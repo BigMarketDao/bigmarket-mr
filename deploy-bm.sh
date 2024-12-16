@@ -17,9 +17,9 @@ fi
 DOCKER_ID_USER='mijoco'
 DOCKER_CMD='docker'
 
-$DOCKER_CMD build -t mijoco/stxeco_api_vote .
-$DOCKER_CMD tag mijoco/stxeco_api_vote mijoco/stxeco_api_vote
-$DOCKER_CMD push mijoco/stxeco_api_vote:latest
+$DOCKER_CMD build -t mijoco/bigmarket_api .
+$DOCKER_CMD tag mijoco/bigmarket_api mijoco/bigmarket_api
+$DOCKER_CMD push mijoco/bigmarket_api:latest
 
 printf "\n\n===================================================="
 printf "\nConnecting to: $SERVER:$PORT"
