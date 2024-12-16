@@ -13,7 +13,7 @@ if (process.env.NODE_ENV === "development") {
 }
 
 const app = express();
-const port = process.env.PORT || 3010;
+const port = process.env.PORT || 3020;
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 app.use(express.json());
@@ -42,7 +42,7 @@ app.use((req, res, next) => {
   }
 });
 
-app.use("/bridge-api/jwt/v1", jwtRoutes);
+app.use("/bigmarket-api/jwt/v1", jwtRoutes);
 
 console.log(`\n\nExpress is listening at http://localhost:${getConfig().port}`);
 console.log("Startup Environment: ", process.env.NODE_ENV);
