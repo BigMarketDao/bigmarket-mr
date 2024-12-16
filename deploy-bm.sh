@@ -3,7 +3,7 @@
 ############################################################
 
 SERVER=spinoza.brightblock.org;
-DOCKER_NAME=stxeco_api_vote
+DOCKER_NAME=bigmarket_api
 DEPLOYMENT=$1
 PORT=22
 
@@ -28,9 +28,9 @@ printf "\nDeploying docker container: $DOCKER_NAME"
 #ssh -p $PORT bob@$SERVER "
 #  source ~/.profile;
 #  docker login;
-#  docker pull mijoco/stxeco_api_vote;
-#  docker rm -f stxeco_api_vote  
-#  docker run -d -t -i --network host --env-file ~/.env --name stxeco_api_vote -p 3010:3010 mijoco/stxeco_api_vote
+#  docker pull mijoco/bigmarket_api;
+#  docker rm -f bigmarket_api  
+#  docker run -d -t -i --network host --env-file ~/.env --name bigmarket_api -p 3010:3010 mijoco/bigmarket_api
 #";
 
 printf "Finished....\n"
