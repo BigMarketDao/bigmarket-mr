@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "NODE_ENV=mainnet tsc",
+    "build": "NODE_ENV=devnet tsc",
     "build:testnet": "NODE_ENV=testnet tsc",
-    "start": "NODE_ENV=mainnet node dist/app.js",
+    "start": "NODE_ENV=devnet node dist/app.js",
     "dev": "NODE_ENV=devnet npx ts-node-dev --respawn src/app.ts"
   },
   "keywords": [],
