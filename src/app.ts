@@ -6,7 +6,12 @@ import cors from "cors";
 import { getConfig, printConfig, setConfigOnStart } from "./lib/config";
 import { WebSocketServer } from "ws";
 import { jwtRoutes } from "./routes/jwt/jwtRoutes";
+import { pollingRoutes } from "./routes/polling/pollingRoutes";
 import { connect } from "./lib/data/db_models";
+import { daoEventRoutes } from "./routes/dao/events/daoEventsRoutes";
+import { daoProposalRoutes } from "./routes/dao/proposals/daoProposalRoutes";
+import { initScanDaoEventsJob } from "./routes/dao/events/eventScheduler";
+import { setDaoConfigOnStart } from "./lib/config_dao";
 
 if (process.env.NODE_ENV === "development") {
   dotenv.config();
@@ -17,12 +22,21 @@ const port = process.env.PORT || 3020;
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 app.use(express.json());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:8060",
+      "http://localhost:8080",
+      "https://brightblock.org",
+    ],
+  })
+);
 
 app.use(morgan("tiny"));
 app.use(express.static("public"));
 app.use(cors());
 setConfigOnStart();
-printConfig();
+setDaoConfigOnStart();
 
 app.use(
   bodyParser.urlencoded({
@@ -42,7 +56,10 @@ app.use((req, res, next) => {
   }
 });
 
-app.use("/bigmarket-api/jwt/v1", jwtRoutes);
+app.use("/bigmarket-api/jwt", jwtRoutes);
+app.use("/bigmarket-api/polling", pollingRoutes);
+app.use("/bigmarket-api/dao/events", daoEventRoutes);
+app.use("/bigmarket-api/dao/proposals", daoProposalRoutes);
 
 console.log(`\n\nExpress is listening at http://localhost:${getConfig().port}`);
 console.log("Startup Environment: ", process.env.NODE_ENV);
@@ -58,6 +75,8 @@ async function connectToMongoCloud() {
   });
 
   const wss = new WebSocketServer({ server });
+  initScanDaoEventsJob.start();
+  // initScanVotingEventsJob.start();
 
   wss.on("connection", function connection(ws: any) {
     ws.on("message", function incoming(message: any) {

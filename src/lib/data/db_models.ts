@@ -3,6 +3,8 @@ import type { Collection } from "mongodb";
 import { getConfig, isDev } from "../config";
 
 export let exchangeRatesCollection: Collection;
+export let opinionPollCollection: Collection;
+export let daoEventCollection: Collection;
 
 export async function connect() {
   let uriPrefix: string = "mongodb+srv";
@@ -27,4 +29,13 @@ export async function connect() {
   const database = client.db(getConfig().mongoDbName);
   exchangeRatesCollection = database.collection("exchangeRatesCollection");
   await exchangeRatesCollection.createIndex({ currency: 1 }, { unique: true });
+
+  opinionPollCollection = database.collection("opinionPollCollection");
+  await opinionPollCollection.createIndex({ pollId: 1 }, { unique: true });
+
+  daoEventCollection = database.collection("daoEventCollection");
+  await daoEventCollection.createIndex(
+    { txId: 1, event_index: 1 },
+    { unique: true }
+  );
 }

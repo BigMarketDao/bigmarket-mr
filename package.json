@@ -13,6 +13,12 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@mijoco/stx_helpers": "^0.5.9",
+    "@stacks/common": "^7.0.2",
+    "@stacks/connect": "^7.9.0",
+    "@stacks/encryption": "^7.0.2",
+    "@stacks/transactions": "^7.0.2",
+    "axios": "^1.7.9",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.0.1",

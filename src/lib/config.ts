@@ -15,14 +15,25 @@ export function printConfig() {
   console.log("mongoUser = " + CONFIG.mongoUser);
   console.log("mongoPwd = " + CONFIG.mongoPwd);
   console.log("host = " + CONFIG.host + ":" + CONFIG.port);
-  console.log("suiApi = " + CONFIG.suiApi);
+  console.log("stacksApi = " + CONFIG.stacksApi);
   console.log("network = " + CONFIG.network);
   console.log("publicAppName = " + CONFIG.publicAppName);
   console.log("publicAppVersion = " + CONFIG.publicAppVersion);
+  console.log("g_client_id = " + CONFIG.g_client_id);
+  console.log("g_javascript_origins = " + CONFIG.g_javascript_origins);
 }
 
 export function setConfigOnStart() {
   const network = process.env.NODE_ENV;
+
+  CONFIG.g_client_id = process.env[network + "_g_client_id"] || "";
+  CONFIG.g_project_id = process.env[network + "_g_project_id"] || "";
+  CONFIG.g_auth_uri = process.env[network + "_g_auth_uri"] || "";
+  CONFIG.g_token_uri = process.env[network + "_g_token_uri"] || "";
+  CONFIG.g_client_secret = process.env[network + "_g_client_secret"] || "";
+  CONFIG.g_redirect_uris = process.env[network + "_g_redirect_uris"] || "";
+  CONFIG.g_javascript_origins =
+    process.env[network + "_g_javascript_origins"] || "";
 
   CONFIG.host = process.env[network + "_sui_host"] || "";
   CONFIG.port = Number(process.env[network + "_sui_port"]) || 6060;
@@ -34,7 +45,7 @@ export function setConfigOnStart() {
   CONFIG.mongoPwd = process.env[network + "_sui_mongoPwd"] || "";
 
   CONFIG.network = process.env[network + "_sui_network"] || "";
-  CONFIG.suiApi = process.env[network + "_sui_suiApi"] || "";
+  CONFIG.stacksApi = process.env[network + "_sui_stacksApi"] || "";
   CONFIG.publicAppName = process.env[network + "_sui_publicAppName"] || "";
   CONFIG.publicAppVersion =
     process.env[network + "_sui_publicAppVersion"] || "";

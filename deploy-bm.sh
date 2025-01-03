@@ -25,14 +25,6 @@ printf "\n\n===================================================="
 printf "\nConnecting to: $SERVER:$PORT"
 printf "\nDeploying docker container: $DOCKER_NAME"
 
-#ssh -p $PORT bob@$SERVER "
-#  source ~/.profile;
-#  docker login;
-#  docker pull mijoco/bigmarket_api;
-#  docker rm -f bigmarket_api  
-#  docker run -d -t -i --network host --env-file ~/.env --name bigmarket_api -p 3010:3010 mijoco/bigmarket_api
-#";
-
 printf "Finished....\n"
 printf "\n-----------------------------------------------------------------------------------------------------\n";
 
