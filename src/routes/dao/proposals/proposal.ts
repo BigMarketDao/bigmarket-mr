@@ -1,4 +1,3 @@
-import { hex } from "@scure/base";
 import { contractPrincipalCV, serializeCV } from "@stacks/transactions";
 import {
   callContractReadOnly,

@@ -16,6 +16,7 @@ import { ObjectId } from "mongodb";
 import { opinionPollCollection } from "../../lib/data/db_models";
 import { bytesToHex, hexToBytes } from "@stacks/common";
 import { getConfig } from "../../lib/config";
+import { getC32AddressFromPublicKey } from "../dao/events/dao_events_helper";
 
 type BaseAdminMessage = {
   message: string;
@@ -26,64 +27,30 @@ type Auth = {
   message: BaseAdminMessage;
   signature: SignatureData;
 };
-function domainCV(domain: any) {
-  return tupleCV({
-    name: stringAsciiCV(domain.name),
-    version: stringAsciiCV(domain.version),
-    "chain-id": uintCV(domain["chain-id"]),
-  });
-}
-function messageCV(message: BaseAdminMessage) {
-  return tupleCV({
-    message: stringAsciiCV(message.message),
-    timestamp: uintCV(message.timestamp),
-    admin: stringAsciiCV(message.admin),
-  });
-}
 
 export function isPostValid(
   signature: SignatureData,
   message: OpinionPoll
 ): boolean {
-  if (message.admin !== getC32AddressFromPublicKey(signature.publicKey))
+  const stxAddressFromKey = getC32AddressFromPublicKey(
+    signature.publicKey,
+    getConfig().network
+  );
+  if (message.admin !== stxAddressFromKey) {
+    console.log(
+      "/votes: wrong voter: " + message.admin + " signer: " + stxAddressFromKey
+    );
     return false;
-  return isValidSignature(signature, message);
-}
-
-export function isPutValid(
-  signature: SignatureData,
-  message: OpinionPoll
-): boolean {
-  if (message.admin !== getC32AddressFromPublicKey(signature.publicKey))
-    return false;
-  return isValidSignature(signature, message);
-}
-
-export function isValidSignature(
-  signature: SignatureData,
-  message: OpinionPoll
-): boolean {
-  return verifyMessageSignatureRsv({
-    signature: signature.signature,
-    message: JSON.stringify(message),
-    publicKey: signature.publicKey,
-  });
-}
-
-function getC32AddressFromPublicKey(
-  publicKeyHex: string,
-  isMainnet = true
-): string {
-  // Select the network version
-  const version = isMainnet ? "mainnet" : "testnet";
-
-  // Convert the public key to a Stacks address
-  const stacksAddress = publicKeyToAddress(publicKeyHex, version);
-  //   version, // Network version
-  //   pubKeyfromBytes(Buffer.from(publicKeyHex, 'hex')) // Convert public key from hex to Buffer
+  }
+  console.log(
+    "/votes: correct voter: " + message.admin + " signer: " + stxAddressFromKey
+  );
+  return false;
+  // return verifyOpinionPollSignature(
+  //   message,
+  //   signature.publicKey,
+  //   signature.signature
   // );
-
-  return stacksAddress;
 }
 
 export async function savePoll(poll: OpinionPoll) {

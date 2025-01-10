@@ -5,6 +5,7 @@ import { getConfig, isDev } from "../config";
 export let exchangeRatesCollection: Collection;
 export let opinionPollCollection: Collection;
 export let daoEventCollection: Collection;
+export let daoSip18VotingCollection: Collection;
 
 export async function connect() {
   let uriPrefix: string = "mongodb+srv";
@@ -36,6 +37,16 @@ export async function connect() {
   daoEventCollection = database.collection("daoEventCollection");
   await daoEventCollection.createIndex(
     { txId: 1, event_index: 1 },
+    { unique: true }
+  );
+
+  daoSip18VotingCollection = database.collection("daoSip18VotingCollection");
+  await daoSip18VotingCollection.createIndex(
+    { voteObjectHash: 1 },
+    { unique: true }
+  );
+  await daoSip18VotingCollection.createIndex(
+    { timestamp: 1 },
     { unique: true }
   );
 }

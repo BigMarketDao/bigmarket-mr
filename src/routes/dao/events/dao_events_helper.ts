@@ -1,16 +1,66 @@
 /**
  * sbtc - interact with Stacks Blockchain to read sbtc contract info
  */
-import { cvToJSON, deserializeCV } from "@stacks/transactions";
+import {
+  cvToJSON,
+  deserializeCV,
+  publicKeyToAddressSingleSig,
+} from "@stacks/transactions";
 import {
   DaoEventExecuteProposal,
   DaoEventEnableExtension,
   ExtensionType,
-  VotingEventProposeProposal,
+  verifyBaseAdminSignature,
 } from "@mijoco/stx_helpers/dist/index";
 import { getConfig } from "../../../lib/config";
 import { isExtension } from "./extension";
 import { daoEventCollection } from "../../../lib/data/db_models";
+import { BaseAdminMessage } from "./dao_events_types";
+import { SignatureData } from "@stacks/connect";
+
+export function getC32AddressFromPublicKey(
+  publicKeyHex: string,
+  network: string
+): string {
+  if (network === "mainnet" || network === "testnet" || network === "devnet") {
+    const stacksAddress = publicKeyToAddressSingleSig(publicKeyHex, network);
+    return stacksAddress;
+  }
+  return "unknown";
+}
+
+export function isPostValid(
+  signature: SignatureData,
+  message: BaseAdminMessage
+): boolean {
+  const stxAddressFromKey = getC32AddressFromPublicKey(
+    signature.publicKey,
+    getConfig().network
+  );
+  if (message.admin !== stxAddressFromKey) {
+    console.log(
+      "/votes: wrong voter: " + message.admin + " signer: " + stxAddressFromKey
+    );
+    return false;
+  }
+  console.log("/votes: network: " + getConfig().network);
+  console.log("/votes: publicAppName: " + getConfig().publicAppName);
+  console.log("/votes: publicAppVersion: " + getConfig().publicAppVersion);
+  console.log("/votes: signature: " + signature.signature);
+  console.log("/votes: publicKey: " + signature.publicKey);
+  console.log("/votes: message: ", message);
+  const stacksAddress = verifyBaseAdminSignature(
+    getConfig().network,
+    getConfig().publicAppName,
+    getConfig().publicAppVersion,
+    message,
+    signature.publicKey,
+    signature.signature
+  );
+  console.log("/votes: correct voter: " + stacksAddress);
+  if (!stacksAddress) return false;
+  return true;
+}
 
 export async function readDaoEvents(genesis: boolean, daoContractId: string) {
   const url =
@@ -18,12 +68,14 @@ export async function readDaoEvents(genesis: boolean, daoContractId: string) {
     "/extended/v1/contract/" +
     daoContractId +
     "/events?limit=20";
-  console.log("readDaoEvents: " + url);
   const extensions: Array<ExtensionType> = [];
   let currentOffset = 0;
   if (!genesis) {
     currentOffset = await countAllEvents();
   }
+  console.log(
+    "readDaoEvents: from " + currentOffset + " contract: " + daoContractId
+  );
   let count = 0;
   let moreEvents = true;
   try {
@@ -61,7 +113,7 @@ async function resolveExtensionEvents(
     typeof val.results !== "object" ||
     val.results.length === 0
   ) {
-    console.log("resolveExtensionEvents: for url " + urlOffset, val.results);
+    //console.log("resolveExtensionEvents: for url " + urlOffset, val.results);
     return false;
   } else {
     console.log(

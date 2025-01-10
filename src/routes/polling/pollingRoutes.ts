@@ -1,16 +1,11 @@
-import express, { Request, Response, Router } from "express";
-import type { SignatureData } from "@stacks/connect";
+import express from "express";
 import {
   findPollById,
   isPostValid,
-  isPutValid,
   savePoll,
   sha256,
   updatePoll,
 } from "./polling_helper";
-import { opinionPollCollection } from "../../lib/data/db_models";
-import { OpinionPoll } from "./polling_types";
-import { createSha2Hash } from "@stacks/encryption";
 import { publicKeyToAddress } from "@stacks/transactions";
 
 const router = express.Router();
@@ -38,7 +33,7 @@ router.put("/polls/:id", async (req, res) => {
   const { message, signature } = req.body;
   const pollId = message._id;
 
-  if (!isPutValid(signature, message)) {
+  if (!isPostValid(signature, message)) {
     res.status(401).json({ error: "Invalid request" });
   }
 

@@ -35,7 +35,7 @@ async function readVotingEvents(
   daoContract: string,
   votingContract: string
 ) {
-  console.log("VotingContractEvents: votingContract ", votingContract);
+  console.log("readVotingEvents: extension contract ", votingContract);
   //return;
   const url =
     getConfig().stacksApi +
@@ -90,17 +90,16 @@ async function resolveExtensionEvents(
     val.results.length === 0
   ) {
     console.log(
-      "VotingContractEvents: no results ",
-      val + " for url " + urlOffset
+      "resolveExtensionEvents: no results for contract " + votingContract
     );
     return false;
   }
 
   console.log(
-    "VotingContractEvents: processing " +
+    "resolveExtensionEvents: processing " +
       (val?.results?.length || 0) +
       " events from " +
-      urlOffset
+      votingContract
   );
   //console.log('resolveExtensionEvents: val: ', val)
   for (const event of val.results) {
@@ -167,6 +166,7 @@ async function processEvent(
       daoContract,
       votingContract,
       proposal: result.value.proposal.value,
+      sip18: result.value.sip18?.value,
       voter: result.value.voter.value,
       for: result.value.for.value,
       amount: Number(result.value.amount.value),
@@ -193,6 +193,8 @@ async function processEvent(
 
     //console.log('resolveExtensionEvents: extension: enabled=' + votingContractEvent.enabled + ' contract=' + votingContractEvent.extension + ' contract=' + votingContractEvent.extension + ' event.event_index=' + event.event_index)
     await saveOrUpdateEvent(votingContractEvent);
+  } else {
+    console.log("processEvent: new event: ", event);
   }
 }
 
@@ -244,6 +246,23 @@ async function getSubmissionContract(txId: string): Promise<string> {
 export async function getVotesByProposal(proposal: string): Promise<any> {
   const result = await daoEventCollection
     .find({ proposal, event: "vote" })
+    .toArray();
+  return result;
+}
+
+export async function getVotesByProposalAndVoter(
+  proposal: string,
+  voter: string
+): Promise<any> {
+  const result = await daoEventCollection
+    .find({ proposal, voter, event: "vote" })
+    .toArray();
+  return result;
+}
+
+export async function getVotesByVoter(voter: string): Promise<any> {
+  const result = await daoEventCollection
+    .find({ voter, event: "vote" })
     .toArray();
   return result;
 }

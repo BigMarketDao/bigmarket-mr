@@ -3,11 +3,10 @@ import {
   fetchBaseDaoEvents,
   fetchExtensionEvent,
   fetchExtensions,
+  isPostValid,
   readDaoEvents,
 } from "./dao_events_helper";
-import { isPostValid } from "../../polling/polling_helper";
 import { readDaoExtensionEvents } from "./dao_events_extension_helper";
-import { getConfig } from "../../../lib/config";
 import {
   getGovernanceData,
   isExecutiveTeamMember,
@@ -22,13 +21,14 @@ router.post("/extensions/:daoContractId", async (req, res, next) => {
     const { message, signature } = req.body;
     if (!isPostValid(signature, message)) {
       res.status(401).json({ error: "Invalid request" });
+    } else {
+      console.log("processEvent: readDaoEvents");
+      await readDaoEvents(true, req.params.daoContractId);
+      await readDaoExtensionEvents(true, req.params.daoContractId);
+      console.log("processEvent: all events: " + req.params.daoContractId);
+      const events = await fetchBaseDaoEvents();
+      res.send(events);
     }
-    console.log("processEvent: readDaoEvents");
-    await readDaoEvents(true, req.params.daoContractId);
-    await readDaoExtensionEvents(true, req.params.daoContractId);
-    console.log("processEvent: all events: " + req.params.daoContractId);
-    const events = await fetchBaseDaoEvents();
-    res.send(events);
   } catch (error) {
     console.log("Error in routes: ", error);
     next("An error occurred fetching pox-info.");

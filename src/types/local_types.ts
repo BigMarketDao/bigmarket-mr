@@ -1,3 +1,5 @@
+import { SignatureData } from "@stacks/connect";
+
 export type ConfigI = {
   mongoDbUrl: string;
   mongoUser: string;
