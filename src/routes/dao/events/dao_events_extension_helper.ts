@@ -207,14 +207,13 @@ async function processEvent(
     const unhashed: StoredOpinionPoll = await findUserEnteredPollByHash(
       metadataHash
     );
-    //opinionPollCollection.findOne();
-    const PollCreateEvent = {
+    const o = {
       _id: new ObjectId(),
       event: result.value.event.value,
       event_index: Number(event.event_index),
       txId: event.tx_id,
       daoContract,
-      contract: eventContract,
+      votingContract: eventContract,
       pollId: Number(result.value["poll-id"].value),
       isGated: Boolean(result.value["is-gated"].value),
       endBurnHeight: Number(result.value["end-burn-height"].value),
@@ -224,24 +223,24 @@ async function processEvent(
       unhashedData: unhashed,
     } as PollCreateEvent;
 
-    console.log("resolveExtensionEvents: PollCreateEvent=", PollCreateEvent);
-    await saveOrUpdateEvent(PollCreateEvent);
+    console.log("resolveExtensionEvents: PollCreateEvent=", o);
+    await saveOrUpdateEvent(o);
   } else if (result.value.event.value === "poll-vote") {
-    const PollVoteEvent = {
+    const o: PollVoteEvent = {
       _id: new ObjectId(),
       event: result.value.event.value,
       event_index: Number(event.event_index),
       txId: event.tx_id,
       daoContract,
-      contract: eventContract,
+      votingContract: eventContract,
       pollId: Number(result.value["poll-id"].value),
       sip18: result.value.sip18.value,
       voter: result.value.voter.value,
       for: result.value.for.value,
-    } as PollCreateEvent;
+    } as PollVoteEvent;
 
-    console.log("resolveExtensionEvents: PollCreateEvent=", PollCreateEvent);
-    await saveOrUpdateEvent(PollCreateEvent);
+    console.log("resolveExtensionEvents: PollCreateEvent=", o);
+    await saveOrUpdateEvent(o);
   } else {
     console.log("processEvent: new event: ", event);
   }
@@ -321,12 +320,12 @@ export async function getVotesByVoter(voter: string): Promise<any> {
  */
 
 export async function findVotingContractEventByContractAndIndex(
-  votingContract: string,
+  daoContract: string,
   event_index: number,
   txId: string
 ): Promise<any> {
   const result = await daoEventCollection.findOne({
-    votingContract,
+    daoContract,
     event_index,
     txId,
   });
@@ -347,30 +346,9 @@ async function saveOrUpdateEvent(
       votingContractEvent.event_index,
       votingContractEvent.txId
     );
-    console.log("saveOrUpdateEvent: pdb", pdb);
     if (pdb) {
-      console.log(
-        "saveOrUpdateEvent: updating: " +
-          votingContractEvent.votingContract +
-          " / " +
-          votingContractEvent.event +
-          " / " +
-          votingContractEvent.event_index +
-          " / " +
-          votingContractEvent.txId
-      );
       await updateDaoEvent(votingContractEvent._id, votingContractEvent);
     } else {
-      console.log(
-        "saveOrUpdateEvent: saving: " +
-          votingContractEvent.votingContract +
-          " / " +
-          votingContractEvent.event +
-          " / " +
-          votingContractEvent.event_index +
-          " / " +
-          votingContractEvent.txId
-      );
       await saveDaoEvent(votingContractEvent);
     }
   } catch (err: any) {

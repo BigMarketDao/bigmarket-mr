@@ -1,15 +1,19 @@
 import type { SignatureData } from "@stacks/connect";
 import { ObjectId } from "mongodb";
 import { opinionPollSip18VotingCollection } from "../../lib/data/db_models";
-import { StoredOpinionPoll, StoredPollVoteMessage } from "@mijoco/stx_helpers";
+import {
+  PollVoteEvent,
+  StoredOpinionPoll,
+  StoredPollVoteMessage,
+} from "@mijoco/stx_helpers";
 
 export async function findPollVoteByHash(
   pollVoteObjectHash: string
-): Promise<StoredOpinionPoll> {
+): Promise<PollVoteEvent> {
   const result = await opinionPollSip18VotingCollection.findOne({
     pollVoteObjectHash: pollVoteObjectHash,
   });
-  return result as unknown as StoredOpinionPoll;
+  return result as unknown as PollVoteEvent;
 }
 
 export async function findUnprocessedSip18PollMessages(
@@ -31,5 +35,5 @@ export async function saveSip18PollVote(
   voteMessage.signature = signature.signature;
   voteMessage.publicKey = signature.publicKey;
   const result = await opinionPollSip18VotingCollection.insertOne(voteMessage);
-  return await findPollVoteByHash(voteMessage["poll-id"]);
+  return await findPollVoteByHash(voteMessage["metadata-hash"]);
 }
