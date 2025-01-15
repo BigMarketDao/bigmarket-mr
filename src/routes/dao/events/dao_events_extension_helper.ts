@@ -9,16 +9,26 @@ import {
   ExtensionType,
   getTransaction,
   ProposalContract,
+  PollCreateEvent,
+  PollVoteEvent,
+  StoredOpinionPoll,
 } from "@mijoco/stx_helpers/dist/index";
 import { ObjectId } from "mongodb";
 import { fetchExtensions } from "./dao_events_helper";
 import { getConfig } from "../../../lib/config";
-import { daoEventCollection } from "../../../lib/data/db_models";
+import {
+  daoEventCollection,
+  opinionPollCollection,
+} from "../../../lib/data/db_models";
 import {
   getMetaData,
   getProposalContractSource,
   getProposalData,
 } from "../proposals/proposal";
+import {
+  findPollByHash,
+  findUserEnteredPollByHash,
+} from "../../polling/polling_helper";
 
 export async function readDaoExtensionEvents(
   genesis: boolean,
@@ -33,21 +43,21 @@ export async function readDaoExtensionEvents(
 async function readVotingEvents(
   genesis: boolean,
   daoContract: string,
-  votingContract: string
+  extensionContract: string
 ) {
-  console.log("readVotingEvents: extension contract ", votingContract);
+  console.log("readVotingEvents: extension contract ", extensionContract);
   //return;
   const url =
     getConfig().stacksApi +
     "/extended/v1/contract/" +
-    votingContract +
+    extensionContract +
     "/events?limit=20";
   const extensions: Array<ExtensionType> = [];
   let currentOffset = 0;
   if (!genesis) {
     currentOffset = await countEventsByVotingContract(
       daoContract,
-      votingContract
+      extensionContract
     );
   }
   let count = 0;
@@ -60,7 +70,7 @@ async function readVotingEvents(
           currentOffset,
           count,
           daoContract,
-          votingContract
+          extensionContract
         );
         count++;
       } catch (err: any) {
@@ -78,7 +88,7 @@ async function resolveExtensionEvents(
   currentOffset: number,
   count: number,
   daoContract: string,
-  votingContract: string
+  extensionContract: string
 ): Promise<any> {
   let urlOffset = url + "&offset=" + (currentOffset + count * 20);
   const response = await fetch(urlOffset);
@@ -89,9 +99,6 @@ async function resolveExtensionEvents(
     typeof val.results !== "object" ||
     val.results.length === 0
   ) {
-    console.log(
-      "resolveExtensionEvents: no results for contract " + votingContract
-    );
     return false;
   }
 
@@ -99,18 +106,18 @@ async function resolveExtensionEvents(
     "resolveExtensionEvents: processing " +
       (val?.results?.length || 0) +
       " events from " +
-      votingContract
+      extensionContract
   );
   //console.log('resolveExtensionEvents: val: ', val)
   for (const event of val.results) {
     const pdb = await findVotingContractEventByContractAndIndex(
-      votingContract,
+      extensionContract,
       Number(event.event_index),
       event.tx_id
     );
     if (!pdb) {
       try {
-        processEvent(event, daoContract, votingContract);
+        processEvent(event, daoContract, extensionContract);
       } catch (err: any) {
         console.log("resolveExtensionEvents: ", err);
       }
@@ -124,6 +131,7 @@ async function processEvent(
   daoContract: string,
   votingContract: string
 ) {
+  const eventContract = event.contract_log.contract_id;
   const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
   console.log(
     "processEvent: new event: " +
@@ -193,6 +201,47 @@ async function processEvent(
 
     //console.log('resolveExtensionEvents: extension: enabled=' + votingContractEvent.enabled + ' contract=' + votingContractEvent.extension + ' contract=' + votingContractEvent.extension + ' event.event_index=' + event.event_index)
     await saveOrUpdateEvent(votingContractEvent);
+  } else if (result.value.event.value === "add-poll") {
+    let metadataHash = result.value["metadata-hash"].value;
+    metadataHash = metadataHash.replace(/^0x/, "");
+    const unhashed: StoredOpinionPoll = await findUserEnteredPollByHash(
+      metadataHash
+    );
+    //opinionPollCollection.findOne();
+    const PollCreateEvent = {
+      _id: new ObjectId(),
+      event: result.value.event.value,
+      event_index: Number(event.event_index),
+      txId: event.tx_id,
+      daoContract,
+      contract: eventContract,
+      pollId: Number(result.value["poll-id"].value),
+      isGated: Boolean(result.value["is-gated"].value),
+      endBurnHeight: Number(result.value["end-burn-height"].value),
+      startBurnHeight: Number(result.value["start-burn-height"].value),
+      metadataHash: metadataHash,
+      proposer: result.value.proposer.value,
+      unhashedData: unhashed,
+    } as PollCreateEvent;
+
+    console.log("resolveExtensionEvents: PollCreateEvent=", PollCreateEvent);
+    await saveOrUpdateEvent(PollCreateEvent);
+  } else if (result.value.event.value === "poll-vote") {
+    const PollVoteEvent = {
+      _id: new ObjectId(),
+      event: result.value.event.value,
+      event_index: Number(event.event_index),
+      txId: event.tx_id,
+      daoContract,
+      contract: eventContract,
+      pollId: Number(result.value["poll-id"].value),
+      sip18: result.value.sip18.value,
+      voter: result.value.voter.value,
+      for: result.value.for.value,
+    } as PollCreateEvent;
+
+    console.log("resolveExtensionEvents: PollCreateEvent=", PollCreateEvent);
+    await saveOrUpdateEvent(PollCreateEvent);
   } else {
     console.log("processEvent: new event: ", event);
   }
@@ -289,6 +338,8 @@ async function saveOrUpdateEvent(
     | VotingEventVoteOnProposal
     | VotingEventConcludeProposal
     | VotingEventProposeProposal
+    | PollCreateEvent
+    | PollVoteEvent
 ) {
   try {
     const pdb = await findVotingContractEventByContractAndIndex(
@@ -331,6 +382,8 @@ async function saveDaoEvent(
     | VotingEventVoteOnProposal
     | VotingEventConcludeProposal
     | VotingEventProposeProposal
+    | PollCreateEvent
+    | PollVoteEvent
 ) {
   proposal._id = new ObjectId();
   const result = await daoEventCollection.insertOne(proposal);
@@ -343,6 +396,8 @@ async function updateDaoEvent(
     | VotingEventVoteOnProposal
     | VotingEventConcludeProposal
     | VotingEventProposeProposal
+    | PollCreateEvent
+    | PollVoteEvent
 ) {
   const result = await daoEventCollection.updateOne(
     {

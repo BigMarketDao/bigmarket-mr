@@ -1,12 +1,18 @@
 import express from "express";
 import {
-  findPollById,
-  isPostValid,
+  findPollByHash,
+  findPolls,
+  isCreatePollPostValid,
+  isPostPollMessageValid,
   savePoll,
-  sha256,
-  updatePoll,
 } from "./polling_helper";
 import { publicKeyToAddress } from "@stacks/transactions";
+import { isPostValid } from "../dao/events/dao_events_helper";
+import {
+  findPollVoteByHash,
+  findUnprocessedSip18PollMessages,
+  saveSip18PollVote,
+} from "./poll_voting_helper";
 
 const router = express.Router();
 
@@ -14,46 +20,40 @@ const SCOPES = "email profile";
 const SUPER_ADMIN_ADDRESS = "";
 
 router.post("/polls", async (req, res) => {
-  const { message, signature } = req.body;
-  if (!isPostValid(signature, message)) {
+  const { poll, auth } = req.body;
+  if (!isPostValid(auth.signature, auth.message)) {
     res.status(401).json({ error: "Invalid request" });
+  } else {
+    console.log("/polls", poll);
+    const newPoll = await savePoll(poll);
+    res.json(newPoll);
   }
-  const poll = await savePoll(message);
-  const sortedObject = JSON.stringify(poll, Object.keys(poll).sort());
-  sha256(sortedObject);
-  // write to the smart contract...
-  res.json(poll);
 });
 
-router.get("/polls/:id", async (req, res) => {
-  const poll = await findPollById(req.params.id);
+router.post("/sip18-votes/:pollVoteObjectHash", async (req, res) => {
+  const { message, signature } = req.body;
+  if (!isPostPollMessageValid(signature, message)) {
+    res.status(401).json({ error: "Invalid request" });
+  } else {
+    console.log("/votes: PostValid");
+    await saveSip18PollVote(req.params.pollVoteObjectHash, message, signature);
+    const vote = await findPollVoteByHash(message.pollVoteObjectHash);
+    res.json(vote);
+  }
 });
 
-router.put("/polls/:id", async (req, res) => {
-  const { message, signature } = req.body;
-  const pollId = message._id;
+router.get("/sip18-votes/:hash", async (req, res) => {
+  const polls = await findUnprocessedSip18PollMessages(req.params.hash);
+  res.json(polls);
+});
 
-  if (!isPostValid(signature, message)) {
-    res.status(401).json({ error: "Invalid request" });
-  }
+router.get("/polls", async (req, res) => {
+  const polls = await findPolls();
+  res.json(polls);
+});
 
-  // // Fetch the poll to check permissions
-  let poll = await findPollById(pollId);
-  if (!poll) {
-    res.status(404).json({ error: "Poll not found" });
-  }
-
-  // // Check if the user is an admin or super admin
-  const stacksAddress = publicKeyToAddress(signature.publicKey, "testnet");
-  if (
-    !poll ||
-    (poll.admin !== stacksAddress && stacksAddress !== SUPER_ADMIN_ADDRESS)
-  ) {
-    res.status(403).json({ error: "Forbidden" });
-  }
-
-  // Proceed with the update
-  poll = await updatePoll(pollId, message); // Example update logic
+router.get("/polls/:hash", async (req, res) => {
+  const poll = await findPollByHash(req.params.hash);
   res.json(poll);
 });
 

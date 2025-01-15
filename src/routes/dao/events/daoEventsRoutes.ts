@@ -72,7 +72,6 @@ router.get(
         emergencyExecuteContractId,
         req.params.stacksAddress
       );
-      console.log("isExecutiveTeamMember: ", result);
       res.send(result);
     } catch (error: any) {
       console.log("Error in routes: ", error.message);

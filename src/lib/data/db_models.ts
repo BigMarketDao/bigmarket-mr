@@ -4,6 +4,7 @@ import { getConfig, isDev } from "../config";
 
 export let exchangeRatesCollection: Collection;
 export let opinionPollCollection: Collection;
+export let opinionPollSip18VotingCollection: Collection;
 export let daoEventCollection: Collection;
 export let daoSip18VotingCollection: Collection;
 
@@ -32,7 +33,9 @@ export async function connect() {
   await exchangeRatesCollection.createIndex({ currency: 1 }, { unique: true });
 
   opinionPollCollection = database.collection("opinionPollCollection");
-  await opinionPollCollection.createIndex({ pollId: 1 }, { unique: true });
+  await opinionPollCollection.createIndex({ createdAt: 1 }, { unique: true });
+  await opinionPollCollection.createIndex({ objectHash: 1 }, { unique: true });
+  await opinionPollCollection.createIndex({ name: 1 }, { unique: true });
 
   daoEventCollection = database.collection("daoEventCollection");
   await daoEventCollection.createIndex(
@@ -47,6 +50,18 @@ export async function connect() {
   );
   await daoSip18VotingCollection.createIndex(
     { timestamp: 1 },
+    { unique: true }
+  );
+
+  opinionPollSip18VotingCollection = database.collection(
+    "opinionPollSip18VotingCollection"
+  );
+  await opinionPollSip18VotingCollection.createIndex(
+    { "poll-id": 1, voter: 1 },
+    { unique: true }
+  );
+  await opinionPollSip18VotingCollection.createIndex(
+    { pollVoteObjectHash: 1 },
     { unique: true }
   );
 }

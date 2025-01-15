@@ -4,7 +4,6 @@ import {
   findSip18VoteById,
   isPostValid,
   saveSip18Vote,
-  sha256,
 } from "./sip18_voting_helper";
 
 const router = express.Router();

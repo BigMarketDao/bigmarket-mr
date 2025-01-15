@@ -225,8 +225,6 @@ export async function fetchProposedProposalsByDao(
   ];
 
   const results = await daoEventCollection.aggregate(pipeline).toArray();
-  console.log(results);
-
   return results as unknown as Array<VotingEventProposeProposal>;
 }
 export async function fetchProposedProposals(): Promise<
@@ -259,8 +257,6 @@ export async function fetchProposedProposals(): Promise<
   ];
 
   const results = await daoEventCollection.aggregate(pipeline).toArray();
-  console.log(results);
-
   return results as unknown as Array<VotingEventProposeProposal>;
 }
 export async function fetchBootstrapProposals(): Promise<

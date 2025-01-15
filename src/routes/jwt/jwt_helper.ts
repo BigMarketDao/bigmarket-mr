@@ -10,7 +10,7 @@ async function getNftHoldingsByPage(
   offset: number
 ): Promise<any> {
   const url =
-    getConfig().suiApi +
+    getConfig().stacksApi +
     "/extended/v1/tokens/nft/holdings?principal=" +
     stxAddress +
     "&limit=" +

@@ -128,14 +128,10 @@ export async function findSip18Votes(): Promise<Array<StoredVoteMessage>> {
 }
 
 export async function findSip18VotesEndingBefore(
-  stopBitcoinHeight: number
+  endBurnHeight: number
 ): Promise<Array<StoredVoteMessage>> {
   const result = await daoSip18VotingCollection
-    .find({ stopBitcoinHeight: { $lt: stopBitcoinHeight } })
+    .find({ endBurnHeight: { $lt: endBurnHeight } })
     .toArray();
   return result as unknown as Array<StoredVoteMessage>;
-}
-
-export async function sha256(publicKeyHex: string) {
-  return hashSha256Sync(hexToBytes(publicKeyHex));
 }

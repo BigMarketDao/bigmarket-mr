@@ -1,22 +1,19 @@
 import type { SignatureData } from "@stacks/connect";
-import {
-  createSha2Hash,
-  hashSha256Sync,
-  verifyMessageSignatureRsv,
-} from "@stacks/encryption";
-import { OpinionPoll } from "./polling_types";
-import {
-  publicKeyToAddress,
-  stringAsciiCV,
-  tupleCV,
-  uintCV,
-} from "@stacks/transactions";
-import { ChainId, StacksNetwork } from "@stacks/network";
 import { ObjectId } from "mongodb";
-import { opinionPollCollection } from "../../lib/data/db_models";
-import { bytesToHex, hexToBytes } from "@stacks/common";
+import {
+  daoEventCollection,
+  opinionPollCollection,
+} from "../../lib/data/db_models";
 import { getConfig } from "../../lib/config";
 import { getC32AddressFromPublicKey } from "../dao/events/dao_events_helper";
+import {
+  PollCreateEvent,
+  OpinionPoll,
+  StoredOpinionPoll,
+  PollVoteMessage,
+  verifyDaoSignature,
+  pollVoteMessageToTupleCV,
+} from "@mijoco/stx_helpers/dist/index";
 
 type BaseAdminMessage = {
   message: string;
@@ -28,7 +25,7 @@ type Auth = {
   signature: SignatureData;
 };
 
-export function isPostValid(
+export function isCreatePollPostValid(
   signature: SignatureData,
   message: OpinionPoll
 ): boolean {
@@ -36,14 +33,20 @@ export function isPostValid(
     signature.publicKey,
     getConfig().network
   );
-  if (message.admin !== stxAddressFromKey) {
+  if (message.proposer !== stxAddressFromKey) {
     console.log(
-      "/votes: wrong voter: " + message.admin + " signer: " + stxAddressFromKey
+      "/polls: wrong voter: " +
+        message.proposer +
+        " signer: " +
+        stxAddressFromKey
     );
     return false;
   }
   console.log(
-    "/votes: correct voter: " + message.admin + " signer: " + stxAddressFromKey
+    "/votes: correct voter: " +
+      message.proposer +
+      " signer: " +
+      stxAddressFromKey
   );
   return false;
   // return verifyOpinionPollSignature(
@@ -52,45 +55,67 @@ export function isPostValid(
   //   signature.signature
   // );
 }
+export function isPostPollMessageValid(
+  signature: SignatureData,
+  message: PollVoteMessage
+): boolean {
+  const stxAddressFromKey = getC32AddressFromPublicKey(
+    signature.publicKey,
+    getConfig().network
+  );
+  if (message.voter !== stxAddressFromKey) {
+    console.log(
+      "/events: wrong voter: " + message.voter + " signer: " + stxAddressFromKey
+    );
+    return false;
+  }
+  const stacksAddress = verifyDaoSignature(
+    getConfig().network,
+    getConfig().publicAppName,
+    getConfig().publicAppVersion,
+    pollVoteMessageToTupleCV(message),
+    signature.publicKey,
+    signature.signature
+  );
+  console.log("/votes: correct voter: " + stacksAddress);
+  if (!stacksAddress) return false;
+  return true;
+}
 
-export async function savePoll(poll: OpinionPoll) {
+export async function savePoll(poll: StoredOpinionPoll) {
   poll._id = poll._id || new ObjectId();
   const result = await opinionPollCollection.insertOne(poll);
-  return await findPollById(poll._id.toString());
+  return await findPollByHash(poll._id.toString());
 }
 
-export async function updatePoll(poll: OpinionPoll, changes: any) {
-  const result = await opinionPollCollection.updateOne(
-    {
-      _id: poll._id,
-    },
-    { $set: changes }
-  );
-  poll = await findPollById(poll._id.toString());
-  return poll;
-}
-
-export async function findPollById(_id: string): Promise<OpinionPoll> {
-  const result = await opinionPollCollection.findOne({
-    _id: new ObjectId(_id),
+export async function findPollByHash(
+  objectHash: string
+): Promise<PollCreateEvent> {
+  const result = await daoEventCollection.findOne({
+    objectHash: objectHash,
   });
-  return result as unknown as OpinionPoll;
+  return result as unknown as PollCreateEvent;
 }
 
-export async function findPolls(): Promise<Array<OpinionPoll>> {
-  const result = await opinionPollCollection.find().toArray();
-  return result as unknown as Array<OpinionPoll>;
+export async function findUserEnteredPollByHash(
+  objectHash: string
+): Promise<StoredOpinionPoll> {
+  const result = await opinionPollCollection.findOne({
+    objectHash: objectHash,
+  });
+  return result as unknown as StoredOpinionPoll;
+}
+
+export async function findPolls(): Promise<Array<PollCreateEvent>> {
+  const events = await daoEventCollection.find({ event: "add-poll" }).toArray();
+  return events as unknown as Array<PollCreateEvent>;
 }
 
 export async function findPollsEndingBefore(
-  stopBitcoinHeight: number
-): Promise<Array<OpinionPoll>> {
-  const result = await opinionPollCollection
-    .find({ stopBitcoinHeight: { $lt: stopBitcoinHeight } })
+  endBurnHeight: number
+): Promise<Array<PollCreateEvent>> {
+  const result = await daoEventCollection
+    .find({ endBurnHeight: { $lt: endBurnHeight } })
     .toArray();
-  return result as unknown as Array<OpinionPoll>;
-}
-
-export async function sha256(publicKeyHex: string) {
-  return hashSha256Sync(hexToBytes(publicKeyHex));
+  return result as unknown as Array<PollCreateEvent>;
 }

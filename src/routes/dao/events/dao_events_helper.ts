@@ -39,16 +39,10 @@ export function isPostValid(
   );
   if (message.admin !== stxAddressFromKey) {
     console.log(
-      "/votes: wrong voter: " + message.admin + " signer: " + stxAddressFromKey
+      "/events: wrong voter: " + message.admin + " signer: " + stxAddressFromKey
     );
     return false;
   }
-  console.log("/votes: network: " + getConfig().network);
-  console.log("/votes: publicAppName: " + getConfig().publicAppName);
-  console.log("/votes: publicAppVersion: " + getConfig().publicAppVersion);
-  console.log("/votes: signature: " + signature.signature);
-  console.log("/votes: publicKey: " + signature.publicKey);
-  console.log("/votes: message: ", message);
   const stacksAddress = verifyBaseAdminSignature(
     getConfig().network,
     getConfig().publicAppName,
@@ -115,13 +109,6 @@ async function resolveExtensionEvents(
   ) {
     //console.log("resolveExtensionEvents: for url " + urlOffset, val.results);
     return false;
-  } else {
-    console.log(
-      "resolveExtensionEvents: no processing " +
-        val.results.length +
-        " for url " +
-        urlOffset
-    );
   }
   for (const event of val.results) {
     //console.log("resolveExtensionEvents: processing: ", event);
