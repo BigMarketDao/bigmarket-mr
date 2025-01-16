@@ -2,10 +2,12 @@ import cron from "node-cron";
 import { readDaoEvents } from "./dao_events_helper";
 import { daoEventCollection } from "../../../lib/data/db_models";
 import { readDaoExtensionEvents } from "./dao_events_extension_helper";
+import { readPredictionEvents } from "../../predictions/dao_events_prediction_market_helper";
+import { getDaoConfig } from "../../../lib/config_dao";
 
 // 30 mins past every second hour: 30 */2 * * *'
 export const initScanDaoEventsJob = cron.schedule(
-  "1 * * * *",
+  "* * * * *",
   async (fireDate) => {
     console.log("Running: initScanDaoEventsJob at: " + fireDate);
     try {
@@ -27,6 +29,11 @@ export const initScanDaoEventsJob = cron.schedule(
         }
         await readDaoExtensionEvents(false, docContract);
       }
+      await readPredictionEvents(
+        true,
+        getDaoConfig().VITE_DOA_DEPLOYER + ".bitcoin-dao",
+        getDaoConfig().VITE_DOA_PREDICTION_MARKET
+      );
     } catch (err: any) {
       console.log("initScanDaoEventsJob: ", err);
     }

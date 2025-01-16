@@ -29,4 +29,5 @@ export type ConfigDaoI = {
   VITE_DOA_DEPLOYER: string;
   VITE_DOA_EMERGENCY_EXECUTE_EXTENSION: string;
   VITE_DOA_POX: string;
+  VITE_DOA_PREDICTION_MARKET: string;
 };

@@ -1,5 +1,4 @@
 import type { SignatureData } from "@stacks/connect";
-import { hashSha256Sync } from "@stacks/encryption";
 import {
   boolCV,
   broadcastTransaction,

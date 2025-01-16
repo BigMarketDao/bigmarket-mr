@@ -29,15 +29,32 @@ import {
   findPollByHash,
   findUserEnteredPollByHash,
 } from "../../polling/polling_helper";
+import { readPredictionEvents } from "../../predictions/dao_events_prediction_market_helper";
+import { getDaoConfig } from "../../../lib/config_dao";
 
 export async function readDaoExtensionEvents(
   genesis: boolean,
   daoContractId: string
 ) {
   const extensions = await fetchExtensions(daoContractId);
+  let predictions = false;
   for (const extensionObj of extensions) {
-    await readVotingEvents(genesis, daoContractId, extensionObj.extension);
+    if (extensionObj.extension.indexOf("prediction") > -1) {
+      predictions = true;
+      await readPredictionEvents(
+        genesis,
+        daoContractId,
+        extensionObj.extension
+      );
+    } else {
+      await readVotingEvents(genesis, daoContractId, extensionObj.extension);
+    }
   }
+  await readPredictionEvents(
+    genesis,
+    daoContractId,
+    getDaoConfig().VITE_DOA_PREDICTION_MARKET
+  );
 }
 
 async function readVotingEvents(
