@@ -1,5 +1,11 @@
-import { PredictionMarketCreateEvent } from "@mijoco/stx_helpers";
-import { daoEventCollection } from "../../lib/data/db_models";
+import {
+  PredictionMarketCreateEvent,
+  StoredOpinionPoll,
+} from "@mijoco/stx_helpers";
+import {
+  daoEventCollection,
+  opinionPollCollection,
+} from "../../lib/data/db_models";
 
 export async function fetchMarkets(): Promise<
   Array<PredictionMarketCreateEvent>
@@ -10,10 +16,22 @@ export async function fetchMarkets(): Promise<
   return result as unknown as Array<PredictionMarketCreateEvent>;
 }
 
+export async function findOpinionPollByTitle(
+  title: string
+): Promise<StoredOpinionPoll> {
+  const result = await opinionPollCollection.findOne({
+    name: title,
+  });
+  return result as unknown as StoredOpinionPoll;
+}
+
 export async function fetchMarket(
   marketId: number
 ): Promise<PredictionMarketCreateEvent> {
-  const result = await daoEventCollection.findOne({ marketId });
+  const result = await daoEventCollection.findOne({
+    event: "create",
+    marketId: String(marketId),
+  });
   return result as unknown as PredictionMarketCreateEvent;
 }
 
@@ -27,12 +45,22 @@ export async function countCreateMarketEvents(): Promise<number> {
 }
 
 export async function findPredictionContractEventByContractAndIndex(
-  daoContract: string,
+  votingContract: string,
   event_index: number,
   txId: string
 ): Promise<any> {
   const result = await daoEventCollection.findOne({
-    daoContract,
+    votingContract,
+    event_index,
+    txId,
+  });
+  return result;
+}
+export async function findPredictionContractEventAndIndex(
+  event_index: number,
+  txId: string
+): Promise<any> {
+  const result = await daoEventCollection.findOne({
     event_index,
     txId,
   });

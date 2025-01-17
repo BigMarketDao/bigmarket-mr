@@ -363,13 +363,13 @@ async function saveOrUpdateEvent(
       votingContractEvent.event_index,
       votingContractEvent.txId
     );
-    if (pdb) {
-      await updateDaoEvent(votingContractEvent._id, votingContractEvent);
-    } else {
+    if (!pdb) {
       await saveDaoEvent(votingContractEvent);
+      //await updateDaoEvent(votingContractEvent._id, votingContractEvent);
+      // } else {
     }
   } catch (err: any) {
-    console.log("saveOrUpdateEvent: error", err);
+    console.log("saveOrUpdateEvent: error2: ", err);
   }
 }
 async function saveDaoEvent(

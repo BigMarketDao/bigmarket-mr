@@ -1,22 +1,29 @@
 import express from "express";
-import { isPostValid } from "../dao/events/dao_events_helper";
-import { savePoll } from "../polling/polling_helper";
+import { isCreatePollPostValid, savePoll } from "../polling/polling_helper";
 import {
   countCreateMarketEvents,
   fetchMarket,
   fetchMarkets,
+  findOpinionPollByTitle,
 } from "./db_helper";
 
 const router = express.Router();
 
 router.post("/markets", async (req, res) => {
-  const { poll, auth } = req.body;
-  if (!isPostValid(auth.signature, auth.message)) {
+  const { newPoll } = req.body;
+  if (!isCreatePollPostValid(newPoll)) {
     res.status(401).json({ error: "Invalid request" });
   } else {
-    console.log("/polls", poll);
-    const newPoll = await savePoll(poll);
-    res.json(newPoll);
+    const p = await findOpinionPollByTitle(newPoll.name);
+    if (p) {
+      res
+        .status(502)
+        .json({ error: "Market with this question already exists" });
+    } else {
+      //console.log("/markets", newPoll);
+      await savePoll(newPoll);
+      res.json(newPoll);
+    }
   }
 });
 

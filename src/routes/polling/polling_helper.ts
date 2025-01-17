@@ -13,6 +13,7 @@ import {
   PollVoteMessage,
   verifyDaoSignature,
   pollVoteMessageToTupleCV,
+  opinionPollToTupleCV,
 } from "@mijoco/stx_helpers/dist/index";
 
 type BaseAdminMessage = {
@@ -25,14 +26,14 @@ type Auth = {
   signature: SignatureData;
 };
 
-export function isCreatePollPostValid(
-  signature: SignatureData,
-  message: OpinionPoll
-): boolean {
+export function isCreatePollPostValid(message: StoredOpinionPoll): boolean {
+  console.log("-------------------------------------------");
+  //console.log("isCreatePollPostValid: ", message);
   const stxAddressFromKey = getC32AddressFromPublicKey(
-    signature.publicKey,
+    message.publicKey,
     getConfig().network
   );
+  console.log("isCreatePollPostValid: stxAddressFromKey: " + stxAddressFromKey);
   if (message.proposer !== stxAddressFromKey) {
     console.log(
       "/polls: wrong voter: " +
@@ -48,12 +49,24 @@ export function isCreatePollPostValid(
       " signer: " +
       stxAddressFromKey
   );
-  return false;
-  // return verifyOpinionPollSignature(
-  //   message,
-  //   signature.publicKey,
-  //   signature.signature
-  // );
+  const pollMessage = opinionPollToTupleCV(
+    message.name,
+    message.description,
+    message.proposer,
+    message.createdAt,
+    message.startBurnHeight,
+    message.endBurnHeight
+  );
+
+  let res = verifyDaoSignature(
+    getConfig().network,
+    getConfig().publicAppName,
+    getConfig().publicAppVersion,
+    pollMessage,
+    message.publicKey,
+    message.signature
+  );
+  return typeof res === "string";
 }
 export function isPostPollMessageValid(
   signature: SignatureData,

@@ -6,8 +6,6 @@ import {
   isPostPollMessageValid,
   savePoll,
 } from "./polling_helper";
-import { publicKeyToAddress } from "@stacks/transactions";
-import { isPostValid } from "../dao/events/dao_events_helper";
 import {
   findPollVoteByHash,
   findUnprocessedSip18PollMessages,
@@ -21,7 +19,7 @@ const SUPER_ADMIN_ADDRESS = "";
 
 router.post("/polls", async (req, res) => {
   const { poll, auth } = req.body;
-  if (!isPostValid(auth.signature, auth.message)) {
+  if (!isCreatePollPostValid(poll)) {
     res.status(401).json({ error: "Invalid request" });
   } else {
     console.log("/polls", poll);

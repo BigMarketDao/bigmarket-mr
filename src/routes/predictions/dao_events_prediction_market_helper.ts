@@ -206,19 +206,20 @@ async function saveOrUpdateEvent(
     | PredictionMarketStakeEvent
     | PredictionMarketClaimEvent
 ) {
+  let pdb;
   try {
-    const pdb = await findPredictionContractEventByContractAndIndex(
+    pdb = await findPredictionContractEventByContractAndIndex(
       contractEvent.votingContract,
       contractEvent.event_index,
       contractEvent.txId
     );
-    if (pdb) {
-      await updateDaoEvent(contractEvent._id, contractEvent);
-    } else {
+    if (!pdb) {
+      //   await updateDaoEvent(contractEvent._id, contractEvent);
+      // } else {
       await saveDaoEvent(contractEvent);
     }
   } catch (err: any) {
-    console.log("saveOrUpdateEvent: error", err);
+    console.log("saveOrUpdateEvent: error1: ", pdb, err);
   }
 }
 async function saveDaoEvent(
