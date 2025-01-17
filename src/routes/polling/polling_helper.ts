@@ -29,9 +29,13 @@ type Auth = {
 export function isCreatePollPostValid(message: StoredOpinionPoll): boolean {
   console.log("-------------------------------------------");
   console.log("isCreatePollPostValid: ", message);
-  console.log("isCreatePollPostValid: " + getConfig().network);
-  console.log("isCreatePollPostValid: " + getConfig().publicAppName);
-  console.log("isCreatePollPostValid: " + getConfig().publicAppVersion);
+  console.log("isCreatePollPostValid: network: " + getConfig().network);
+  console.log(
+    "isCreatePollPostValid: publicAppName: " + getConfig().publicAppName
+  );
+  console.log(
+    "isCreatePollPostValid: publicAppVersion: " + getConfig().publicAppVersion
+  );
   const stxAddressFromKey = getC32AddressFromPublicKey(
     message.publicKey,
     getConfig().network
