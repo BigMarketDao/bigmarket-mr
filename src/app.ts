@@ -75,7 +75,7 @@ async function connectToMongoCloud() {
   printConfig();
   await connect();
   console.log("Connected to MongoDB!");
-  initScanDaoEventsJob.start();
+  //initScanDaoEventsJob.start();
   const server = app.listen(getConfig().port, () => {
     console.log("Server listening!");
     return;
