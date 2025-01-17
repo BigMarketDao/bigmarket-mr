@@ -14,7 +14,7 @@ source ~/.profile;
 #cd ~/hubgit/bigmarket/bigmarket-api
 #git pull https://github.com/radicleart/bigmarket-api.git daoless
 docker login;
-docker build -t $DOCKER_NAME .
+docker build --build-arg NODE_ENV=testnet -t $DOCKER_NAME .
 docker tag mijoco/bigmarket_api mijoco/bigmarket_api
 docker push mijoco/bigmarket_api:latest
 

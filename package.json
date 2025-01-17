@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "NODE_ENV=devnet tsc",
+    "build": "tsc",
     "build:testnet": "NODE_ENV=testnet tsc",
     "build:mainnet": "NODE_ENV=mainnet tsc",
     "start": "NODE_ENV=devnet node dist/app.js",
