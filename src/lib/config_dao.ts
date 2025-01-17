@@ -12,7 +12,6 @@ export function setDaoConfigOnStart() {
     process.env[network + "_" + "VITE_DOA_SIP_VOTES"] || "";
   CONFIG.VITE_DOA_VOTING_CONTRACTS =
     process.env[network + "_" + "VITE_DOA_VOTING_CONTRACTS"] || "";
-  CONFIG.VITE_DOA = process.env[network + "_" + "VITE_DOA"] || "";
   CONFIG.VITE_DOA_DEPLOYER =
     process.env[network + "_" + "VITE_DOA_DEPLOYER"] || "";
   CONFIG.VITE_DOA_EMERGENCY_EXECUTE_EXTENSION =
@@ -24,4 +23,27 @@ export function setDaoConfigOnStart() {
 
 export function getDaoConfig() {
   return CONFIG;
+}
+
+export function printDaoConfig() {
+  console.log(
+    "== " +
+      process.env.NODE_ENV +
+      " =========================================================="
+  );
+  console.log("VITE_DOA = " + CONFIG.VITE_DOA);
+  console.log("VITE_DOAS = " + CONFIG.VITE_DOAS);
+  console.log("VITE_DOA_SIP_VOTES = " + CONFIG.VITE_DOA_SIP_VOTES);
+  console.log(
+    "VITE_DOA_VOTING_CONTRACTS = " + CONFIG.VITE_DOA_VOTING_CONTRACTS
+  );
+  console.log("VITE_DOA_DEPLOYER = " + CONFIG.VITE_DOA_DEPLOYER);
+  console.log(
+    "VITE_DOA_EMERGENCY_EXECUTE_EXTENSION = " +
+      CONFIG.VITE_DOA_EMERGENCY_EXECUTE_EXTENSION
+  );
+  console.log("VITE_DOA_POX = " + CONFIG.VITE_DOA_POX);
+  console.log(
+    "VITE_DOA_PREDICTION_MARKET = " + CONFIG.VITE_DOA_PREDICTION_MARKET
+  );
 }

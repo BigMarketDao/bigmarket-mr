@@ -13,7 +13,7 @@ import { predictionMarketRoutes } from "./routes/predictions/predictionMarketRou
 import { daoProposalRoutes } from "./routes/dao/proposals/daoProposalRoutes";
 import { daoSip18VotingRoutes } from "./routes/dao/sip18-voting/daoSip18VotingRoutes";
 import { initScanDaoEventsJob } from "./routes/dao/events/eventScheduler";
-import { setDaoConfigOnStart } from "./lib/config_dao";
+import { printDaoConfig, setDaoConfigOnStart } from "./lib/config_dao";
 
 if (process.env.NODE_ENV === "development") {
   dotenv.config();
@@ -73,6 +73,7 @@ console.log("publicAppVersion = " + getConfig().publicAppVersion);
 
 async function connectToMongoCloud() {
   printConfig();
+  printDaoConfig();
   await connect();
   console.log("Connected to MongoDB!");
   //initScanDaoEventsJob.start();
