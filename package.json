@@ -5,6 +5,7 @@
   "scripts": {
     "build": "NODE_ENV=devnet tsc",
     "build:testnet": "NODE_ENV=testnet tsc",
+    "build:mainnet": "NODE_ENV=mainnet tsc",
     "start": "NODE_ENV=devnet node dist/app.js",
     "dev": "NODE_ENV=devnet npx ts-node-dev --respawn src/app.ts"
   },
