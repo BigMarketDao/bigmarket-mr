@@ -28,7 +28,10 @@ type Auth = {
 
 export function isCreatePollPostValid(message: StoredOpinionPoll): boolean {
   console.log("-------------------------------------------");
-  //console.log("isCreatePollPostValid: ", message);
+  console.log("isCreatePollPostValid: ", message);
+  console.log("isCreatePollPostValid: " + getConfig().network);
+  console.log("isCreatePollPostValid: " + getConfig().publicAppName);
+  console.log("isCreatePollPostValid: " + getConfig().publicAppVersion);
   const stxAddressFromKey = getC32AddressFromPublicKey(
     message.publicKey,
     getConfig().network
@@ -50,12 +53,9 @@ export function isCreatePollPostValid(message: StoredOpinionPoll): boolean {
       stxAddressFromKey
   );
   const pollMessage = opinionPollToTupleCV(
-    message.name,
-    message.description,
-    message.proposer,
     message.createdAt,
-    message.startBurnHeight,
-    message.endBurnHeight
+    message.name,
+    message.proposer
   );
 
   let res = verifyDaoSignature(
