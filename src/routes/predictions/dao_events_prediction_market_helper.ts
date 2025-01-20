@@ -8,6 +8,7 @@ import {
   PredictionMarketCreateEvent,
   PredictionMarketClaimEvent,
   PredictionMarketStakeEvent,
+  ResolutionState,
 } from "@mijoco/stx_helpers/dist/index";
 import { ObjectId } from "mongodb";
 import { getConfig } from "../../lib/config";
@@ -17,7 +18,7 @@ import {
   countCreateMarketEvents,
   fetchMarket,
   findPredictionContractEventByContractAndIndex,
-} from "./db_helper";
+} from "./markets_helper";
 
 export async function readPredictionEvents(
   genesis: boolean,
@@ -120,18 +121,18 @@ async function processEvent(
       event.tx_id
   );
 
-  if (result.value.event.value === "create") {
-    let metadataHash = result.value["metadata-hash"].value;
+  if (result.value.event.value === "create-market") {
+    let metadataHash = result.value["market-data-hash"].value;
     metadataHash = metadataHash.replace(/^0x/, "");
     const unhashedData: StoredOpinionPoll = await findUserEnteredPollByHash(
       metadataHash
     );
-    const marketId = result.value["market-id"].value;
-    const marketType = result.value["market-type"].value;
+    const marketId = Number(result.value["market-id"].value);
+    const marketType = Number(result.value["market-type"].value);
     const creator = result.value.creator.value;
     const contractEvent = {
       _id: new ObjectId(),
-      event: "create",
+      event: "create-market",
       event_index: Number(event.event_index),
       txId: event.tx_id,
       daoContract,
@@ -141,18 +142,19 @@ async function processEvent(
       marketType,
       creator,
       unhashedData,
+      resolutionState: ResolutionState.RESOLUTION_OPEN,
     } as PredictionMarketCreateEvent;
     console.log("processEvent: contractEvent", contractEvent);
     await saveOrUpdateEvent(contractEvent);
-  } else if (result.value.event.value === "stake") {
-    const marketId = result.value["market-id"].value;
-    const amount = result.value.amount.value;
-    const yes = result.value.yes.value;
+  } else if (result.value.event.value === "market-stake") {
+    const marketId = Number(result.value["market-id"].value);
+    const amount = Number(result.value.amount.value);
+    const yes = Boolean(result.value.yes.value);
     const voter = result.value.voter.value;
 
     const contractEvent = {
       _id: new ObjectId(),
-      event: "stake",
+      event: "market-stake",
       event_index: Number(event.event_index),
       txId: event.tx_id,
       daoContract,
@@ -163,35 +165,75 @@ async function processEvent(
       voter,
     } as PredictionMarketStakeEvent;
     await saveOrUpdateEvent(contractEvent);
-  } else if (result.value.event.value === "resolve") {
-    const marketId = result.value["market-id"].value;
+    // (print {event: "market-stake", market-id: market-id, amount: amount, yes: yes, voter: tx-sender})
+  } else if (result.value.event.value === "resolve-market") {
+    const marketId = Number(result.value["market-id"].value);
     const createEvent = await fetchMarket(marketId);
-    createEvent.isWon = result.value["is-won"].value;
+    if (!createEvent || createEvent.concluded) return;
+    createEvent.outcome = Boolean(result.value.outcome.value);
     createEvent.resolver = result.value.resolver.value;
-    createEvent.resolved = true;
+    createEvent.resolutionState = Number(
+      result.value["resolution-state"].value
+    );
+    createEvent.concluded = false;
     await saveOrUpdateEvent(createEvent);
-  } else if (result.value.event.value === "claim") {
-    const marketId = result.value["market-id"].value;
-    const isWon = result.value["is-won"].value;
+  } else if (result.value.event.value === "resolve-market-undisputed") {
+    const marketId = Number(result.value["market-id"].value);
+    const createEvent = await fetchMarket(marketId);
+    if (!createEvent || createEvent.concluded) return;
+    createEvent.resolver = result.value.resolver.value;
+    createEvent.concluded = true;
+    createEvent.resolutionState = Number(
+      result.value["resolution-state"].value
+    );
+    createEvent.resolutionBurnHeight = Number(
+      result.value["resolution-burn-height"].value
+    );
+    await saveOrUpdateEvent(createEvent);
+  } else if (result.value.event.value === "resolve-market-vote") {
+    const marketId = Number(result.value["market-id"].value);
+    const createEvent = await fetchMarket(marketId);
+    if (!createEvent || createEvent.concluded) return;
+    createEvent.resolver = result.value.resolver.value;
+    createEvent.outcome = result.value.outcome.value;
+    createEvent.concluded = true;
+    createEvent.resolutionState = Number(
+      result.value["resolution-state"].value
+    );
+    await saveOrUpdateEvent(createEvent);
+  } else if (result.value.event.value === "dispute-resolution") {
+    const marketId = Number(result.value["market-id"].value);
+    const createEvent = await fetchMarket(marketId);
+    if (!createEvent || createEvent.concluded) return;
+    createEvent.disputer = result.value.disputer.value;
+    createEvent.resolutionState = Number(
+      result.value["resolution-state"].value
+    );
+    await saveOrUpdateEvent(createEvent);
+  } else if (result.value.event.value === "claim-winnings") {
+    const marketId = Number(result.value["market-id"].value);
+    const yes = Boolean(result.value.yes.value);
     const claimer = result.value.claimer.value;
-    const userStake = result.value["user-stake"].value;
-    const userShare = result.value["user-share"].value;
-    const winningPool = result.value["winning-pool"].value;
-    const totalPool = result.value["total-pool"].value;
+    const userStake = Number(result.value["user-stake"].value);
+    const userShare = Number(result.value["user-share"].value);
+    const winningPool = Number(result.value["winning-pool"].value);
+    const totalPool = Number(result.value["total-pool"].value);
+    const daoFee = Number(result.value["dao-fee"].value);
 
     const contractEvent = {
       _id: new ObjectId(),
-      event: "claim",
+      event: "claim-winnings",
       event_index: Number(event.event_index),
       txId: event.tx_id,
       daoContract,
       votingContract,
       marketId,
       claimer,
-      isWon,
+      yes,
       userStake,
       userShare,
       winningPool,
+      daoFee,
       totalPool,
     } as PredictionMarketClaimEvent;
     await saveOrUpdateEvent(contractEvent);
@@ -213,9 +255,9 @@ async function saveOrUpdateEvent(
       contractEvent.event_index,
       contractEvent.txId
     );
-    if (!pdb) {
-      //   await updateDaoEvent(contractEvent._id, contractEvent);
-      // } else {
+    if (pdb) {
+      await updateDaoEvent(contractEvent._id, contractEvent);
+    } else {
       await saveDaoEvent(contractEvent);
     }
   } catch (err: any) {

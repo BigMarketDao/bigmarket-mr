@@ -18,6 +18,12 @@ export const initScanDaoEventsJob = cron.schedule(
         ])
         .toArray();
       console.log("Running: distinctDaoContracts: ", distinctDaoContracts);
+      if (distinctDaoContracts.length === 0) {
+        distinctDaoContracts.push({
+          daoContract:
+            getDaoConfig().VITE_DOA_DEPLOYER + "." + getDaoConfig().VITE_DOA,
+        });
+      }
 
       for (const dao of distinctDaoContracts) {
         const docContract = dao.daoContract;

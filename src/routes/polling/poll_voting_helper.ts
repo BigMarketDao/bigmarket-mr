@@ -35,5 +35,5 @@ export async function saveSip18PollVote(
   voteMessage.signature = signature.signature;
   voteMessage.publicKey = signature.publicKey;
   const result = await opinionPollSip18VotingCollection.insertOne(voteMessage);
-  return await findPollVoteByHash(voteMessage["metadata-hash"]);
+  return await findPollVoteByHash(voteMessage["market-data-hash"]);
 }

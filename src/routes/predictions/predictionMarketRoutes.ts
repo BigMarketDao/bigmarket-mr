@@ -4,13 +4,27 @@ import {
   countCreateMarketEvents,
   fetchMarket,
   fetchMarkets,
+  fetchMarketStakes,
   findOpinionPollByTitle,
-} from "./db_helper";
+} from "./markets_helper";
+import { readPredictionContractData } from "@mijoco/stx_helpers/dist/index";
+import { getConfig } from "../../lib/config";
+import { getDaoConfig } from "../../lib/config_dao";
 
 const router = express.Router();
 
+router.get("/contract", async (req, res) => {
+  const polls = await readPredictionContractData(
+    getConfig().stacksApi,
+    getDaoConfig().VITE_DOA_PREDICTION_MARKET.split(".")[0],
+    getDaoConfig().VITE_DOA_PREDICTION_MARKET.split(".")[1]
+  );
+  res.json(polls);
+});
+
 router.post("/markets", async (req, res) => {
   const { newPoll } = req.body;
+  console.log("isCreatePollPostValid: ", newPoll);
   if (!isCreatePollPostValid(newPoll)) {
     res.status(401).json({ error: "Invalid request" });
   } else {
@@ -25,6 +39,11 @@ router.post("/markets", async (req, res) => {
       res.json(newPoll);
     }
   }
+});
+
+router.get("/markets/stakes/:marketId", async (req, res) => {
+  const polls = await fetchMarketStakes(Number(req.params.marketId));
+  res.json(polls);
 });
 
 router.get("/markets", async (req, res) => {

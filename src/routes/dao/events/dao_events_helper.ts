@@ -22,6 +22,8 @@ export function getC32AddressFromPublicKey(
   publicKeyHex: string,
   network: string
 ): string {
+  console.log("processEvent: auth check");
+
   if (network === "mainnet" || network === "testnet" || network === "devnet") {
     const stacksAddress = publicKeyToAddressSingleSig(publicKeyHex, network);
     return stacksAddress;

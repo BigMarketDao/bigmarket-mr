@@ -29,6 +29,7 @@ app.use(
     origin: [
       "http://localhost:8060",
       "http://localhost:8080",
+      "http://localhost:8081",
       "https://brightblock.org",
     ],
   })
@@ -47,6 +48,7 @@ app.use(
 );
 app.use(bodyParser.json());
 app.use((req, res, next) => {
+  console.log("isCreatePollPostValid: ");
   if (
     req.method === "POST" ||
     req.method === "PUT" ||

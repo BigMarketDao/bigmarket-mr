@@ -219,7 +219,7 @@ async function processEvent(
     //console.log('resolveExtensionEvents: extension: enabled=' + votingContractEvent.enabled + ' contract=' + votingContractEvent.extension + ' contract=' + votingContractEvent.extension + ' event.event_index=' + event.event_index)
     await saveOrUpdateEvent(votingContractEvent);
   } else if (result.value.event.value === "add-poll") {
-    let metadataHash = result.value["metadata-hash"].value;
+    let metadataHash = result.value["market-data-hash"].value;
     metadataHash = metadataHash.replace(/^0x/, "");
     const unhashed: StoredOpinionPoll = await findUserEnteredPollByHash(
       metadataHash
