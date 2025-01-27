@@ -18,16 +18,12 @@ const router = express.Router();
 
 router.post("/extensions/:daoContractId", async (req, res, next) => {
   try {
-    console.log("processEvent: auth check");
     const { message, signature } = req.body;
     if (!isPostValid(signature, message)) {
-      console.log("processEvent: auth check");
       res.status(401).json({ error: "Invalid request" });
     } else {
-      console.log("processEvent: readDaoEvents");
       await readDaoEvents(true, req.params.daoContractId);
       await readDaoExtensionEvents(true, req.params.daoContractId);
-      console.log("processEvent: all events: " + req.params.daoContractId);
       const events = await fetchBaseDaoEvents();
       res.send(events);
     }

@@ -1,12 +1,33 @@
 import {
+  PollVoteEvent,
   PredictionMarketCreateEvent,
   PredictionMarketStakeEvent,
   StoredOpinionPoll,
+  TokenPermissionEvent,
 } from "@mijoco/stx_helpers/dist/index";
 import {
   daoEventCollection,
   opinionPollCollection,
 } from "../../lib/data/db_models";
+
+export async function fetchAllowedTokens(): Promise<
+  Array<TokenPermissionEvent>
+> {
+  const result = await daoEventCollection
+    .find({ event: "allowed-token" })
+    .toArray();
+
+  return result as unknown as Array<TokenPermissionEvent>;
+}
+
+export async function fetchMarketVotes(
+  marketId: number
+): Promise<Array<PollVoteEvent>> {
+  const result = await daoEventCollection
+    .find({ pollId: marketId, event: "market-vote" })
+    .toArray();
+  return result as unknown as Array<PollVoteEvent>;
+}
 
 export async function fetchMarketStakes(
   marketId: number

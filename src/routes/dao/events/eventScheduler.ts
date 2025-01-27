@@ -33,12 +33,14 @@ export const initScanDaoEventsJob = cron.schedule(
         } catch (err) {
           console.log("Error running: ecosystem-dao: ", err);
         }
-        await readDaoExtensionEvents(false, docContract);
+        await readDaoExtensionEvents(true, docContract);
       }
       await readPredictionEvents(
         true,
         getDaoConfig().VITE_DOA_DEPLOYER + ".bitcoin-dao",
-        getDaoConfig().VITE_DOA_PREDICTION_MARKET
+        getDaoConfig().VITE_DOA_DEPLOYER +
+          "." +
+          getDaoConfig().VITE_DAO_MARKET_RESOLUTION_STAKING
       );
     } catch (err: any) {
       console.log("initScanDaoEventsJob: ", err);

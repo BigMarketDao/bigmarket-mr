@@ -9,6 +9,8 @@ import {
   PredictionMarketClaimEvent,
   PredictionMarketStakeEvent,
   ResolutionState,
+  TokenPermissionEvent,
+  getSip10Properties,
 } from "@mijoco/stx_helpers/dist/index";
 import { ObjectId } from "mongodb";
 import { getConfig } from "../../lib/config";
@@ -112,14 +114,14 @@ async function processEvent(
   votingContract: string
 ) {
   const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
-  console.log(
-    "processEvent: new event: " +
-      result.value.event.value +
-      " contract=" +
-      event.event_index +
-      " / " +
-      event.tx_id
-  );
+  // console.log(
+  //   "processEvent: new event: " +
+  //     result.value.event.value +
+  //     " contract=" +
+  //     event.event_index +
+  //     " / " +
+  //     event.tx_id
+  // );
 
   if (result.value.event.value === "create-market") {
     let metadataHash = result.value["market-data-hash"].value;
@@ -130,6 +132,7 @@ async function processEvent(
     const marketId = Number(result.value["market-id"].value);
     const marketType = Number(result.value["market-type"].value);
     const creator = result.value.creator.value;
+    const token = result.value.token.value;
     const contractEvent = {
       _id: new ObjectId(),
       event: "create-market",
@@ -141,11 +144,33 @@ async function processEvent(
       metadataHash,
       marketType,
       creator,
+      token,
       unhashedData,
       resolutionState: ResolutionState.RESOLUTION_OPEN,
     } as PredictionMarketCreateEvent;
-    console.log("processEvent: contractEvent", contractEvent);
+    //console.log("processEvent: contractEvent", contractEvent);
     await saveOrUpdateEvent(contractEvent);
+  } else if (result.value.event.value === "allowed-token") {
+    const allowed = Boolean(result.value.enabled.value);
+    const token = result.value.token.value;
+
+    const contractEvent = {
+      _id: new ObjectId(),
+      event: "allowed-token",
+      event_index: Number(event.event_index),
+      txId: event.tx_id,
+      daoContract,
+      votingContract,
+      allowed,
+      token,
+    } as TokenPermissionEvent;
+    const sip10Data = await getSip10Properties(
+      getConfig().stacksApi,
+      contractEvent
+    );
+    contractEvent.sip10Data = sip10Data;
+    await saveOrUpdateEvent(contractEvent);
+    // (print {event: "market-stake", market-id: market-id, amount: amount, yes: yes, voter: tx-sender})
   } else if (result.value.event.value === "market-stake") {
     const marketId = Number(result.value["market-id"].value);
     const amount = Number(result.value.amount.value);
@@ -181,7 +206,6 @@ async function processEvent(
     const marketId = Number(result.value["market-id"].value);
     const createEvent = await fetchMarket(marketId);
     if (!createEvent || createEvent.concluded) return;
-    createEvent.resolver = result.value.resolver.value;
     createEvent.concluded = true;
     createEvent.resolutionState = Number(
       result.value["resolution-state"].value
@@ -191,16 +215,21 @@ async function processEvent(
     );
     await saveOrUpdateEvent(createEvent);
   } else if (result.value.event.value === "resolve-market-vote") {
+    console.log("=======> resolveExtensionEvents: resolve-market-vote", result);
     const marketId = Number(result.value["market-id"].value);
     const createEvent = await fetchMarket(marketId);
-    if (!createEvent || createEvent.concluded) return;
+    //if (!createEvent || createEvent.concluded) return;
+    console.log(
+      "=======> resolveExtensionEvents: resolve-market-vote",
+      createEvent
+    );
     createEvent.resolver = result.value.resolver.value;
     createEvent.outcome = result.value.outcome.value;
     createEvent.concluded = true;
     createEvent.resolutionState = Number(
       result.value["resolution-state"].value
     );
-    await saveOrUpdateEvent(createEvent);
+    await updateDaoEvent(createEvent._id, createEvent);
   } else if (result.value.event.value === "dispute-resolution") {
     const marketId = Number(result.value["market-id"].value);
     const createEvent = await fetchMarket(marketId);
@@ -238,7 +267,7 @@ async function processEvent(
     } as PredictionMarketClaimEvent;
     await saveOrUpdateEvent(contractEvent);
   } else {
-    console.log("processEvent: new event: ", event);
+    //console.log("processEvent: new event: ", event);
   }
 }
 
@@ -247,6 +276,7 @@ async function saveOrUpdateEvent(
     | PredictionMarketCreateEvent
     | PredictionMarketStakeEvent
     | PredictionMarketClaimEvent
+    | TokenPermissionEvent
 ) {
   let pdb;
   try {
@@ -256,7 +286,7 @@ async function saveOrUpdateEvent(
       contractEvent.txId
     );
     if (pdb) {
-      await updateDaoEvent(contractEvent._id, contractEvent);
+      await updateDaoEvent(contractEvent._id!, contractEvent);
     } else {
       await saveDaoEvent(contractEvent);
     }
@@ -269,6 +299,7 @@ async function saveDaoEvent(
     | PredictionMarketCreateEvent
     | PredictionMarketStakeEvent
     | PredictionMarketClaimEvent
+    | TokenPermissionEvent
 ) {
   contractEvent._id = new ObjectId();
   const result = await daoEventCollection.insertOne(contractEvent);
@@ -281,6 +312,7 @@ async function updateDaoEvent(
     | PredictionMarketCreateEvent
     | PredictionMarketStakeEvent
     | PredictionMarketClaimEvent
+    | TokenPermissionEvent
 ) {
   const result = await daoEventCollection.updateOne(
     {

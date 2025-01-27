@@ -59,7 +59,8 @@ export function isCreatePollPostValid(message: StoredOpinionPoll): boolean {
   const pollMessage = opinionPollToTupleCV(
     message.createdAt,
     message.name,
-    message.proposer
+    message.proposer,
+    message.token
   );
 
   let res = verifyDaoSignature(
@@ -109,7 +110,18 @@ export async function findPollByHash(
   objectHash: string
 ): Promise<PollCreateEvent> {
   const result = await daoEventCollection.findOne({
+    event: "create-market-vote",
     objectHash: objectHash,
+  });
+  return result as unknown as PollCreateEvent;
+}
+
+export async function findPollByMarketId(
+  pollId: number
+): Promise<PollCreateEvent> {
+  const result = await daoEventCollection.findOne({
+    event: "create-market-vote",
+    pollId: pollId,
   });
   return result as unknown as PollCreateEvent;
 }
@@ -124,7 +136,9 @@ export async function findUserEnteredPollByHash(
 }
 
 export async function findPolls(): Promise<Array<PollCreateEvent>> {
-  const events = await daoEventCollection.find({ event: "add-poll" }).toArray();
+  const events = await daoEventCollection
+    .find({ event: "create-market-vote" })
+    .toArray();
   return events as unknown as Array<PollCreateEvent>;
 }
 

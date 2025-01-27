@@ -21,17 +21,22 @@ import {
   opinionPollCollection,
 } from "../../../lib/data/db_models";
 import {
+  fetchProposeEvent,
   getMetaData,
   getProposalContractSource,
   getProposalData,
 } from "../proposals/proposal";
-import {
-  findPollByHash,
-  findUserEnteredPollByHash,
-} from "../../polling/polling_helper";
+import { findPollByMarketId } from "../../polling/polling_helper";
 import { readPredictionEvents } from "../../predictions/dao_events_prediction_market_helper";
 import { getDaoConfig } from "../../../lib/config_dao";
+import assert from "assert";
 
+function ismarketVotingExtension(extensionContract: string) {
+  return (
+    extensionContract ===
+    "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.bde021-market-resolution-voting"
+  );
+}
 export async function readDaoExtensionEvents(
   genesis: boolean,
   daoContractId: string
@@ -53,7 +58,9 @@ export async function readDaoExtensionEvents(
   await readPredictionEvents(
     genesis,
     daoContractId,
-    getDaoConfig().VITE_DOA_PREDICTION_MARKET
+    getDaoConfig().VITE_DOA_DEPLOYER +
+      "." +
+      getDaoConfig().VITE_DAO_MARKET_RESOLUTION_STAKING
   );
 }
 
@@ -76,12 +83,16 @@ async function readVotingEvents(
       daoContract,
       extensionContract
     );
+    if (currentOffset > 0) currentOffset -= 1;
   }
   let count = 0;
   let moreEvents = true;
   try {
     do {
       try {
+        // if (ismarketVotingExtension(extensionContract)) {
+        //   console.log("=======> readVotingEvents: " + url);
+        // }
         moreEvents = await resolveExtensionEvents(
           url,
           currentOffset,
@@ -110,6 +121,7 @@ async function resolveExtensionEvents(
   let urlOffset = url + "&offset=" + (currentOffset + count * 20);
   const response = await fetch(urlOffset);
   const val = await response.json();
+
   if (
     !val ||
     !val.results ||
@@ -150,14 +162,21 @@ async function processEvent(
 ) {
   const eventContract = event.contract_log.contract_id;
   const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
-  console.log(
-    "processEvent: new event: " +
-      result.value.event.value +
-      " contract=" +
-      event.event_index +
-      " / " +
-      event.tx_id
+  const event_index = Number(event.event_index);
+  const txId = event.tx_id;
+  const pdb = await findVotingContractEventByTxIdAndEventIndex(
+    event_index,
+    txId
   );
+  if (pdb) return;
+  // console.log(
+  //   "processEvent: new event: " +
+  //     result.value.event.value +
+  //     " contract=" +
+  //     event.event_index +
+  //     " / " +
+  //     event.tx_id
+  // );
 
   if (result.value.event.value === "propose") {
     const proposal = result.value.proposal.value;
@@ -178,7 +197,7 @@ async function processEvent(
       proposalData: await getProposalData(votingContract, proposal),
       proposer: result.value.proposer.value,
     } as VotingEventProposeProposal;
-    console.log("processEvent: votingContractEvent", votingContractEvent);
+    //console.log("processEvent: votingContractEvent", votingContractEvent);
     await saveOrUpdateEvent(votingContractEvent);
     //await updateStackerData(false, proposal);
   } else if (result.value.event.value === "vote") {
@@ -218,12 +237,9 @@ async function processEvent(
 
     //console.log('resolveExtensionEvents: extension: enabled=' + votingContractEvent.enabled + ' contract=' + votingContractEvent.extension + ' contract=' + votingContractEvent.extension + ' event.event_index=' + event.event_index)
     await saveOrUpdateEvent(votingContractEvent);
-  } else if (result.value.event.value === "add-poll") {
+  } else if (result.value.event.value === "create-market-vote") {
     let metadataHash = result.value["market-data-hash"].value;
     metadataHash = metadataHash.replace(/^0x/, "");
-    const unhashed: StoredOpinionPoll = await findUserEnteredPollByHash(
-      metadataHash
-    );
     const o = {
       _id: new ObjectId(),
       event: result.value.event.value,
@@ -231,18 +247,20 @@ async function processEvent(
       txId: event.tx_id,
       daoContract,
       votingContract: eventContract,
-      pollId: Number(result.value["poll-id"].value),
+      pollId: Number(result.value["market-id"].value),
       isGated: Boolean(result.value["is-gated"].value),
       endBurnHeight: Number(result.value["end-burn-height"].value),
       startBurnHeight: Number(result.value["start-burn-height"].value),
       metadataHash: metadataHash,
       proposer: result.value.proposer.value,
-      unhashedData: unhashed,
     } as PollCreateEvent;
 
     console.log("resolveExtensionEvents: PollCreateEvent=", o);
     await saveOrUpdateEvent(o);
-  } else if (result.value.event.value === "poll-vote") {
+  } else if (result.value.event.value === "market-vote") {
+    console.log(
+      "resolveExtensionEvents: PollVoteEvent=" + result.value.event.value
+    );
     const o: PollVoteEvent = {
       _id: new ObjectId(),
       event: result.value.event.value,
@@ -250,16 +268,31 @@ async function processEvent(
       txId: event.tx_id,
       daoContract,
       votingContract: eventContract,
-      pollId: Number(result.value["poll-id"].value),
+      pollId: Number(result.value["market-id"].value),
       sip18: result.value.sip18.value,
       voter: result.value.voter.value,
       for: result.value.for.value,
     } as PollVoteEvent;
 
-    console.log("resolveExtensionEvents: PollCreateEvent=", o);
     await saveOrUpdateEvent(o);
+  } else if (result.value.event.value === "conclude-market-vote") {
+    let pollId = Number(result.value["market-id"].value);
+    const marketPoll = await findPollByMarketId(pollId);
+    // if (ismarketVotingExtension(votingContract)) {
+    //   console.log("=======> resolveExtensionEvents: pollId" + pollId);
+    //   console.log("=======> resolveExtensionEvents: marketPoll", marketPoll);
+    // }
+    if (!marketPoll) return;
+    assert(
+      marketPoll.pollId === Number(result.value["market-id"].value),
+      "wrong market?"
+    );
+    marketPoll.marketId = Number(result.value["market-id"].value);
+    marketPoll.passed = Boolean(result.value.passed.value);
+    marketPoll.concludeTxId = txId;
+    await updateDaoEvent(marketPoll._id, marketPoll);
   } else {
-    console.log("processEvent: new event: ", event);
+    //console.log("processEvent: new event: ", event);
   }
 }
 
@@ -343,6 +376,17 @@ export async function findVotingContractEventByContractAndIndex(
 ): Promise<any> {
   const result = await daoEventCollection.findOne({
     daoContract,
+    event_index,
+    txId,
+  });
+  return result;
+}
+
+export async function findVotingContractEventByTxIdAndEventIndex(
+  event_index: number,
+  txId: string
+): Promise<any> {
+  const result = await daoEventCollection.findOne({
     event_index,
     txId,
   });

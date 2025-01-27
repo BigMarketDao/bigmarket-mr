@@ -7,7 +7,7 @@ export let opinionPollCollection: Collection;
 export let opinionPollSip18VotingCollection: Collection;
 export let daoEventCollection: Collection;
 export let daoSip18VotingCollection: Collection;
-export let predictionMarketCollection: Collection;
+export let gatingCollection: Collection;
 
 export async function connect() {
   let uriPrefix: string = "mongodb+srv";
@@ -66,11 +66,6 @@ export async function connect() {
     { unique: true }
   );
 
-  predictionMarketCollection = database.collection(
-    "predictionMarketCollection"
-  );
-  await predictionMarketCollection.createIndex(
-    { "market-id": 1, voter: 1 },
-    { unique: true }
-  );
+  gatingCollection = database.collection("gatingCollection");
+  await gatingCollection.createIndex({ gateType: 1 }, { unique: true });
 }

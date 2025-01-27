@@ -1,11 +1,7 @@
 import type { SignatureData } from "@stacks/connect";
 import { ObjectId } from "mongodb";
 import { opinionPollSip18VotingCollection } from "../../lib/data/db_models";
-import {
-  PollVoteEvent,
-  StoredOpinionPoll,
-  StoredPollVoteMessage,
-} from "@mijoco/stx_helpers";
+import { PollVoteEvent, StoredPollVoteMessage } from "@mijoco/stx_helpers";
 
 export async function findPollVoteByHash(
   pollVoteObjectHash: string

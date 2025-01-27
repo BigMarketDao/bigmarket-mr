@@ -22,7 +22,7 @@ export function getC32AddressFromPublicKey(
   publicKeyHex: string,
   network: string
 ): string {
-  console.log("processEvent: auth check");
+  //console.log("getC32AddressFromPublicKey: auth check");
 
   if (network === "mainnet" || network === "testnet" || network === "devnet") {
     const stacksAddress = publicKeyToAddressSingleSig(publicKeyHex, network);
@@ -132,14 +132,14 @@ async function resolveExtensionEvents(
 
 async function processEvent(event: any, daoContract: string) {
   const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
-  console.log(
-    "processEvent: new event: " +
-      result.value.event.value +
-      " contract=" +
-      event.event_index +
-      " / " +
-      event.tx_id
-  );
+  // console.log(
+  //   "processEvent: new event: " +
+  //     result.value.event.value +
+  //     " contract=" +
+  //     event.event_index +
+  //     " / " +
+  //     event.tx_id
+  // );
   if (result.value.event.value === "execute") {
     //console.log('resolveExtensionEvents: execute: ', util.inspect(event, false, null, true /* enable colors */))
     const daoEvent = {

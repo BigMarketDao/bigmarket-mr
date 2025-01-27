@@ -17,8 +17,12 @@ export function setDaoConfigOnStart() {
   CONFIG.VITE_DOA_EMERGENCY_EXECUTE_EXTENSION =
     process.env[network + "_" + "VITE_DOA_EMERGENCY_EXECUTE_EXTENSION"] || "";
   CONFIG.VITE_DOA_POX = process.env[network + "_" + "VITE_DOA_POX"] || "";
-  CONFIG.VITE_DOA_PREDICTION_MARKET =
-    process.env[network + "_" + "VITE_DOA_PREDICTION_MARKET"] || "";
+  CONFIG.VITE_DAO_MARKET_RESOLUTION_VOTING =
+    process.env[network + "_" + "VITE_DAO_MARKET_RESOLUTION_VOTING"] || "";
+  CONFIG.VITE_DAO_MARKET_RESOLUTION_GATING =
+    process.env[network + "_" + "VITE_DAO_MARKET_RESOLUTION_GATING"] || "";
+  CONFIG.VITE_DAO_MARKET_RESOLUTION_STAKING =
+    process.env[network + "_" + "VITE_DAO_MARKET_RESOLUTION_STAKING"] || "";
 }
 
 export function getDaoConfig() {
@@ -44,6 +48,15 @@ export function printDaoConfig() {
   );
   console.log("VITE_DOA_POX = " + CONFIG.VITE_DOA_POX);
   console.log(
-    "VITE_DOA_PREDICTION_MARKET = " + CONFIG.VITE_DOA_PREDICTION_MARKET
+    "VITE_DAO_MARKET_RESOLUTION_VOTING = " +
+      CONFIG.VITE_DAO_MARKET_RESOLUTION_VOTING
+  );
+  console.log(
+    "VITE_DAO_MARKET_RESOLUTION_GATING = " +
+      CONFIG.VITE_DAO_MARKET_RESOLUTION_GATING
+  );
+  console.log(
+    "VITE_DAO_MARKET_RESOLUTION_STAKING = " +
+      CONFIG.VITE_DAO_MARKET_RESOLUTION_STAKING
   );
 }
