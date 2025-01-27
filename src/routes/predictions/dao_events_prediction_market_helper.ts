@@ -194,51 +194,60 @@ async function processEvent(
   } else if (result.value.event.value === "resolve-market") {
     const marketId = Number(result.value["market-id"].value);
     const createEvent = await fetchMarket(marketId);
-    if (!createEvent || createEvent.concluded) return;
-    createEvent.outcome = Boolean(result.value.outcome.value);
-    createEvent.resolver = result.value.resolver.value;
-    createEvent.resolutionState = Number(
-      result.value["resolution-state"].value
-    );
-    createEvent.concluded = false;
-    await saveOrUpdateEvent(createEvent);
+    const changes = {
+      outcome: Boolean(result.value.outcome.value),
+      concluded: false,
+      resolver: result.value.resolver.value,
+      resolutionState: Number(result.value["resolution-state"].value),
+    };
+    if (!createEvent || changes.resolutionState < createEvent.resolutionState)
+      return;
+    console.log("resolve-market: changes: " + createEvent._id, changes);
+    await updateDaoEvent(createEvent._id, changes);
   } else if (result.value.event.value === "resolve-market-undisputed") {
     const marketId = Number(result.value["market-id"].value);
     const createEvent = await fetchMarket(marketId);
-    if (!createEvent || createEvent.concluded) return;
-    createEvent.concluded = true;
-    createEvent.resolutionState = Number(
-      result.value["resolution-state"].value
+    if (!createEvent) return;
+    const changes = {
+      concluded: true,
+      resolutionBurnHeight: Number(
+        result.value["resolution-burn-height"].value
+      ),
+      resolutionState: Number(result.value["resolution-state"].value),
+    };
+    if (!createEvent || changes.resolutionState < createEvent.resolutionState)
+      return;
+    console.log(
+      "resolve-market-undisputed: changes: " + createEvent._id,
+      changes
     );
-    createEvent.resolutionBurnHeight = Number(
-      result.value["resolution-burn-height"].value
-    );
-    await saveOrUpdateEvent(createEvent);
+    await updateDaoEvent(createEvent._id, changes);
   } else if (result.value.event.value === "resolve-market-vote") {
-    console.log("=======> resolveExtensionEvents: resolve-market-vote", result);
     const marketId = Number(result.value["market-id"].value);
     const createEvent = await fetchMarket(marketId);
-    //if (!createEvent || createEvent.concluded) return;
-    console.log(
-      "=======> resolveExtensionEvents: resolve-market-vote",
-      createEvent
-    );
-    createEvent.resolver = result.value.resolver.value;
-    createEvent.outcome = result.value.outcome.value;
-    createEvent.concluded = true;
-    createEvent.resolutionState = Number(
-      result.value["resolution-state"].value
-    );
-    await updateDaoEvent(createEvent._id, createEvent);
+    if (!createEvent) return;
+    const changes = {
+      concluded: Boolean(result.value.concluded.value),
+      outcome: Boolean(result.value.outcome.value),
+      resolutionState: Number(result.value["resolution-state"].value),
+      resolver: result.value.resolver.value,
+    };
+    if (!createEvent || changes.resolutionState < createEvent.resolutionState)
+      return;
+    console.log("resolve-market-vote: changes: " + createEvent._id, changes);
+    await updateDaoEvent(createEvent._id, changes);
   } else if (result.value.event.value === "dispute-resolution") {
     const marketId = Number(result.value["market-id"].value);
     const createEvent = await fetchMarket(marketId);
-    if (!createEvent || createEvent.concluded) return;
-    createEvent.disputer = result.value.disputer.value;
-    createEvent.resolutionState = Number(
-      result.value["resolution-state"].value
-    );
-    await saveOrUpdateEvent(createEvent);
+    if (!createEvent) return;
+    const changes = {
+      resolutionState: Number(result.value["resolution-state"].value),
+      disputer: result.value.disputer.value,
+    };
+    console.log("dispute-resolution: changes: " + createEvent._id, changes);
+    if (!createEvent || changes.resolutionState < createEvent.resolutionState)
+      return;
+    await updateDaoEvent(createEvent._id, changes);
   } else if (result.value.event.value === "claim-winnings") {
     const marketId = Number(result.value["market-id"].value);
     const yes = Boolean(result.value.yes.value);
@@ -306,19 +315,21 @@ async function saveDaoEvent(
   return result;
 }
 
-async function updateDaoEvent(
-  _id: ObjectId,
-  changes:
-    | PredictionMarketCreateEvent
-    | PredictionMarketStakeEvent
-    | PredictionMarketClaimEvent
-    | TokenPermissionEvent
-) {
+async function updateDaoEvent(_id: ObjectId, changes: any) {
+  if (!changes || Object.keys(changes).length === 0) {
+    throw new Error("Changes object is empty or invalid.");
+  }
+
   const result = await daoEventCollection.updateOne(
     {
       _id,
     },
-    { $set: changes }
+    { $set: changes },
+    { writeConcern: { w: "majority" } }
   );
+  if (result.matchedCount === 0) {
+    throw new Error(`No document found with _id: ${_id}`);
+  }
+
   return result;
 }

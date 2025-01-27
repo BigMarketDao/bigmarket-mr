@@ -7,6 +7,10 @@ be reused for different ;
 
 db.gatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"]})
 
+db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345904d2936')}, update: {$set: {resolutionState: 237 }}, upsert: false, new: true, fields: {}})
+
+db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345904d2936')}, update: {$set: {marketType: 233 }}, upsert: false, new: true, fields: {}})
+
 ````
     gateType: string;
     merkleRootInput: Array<string>;

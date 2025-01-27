@@ -249,8 +249,6 @@ async function processEvent(
       votingContract: eventContract,
       pollId: Number(result.value["market-id"].value),
       isGated: Boolean(result.value["is-gated"].value),
-      endBurnHeight: Number(result.value["end-burn-height"].value),
-      startBurnHeight: Number(result.value["start-burn-height"].value),
       metadataHash: metadataHash,
       proposer: result.value.proposer.value,
     } as PollCreateEvent;
