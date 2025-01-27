@@ -227,7 +227,7 @@ async function processEvent(
     const createEvent = await fetchMarket(marketId);
     if (!createEvent) return;
     const changes = {
-      concluded: Boolean(result.value.concluded.value),
+      concluded: true,
       outcome: Boolean(result.value.outcome.value),
       resolutionState: Number(result.value["resolution-state"].value),
       resolver: result.value.resolver.value,
