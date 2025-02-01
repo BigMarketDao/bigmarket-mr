@@ -1,12 +1,15 @@
 import {
   PollVoteEvent,
+  PredictionMarketClaimEvent,
   PredictionMarketCreateEvent,
   PredictionMarketStakeEvent,
   StoredOpinionPoll,
   TokenPermissionEvent,
+  type MarketCategory,
 } from "@mijoco/stx_helpers/dist/index";
 import {
   daoEventCollection,
+  marketCategoriesCollection,
   opinionPollCollection,
 } from "../../lib/data/db_models";
 
@@ -18,6 +21,16 @@ export async function fetchAllowedTokens(): Promise<
     .toArray();
 
   return result as unknown as Array<TokenPermissionEvent>;
+}
+
+export async function fetchActiveMarketCategories(): Promise<
+  Array<MarketCategory>
+> {
+  const result = await marketCategoriesCollection
+    .find({ active: true })
+    .toArray();
+
+  return result as unknown as Array<MarketCategory>;
 }
 
 export async function fetchMarketVotes(
@@ -36,6 +49,15 @@ export async function fetchMarketStakes(
     .find({ marketId, event: "market-stake" })
     .toArray();
   return result as unknown as Array<PredictionMarketStakeEvent>;
+}
+
+export async function fetchMarketClaims(
+  marketId: number
+): Promise<Array<PredictionMarketClaimEvent>> {
+  const result = await daoEventCollection
+    .find({ marketId, event: "claim-winnings" })
+    .toArray();
+  return result as unknown as Array<PredictionMarketClaimEvent>;
 }
 
 export async function fetchMarkets(): Promise<

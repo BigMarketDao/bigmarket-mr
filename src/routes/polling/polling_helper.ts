@@ -57,8 +57,9 @@ export function isCreatePollPostValid(message: StoredOpinionPoll): boolean {
       stxAddressFromKey
   );
   const pollMessage = opinionPollToTupleCV(
-    message.createdAt,
     message.name,
+    message.category,
+    message.createdAt,
     message.proposer,
     message.token
   );

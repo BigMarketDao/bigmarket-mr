@@ -132,6 +132,7 @@ async function processEvent(
     const marketId = Number(result.value["market-id"].value);
     const marketType = Number(result.value["market-type"].value);
     const creator = result.value.creator.value;
+    const marketFeeBips = result.value["market-fee-bips"].value;
     const token = result.value.token.value;
     const contractEvent = {
       _id: new ObjectId(),
@@ -145,6 +146,7 @@ async function processEvent(
       marketType,
       creator,
       token,
+      marketFeeBips,
       unhashedData,
       resolutionState: ResolutionState.RESOLUTION_OPEN,
     } as PredictionMarketCreateEvent;
@@ -256,7 +258,8 @@ async function processEvent(
     const userShare = Number(result.value["user-share"].value);
     const winningPool = Number(result.value["winning-pool"].value);
     const totalPool = Number(result.value["total-pool"].value);
-    const daoFee = Number(result.value["dao-fee"].value);
+    const daoFee = Number(result.value.daofee?.value);
+    const marketFee = Number(result.value.marketfee?.value);
 
     const contractEvent = {
       _id: new ObjectId(),
@@ -272,6 +275,7 @@ async function processEvent(
       userShare,
       winningPool,
       daoFee,
+      marketFee,
       totalPool,
     } as PredictionMarketClaimEvent;
     await saveOrUpdateEvent(contractEvent);

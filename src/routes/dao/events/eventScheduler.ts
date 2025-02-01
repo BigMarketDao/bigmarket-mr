@@ -40,7 +40,7 @@ export const initScanDaoEventsJob = cron.schedule(
         getDaoConfig().VITE_DOA_DEPLOYER + ".bitcoin-dao",
         getDaoConfig().VITE_DOA_DEPLOYER +
           "." +
-          getDaoConfig().VITE_DAO_MARKET_RESOLUTION_STAKING
+          getDaoConfig().VITE_DAO_MARKET_PREDICTING
       );
     } catch (err: any) {
       console.log("initScanDaoEventsJob: ", err);

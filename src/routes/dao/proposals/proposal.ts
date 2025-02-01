@@ -51,9 +51,9 @@ export async function getProposalData(
       // post nakamoto
       start = Number(result.value.value["start-burn-height"].value);
       end = Number(result.value.value["end-burn-height"].value);
-      startBlockHeight = Number(
-        result.value.value["start-height-stacks"].value
-      );
+      // startBlockHeight = Number(
+      //   result.value.value["start-height-stacks"].value
+      // );
     } else {
       // pre nakamoto
       start = Number(result.value.value["start-block-height"].value);

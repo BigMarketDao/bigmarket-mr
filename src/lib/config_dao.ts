@@ -17,12 +17,14 @@ export function setDaoConfigOnStart() {
   CONFIG.VITE_DOA_EMERGENCY_EXECUTE_EXTENSION =
     process.env[network + "_" + "VITE_DOA_EMERGENCY_EXECUTE_EXTENSION"] || "";
   CONFIG.VITE_DOA_POX = process.env[network + "_" + "VITE_DOA_POX"] || "";
-  CONFIG.VITE_DAO_MARKET_RESOLUTION_VOTING =
-    process.env[network + "_" + "VITE_DAO_MARKET_RESOLUTION_VOTING"] || "";
-  CONFIG.VITE_DAO_MARKET_RESOLUTION_GATING =
-    process.env[network + "_" + "VITE_DAO_MARKET_RESOLUTION_GATING"] || "";
-  CONFIG.VITE_DAO_MARKET_RESOLUTION_STAKING =
-    process.env[network + "_" + "VITE_DAO_MARKET_RESOLUTION_STAKING"] || "";
+  CONFIG.VITE_DAO_MARKET_VOTING =
+    process.env[network + "_" + "VITE_DAO_MARKET_VOTING"] || "";
+  CONFIG.VITE_DAO_MARKET_GATING =
+    process.env[network + "_" + "VITE_DAO_MARKET_GATING"] || "";
+  CONFIG.VITE_DAO_MARKET_PREDICTING =
+    process.env[network + "_" + "VITE_DAO_MARKET_PREDICTING"] || "";
+  CONFIG.VITE_DAO_TREASURY =
+    process.env[network + "_" + "VITE_DAO_TREASURY"] || "";
 }
 
 export function getDaoConfig() {
@@ -47,16 +49,10 @@ export function printDaoConfig() {
       CONFIG.VITE_DOA_EMERGENCY_EXECUTE_EXTENSION
   );
   console.log("VITE_DOA_POX = " + CONFIG.VITE_DOA_POX);
+  console.log("VITE_DAO_MARKET_VOTING = " + CONFIG.VITE_DAO_MARKET_VOTING);
+  console.log("VITE_DAO_MARKET_GATING = " + CONFIG.VITE_DAO_MARKET_GATING);
   console.log(
-    "VITE_DAO_MARKET_RESOLUTION_VOTING = " +
-      CONFIG.VITE_DAO_MARKET_RESOLUTION_VOTING
+    "VITE_DAO_MARKET_PREDICTING = " + CONFIG.VITE_DAO_MARKET_PREDICTING
   );
-  console.log(
-    "VITE_DAO_MARKET_RESOLUTION_GATING = " +
-      CONFIG.VITE_DAO_MARKET_RESOLUTION_GATING
-  );
-  console.log(
-    "VITE_DAO_MARKET_RESOLUTION_STAKING = " +
-      CONFIG.VITE_DAO_MARKET_RESOLUTION_STAKING
-  );
+  console.log("VITE_DAO_TREASURY = " + CONFIG.VITE_DAO_TREASURY);
 }

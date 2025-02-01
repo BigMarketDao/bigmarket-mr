@@ -11,6 +11,7 @@ import { connect } from "./lib/data/db_models";
 import { daoEventRoutes } from "./routes/dao/events/daoEventsRoutes";
 import { predictionMarketRoutes } from "./routes/predictions/predictionMarketRoutes";
 import { daoProposalRoutes } from "./routes/dao/proposals/daoProposalRoutes";
+import { voterRoutes } from "./routes/dao/voter/voterRoutes";
 import { gatingRoutes } from "./routes/gating/gatingRoutes";
 import { daoSip18VotingRoutes } from "./routes/dao/sip18-voting/daoSip18VotingRoutes";
 import { initScanDaoEventsJob } from "./routes/dao/events/eventScheduler";
@@ -66,6 +67,7 @@ app.use("/bigmarket-api/pm", predictionMarketRoutes);
 app.use("/bigmarket-api/polling", pollingRoutes);
 app.use("/bigmarket-api/dao/events", daoEventRoutes);
 app.use("/bigmarket-api/dao/proposals", daoProposalRoutes);
+app.use("/bigmarket-api/dao/voter", voterRoutes);
 app.use("/bigmarket-api/dao/sip18-voting", daoSip18VotingRoutes);
 app.use("/bigmarket-api/gating", gatingRoutes);
 

@@ -9,40 +9,13 @@ import {
   fetchProposedProposals,
   fetchProposedProposalsByDao,
 } from "./proposal";
-import {
-  getVotesByProposal,
-  getVotesByProposalAndVoter,
-  getVotesByVoter,
-} from "../events/dao_events_extension_helper";
+import { getVotesByProposal } from "../events/dao_events_extension_helper";
 
 const router = express.Router();
 
 router.get("/votes/:proposal", async (req, res, next) => {
   try {
     const response = await getVotesByProposal(req.params.proposal);
-    res.send(response);
-  } catch (error) {
-    console.log("Error in routes: ", error);
-    next("An error occurred fetching pox-info.");
-  }
-});
-
-router.get("/votes/:proposal/:voter", async (req, res, next) => {
-  try {
-    const response = await getVotesByProposalAndVoter(
-      req.params.proposal,
-      req.params.voter
-    );
-    res.send(response);
-  } catch (error) {
-    console.log("Error in routes: ", error);
-    next("An error occurred fetching pox-info.");
-  }
-});
-
-router.get("/votes/voter/:voter", async (req, res, next) => {
-  try {
-    const response = await getVotesByVoter(req.params.voter);
     res.send(response);
   } catch (error) {
     console.log("Error in routes: ", error);

@@ -34,7 +34,7 @@ import assert from "assert";
 function ismarketVotingExtension(extensionContract: string) {
   return (
     extensionContract ===
-    "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.bde021-market-resolution-voting"
+    "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.bde021-market-voting"
   );
 }
 export async function readDaoExtensionEvents(
@@ -60,7 +60,7 @@ export async function readDaoExtensionEvents(
     daoContractId,
     getDaoConfig().VITE_DOA_DEPLOYER +
       "." +
-      getDaoConfig().VITE_DAO_MARKET_RESOLUTION_STAKING
+      getDaoConfig().VITE_DAO_MARKET_PREDICTING
   );
 }
 
@@ -248,7 +248,7 @@ async function processEvent(
       daoContract,
       votingContract: eventContract,
       pollId: Number(result.value["market-id"].value),
-      isGated: Boolean(result.value["is-gated"].value),
+      isGated: false,
       metadataHash: metadataHash,
       proposer: result.value.proposer.value,
     } as PollCreateEvent;
@@ -270,6 +270,8 @@ async function processEvent(
       sip18: result.value.sip18.value,
       voter: result.value.voter.value,
       for: result.value.for.value,
+      amount: Number(result.value.amount?.value || 0),
+      reclaimId: result.value["prev-market-id"]?.value,
     } as PollVoteEvent;
 
     await saveOrUpdateEvent(o);
@@ -342,23 +344,6 @@ async function getSubmissionContract(txId: string): Promise<string> {
 export async function getVotesByProposal(proposal: string): Promise<any> {
   const result = await daoEventCollection
     .find({ proposal, event: "vote" })
-    .toArray();
-  return result;
-}
-
-export async function getVotesByProposalAndVoter(
-  proposal: string,
-  voter: string
-): Promise<any> {
-  const result = await daoEventCollection
-    .find({ proposal, voter, event: "vote" })
-    .toArray();
-  return result;
-}
-
-export async function getVotesByVoter(voter: string): Promise<any> {
-  const result = await daoEventCollection
-    .find({ voter, event: "vote" })
     .toArray();
   return result;
 }

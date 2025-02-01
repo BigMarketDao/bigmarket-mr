@@ -1,24 +1,11 @@
 import type { SignatureData } from "@stacks/connect";
-import {
-  boolCV,
-  broadcastTransaction,
-  bufferCV,
-  listCV,
-  makeContractCall,
-  standardPrincipalCV,
-  tupleCV,
-  uintCV,
-} from "@stacks/transactions";
 import { ObjectId } from "mongodb";
-import { hexToBytes } from "@stacks/common";
 import { daoSip18VotingCollection } from "../../../lib/data/db_models";
 import { getConfig } from "../../../lib/config";
 import { getC32AddressFromPublicKey } from "../events/dao_events_helper";
 import {
-  getStacksNetwork,
   StoredVoteMessage,
   verifySip18VoteSignature,
-  votesToClarityValue,
 } from "@mijoco/stx_helpers/dist/index";
 
 async function markVotesAsProcessed(voteIds: string[]) {
@@ -27,29 +14,6 @@ async function markVotesAsProcessed(voteIds: string[]) {
     { _id: { $in: voteIds.map((id) => new ObjectId(id)) } },
     { $set: { processed: true } }
   );
-}
-
-async function sendBatchVote(proposal: string, votes: StoredVoteMessage[]) {
-  const { proposalCV, votesCV } = votesToClarityValue(proposal, votes);
-  const network = getConfig().network;
-  const txOptions = {
-    contractAddress: "SP1234567890ABCDEF", // Replace with your contract address
-    contractName: "your-contract-name", // Replace with your contract name
-    functionName: "batch-vote",
-    functionArgs: [proposalCV, votesCV],
-    senderKey: "privateKey",
-    network: getStacksNetwork(network),
-    postConditionMode: 1,
-  };
-
-  const transaction = await makeContractCall(txOptions);
-  const txId = await broadcastTransaction({
-    transaction,
-    network: getStacksNetwork(network),
-  });
-  console.log("Transaction ID:", txId);
-
-  return txId;
 }
 
 export function isPostValid(

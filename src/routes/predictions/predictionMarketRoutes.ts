@@ -2,18 +2,19 @@ import express from "express";
 import { isCreatePollPostValid, savePoll } from "../polling/polling_helper";
 import {
   countCreateMarketEvents,
+  fetchActiveMarketCategories,
   fetchAllowedTokens,
   fetchMarket,
+  fetchMarketClaims,
   fetchMarkets,
   fetchMarketStakes,
   fetchMarketVotes,
   findOpinionPollByTitle,
 } from "./markets_helper";
 import {
-  ContractBalances,
+  DaoOverview,
   fetchContractBalances,
   GateKeeper,
-  PredictionContractData,
   readPredictionContractData,
   StoredOpinionPoll,
 } from "@mijoco/stx_helpers/dist/index";
@@ -21,11 +22,9 @@ import { getConfig } from "../../lib/config";
 import { getDaoConfig } from "../../lib/config_dao";
 import { fetchCreateMarketMerkleInput } from "../gating/gating_helper";
 
+//ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.bdp001-market-setup-v2
 const router = express.Router();
-let cachedData: {
-  contractData: PredictionContractData;
-  contractBalances: ContractBalances;
-} | null = null; // simpple cache
+let cachedData: DaoOverview | null = null; // simpple cache
 let lastFetchTime = 0; // To track the last fetch timestamp
 //const CACHE_DURATION = 5 * 60 * 1000; // Cache duration in milliseconds (5 minutes)
 const CACHE_DURATION = 30 * 1000; // Cache duration in milliseconds (5 minutes)
@@ -41,19 +40,25 @@ router.get("/market-dao-data", async (req, res) => {
       const contractData = await readPredictionContractData(
         getConfig().stacksApi,
         getDaoConfig().VITE_DOA_DEPLOYER,
-        getDaoConfig().VITE_DAO_MARKET_RESOLUTION_STAKING
+        getDaoConfig().VITE_DAO_MARKET_PREDICTING
       );
 
       // Fetch contract balances
       const contractBalances = await fetchContractBalances(
         getConfig().stacksApi,
         `${getDaoConfig().VITE_DOA_DEPLOYER}.${
-          getDaoConfig().VITE_DAO_MARKET_RESOLUTION_STAKING
+          getDaoConfig().VITE_DAO_MARKET_PREDICTING
+        }`
+      );
+      const treasuryBalances = await fetchContractBalances(
+        getConfig().stacksApi,
+        `${getDaoConfig().VITE_DOA_DEPLOYER}.${
+          getDaoConfig().VITE_DAO_TREASURY
         }`
       );
 
       // Update cache
-      cachedData = { contractData, contractBalances };
+      cachedData = { contractData, contractBalances, treasuryBalances };
       lastFetchTime = now;
 
       // Send response
@@ -68,9 +73,11 @@ router.get("/market-dao-data", async (req, res) => {
 router.post("/markets", async (req, res) => {
   const { newPoll } = req.body;
   console.log("isCreatePollPostValid: ", newPoll);
+
+  const gated = cachedData?.contractData.creationGated || false;
   const data: GateKeeper = await fetchCreateMarketMerkleInput();
   const newPoll1: StoredOpinionPoll = newPoll;
-  if (!data.merkleRootInput.includes(newPoll1.proposer)) {
+  if (gated && !data.merkleRootInput.includes(newPoll1.proposer)) {
     res.status(401).json({ error: "no create market privileges" });
   } else {
     if (!isCreatePollPostValid(newPoll)) {
@@ -95,13 +102,13 @@ router.get("/markets/allowed-tokens", async (req, res) => {
   res.json(polls);
 });
 
-router.get("/markets/votes/:marketId", async (req, res) => {
-  const polls = await fetchMarketVotes(Number(req.params.marketId));
+router.get("/markets/categories", async (req, res) => {
+  const polls = await fetchActiveMarketCategories();
   res.json(polls);
 });
 
-router.get("/markets/stakes/:marketId", async (req, res) => {
-  const polls = await fetchMarketStakes(Number(req.params.marketId));
+router.get("/markets/votes/:marketId", async (req, res) => {
+  const polls = await fetchMarketVotes(Number(req.params.marketId));
   res.json(polls);
 });
 
@@ -112,6 +119,16 @@ router.get("/markets", async (req, res) => {
 
 router.get("/markets/:marketId", async (req, res) => {
   const market = await fetchMarket(Number(req.params.marketId));
+  res.json(market);
+});
+
+router.get("/claims/:marketId", async (req, res) => {
+  const market = await fetchMarketClaims(Number(req.params.marketId));
+  res.json(market);
+});
+
+router.get("/stakes/:marketId", async (req, res) => {
+  const market = await fetchMarketStakes(Number(req.params.marketId));
   res.json(market);
 });
 
