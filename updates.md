@@ -25,7 +25,7 @@ db.marketCategoriesCollection.insertMany([
 { name : 'culture', information: '', displayName: 'Pop Culture', active: true},
 { name : 'business', information: '', displayName: 'Business', active: false}])
 
-db.gatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST3RR3HF25CQ9A5DEWS4R1WKJSBCFKQXFBYPJK3WV", "ST2RPDWF6N939Y32C4ZEVC74SCRTGSJBFBPJP05H5", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ"]})
+db.gatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST2293W5GRAYMAQTC5D3NZ0R5YR4XT56NW8P920W", "ST2RPDWF6N939Y32C4ZEVC74SCRTGSJBFBPJP05H5", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ"]})
 
 db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345904d2936')}, update: {$set: {resolutionState: 237 }}, upsert: false, new: true, fields: {}})
 
