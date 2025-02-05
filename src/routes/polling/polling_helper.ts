@@ -1,9 +1,6 @@
 import type { SignatureData } from "@stacks/connect";
 import { ObjectId } from "mongodb";
-import {
-  daoEventCollection,
-  opinionPollCollection,
-} from "../../lib/data/db_models";
+import { daoEventCollection, marketCollection } from "../../lib/data/db_models";
 import { getConfig } from "../../lib/config";
 import { getC32AddressFromPublicKey } from "../dao/events/dao_events_helper";
 import {
@@ -27,20 +24,20 @@ type Auth = {
 };
 
 export function isCreatePollPostValid(message: StoredOpinionPoll): boolean {
-  console.log("-------------------------------------------");
-  console.log("isCreatePollPostValid: ", message);
-  console.log("isCreatePollPostValid: network: " + getConfig().network);
-  console.log(
-    "isCreatePollPostValid: publicAppName: " + getConfig().publicAppName
-  );
-  console.log(
-    "isCreatePollPostValid: publicAppVersion: " + getConfig().publicAppVersion
-  );
+  // console.log("-------------------------------------------");
+  // console.log("isCreatePollPostValid: ", message);
+  // console.log("isCreatePollPostValid: network: " + getConfig().network);
+  // console.log(
+  //   "isCreatePollPostValid: publicAppName: " + getConfig().publicAppName
+  // );
+  // console.log(
+  //   "isCreatePollPostValid: publicAppVersion: " + getConfig().publicAppVersion
+  // );
   const stxAddressFromKey = getC32AddressFromPublicKey(
     message.publicKey,
     getConfig().network
   );
-  console.log("isCreatePollPostValid: stxAddressFromKey: " + stxAddressFromKey);
+  // console.log("isCreatePollPostValid: stxAddressFromKey: " + stxAddressFromKey);
   if (message.proposer !== stxAddressFromKey) {
     console.log(
       "/polls: wrong voter: " +
@@ -50,12 +47,12 @@ export function isCreatePollPostValid(message: StoredOpinionPoll): boolean {
     );
     return false;
   }
-  console.log(
-    "/votes: correct voter: " +
-      message.proposer +
-      " signer: " +
-      stxAddressFromKey
-  );
+  // console.log(
+  //   "/votes: correct voter: " +
+  //     message.proposer +
+  //     " signer: " +
+  //     stxAddressFromKey
+  // );
   const pollMessage = opinionPollToTupleCV(
     message.name,
     message.category,
@@ -103,8 +100,13 @@ export function isPostPollMessageValid(
 
 export async function savePoll(poll: StoredOpinionPoll) {
   poll._id = poll._id || new ObjectId();
-  const result = await opinionPollCollection.insertOne(poll);
-  return await findPollByHash(poll._id.toString());
+  try {
+    const result = await marketCollection.insertOne(poll);
+    return await findPollByHash(poll._id.toString());
+  } catch (err: any) {
+    console.log("savePoll: ", err);
+    return;
+  }
 }
 
 export async function findPollByHash(
@@ -130,7 +132,7 @@ export async function findPollByMarketId(
 export async function findUserEnteredPollByHash(
   objectHash: string
 ): Promise<StoredOpinionPoll> {
-  const result = await opinionPollCollection.findOne({
+  const result = await marketCollection.findOne({
     objectHash: objectHash,
   });
   return result as unknown as StoredOpinionPoll;

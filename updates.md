@@ -25,7 +25,11 @@ db.marketCategoriesCollection.insertMany([
 { name : 'culture', information: '', displayName: 'Pop Culture', active: true},
 { name : 'business', information: '', displayName: 'Business', active: false}])
 
-db.gatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST2293W5GRAYMAQTC5D3NZ0R5YR4XT56NW8P920W", "ST2RPDWF6N939Y32C4ZEVC74SCRTGSJBFBPJP05H5", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ"]})
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST2293W5GRAYMAQTC5D3NZ0R5YR4XT56NW8P920W", "ST2RPDWF6N939Y32C4ZEVC74SCRTGSJBFBPJP05H5", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ"]})
+
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5", "ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG", "ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC"]})
+
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"]})
 
 db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345904d2936')}, update: {$set: {resolutionState: 237 }}, upsert: false, new: true, fields: {}})
 

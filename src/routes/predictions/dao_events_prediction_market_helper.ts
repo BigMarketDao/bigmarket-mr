@@ -175,9 +175,12 @@ async function processEvent(
     // (print {event: "market-stake", market-id: market-id, amount: amount, yes: yes, voter: tx-sender})
   } else if (result.value.event.value === "market-stake") {
     const marketId = Number(result.value["market-id"].value);
+    const marketType = Number(result.value["market-type"].value);
     const amount = Number(result.value.amount.value);
-    const yes = Boolean(result.value.yes.value);
+    const index = Number(result.value.index.value);
+    const category = result.value.category.value;
     const voter = result.value.voter.value;
+    // (, index: index, category: category, amount: amount-less-fee, voter: tx-sender})
 
     const contractEvent = {
       _id: new ObjectId(),
@@ -187,24 +190,29 @@ async function processEvent(
       daoContract,
       votingContract,
       marketId,
+      marketType,
       amount,
-      yes,
+      category,
+      index,
       voter,
     } as PredictionMarketStakeEvent;
     await saveOrUpdateEvent(contractEvent);
     // (print {event: "market-stake", market-id: market-id, amount: amount, yes: yes, voter: tx-sender})
   } else if (result.value.event.value === "resolve-market") {
     const marketId = Number(result.value["market-id"].value);
+    console.log("resolve-market: result.value.event: ", result.value);
     const createEvent = await fetchMarket(marketId);
+    const outcome = Number(result.value.outcome.value);
+    const category = result.value.category.value;
     const changes = {
-      outcome: Boolean(result.value.outcome.value),
+      outcome,
+      category,
       concluded: false,
       resolver: result.value.resolver.value,
       resolutionState: Number(result.value["resolution-state"].value),
     };
     if (!createEvent || changes.resolutionState < createEvent.resolutionState)
       return;
-    console.log("resolve-market: changes: " + createEvent._id, changes);
     await updateDaoEvent(createEvent._id, changes);
   } else if (result.value.event.value === "resolve-market-undisputed") {
     const marketId = Number(result.value["market-id"].value);
@@ -230,7 +238,7 @@ async function processEvent(
     if (!createEvent) return;
     const changes = {
       concluded: true,
-      outcome: Boolean(result.value.outcome.value),
+      outcome: Number(result.value.outcome.value),
       resolutionState: Number(result.value["resolution-state"].value),
       resolver: result.value.resolver.value,
     };
@@ -250,9 +258,17 @@ async function processEvent(
     if (!createEvent || changes.resolutionState < createEvent.resolutionState)
       return;
     await updateDaoEvent(createEvent._id, changes);
+  } else if (result.value.event.value === "transfer-losing-stakes") {
+    const marketId = Number(result.value["market-id"].value);
+    const createEvent = await fetchMarket(marketId);
+    if (!createEvent) return;
+    const changes = {
+      transferLosingStakes: Number(result.value.balance.value),
+    };
+    await updateDaoEvent(createEvent._id, changes);
   } else if (result.value.event.value === "claim-winnings") {
     const marketId = Number(result.value["market-id"].value);
-    const yes = Boolean(result.value.yes.value);
+    const indexWon = Number(result.value["index-won"].value);
     const claimer = result.value.claimer.value;
     const userStake = Number(result.value["user-stake"].value);
     const userShare = Number(result.value["user-share"].value);
@@ -270,7 +286,7 @@ async function processEvent(
       votingContract,
       marketId,
       claimer,
-      yes,
+      indexWon,
       userStake,
       userShare,
       winningPool,

@@ -1,6 +1,6 @@
 import type { SignatureData } from "@stacks/connect";
 import { ObjectId } from "mongodb";
-import { daoSip18VotingCollection } from "../../../lib/data/db_models";
+import { daoBatchVotingCollection } from "../../../lib/data/db_models";
 import { getConfig } from "../../../lib/config";
 import { getC32AddressFromPublicKey } from "../events/dao_events_helper";
 import {
@@ -10,7 +10,7 @@ import {
 
 async function markVotesAsProcessed(voteIds: string[]) {
   // Update votes to set `processed: true`
-  await daoSip18VotingCollection.updateMany(
+  await daoBatchVotingCollection.updateMany(
     { _id: { $in: voteIds.map((id) => new ObjectId(id)) } },
     { $set: { processed: true } }
   );
@@ -48,7 +48,7 @@ export function isPostValid(
 export async function fetchSip18Votes(
   fitler: any
 ): Promise<Array<StoredVoteMessage>> {
-  const results = await daoSip18VotingCollection.find(fitler).toArray();
+  const results = await daoBatchVotingCollection.find(fitler).toArray();
   return results as unknown as Array<StoredVoteMessage>;
 }
 
@@ -61,12 +61,12 @@ export async function saveSip18Vote(
   voteMessage.voteObjectHash = hash;
   voteMessage.signature = signature.signature;
   voteMessage.publicKey = signature.publicKey;
-  const result = await daoSip18VotingCollection.insertOne(voteMessage);
+  const result = await daoBatchVotingCollection.insertOne(voteMessage);
   return await findSip18VoteById(voteMessage._id.toString());
 }
 
 export async function updateSip18Vote(poll: StoredVoteMessage, changes: any) {
-  const result = await daoSip18VotingCollection.updateOne(
+  const result = await daoBatchVotingCollection.updateOne(
     {
       _id: poll._id,
     },
@@ -79,21 +79,21 @@ export async function updateSip18Vote(poll: StoredVoteMessage, changes: any) {
 export async function findSip18VoteById(
   _id: string
 ): Promise<StoredVoteMessage> {
-  const result = await daoSip18VotingCollection.findOne({
+  const result = await daoBatchVotingCollection.findOne({
     _id: new ObjectId(_id),
   });
   return result as unknown as StoredVoteMessage;
 }
 
 export async function findSip18Votes(): Promise<Array<StoredVoteMessage>> {
-  const result = await daoSip18VotingCollection.find().toArray();
+  const result = await daoBatchVotingCollection.find().toArray();
   return result as unknown as Array<StoredVoteMessage>;
 }
 
 export async function findSip18VotesEndingBefore(
   endBurnHeight: number
 ): Promise<Array<StoredVoteMessage>> {
-  const result = await daoSip18VotingCollection
+  const result = await daoBatchVotingCollection
     .find({ endBurnHeight: { $lt: endBurnHeight } })
     .toArray();
   return result as unknown as Array<StoredVoteMessage>;

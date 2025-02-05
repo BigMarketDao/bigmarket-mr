@@ -10,7 +10,7 @@ import {
 import {
   daoEventCollection,
   marketCategoriesCollection,
-  opinionPollCollection,
+  marketCollection,
 } from "../../lib/data/db_models";
 
 export async function fetchAllowedTokens(): Promise<
@@ -72,7 +72,7 @@ export async function fetchMarkets(): Promise<
 export async function findOpinionPollByTitle(
   title: string
 ): Promise<StoredOpinionPoll> {
-  const result = await opinionPollCollection.findOne({
+  const result = await marketCollection.findOne({
     name: title,
   });
   return result as unknown as StoredOpinionPoll;

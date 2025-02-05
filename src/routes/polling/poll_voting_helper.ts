@@ -1,12 +1,12 @@
 import type { SignatureData } from "@stacks/connect";
 import { ObjectId } from "mongodb";
-import { opinionPollSip18VotingCollection } from "../../lib/data/db_models";
+import { marketBatchVotingCollection } from "../../lib/data/db_models";
 import { PollVoteEvent, StoredPollVoteMessage } from "@mijoco/stx_helpers";
 
 export async function findPollVoteByHash(
   pollVoteObjectHash: string
 ): Promise<PollVoteEvent> {
-  const result = await opinionPollSip18VotingCollection.findOne({
+  const result = await marketBatchVotingCollection.findOne({
     pollVoteObjectHash: pollVoteObjectHash,
   });
   return result as unknown as PollVoteEvent;
@@ -15,7 +15,7 @@ export async function findPollVoteByHash(
 export async function findUnprocessedSip18PollMessages(
   pollId: string
 ): Promise<Array<StoredPollVoteMessage>> {
-  const result = await opinionPollSip18VotingCollection
+  const result = await marketBatchVotingCollection
     .find({ "poll-id": pollId })
     .toArray();
   return result as unknown as Array<StoredPollVoteMessage>;
@@ -30,6 +30,6 @@ export async function saveSip18PollVote(
   voteMessage.pollVoteObjectHash = pollVoteObjectHash;
   voteMessage.signature = signature.signature;
   voteMessage.publicKey = signature.publicKey;
-  const result = await opinionPollSip18VotingCollection.insertOne(voteMessage);
+  const result = await marketBatchVotingCollection.insertOne(voteMessage);
   return await findPollVoteByHash(voteMessage["market-data-hash"]);
 }

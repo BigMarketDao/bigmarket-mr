@@ -72,7 +72,7 @@ router.get("/market-dao-data", async (req, res) => {
 
 router.post("/markets", async (req, res) => {
   const { newPoll } = req.body;
-  console.log("isCreatePollPostValid: ", newPoll);
+  // console.log("isCreatePollPostValid: ", newPoll);
 
   const gated = cachedData?.contractData.creationGated || false;
   const data: GateKeeper = await fetchCreateMarketMerkleInput();
@@ -84,6 +84,7 @@ router.post("/markets", async (req, res) => {
       res.status(401).json({ error: "Invalid request" });
     } else {
       const p = await findOpinionPollByTitle(newPoll.name);
+      console.log("isCreatePollPostValid: p =", p);
       if (p) {
         res
           .status(502)

@@ -3,11 +3,12 @@ import type { Collection } from "mongodb";
 import { getConfig, isDev } from "../config";
 
 export let exchangeRatesCollection: Collection;
-export let opinionPollCollection: Collection;
-export let opinionPollSip18VotingCollection: Collection;
 export let daoEventCollection: Collection;
-export let daoSip18VotingCollection: Collection;
-export let gatingCollection: Collection;
+export let daoBatchVotingCollection: Collection;
+export let marketCollection: Collection;
+export let marketBatchVotingCollection: Collection;
+export let marketGatingCollection: Collection;
+export let marketInterestCollection: Collection;
 export let marketCategoriesCollection: Collection;
 
 export async function connect() {
@@ -34,10 +35,10 @@ export async function connect() {
   exchangeRatesCollection = database.collection("exchangeRatesCollection");
   await exchangeRatesCollection.createIndex({ currency: 1 }, { unique: true });
 
-  opinionPollCollection = database.collection("opinionPollCollection");
-  await opinionPollCollection.createIndex({ createdAt: 1 }, { unique: true });
-  await opinionPollCollection.createIndex({ objectHash: 1 }, { unique: true });
-  await opinionPollCollection.createIndex({ name: 1 }, { unique: true });
+  marketCollection = database.collection("marketCollection");
+  await marketCollection.createIndex({ createdAt: 1 }, { unique: true });
+  await marketCollection.createIndex({ objectHash: 1 }, { unique: true });
+  await marketCollection.createIndex({ name: 1 }, { unique: true });
 
   daoEventCollection = database.collection("daoEventCollection");
   await daoEventCollection.createIndex(
@@ -45,33 +46,36 @@ export async function connect() {
     { unique: true }
   );
 
-  daoSip18VotingCollection = database.collection("daoSip18VotingCollection");
-  await daoSip18VotingCollection.createIndex(
+  daoBatchVotingCollection = database.collection("daoBatchVotingCollection");
+  await daoBatchVotingCollection.createIndex(
     { voteObjectHash: 1 },
     { unique: true }
   );
-  await daoSip18VotingCollection.createIndex(
+  await daoBatchVotingCollection.createIndex(
     { timestamp: 1 },
     { unique: true }
   );
 
-  opinionPollSip18VotingCollection = database.collection(
-    "opinionPollSip18VotingCollection"
+  marketBatchVotingCollection = database.collection(
+    "marketBatchVotingCollection"
   );
-  await opinionPollSip18VotingCollection.createIndex(
+  await marketBatchVotingCollection.createIndex(
     { "poll-id": 1, voter: 1 },
     { unique: true }
   );
-  await opinionPollSip18VotingCollection.createIndex(
+  await marketBatchVotingCollection.createIndex(
     { pollVoteObjectHash: 1 },
     { unique: true }
   );
 
-  gatingCollection = database.collection("gatingCollection");
-  await gatingCollection.createIndex({ gateType: 1 }, { unique: true });
+  marketGatingCollection = database.collection("marketGatingCollection");
+  await marketGatingCollection.createIndex({ gateType: 1 }, { unique: true });
 
   marketCategoriesCollection = database.collection(
     "marketCategoriesCollection"
   );
   await marketCategoriesCollection.createIndex({ name: 1 }, { unique: true });
+
+  marketInterestCollection = database.collection("marketInterestCollection");
+  await marketInterestCollection.createIndex({ email: 1 }, { unique: true });
 }

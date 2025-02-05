@@ -50,7 +50,6 @@ app.use(
 );
 app.use(bodyParser.json());
 app.use((req, res, next) => {
-  console.log("isCreatePollPostValid: ");
   if (
     req.method === "POST" ||
     req.method === "PUT" ||

@@ -18,7 +18,7 @@ import { fetchExtensions } from "./dao_events_helper";
 import { getConfig } from "../../../lib/config";
 import {
   daoEventCollection,
-  opinionPollCollection,
+  marketCollection,
 } from "../../../lib/data/db_models";
 import {
   fetchProposeEvent,
@@ -269,7 +269,7 @@ async function processEvent(
       pollId: Number(result.value["market-id"].value),
       sip18: result.value.sip18.value,
       voter: result.value.voter.value,
-      for: result.value.for.value,
+      for: Number(result.value["category-for"].value),
       amount: Number(result.value.amount?.value || 0),
       reclaimId: result.value["prev-market-id"]?.value,
     } as PollVoteEvent;
@@ -288,7 +288,9 @@ async function processEvent(
       "wrong market?"
     );
     marketPoll.marketId = Number(result.value["market-id"].value);
-    marketPoll.passed = Boolean(result.value.passed.value);
+    marketPoll.winningCategory = Boolean(
+      result.value["winning-category"].value
+    );
     marketPoll.concludeTxId = txId;
     await updateDaoEvent(marketPoll._id, marketPoll);
   } else {
