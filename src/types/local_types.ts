@@ -33,4 +33,5 @@ export type ConfigDaoI = {
   VITE_DAO_MARKET_GATING: string;
   VITE_DAO_MARKET_PREDICTING: string;
   VITE_DAO_TREASURY: string;
+  VITE_DAO_TOKEN_SALE: string;
 };

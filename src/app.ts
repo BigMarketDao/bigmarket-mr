@@ -14,6 +14,7 @@ import { daoProposalRoutes } from "./routes/dao/proposals/daoProposalRoutes";
 import { voterRoutes } from "./routes/dao/voter/voterRoutes";
 import { gatingRoutes } from "./routes/gating/gatingRoutes";
 import { daoSip18VotingRoutes } from "./routes/dao/sip18-voting/daoSip18VotingRoutes";
+import { tokenSaleRoutes } from "./routes/dao/token-sale/tokenSaleRoutes";
 import { initScanDaoEventsJob } from "./routes/dao/events/eventScheduler";
 import { printDaoConfig, setDaoConfigOnStart } from "./lib/config_dao";
 
@@ -68,6 +69,7 @@ app.use("/bigmarket-api/dao/events", daoEventRoutes);
 app.use("/bigmarket-api/dao/proposals", daoProposalRoutes);
 app.use("/bigmarket-api/dao/voter", voterRoutes);
 app.use("/bigmarket-api/dao/sip18-voting", daoSip18VotingRoutes);
+app.use("/bigmarket-api/dao/token-sale", tokenSaleRoutes);
 app.use("/bigmarket-api/gating", gatingRoutes);
 
 console.log(`\n\nExpress is listening at http://localhost:${getConfig().port}`);

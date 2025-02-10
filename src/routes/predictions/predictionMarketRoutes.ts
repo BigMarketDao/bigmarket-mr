@@ -14,6 +14,7 @@ import {
 import {
   DaoOverview,
   fetchContractBalances,
+  fetchTokenSaleStages,
   GateKeeper,
   readPredictionContractData,
   StoredOpinionPoll,
@@ -22,7 +23,6 @@ import { getConfig } from "../../lib/config";
 import { getDaoConfig } from "../../lib/config_dao";
 import { fetchCreateMarketMerkleInput } from "../gating/gating_helper";
 
-//ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.bdp001-market-setup-v2
 const router = express.Router();
 let cachedData: DaoOverview | null = null; // simpple cache
 let lastFetchTime = 0; // To track the last fetch timestamp
@@ -56,9 +56,19 @@ router.get("/market-dao-data", async (req, res) => {
           getDaoConfig().VITE_DAO_TREASURY
         }`
       );
+      const tokenSale = await fetchTokenSaleStages(
+        getConfig().stacksApi,
+        getDaoConfig().VITE_DOA_DEPLOYER,
+        getDaoConfig().VITE_DAO_TOKEN_SALE
+      );
 
       // Update cache
-      cachedData = { contractData, contractBalances, treasuryBalances };
+      cachedData = {
+        contractData,
+        contractBalances,
+        treasuryBalances,
+        tokenSale,
+      };
       lastFetchTime = now;
 
       // Send response

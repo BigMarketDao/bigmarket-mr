@@ -25,6 +25,8 @@ export function setDaoConfigOnStart() {
     process.env[network + "_" + "VITE_DAO_MARKET_PREDICTING"] || "";
   CONFIG.VITE_DAO_TREASURY =
     process.env[network + "_" + "VITE_DAO_TREASURY"] || "";
+  CONFIG.VITE_DAO_TOKEN_SALE =
+    process.env[network + "_" + "VITE_DAO_TOKEN_SALE"] || "";
 }
 
 export function getDaoConfig() {
@@ -55,4 +57,5 @@ export function printDaoConfig() {
     "VITE_DAO_MARKET_PREDICTING = " + CONFIG.VITE_DAO_MARKET_PREDICTING
   );
   console.log("VITE_DAO_TREASURY = " + CONFIG.VITE_DAO_TREASURY);
+  console.log("VITE_DAO_TOKEN_SALE = " + CONFIG.VITE_DAO_TOKEN_SALE);
 }
