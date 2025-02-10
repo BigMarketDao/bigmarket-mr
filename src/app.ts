@@ -15,7 +15,7 @@ import { voterRoutes } from "./routes/dao/voter/voterRoutes";
 import { gatingRoutes } from "./routes/gating/gatingRoutes";
 import { daoSip18VotingRoutes } from "./routes/dao/sip18-voting/daoSip18VotingRoutes";
 import { tokenSaleRoutes } from "./routes/dao/token-sale/tokenSaleRoutes";
-import { exchangeRoutes } from "./routes/rate/exchangeRoutes";
+import { exchangeRoutes } from "./routes/rates/exchangeRoutes";
 import { initScanDaoEventsJob } from "./routes/dao/events/eventScheduler";
 import { printDaoConfig, setDaoConfigOnStart } from "./lib/config_dao";
 import { initExchangeRatesJob } from "./routes/rates/ratesScheduler";
