@@ -8,4 +8,4 @@ router.get("/rates", async (req, res) => {
   res.json({ result: data });
 });
 
-export { router as gatingRoutes };
+export { router as exchangeRoutes };
