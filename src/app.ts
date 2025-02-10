@@ -17,6 +17,7 @@ import { daoSip18VotingRoutes } from "./routes/dao/sip18-voting/daoSip18VotingRo
 import { tokenSaleRoutes } from "./routes/dao/token-sale/tokenSaleRoutes";
 import { initScanDaoEventsJob } from "./routes/dao/events/eventScheduler";
 import { printDaoConfig, setDaoConfigOnStart } from "./lib/config_dao";
+import { initExchangeRatesJob } from "./routes/rates/ratesScheduler";
 
 if (process.env.NODE_ENV === "development") {
   dotenv.config();
@@ -84,6 +85,8 @@ async function connectToMongoCloud() {
   await connect();
   console.log("Connected to MongoDB!");
   initScanDaoEventsJob.start();
+  initExchangeRatesJob.start();
+
   const server = app.listen(getConfig().port, () => {
     console.log("Server listening!");
     return;

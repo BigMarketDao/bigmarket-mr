@@ -1,6 +1,6 @@
 import { ExchangeRate } from "@mijoco/stx_helpers";
 import { currencies } from "./utils_currencies";
-import { exchangeRatesCollection } from "./data/db_models";
+import { exchangeRatesCollection } from "../../lib/data/db_models";
 
 export async function getRates(): Promise<any> {
   const rates = await getExchangeRates();
@@ -8,7 +8,7 @@ export async function getRates(): Promise<any> {
 }
 
 export async function getStxToBtc(): Promise<any> {
-  const url = "https://www.blockchain.com/en/tobtc?currency=STX&value=500";
+  const url = "https://www.blockchain.com/en/tobtc?currency=STX&value=1";
   const response = await fetch(url);
   const info = await response.json();
   return info;
@@ -43,6 +43,7 @@ export async function updateExchangeRates() {
           sell: info[key].sell,
           symbol: currencies[key].symbol,
           name: currencies[key].name,
+          stxToBtc,
         });
       }
     }
