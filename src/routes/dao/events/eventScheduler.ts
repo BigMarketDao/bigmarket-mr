@@ -37,7 +37,7 @@ export const initScanDaoEventsJob = cron.schedule(
       }
       await readPredictionEvents(
         true,
-        getDaoConfig().VITE_DOA_DEPLOYER + ".bitcoin-dao",
+        getDaoConfig().VITE_DOA_DEPLOYER + ".bigmarket-dao",
         getDaoConfig().VITE_DOA_DEPLOYER +
           "." +
           getDaoConfig().VITE_DAO_MARKET_PREDICTING

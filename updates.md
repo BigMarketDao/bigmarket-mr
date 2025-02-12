@@ -53,5 +53,5 @@ db.daoEventCollection.findAndModify({query: {marketId:0}, update: {$set: {featur
 
 where dao contract is
 
-- SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.bitcoin-dao (nakamoto)
+- SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.bigmarket-dao (nakamoto)
 - SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.ecosystem-dao (2.1 upgrade)

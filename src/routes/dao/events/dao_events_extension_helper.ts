@@ -34,7 +34,7 @@ import assert from "assert";
 function ismarketVotingExtension(extensionContract: string) {
   return (
     extensionContract ===
-    "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.bde021-market-voting"
+    "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.bme021-0-market-voting"
   );
 }
 export async function readDaoExtensionEvents(
