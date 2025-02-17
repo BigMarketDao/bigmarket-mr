@@ -1,35 +1,25 @@
-import type { SignatureData } from "@stacks/connect";
-import { ObjectId } from "mongodb";
-import { marketBatchVotingCollection } from "../../lib/data/db_models";
-import { PollVoteEvent, StoredPollVoteMessage } from "@mijoco/stx_helpers";
+import type { SignatureData } from '@stacks/connect';
+import { ObjectId } from 'mongodb';
+import { marketBatchVotingCollection } from '../../lib/data/db_models';
+import { PollVoteEvent, StoredPollVoteMessage } from '@mijoco/stx_helpers/dist/index';
 
-export async function findPollVoteByHash(
-  pollVoteObjectHash: string
-): Promise<PollVoteEvent> {
-  const result = await marketBatchVotingCollection.findOne({
-    pollVoteObjectHash: pollVoteObjectHash,
-  });
-  return result as unknown as PollVoteEvent;
+export async function findPollVoteByHash(pollVoteObjectHash: string): Promise<PollVoteEvent> {
+	const result = await marketBatchVotingCollection.findOne({
+		pollVoteObjectHash: pollVoteObjectHash
+	});
+	return result as unknown as PollVoteEvent;
 }
 
-export async function findUnprocessedSip18PollMessages(
-  pollId: string
-): Promise<Array<StoredPollVoteMessage>> {
-  const result = await marketBatchVotingCollection
-    .find({ "poll-id": pollId })
-    .toArray();
-  return result as unknown as Array<StoredPollVoteMessage>;
+export async function findUnprocessedSip18PollMessages(pollId: string): Promise<Array<StoredPollVoteMessage>> {
+	const result = await marketBatchVotingCollection.find({ 'poll-id': pollId }).toArray();
+	return result as unknown as Array<StoredPollVoteMessage>;
 }
 
-export async function saveSip18PollVote(
-  pollVoteObjectHash: string,
-  voteMessage: StoredPollVoteMessage,
-  signature: SignatureData
-) {
-  voteMessage._id = voteMessage._id || new ObjectId();
-  voteMessage.pollVoteObjectHash = pollVoteObjectHash;
-  voteMessage.signature = signature.signature;
-  voteMessage.publicKey = signature.publicKey;
-  const result = await marketBatchVotingCollection.insertOne(voteMessage);
-  return await findPollVoteByHash(voteMessage["market-data-hash"]);
+export async function saveSip18PollVote(pollVoteObjectHash: string, voteMessage: StoredPollVoteMessage, signature: SignatureData) {
+	voteMessage._id = voteMessage._id || new ObjectId();
+	voteMessage.pollVoteObjectHash = pollVoteObjectHash;
+	voteMessage.signature = signature.signature;
+	voteMessage.publicKey = signature.publicKey;
+	const result = await marketBatchVotingCollection.insertOne(voteMessage);
+	return await findPollVoteByHash(voteMessage['market-data-hash']);
 }
