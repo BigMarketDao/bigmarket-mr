@@ -4,6 +4,7 @@ import { daoEventCollection } from '../../../lib/data/db_models';
 import { readDaoExtensionEvents } from './dao_events_extension_helper';
 import { readPredictionEvents } from '../../predictions/dao_events_prediction_market_helper';
 import { getDaoConfig } from '../../../lib/config_dao';
+import { readScalarEvents } from '../../predictions/scalar/dao_events_scalar_market_helper';
 
 // 30 mins past every second hour: 30 */2 * * *'
 export const initScanDaoEventsJob = cron.schedule('* * * * *', async (fireDate) => {
@@ -32,7 +33,8 @@ export const initScanDaoEventsJob = cron.schedule('* * * * *', async (fireDate) 
 			}
 			await readDaoExtensionEvents(true, docContract);
 		}
-		await readPredictionEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
+		await readPredictionEvents(false, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
+		await readScalarEvents(false, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
 	} catch (err: any) {
 		console.log('initScanDaoEventsJob: ', err);
 	}

@@ -9,22 +9,17 @@ import { getConfig } from '../../../lib/config';
 import { daoEventCollection } from '../../../lib/data/db_models';
 import { getMetaData, getProposalContractSource, getProposalData } from '../proposals/proposal';
 import { findPollByMarketId } from '../../polling/polling_helper';
-import { readPredictionEvents } from '../../predictions/dao_events_prediction_market_helper';
-import { getDaoConfig } from '../../../lib/config_dao';
 import assert from 'assert';
 
 export async function readDaoExtensionEvents(genesis: boolean, daoContractId: string) {
 	const extensions = await fetchExtensions(daoContractId);
 	let predictions = false;
 	for (const extensionObj of extensions) {
-		if (extensionObj.extension.indexOf('prediction') > -1) {
-			predictions = true;
-			await readPredictionEvents(genesis, daoContractId, extensionObj.extension);
-		} else {
+		// skip prediction market event as they have their own handlers
+		if (!extensionObj.extension.startsWith('bme023')) {
 			await readVotingEvents(genesis, daoContractId, extensionObj.extension);
 		}
 	}
-	await readPredictionEvents(genesis, daoContractId, getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
 }
 
 async function readVotingEvents(genesis: boolean, daoContract: string, extensionContract: string) {

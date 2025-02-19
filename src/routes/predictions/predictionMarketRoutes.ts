@@ -91,8 +91,8 @@ router.get('/markets', async (req, res) => {
 	res.json(polls);
 });
 
-router.get('/markets/:marketId', async (req, res) => {
-	const market = await fetchMarket(Number(req.params.marketId));
+router.get('/markets/:marketId/:marketType', async (req, res) => {
+	const market = await fetchMarket(Number(req.params.marketId), Number(req.params.marketType));
 	res.json(market);
 });
 
@@ -107,8 +107,9 @@ router.get('/stakes/:marketId', async (req, res) => {
 });
 
 router.get('/count/markets', async (req, res) => {
-	const market = await countCreateMarketEvents();
-	res.json(market);
+	let markets = await countCreateMarketEvents(1);
+	markets += await countCreateMarketEvents(2);
+	res.json(markets);
 });
 
 export { router as predictionMarketRoutes };

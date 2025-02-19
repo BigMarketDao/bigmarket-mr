@@ -3,6 +3,8 @@ import { fetchBaseDaoEvents, fetchExtensionEvent, fetchExtensions, isPostValid, 
 import { readDaoExtensionEvents } from './dao_events_extension_helper';
 import { getGovernanceData, isExecutiveTeamMember, isExtension } from './extension';
 import { getDaoConfig } from '../../../lib/config_dao';
+import { readPredictionEvents } from '../../predictions/dao_events_prediction_market_helper';
+import { readScalarEvents } from '../../predictions/scalar/dao_events_scalar_market_helper';
 
 const router = express.Router();
 
@@ -15,6 +17,8 @@ router.post('/extensions/:daoContractId', async (req, res, next) => {
 			await readDaoEvents(true, req.params.daoContractId);
 			await readDaoExtensionEvents(true, req.params.daoContractId);
 			const events = await fetchBaseDaoEvents();
+			await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
+			await readScalarEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
 			res.send(events);
 		}
 	} catch (error) {
