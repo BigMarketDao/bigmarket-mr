@@ -39,7 +39,7 @@ async function resolveScalarEvents(url: string, currentOffset: number, count: nu
 	let urlOffset = url + '&offset=' + (currentOffset + count * 20);
 	const response = await fetch(urlOffset);
 	const val = await response.json();
-	console.log('resolveScalarEvents: processing ' + url + ' events from ', val);
+	// console.log('resolveScalarEvents: processing ' + url + ' events from ', val);
 
 	if (!val || !val.results || typeof val.results !== 'object' || val.results.length === 0) {
 		return false;

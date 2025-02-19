@@ -156,11 +156,12 @@ export async function updateClaimWinningsEvent(marketType:number, event: any, re
 }
 
 export async function updateMarketStakeEvent(marketType:number, event: any, result:any, daoContract:string, votingContract:string) {
+	console.log('updateMarketStakeEvent: ' + marketType + ' : ' + votingContract);
 	const marketId = Number(result.value['market-id'].value);
 	const amount = Number(result.value.amount.value);
 	const index = Number(result.value.index.value);
 	const voter = result.value.voter.value;
-
+	console.log('resolveScalarEvents: found object: ' + voter);
 	const contractEvent = {
 		_id: new ObjectId(),
 		event: 'market-stake',
@@ -174,9 +175,12 @@ export async function updateMarketStakeEvent(marketType:number, event: any, resu
 		index,
 		voter
 	} as PredictionMarketStakeEvent;
+	console.log('resolveScalarEvents: update event data: ');
 	await saveOrUpdateEvent(contractEvent);
+	console.log('resolveScalarEvents: updateMarketData: ');
 	await updateMarketData(marketId,marketType,votingContract)
 }
+// (print {event: "market-stake", market-id: market-id, index: index, category: category, amount: amount-less-fee, voter: tx-sender})
 
 export async function fetchAllowedTokens(): Promise<Array<TokenPermissionEvent>> {
 	const result = await daoEventCollection.find({ event: 'allowed-token', marketType: 1 }).toArray();
