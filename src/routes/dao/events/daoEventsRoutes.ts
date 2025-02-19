@@ -17,7 +17,7 @@ router.post('/extensions/:daoContractId', async (req, res, next) => {
 			await readDaoEvents(true, req.params.daoContractId);
 			await readDaoExtensionEvents(true, req.params.daoContractId);
 			const events = await fetchBaseDaoEvents();
-			await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
+			await readPredictionEvents(true, req.params.daoContractId, getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
 			await readScalarEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
 			res.send(events);
 		}

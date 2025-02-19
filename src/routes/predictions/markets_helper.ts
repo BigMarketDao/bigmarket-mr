@@ -161,7 +161,7 @@ export async function updateMarketStakeEvent(marketType:number, event: any, resu
 	const amount = Number(result.value.amount.value);
 	const index = Number(result.value.index.value);
 	const voter = result.value.voter.value;
-	console.log('resolveScalarEvents: found object: ' + voter);
+	console.log('updateMarketStakeEvent: found object: ' + voter);
 	const contractEvent = {
 		_id: new ObjectId(),
 		event: 'market-stake',
@@ -175,9 +175,9 @@ export async function updateMarketStakeEvent(marketType:number, event: any, resu
 		index,
 		voter
 	} as PredictionMarketStakeEvent;
-	console.log('resolveScalarEvents: update event data: ');
+	console.log('updateMarketStakeEvent: update event data: ');
 	await saveOrUpdateEvent(contractEvent);
-	console.log('resolveScalarEvents: updateMarketData: ');
+	console.log('updateMarketStakeEvent: updateMarketData: ');
 	await updateMarketData(marketId,marketType,votingContract)
 }
 // (print {event: "market-stake", market-id: market-id, index: index, category: category, amount: amount-less-fee, voter: tx-sender})
