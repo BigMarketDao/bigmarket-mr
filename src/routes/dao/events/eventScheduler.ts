@@ -27,11 +27,11 @@ export const initScanDaoEventsJob = cron.schedule('* * * * *', async (fireDate) 
 			const docContract = dao.daoContract;
 			console.log('Running: dao: ' + docContract);
 			try {
-				await readDaoEvents(false, docContract);
+				await readDaoEvents(true, docContract);
 			} catch (err) {
 				console.log('Error running: ecosystem-dao: ', err);
 			}
-			await readDaoExtensionEvents(true, docContract);
+			await readDaoExtensionEvents(false, docContract);
 		}
 		await readPredictionEvents(false, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
 		await readScalarEvents(false, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
