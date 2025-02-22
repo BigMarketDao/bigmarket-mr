@@ -31,7 +31,7 @@ async function readVotingEvents(genesis: boolean, daoContract: string, extension
 	let currentOffset = 0;
 	if (!genesis) {
 		currentOffset = await countEventsByVotingContract(daoContract, extensionContract);
-		if (currentOffset > 0) currentOffset -= 1;
+		if (currentOffset > 10) currentOffset -= 10;
 	}
 	let count = 0;
 	let moreEvents = true;
