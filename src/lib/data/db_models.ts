@@ -37,10 +37,10 @@ export async function connect() {
 	marketCollection = database.collection('marketCollection');
 	await marketCollection.createIndex({ createdAt: 1 }, { unique: true });
 	await marketCollection.createIndex({ objectHash: 1 }, { unique: true });
-	await marketCollection.createIndex({ marketId: 1, marketType: 1 }, { unique: true });
 
 	daoEventCollection = database.collection('daoEventCollection');
 	await daoEventCollection.createIndex({ txId: 1, event_index: 1 }, { unique: true });
+	await daoEventCollection.createIndex({ marketId: 1, marketType: 1 }, { unique: true });
 
 	pythEventCollection = database.collection('pythEventCollection');
 	await pythEventCollection.createIndex({ txId: 1, event_index: 1 }, { unique: true });
