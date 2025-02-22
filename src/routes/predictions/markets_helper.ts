@@ -1,29 +1,40 @@
-import { fetchMarketData, getSip10Properties, MarketData, PollVoteEvent, PredictionMarketClaimEvent, PredictionMarketCreateEvent, PredictionMarketStakeEvent, StoredOpinionPoll, TokenPermissionEvent, type MarketCategory } from '@mijoco/stx_helpers/dist/index';
+import {
+	fetchMarketData,
+	getSip10Properties,
+	MarketData,
+	PollVoteEvent,
+	PredictionMarketClaimEvent,
+	PredictionMarketCreateEvent,
+	PredictionMarketStakeEvent,
+	StoredOpinionPoll,
+	TokenPermissionEvent,
+	type MarketCategory
+} from '@mijoco/stx_helpers/dist/index';
 import { daoEventCollection, marketCategoriesCollection, marketCollection } from '../../lib/data/db_models';
 import { findUserEnteredPollByHash } from '../polling/polling_helper';
 import { getConfig } from '../../lib/config';
 import { ObjectId } from 'mongodb';
 
-async function updateMarketData(marketId:number, marketType:number, marketContract:string) {
+async function updateMarketData(marketId: number, marketType: number, marketContract: string) {
 	// marketData is kept up to date on the create-market event when new events are detected!
-	const marketData:MarketData|undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
-	if (!marketData) throw new Error('Problem calling api - maybe rate limits?')
+	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
+	if (!marketData) throw new Error('Problem calling api - maybe rate limits?');
 	const createEvent = await fetchMarket(marketId, marketType);
-	if (!createEvent) return // events sequence can screw eg during development
-		const changes = {
-		marketData,
+	if (!createEvent) return; // events sequence can screw eg during development
+	const changes = {
+		marketData
 	};
 	// if (!createEvent || changes.resolutionState < createEvent.resolutionState) return;
 	await updateDaoEvent(createEvent._id, changes);
 }
-export async function updatePredictionMarketCreateEvent(marketType:number, event:any, result:any, daoContract:string, marketContract:string) {
+export async function updatePredictionMarketCreateEvent(marketType: number, event: any, result: any, daoContract: string, marketContract: string) {
 	let metadataHash = result.value['market-data-hash'].value;
 	metadataHash = metadataHash.replace(/^0x/, '');
 	const unhashedData: StoredOpinionPoll = await findUserEnteredPollByHash(metadataHash);
 	const marketId = Number(result.value['market-id'].value);
 
-	const marketData:MarketData|undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
-	if (!marketData) throw new Error('Problem calling api - maybe rate limits?')
+	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
+	if (!marketData) throw new Error('Problem calling api - maybe rate limits?');
 	const createEvent = {
 		_id: new ObjectId(),
 		event: 'create-market',
@@ -34,44 +45,44 @@ export async function updatePredictionMarketCreateEvent(marketType:number, event
 		marketId,
 		marketType,
 		unhashedData,
-		marketData,
+		marketData
 	} as PredictionMarketCreateEvent;
 	await saveOrUpdateEvent(createEvent);
 }
 
-export async function updateResolveMarketEvent(marketType:number, result:any, marketContract:string) {
+export async function updateResolveMarketEvent(marketType: number, result: any, marketContract: string) {
 	console.log('resolve-market: result.value.event: ', result);
 	const marketId = Number(result.value['market-id'].value);
-	const marketData:MarketData|undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
+	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
 	const createEvent = await fetchMarket(marketId, marketType);
 	const changes = {
 		marketData,
 		resolver: result.value.resolver?.value || undefined,
-		priceOutcome: Number(result.value["price"]?.value || 0),
-		stacksHeight: Number(result.value["stacks-height"]?.value || 0),
+		priceOutcome: Number(result.value['price']?.value || 0),
+		stacksHeight: Number(result.value['stacks-height']?.value || 0)
 	};
 	// if (!createEvent || changes.resolutionState < createEvent.resolutionState) return;
 	await updateDaoEvent(createEvent._id, changes);
 }
 
-export async function updateResolveMarketUndisputedEvent(marketType:number, result:any, marketContract:string) {
+export async function updateResolveMarketUndisputedEvent(marketType: number, result: any, marketContract: string) {
 	const marketId = Number(result.value['market-id'].value);
 	const createEvent = await fetchMarket(marketId, marketType);
-	const marketData:MarketData|undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
+	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
 	if (!createEvent) return;
 	const changes = {
 		concluded: true,
-		marketData,
+		marketData
 	};
 	console.log('resolve-market-undisputed: changes: ' + createEvent._id, changes);
 	await updateDaoEvent(createEvent._id, changes);
 }
 
-export async function updateResolveMarketVoteEvent(marketType:number, result:any, marketContract:string) {
+export async function updateResolveMarketVoteEvent(marketType: number, result: any, marketContract: string) {
 	const marketId = Number(result.value['market-id'].value);
 	const createEvent = await fetchMarket(marketId, marketType);
 	if (!createEvent) return;
-	const marketData:MarketData|undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
+	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
 	const changes = {
 		marketData,
 		resolver: result.value.resolver.value
@@ -79,11 +90,11 @@ export async function updateResolveMarketVoteEvent(marketType:number, result:any
 	await updateDaoEvent(createEvent._id, changes);
 }
 
-export async function updateDisputeResolutionEvent(marketType:number, result:any, marketContract:string) {
+export async function updateDisputeResolutionEvent(marketType: number, result: any, marketContract: string) {
 	const marketId = Number(result.value['market-id'].value);
 	const createEvent = await fetchMarket(marketId, marketType);
 	if (!createEvent) return;
-	const marketData:MarketData|undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
+	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
 	const changes = {
 		marketData,
 		disputer: result.value.disputer.value
@@ -91,7 +102,7 @@ export async function updateDisputeResolutionEvent(marketType:number, result:any
 	await updateDaoEvent(createEvent._id, changes);
 }
 
-export async function updateTransferStakeEvent(marketType:number, result:any) {
+export async function updateTransferStakeEvent(marketType: number, result: any) {
 	const marketId = Number(result.value['market-id'].value);
 	const createEvent = await fetchMarket(marketId, marketType);
 	if (!createEvent) return;
@@ -101,7 +112,7 @@ export async function updateTransferStakeEvent(marketType:number, result:any) {
 	await updateDaoEvent(createEvent._id, changes);
 }
 
-export async function updateAllowedTokensEvent(marketType:number, event: any, result:any, daoContract:string, votingContract:string) {
+export async function updateAllowedTokensEvent(marketType: number, event: any, result: any, daoContract: string, votingContract: string) {
 	console.log('allowed-token: ', result.value.event);
 	const allowed = Boolean(result.value.enabled.value);
 	const token = result.value.token.value;
@@ -122,7 +133,7 @@ export async function updateAllowedTokensEvent(marketType:number, event: any, re
 	await saveOrUpdateEvent(contractEvent);
 }
 
-export async function updateClaimWinningsEvent(marketType:number, event: any, result:any, daoContract:string, votingContract:string) {
+export async function updateClaimWinningsEvent(marketType: number, event: any, result: any, daoContract: string, votingContract: string) {
 	const marketId = Number(result.value['market-id'].value);
 	const indexWon = Number(result.value['index-won'].value);
 	const claimer = result.value.claimer.value;
@@ -152,10 +163,10 @@ export async function updateClaimWinningsEvent(marketType:number, event: any, re
 		totalPool
 	} as PredictionMarketClaimEvent;
 	await saveOrUpdateEvent(contractEvent);
-	await updateMarketData(marketId,marketType,votingContract)
+	await updateMarketData(marketId, marketType, votingContract);
 }
 
-export async function updateMarketStakeEvent(marketType:number, event: any, result:any, daoContract:string, votingContract:string) {
+export async function updateMarketStakeEvent(marketType: number, event: any, result: any, daoContract: string, votingContract: string) {
 	console.log('updateMarketStakeEvent: ' + marketType + ' : ' + votingContract);
 	const marketId = Number(result.value['market-id'].value);
 	const amount = Number(result.value.amount.value);
@@ -178,7 +189,7 @@ export async function updateMarketStakeEvent(marketType:number, event: any, resu
 	console.log('updateMarketStakeEvent: update event data: ');
 	await saveOrUpdateEvent(contractEvent);
 	console.log('updateMarketStakeEvent: updateMarketData: ');
-	await updateMarketData(marketId,marketType,votingContract)
+	await updateMarketData(marketId, marketType, votingContract);
 }
 // (print {event: "market-stake", market-id: market-id, index: index, category: category, amount: amount-less-fee, voter: tx-sender})
 
@@ -199,13 +210,13 @@ export async function fetchMarketVotes(marketId: number): Promise<Array<PollVote
 	return result as unknown as Array<PollVoteEvent>;
 }
 
-export async function fetchMarketStakes(marketId: number): Promise<Array<PredictionMarketStakeEvent>> {
-	const result = await daoEventCollection.find({ marketId, event: 'market-stake' }).toArray();
+export async function fetchMarketStakes(marketId: number, marketType: number): Promise<Array<PredictionMarketStakeEvent>> {
+	const result = await daoEventCollection.find({ marketId, marketType, event: 'market-stake' }).toArray();
 	return result as unknown as Array<PredictionMarketStakeEvent>;
 }
 
-export async function fetchMarketClaims(marketId: number): Promise<Array<PredictionMarketClaimEvent>> {
-	const result = await daoEventCollection.find({ marketId, event: 'claim-winnings' }).toArray();
+export async function fetchMarketClaims(marketId: number, marketType: number): Promise<Array<PredictionMarketClaimEvent>> {
+	const result = await daoEventCollection.find({ marketId, marketType, event: 'claim-winnings' }).toArray();
 	return result as unknown as Array<PredictionMarketClaimEvent>;
 }
 
@@ -225,15 +236,16 @@ export async function fetchMarket(marketId: number, marketType?: number): Promis
 	const result = await daoEventCollection.findOne({
 		event: 'create-market',
 		marketId: marketId,
-		marketType: (marketType) ? marketType : 1
+		marketType: marketType ? marketType : 1
 	});
 	return result as unknown as PredictionMarketCreateEvent;
 }
 
-export async function countCreateMarketEvents(marketType:number): Promise<number> {
+export async function countCreateMarketEvents(marketType: number): Promise<number> {
 	try {
 		const result = await daoEventCollection.countDocuments({
-			event: 'create-market', marketType
+			event: 'create-market',
+			marketType
 		});
 		return Number(result);
 	} catch (err: any) {

@@ -96,13 +96,13 @@ router.get('/markets/:marketId/:marketType', async (req, res) => {
 	res.json(market);
 });
 
-router.get('/claims/:marketId', async (req, res) => {
-	const market = await fetchMarketClaims(Number(req.params.marketId));
+router.get('/claims/:marketId/:marketType', async (req, res) => {
+	const market = await fetchMarketClaims(Number(req.params.marketId), Number(req.params.marketType));
 	res.json(market);
 });
 
-router.get('/stakes/:marketId', async (req, res) => {
-	const market = await fetchMarketStakes(Number(req.params.marketId));
+router.get('/stakes/:marketId/:marketType', async (req, res) => {
+	const market = await fetchMarketStakes(Number(req.params.marketId), Number(req.params.marketType));
 	res.json(market);
 });
 
