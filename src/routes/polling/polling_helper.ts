@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb';
 import { daoEventCollection, marketCollection } from '../../lib/data/db_models';
 import { getConfig } from '../../lib/config';
 import { getC32AddressFromPublicKey } from '../dao/events/dao_events_helper';
-import { PollCreateEvent, OpinionPoll, StoredOpinionPoll, PollVoteMessage, verifyDaoSignature, pollVoteMessageToTupleCV, opinionPollToTupleCV } from '@mijoco/stx_helpers/dist/index';
+import { PollCreateEvent, OpinionPoll, StoredOpinionPoll, PollVoteMessage, verifyDaoSignature, pollVoteMessageToTupleCV, marketDataToTupleCV } from '@mijoco/stx_helpers/dist/index';
 
 type BaseAdminMessage = {
 	message: string;
@@ -37,7 +37,7 @@ export function isCreatePollPostValid(message: StoredOpinionPoll): boolean {
 	//     " signer: " +
 	//     stxAddressFromKey
 	// );
-	const pollMessage = opinionPollToTupleCV(message.name, message.category, message.createdAt, message.proposer, message.token);
+	const pollMessage = marketDataToTupleCV(message.name, message.category, message.createdAt, message.proposer, message.token);
 
 	let res = verifyDaoSignature(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, pollMessage, message.publicKey, message.signature);
 	return typeof res === 'string';
