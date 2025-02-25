@@ -15,8 +15,7 @@ export function printConfig() {
 	console.log('network = ' + CONFIG.network);
 	console.log('publicAppName = ' + CONFIG.publicAppName);
 	console.log('publicAppVersion = ' + CONFIG.publicAppVersion);
-	console.log('g_client_id = ' + CONFIG.g_client_id);
-	console.log('g_javascript_origins = ' + CONFIG.g_javascript_origins);
+	console.log('walletKey = ' + CONFIG.walletKey);
 }
 
 export function setConfigOnStart() {
@@ -43,6 +42,7 @@ export function setConfigOnStart() {
 	CONFIG.stacksApi = process.env[network + '_sui_stacksApi'] || '';
 	CONFIG.publicAppName = process.env[network + '_sui_publicAppName'] || '';
 	CONFIG.publicAppVersion = process.env[network + '_sui_publicAppVersion'] || '';
+	CONFIG.walletKey = process.env[network + '_sui_walletKey'] || '';
 }
 
 export function getConfig() {

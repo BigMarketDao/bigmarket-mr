@@ -210,6 +210,11 @@ export async function fetchMarketVotes(marketId: number): Promise<Array<PollVote
 	return result as unknown as Array<PollVoteEvent>;
 }
 
+export async function fetchResolvableMarkets(): Promise<Array<PredictionMarketCreateEvent>> {
+	const result = await daoEventCollection.find({ 'marketData.resolutionState': 0, marketType: 1, event: 'create-market' }).toArray();
+	return result as unknown as Array<PredictionMarketCreateEvent>;
+}
+
 export async function fetchMarketStakes(marketId: number, marketType: number): Promise<Array<PredictionMarketStakeEvent>> {
 	const result = await daoEventCollection.find({ marketId, marketType, event: 'market-stake' }).toArray();
 	return result as unknown as Array<PredictionMarketStakeEvent>;
