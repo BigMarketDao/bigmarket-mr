@@ -1,18 +1,6 @@
-import { fetchMarketData, MarketData, PredictionMarketCreateEvent, PredictionMarketStakeEvent } from '@mijoco/stx_helpers/dist/index';
-import { daoEventCollection, marketCategoriesCollection, marketCollection } from '../../lib/data/db_models';
-import { findUserEnteredPollByHash } from '../polling/polling_helper';
-import { getConfig } from '../../lib/config';
-import { ObjectId } from 'mongodb';
-import { fetchMarket } from './markets_helper';
+import { LeaderBoard, PredictionMarketStakeEvent, TopMarket } from '@mijoco/stx_helpers/dist/index';
+import { daoEventCollection } from '../../lib/data/db_models';
 
-export type TopMarket = {
-	market: PredictionMarketCreateEvent;
-	totalStakes: number;
-};
-export type LeaderBoard = {
-	latestPredicitons: Array<PredictionMarketStakeEvent>;
-	topMarkets: Array<any>;
-};
 export async function getLeaderBoard(): Promise<LeaderBoard> {
 	const changes = {
 		latestPredicitons: await getLatestPredictEvents(),
