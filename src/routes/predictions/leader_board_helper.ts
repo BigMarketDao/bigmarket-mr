@@ -10,7 +10,7 @@ export async function getLeaderBoard(): Promise<LeaderBoard> {
 }
 
 async function getLatestPredictEvents(): Promise<Array<PredictionMarketStakeEvent>> {
-	const latestEvents = await daoEventCollection.find({ event: 'market-stake' }).sort({ _id: -1 }).limit(20).toArray();
+	const latestEvents = await daoEventCollection.find({ event: 'market-stake' }).sort({ _id: -1 }).limit(10).toArray();
 
 	// console.log(latestEvents);
 	return latestEvents as Array<PredictionMarketStakeEvent>;
