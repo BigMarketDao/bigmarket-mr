@@ -52,7 +52,6 @@ async function resolvePredictionEvents(url: string, currentOffset: number, count
 	let urlOffset = url + '&offset=' + (currentOffset + count * 20);
 	const response = await fetch(urlOffset);
 	const val = await response.json();
-	console.log('resolvePredictionEvents: processing ' + url + ' events from ', val);
 
 	if (!val || !val.results || typeof val.results !== 'object' || val.results.length === 0) {
 		return false;
