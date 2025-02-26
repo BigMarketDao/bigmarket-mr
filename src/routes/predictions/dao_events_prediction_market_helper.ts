@@ -87,15 +87,15 @@ async function processEvent(event: any, daoContract: string, votingContract: str
 	} else if (result.value.event.value === 'market-stake') {
 		await updateMarketStakeEvent(1, event, result, daoContract, votingContract);
 	} else if (result.value.event.value === 'resolve-market') {
-		await updateResolveMarketEvent(1, result, votingContract);
+		await updateResolveMarketEvent(1, event, result, daoContract, votingContract);
 	} else if (result.value.event.value === 'resolve-market-undisputed') {
-		await updateResolveMarketUndisputedEvent(1, result, votingContract);
+		await updateResolveMarketUndisputedEvent(1, event, result, daoContract, votingContract);
 	} else if (result.value.event.value === 'resolve-market-vote') {
-		await updateResolveMarketVoteEvent(1, result, votingContract);
+		await updateResolveMarketVoteEvent(1, event, result, daoContract, votingContract);
 	} else if (result.value.event.value === 'dispute-resolution') {
-		await updateDisputeResolutionEvent(1, result, votingContract);
+		await updateDisputeResolutionEvent(1, event, result, daoContract, votingContract);
 	} else if (result.value.event.value === 'transfer-losing-stakes') {
-		await updateTransferStakeEvent(1, result);
+		await updateTransferStakeEvent(1, event, result, daoContract, votingContract);
 	} else if (result.value.event.value === 'claim-winnings') {
 		await updateClaimWinningsEvent(1, event, result, daoContract, votingContract);
 	} else {

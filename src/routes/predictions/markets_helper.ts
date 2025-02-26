@@ -50,22 +50,38 @@ export async function updatePredictionMarketCreateEvent(marketType: number, even
 	await saveOrUpdateEvent(createEvent);
 }
 
-export async function updateResolveMarketEvent(marketType: number, result: any, marketContract: string) {
+export async function updateResolveMarketEvent(marketType: number, event: any, result: any, daoContract: string, marketContract: string) {
 	console.log('resolve-market: result.value.event: ', result);
 	const marketId = Number(result.value['market-id'].value);
 	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
 	const createEvent = await fetchMarket(marketId, marketType);
+	const priceOutcome = Number(result.value['price']?.value || 0);
+	const stacksHeight = Number(result.value['stacks-height']?.value || 0);
 	const changes = {
 		marketData,
 		resolver: result.value.resolver?.value || undefined,
-		priceOutcome: Number(result.value['price']?.value || 0),
-		stacksHeight: Number(result.value['stacks-height']?.value || 0)
+		priceOutcome: priceOutcome,
+		stacksHeight: stacksHeight
 	};
 	// if (!createEvent || changes.resolutionState < createEvent.resolutionState) return;
 	await updateDaoEvent(createEvent._id, changes);
+
+	const resolveEvent = {
+		_id: new ObjectId(),
+		event: 'resolve-market',
+		event_index: Number(event.event_index),
+		txId: event.tx_id,
+		daoContract,
+		votingContract: marketContract,
+		marketId,
+		marketType,
+		priceOutcome,
+		stacksHeight
+	};
+	await saveOrUpdateEvent(resolveEvent);
 }
 
-export async function updateResolveMarketUndisputedEvent(marketType: number, result: any, marketContract: string) {
+export async function updateResolveMarketUndisputedEvent(marketType: number, event: any, result: any, daoContract: string, marketContract: string) {
 	const marketId = Number(result.value['market-id'].value);
 	const createEvent = await fetchMarket(marketId, marketType);
 	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
@@ -76,9 +92,21 @@ export async function updateResolveMarketUndisputedEvent(marketType: number, res
 	};
 	console.log('resolve-market-undisputed: changes: ' + createEvent._id, changes);
 	await updateDaoEvent(createEvent._id, changes);
+
+	const resolveEvent = {
+		_id: new ObjectId(),
+		event: 'resolve-market-undisputed',
+		event_index: Number(event.event_index),
+		txId: event.tx_id,
+		daoContract,
+		votingContract: marketContract,
+		marketId,
+		marketType
+	};
+	await saveOrUpdateEvent(resolveEvent);
 }
 
-export async function updateResolveMarketVoteEvent(marketType: number, result: any, marketContract: string) {
+export async function updateResolveMarketVoteEvent(marketType: number, event: any, result: any, daoContract: string, marketContract: string) {
 	const marketId = Number(result.value['market-id'].value);
 	const createEvent = await fetchMarket(marketId, marketType);
 	if (!createEvent) return;
@@ -88,9 +116,21 @@ export async function updateResolveMarketVoteEvent(marketType: number, result: a
 		resolver: result.value.resolver.value
 	};
 	await updateDaoEvent(createEvent._id, changes);
+	const resolveEvent = {
+		_id: new ObjectId(),
+		event: 'resolve-market-vote',
+		event_index: Number(event.event_index),
+		txId: event.tx_id,
+		daoContract,
+		votingContract: marketContract,
+		marketId,
+		marketType,
+		resolver: result.value.resolver.value
+	};
+	await saveOrUpdateEvent(resolveEvent);
 }
 
-export async function updateDisputeResolutionEvent(marketType: number, result: any, marketContract: string) {
+export async function updateDisputeResolutionEvent(marketType: number, event: any, result: any, daoContract: string, marketContract: string) {
 	const marketId = Number(result.value['market-id'].value);
 	const createEvent = await fetchMarket(marketId, marketType);
 	if (!createEvent) return;
@@ -100,9 +140,21 @@ export async function updateDisputeResolutionEvent(marketType: number, result: a
 		disputer: result.value.disputer.value
 	};
 	await updateDaoEvent(createEvent._id, changes);
+	const resolveEvent = {
+		_id: new ObjectId(),
+		event: 'dispute-resolution',
+		event_index: Number(event.event_index),
+		txId: event.tx_id,
+		daoContract,
+		votingContract: marketContract,
+		marketId,
+		marketType,
+		disputer: result.value.disputer.value
+	};
+	await saveOrUpdateEvent(resolveEvent);
 }
 
-export async function updateTransferStakeEvent(marketType: number, result: any) {
+export async function updateTransferStakeEvent(marketType: number, event: any, result: any, daoContract: string, marketContract: string) {
 	const marketId = Number(result.value['market-id'].value);
 	const createEvent = await fetchMarket(marketId, marketType);
 	if (!createEvent) return;
@@ -110,6 +162,18 @@ export async function updateTransferStakeEvent(marketType: number, result: any) 
 		transferLosingStakes: Number(result.value.balance.value)
 	};
 	await updateDaoEvent(createEvent._id, changes);
+	const resolveEvent = {
+		_id: new ObjectId(),
+		event: 'transfer-losing-stakes',
+		event_index: Number(event.event_index),
+		txId: event.tx_id,
+		daoContract,
+		votingContract: marketContract,
+		marketId,
+		marketType,
+		transferLosingStakes: Number(result.value.balance.value)
+	};
+	await saveOrUpdateEvent(resolveEvent);
 }
 
 export async function updateAllowedTokensEvent(marketType: number, event: any, result: any, daoContract: string, votingContract: string) {
@@ -273,7 +337,7 @@ export async function findPredictionContractEventAndIndex(event_index: number, t
 	return result;
 }
 
-async function saveOrUpdateEvent(contractEvent: PredictionMarketCreateEvent | PredictionMarketStakeEvent | PredictionMarketClaimEvent | TokenPermissionEvent) {
+async function saveOrUpdateEvent(contractEvent: any | PredictionMarketCreateEvent | PredictionMarketStakeEvent | PredictionMarketClaimEvent | TokenPermissionEvent) {
 	let pdb;
 	try {
 		pdb = await findPredictionContractEventByContractAndIndex(contractEvent.votingContract, contractEvent.event_index, contractEvent.txId);
