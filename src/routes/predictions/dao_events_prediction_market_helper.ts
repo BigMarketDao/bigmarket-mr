@@ -7,10 +7,23 @@ import { ObjectId } from 'mongodb';
 import { getConfig } from '../../lib/config';
 import { daoEventCollection } from '../../lib/data/db_models';
 import { findUserEnteredPollByHash } from '../polling/polling_helper';
-import { countCreateMarketEvents, fetchMarket, findPredictionContractEventByContractAndIndex, updateAllowedTokensEvent, updateClaimWinningsEvent, updateDisputeResolutionEvent, updateMarketStakeEvent, updatePredictionMarketCreateEvent, updateResolveMarketEvent, updateResolveMarketUndisputedEvent, updateResolveMarketVoteEvent, updateTransferStakeEvent } from './markets_helper';
+import {
+	countCreateMarketEvents,
+	fetchMarket,
+	findPredictionContractEventByContractAndIndex,
+	updateAllowedTokensEvent,
+	updateClaimWinningsEvent,
+	updateDisputeResolutionEvent,
+	updateMarketStakeEvent,
+	updatePredictionMarketCreateEvent,
+	updateResolveMarketEvent,
+	updateResolveMarketUndisputedEvent,
+	updateResolveMarketVoteEvent,
+	updateTransferStakeEvent
+} from './markets_helper';
 
 export async function readPredictionEvents(genesis: boolean, daoContract: string, extensionContract: string) {
-	console.log('readPredictionMarketEvents: extension contract ', extensionContract);
+	// console.log('readPredictionMarketEvents: extension contract ', extensionContract);
 	//return;
 	const url = getConfig().stacksApi + '/extended/v1/contract/' + extensionContract + '/events?limit=20';
 	const extensions: Array<ExtensionType> = [];
@@ -45,12 +58,13 @@ async function resolvePredictionEvents(url: string, currentOffset: number, count
 		return false;
 	}
 
-	console.log('resolvePredicitonEvents: processing ' + (val?.results?.length || 0) + ' events from ' + extensionContract);
+	// console.log('resolvePredicitonEvents: processing ' + (val?.results?.length || 0) + ' events from ' + extensionContract);
 	//console.log('resolvePredictionEvents: val: ', val)
 	for (const event of val.results) {
 		const pdb = await findPredictionContractEventByContractAndIndex(extensionContract, Number(event.event_index), event.tx_id);
 		if (!pdb) {
 			try {
+				console.log('resolvePredictionEvents: processing event: ' + event.event_index + ' of ' + (val?.results?.length || 0) + ' events from ' + extensionContract);
 				processEvent(event, daoContract, extensionContract);
 			} catch (err: any) {
 				console.log('resolvePredictionEvents: ', err);
@@ -62,28 +76,28 @@ async function resolvePredictionEvents(url: string, currentOffset: number, count
 
 async function processEvent(event: any, daoContract: string, votingContract: string) {
 	const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
-	console.log('processEvent: allowed-token: ', result);
+	// console.log('processEvent: allowed-token: ', result);
 
-	console.log('processEvent: new event: ' + result.value.event.value + ' contract=' + event.event_index + ' / ' + event.tx_id, event);
+	// console.log('processEvent: new event: ' + result.value.event.value + ' contract=' + event.event_index + ' / ' + event.tx_id, event);
 
 	if (result.value.event.value === 'create-market') {
 		await updatePredictionMarketCreateEvent(1, event, result, daoContract, votingContract);
 	} else if (result.value.event.value === 'allowed-token') {
-		await updateAllowedTokensEvent(1, event, result, daoContract, votingContract)
+		await updateAllowedTokensEvent(1, event, result, daoContract, votingContract);
 	} else if (result.value.event.value === 'market-stake') {
-		await updateMarketStakeEvent(1, event, result, daoContract, votingContract)
+		await updateMarketStakeEvent(1, event, result, daoContract, votingContract);
 	} else if (result.value.event.value === 'resolve-market') {
-		await updateResolveMarketEvent(1, result, votingContract)
+		await updateResolveMarketEvent(1, result, votingContract);
 	} else if (result.value.event.value === 'resolve-market-undisputed') {
-		await updateResolveMarketUndisputedEvent(1, result, votingContract)
+		await updateResolveMarketUndisputedEvent(1, result, votingContract);
 	} else if (result.value.event.value === 'resolve-market-vote') {
-		await updateResolveMarketVoteEvent(1, result, votingContract)
+		await updateResolveMarketVoteEvent(1, result, votingContract);
 	} else if (result.value.event.value === 'dispute-resolution') {
-		await updateDisputeResolutionEvent(1, result, votingContract)
+		await updateDisputeResolutionEvent(1, result, votingContract);
 	} else if (result.value.event.value === 'transfer-losing-stakes') {
 		await updateTransferStakeEvent(1, result);
 	} else if (result.value.event.value === 'claim-winnings') {
-		await updateClaimWinningsEvent(1, event, result, daoContract, votingContract)
+		await updateClaimWinningsEvent(1, event, result, daoContract, votingContract);
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}

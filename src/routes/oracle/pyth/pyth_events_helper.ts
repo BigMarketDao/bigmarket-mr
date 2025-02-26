@@ -62,7 +62,7 @@ async function resolveEvents(url: string, currentOffset: number, count: number):
 		const pdb = await findPythEvent(event.event_index, event.tx_id);
 		if (!pdb) {
 			try {
-				processEvent(event);
+				//processEvent(event);
 			} catch (err: any) {
 				console.log('resolveExtensionEvents: ', err);
 			}

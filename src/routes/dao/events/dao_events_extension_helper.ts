@@ -23,9 +23,6 @@ export async function readDaoExtensionEvents(genesis: boolean, daoContractId: st
 }
 
 async function readVotingEvents(genesis: boolean, daoContract: string, extensionContract: string) {
-	// console.log("readVotingEvents: daoContract ", daoContract);
-	// console.log("readVotingEvents: extension contract ", extensionContract);
-	//return;
 	const url = getConfig().stacksApi + '/extended/v1/contract/' + extensionContract + '/events?limit=20';
 	const extensions: Array<ExtensionType> = [];
 	let currentOffset = 0;
@@ -59,12 +56,12 @@ async function resolveExtensionEvents(url: string, currentOffset: number, count:
 		return false;
 	}
 
-	console.log('resolveExtensionEvents: processing ' + (val?.results?.length || 0) + ' events from ' + extensionContract);
 	//console.log('resolveExtensionEvents: val: ', val)
 	for (const event of val.results) {
 		const pdb = await findVotingContractEventByContractAndIndex(extensionContract, Number(event.event_index), event.tx_id);
 		if (!pdb) {
 			try {
+				console.log('resolveExtensionEvents: processing event: ' + event.event_index + ' of ' + (val?.results?.length || 0) + ' events from ' + extensionContract);
 				processEvent(event, daoContract, extensionContract);
 			} catch (err: any) {
 				console.log('resolveExtensionEvents: ', err);

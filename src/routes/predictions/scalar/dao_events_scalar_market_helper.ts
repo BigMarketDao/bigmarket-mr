@@ -2,15 +2,39 @@
  * sbtc - interact with Stacks Blockchain to read sbtc contract info
  */
 import { cvToJSON, deserializeCV } from '@stacks/transactions';
-import { ExtensionType, StoredOpinionPoll, PredictionMarketCreateEvent, PredictionMarketClaimEvent, PredictionMarketStakeEvent, ResolutionState, TokenPermissionEvent, getSip10Properties, fetchMarketData, MarketData } from '@mijoco/stx_helpers/dist/index';
+import {
+	ExtensionType,
+	StoredOpinionPoll,
+	PredictionMarketCreateEvent,
+	PredictionMarketClaimEvent,
+	PredictionMarketStakeEvent,
+	ResolutionState,
+	TokenPermissionEvent,
+	getSip10Properties,
+	fetchMarketData,
+	MarketData
+} from '@mijoco/stx_helpers/dist/index';
 import { ObjectId } from 'mongodb';
-import { countCreateMarketEvents, fetchMarket, findPredictionContractEventByContractAndIndex, updateAllowedTokensEvent, updateClaimWinningsEvent, updateDisputeResolutionEvent, updateMarketStakeEvent, updatePredictionMarketCreateEvent, updateResolveMarketEvent, updateResolveMarketUndisputedEvent, updateResolveMarketVoteEvent, updateTransferStakeEvent } from '../markets_helper';
+import {
+	countCreateMarketEvents,
+	fetchMarket,
+	findPredictionContractEventByContractAndIndex,
+	updateAllowedTokensEvent,
+	updateClaimWinningsEvent,
+	updateDisputeResolutionEvent,
+	updateMarketStakeEvent,
+	updatePredictionMarketCreateEvent,
+	updateResolveMarketEvent,
+	updateResolveMarketUndisputedEvent,
+	updateResolveMarketVoteEvent,
+	updateTransferStakeEvent
+} from '../markets_helper';
 import { getConfig } from '../../../lib/config';
 import { findUserEnteredPollByHash } from '../../polling/polling_helper';
 import { daoEventCollection } from '../../../lib/data/db_models';
 
 export async function readScalarEvents(genesis: boolean, daoContract: string, extensionContract: string) {
-	console.log('readPredictionMarketEvents: extension contract ', extensionContract);
+	// console.log('readPredictionMarketEvents: extension contract ', extensionContract);
 	//return;
 	const url = getConfig().stacksApi + '/extended/v1/contract/' + extensionContract + '/events?limit=20';
 	const extensions: Array<ExtensionType> = [];
@@ -45,12 +69,13 @@ async function resolveScalarEvents(url: string, currentOffset: number, count: nu
 		return false;
 	}
 
-	console.log('readScalarEvents: processing ' + (val?.results?.length || 0) + ' events from ' + extensionContract);
+	// console.log('readScalarEvents: processing ' + (val?.results?.length || 0) + ' events from ' + extensionContract);
 	//console.log('resolveScalarEvents: val: ', val)
 	for (const event of val.results) {
 		const pdb = await findPredictionContractEventByContractAndIndex(extensionContract, Number(event.event_index), event.tx_id);
 		if (!pdb) {
 			try {
+				console.log('resolveScalarEvents: processing event: ' + event.event_index + ' of ' + (val?.results?.length || 0) + ' events from ' + extensionContract);
 				processEvent(event, daoContract, extensionContract);
 			} catch (err: any) {
 				console.log('resolveScalarEvents: ', err);
@@ -70,21 +95,21 @@ async function processEvent(event: any, daoContract: string, votingContract: str
 	if (result.value.event.value === 'create-market') {
 		await updatePredictionMarketCreateEvent(2, event, result, daoContract, votingContract);
 	} else if (result.value.event.value === 'allowed-token') {
-		await updateAllowedTokensEvent(2, event, result, daoContract, votingContract)
+		await updateAllowedTokensEvent(2, event, result, daoContract, votingContract);
 	} else if (result.value.event.value === 'market-stake') {
-		await updateMarketStakeEvent(2, event, result, daoContract, votingContract)
+		await updateMarketStakeEvent(2, event, result, daoContract, votingContract);
 	} else if (result.value.event.value === 'resolve-market') {
-		await updateResolveMarketEvent(2, result, votingContract)
+		await updateResolveMarketEvent(2, result, votingContract);
 	} else if (result.value.event.value === 'resolve-market-undisputed') {
-		await updateResolveMarketUndisputedEvent(2, result, votingContract)
+		await updateResolveMarketUndisputedEvent(2, result, votingContract);
 	} else if (result.value.event.value === 'resolve-market-vote') {
-		await updateResolveMarketVoteEvent(2, result, votingContract)
+		await updateResolveMarketVoteEvent(2, result, votingContract);
 	} else if (result.value.event.value === 'dispute-resolution') {
-		await updateDisputeResolutionEvent(2, result, votingContract)
+		await updateDisputeResolutionEvent(2, result, votingContract);
 	} else if (result.value.event.value === 'transfer-losing-stakes') {
 		await updateTransferStakeEvent(2, result);
 	} else if (result.value.event.value === 'claim-winnings') {
-		await updateClaimWinningsEvent(2, event, result, daoContract, votingContract)
+		await updateClaimWinningsEvent(2, event, result, daoContract, votingContract);
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}
