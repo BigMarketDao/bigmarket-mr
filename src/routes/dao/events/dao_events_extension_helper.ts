@@ -58,10 +58,9 @@ async function resolveExtensionEvents(url: string, currentOffset: number, count:
 
 	//console.log('resolveExtensionEvents: val: ', val)
 	for (const event of val.results) {
-		const pdb = await findVotingContractEventByContractAndIndex(extensionContract, Number(event.event_index), event.tx_id);
+		const pdb = await findVotingContractEventByContractAndIndex(Number(event.event_index), event.tx_id);
 		if (!pdb) {
 			try {
-				console.log('resolveExtensionEvents: processing event: ' + event.event_index + ' of ' + (val?.results?.length || 0) + ' events from ' + extensionContract);
 				processEvent(event, daoContract, extensionContract);
 			} catch (err: any) {
 				console.log('resolveExtensionEvents: ', err);
@@ -86,6 +85,7 @@ async function processEvent(event: any, daoContract: string, votingContract: str
 	//     " / " +
 	//     event.tx_id
 	// );
+	console.log('resolvePredictionEvents: processing event: ' + result.value.event.value + ' : ' + event.event_index + ' events from ' + votingContract);
 
 	if (result.value.event.value === 'propose') {
 		const proposal = result.value.proposal.value;
@@ -247,9 +247,8 @@ export async function getVotesByProposal(proposal: string): Promise<any> {
  * Proposal methods
  */
 
-export async function findVotingContractEventByContractAndIndex(daoContract: string, event_index: number, txId: string): Promise<any> {
+export async function findVotingContractEventByContractAndIndex(event_index: number, txId: string): Promise<any> {
 	const result = await daoEventCollection.findOne({
-		daoContract,
 		event_index,
 		txId
 	});
@@ -266,7 +265,7 @@ export async function findVotingContractEventByTxIdAndEventIndex(event_index: nu
 
 async function saveOrUpdateEvent(votingContractEvent: VotingEventVoteOnProposal | VotingEventConcludeProposal | VotingEventProposeProposal | PollCreateEvent | PollVoteEvent) {
 	try {
-		const pdb = await findVotingContractEventByContractAndIndex(votingContractEvent.votingContract, votingContractEvent.event_index, votingContractEvent.txId);
+		const pdb = await findVotingContractEventByContractAndIndex(votingContractEvent.event_index, votingContractEvent.txId);
 		if (!pdb) {
 			await saveDaoEvent(votingContractEvent);
 			//await updateDaoEvent(votingContractEvent._id, votingContractEvent);

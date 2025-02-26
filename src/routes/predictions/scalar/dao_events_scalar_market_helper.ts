@@ -75,7 +75,6 @@ async function resolveScalarEvents(url: string, currentOffset: number, count: nu
 		const pdb = await findPredictionContractEventByContractAndIndex(extensionContract, Number(event.event_index), event.tx_id);
 		if (!pdb) {
 			try {
-				console.log('resolveScalarEvents: processing event: ' + event.event_index + ' of ' + (val?.results?.length || 0) + ' events from ' + extensionContract);
 				processEvent(event, daoContract, extensionContract);
 			} catch (err: any) {
 				console.log('resolveScalarEvents: ', err);
@@ -90,7 +89,7 @@ async function resolveScalarEvents(url: string, currentOffset: number, count: nu
 async function processEvent(event: any, daoContract: string, votingContract: string) {
 	const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
 
-	console.log('processEvent: new event: ' + result.value.event.value + ' contract=' + event.event_index + ' / ' + event.tx_id, event);
+	console.log('resolvePredictionEvents: processing event: ' + result.value.event.value + ' : ' + event.event_index + ' events from ' + votingContract);
 
 	if (result.value.event.value === 'create-market') {
 		await updatePredictionMarketCreateEvent(2, event, result, daoContract, votingContract);
