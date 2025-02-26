@@ -5,6 +5,7 @@ import { DaoOverview, fetchContractBalances, fetchTokenSaleStages, GateKeeper, r
 import { getConfig } from '../../lib/config';
 import { getDaoConfig } from '../../lib/config_dao';
 import { fetchCreateMarketMerkleInput } from '../gating/gating_helper';
+import { getLeaderBoard } from './leader_board_helper';
 
 const router = express.Router();
 let cachedData: DaoOverview | null = null; // simpple cache
@@ -71,6 +72,11 @@ router.post('/markets', async (req, res) => {
 			}
 		}
 	}
+});
+
+router.get('/markets/leader-board', async (req, res) => {
+	const board = await getLeaderBoard();
+	res.json(board);
 });
 
 router.get('/markets/allowed-tokens', async (req, res) => {

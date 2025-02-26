@@ -1,0 +1,55 @@
+import { fetchMarketData, MarketData, PredictionMarketCreateEvent, PredictionMarketStakeEvent } from '@mijoco/stx_helpers/dist/index';
+import { daoEventCollection, marketCategoriesCollection, marketCollection } from '../../lib/data/db_models';
+import { findUserEnteredPollByHash } from '../polling/polling_helper';
+import { getConfig } from '../../lib/config';
+import { ObjectId } from 'mongodb';
+import { fetchMarket } from './markets_helper';
+
+export type TopMarket = {
+	market: PredictionMarketCreateEvent;
+	totalStakes: number;
+};
+export type LeaderBoard = {
+	latestPredicitons: Array<PredictionMarketStakeEvent>;
+	topMarkets: Array<any>;
+};
+export async function getLeaderBoard(): Promise<LeaderBoard> {
+	const changes = {
+		latestPredicitons: await getLatestPredictEvents(),
+		topMarkets: await topTVLMarkets()
+	};
+	return changes;
+}
+
+async function getLatestPredictEvents(): Promise<Array<PredictionMarketStakeEvent>> {
+	const latestEvents = await daoEventCollection.find({ event: 'market-stake' }).sort({ _id: -1 }).limit(20).toArray();
+
+	// console.log(latestEvents);
+	return latestEvents as Array<PredictionMarketStakeEvent>;
+}
+async function topTVLMarkets(): Promise<Array<TopMarket>> {
+	const topMarketData = await daoEventCollection
+		.aggregate([
+			{
+				$match: { 'marketData.concluded': false } // Filter only non-concluded markets
+			},
+			{
+				$addFields: { totalStakes: { $sum: '$marketData.stakes' } } // Calculate total stakes
+			},
+			{
+				$sort: { totalStakes: -1 } // Sort by highest total stakes
+			},
+			{
+				$limit: 5 // Get top 5 markets
+			}
+		])
+		.toArray();
+	const topMarkets = topMarketData.map((o) => {
+		return {
+			market: o,
+			totalStakes: o.totalStakes
+		};
+	});
+	console.log(topMarkets);
+	return topMarkets as Array<TopMarket>;
+}

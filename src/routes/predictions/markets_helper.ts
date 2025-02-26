@@ -201,7 +201,6 @@ export async function fetchAllowedTokens(): Promise<Array<TokenPermissionEvent>>
 
 export async function fetchActiveMarketCategories(): Promise<Array<MarketCategory>> {
 	const result = await marketCategoriesCollection.find({ active: true }).toArray();
-
 	return result as unknown as Array<MarketCategory>;
 }
 
