@@ -12,18 +12,15 @@ db.gatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': [
 # testnet
 
 db.marketCategoriesCollection.insertMany([
-{ name : 'crypto', information: '', displayName: 'Crypto', active: false},
-{ name : 'bitcoin', information: '', displayName: 'Bitcoin', active: false},
-{ name : 'stacks', information: '', displayName: 'Stacks', active: true},
-{ name : 'solana', information: '', displayName: 'Solana', active: false},
-{ name : 'sui', information: '', displayName: 'Sui', active: false},
-{ name : 'ethereum', information: '', displayName: 'Ethereum', active: false},
-{ name : 'memes', information: '', displayName: 'Memes', active: true},
-{ name : 'politics', information: '', displayName: 'Politics', active: false},
-{ name : 'sports', information: '', displayName: 'Sports', active: false},
-{ name : 'e-sports', information: '', displayName: 'E Sports', active: true},
-{ name : 'culture', information: '', displayName: 'Pop Culture', active: true},
-{ name : 'business', information: '', displayName: 'Business', active: false}])
+{ name : 'crypto', information: '', displayName: 'Crypto', active: true},
+{ name : 'Financial', information: '', displayName: 'Financial', active: true},
+{ name : 'sports', information: '', displayName: 'Sports', active: true},
+{ name : 'politics', information: '', displayName: 'Politics', active: true},
+{ name : 'economy', information: '', displayName: 'Economy', active: true},
+{ name : 'culture', information: '', displayName: 'Culture', active: true},
+{ name : 'music', information: '', displayName: 'Music', active: true},
+{ name : 'nsfw', information: '', displayName: 'NSFW', active: true},
+{ name : 'banter', information: '', displayName: 'Banter', active: true}])
 
 db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST31A25YBK50KFJ2QS0EQK9FNXEQJD4PR0828789R", "ST2ZGXYF58V9D2HXDTP3N02DC3F8G2251PPGRXDQD", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ"]})
 
