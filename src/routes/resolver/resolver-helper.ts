@@ -35,32 +35,6 @@ export async function sweepAndResolveMarkets(): Promise<Array<PredictionMarketCr
 	return markets;
 }
 
-async function sweepAndResolveMarketsTest(): Promise<any> {
-	const data = {
-		market_id: 2,
-		market_type: 1,
-		title: 'Eurovision Winner 2025',
-		description: 'Who wins Eurovision 2025? Another glitter bomb of talentless noise or a rare gem drowning in sequins and autotune? Europe votes, but does anyone really win?',
-		resolution_criteria:
-			"If the winner’s a gimmick act, we’ll call it ironic. If it’s an actual talent, we’ll call it rigged. And if it’s Sweden—again—just cancel the whole thing. Eurovision doesn’t crown the best; it crowns the loudest. The real winners? Meme accounts and TikTok thirst traps. Europe unites for one night to argue, cry, and pretend it matters. And we'll all do it again next year.",
-		outcome_categories: ['Croatia', 'Sweeden', 'Malta', 'Greec', 'Greece', 'Romania', 'Bulgria', 'Slovenia', 'Italy', 'Austria'],
-		resolves_at: 1747496563841,
-		sources: ['https://en.wikipedia.org/wiki/Eurovision_Song_Contest_2025']
-	};
-	const data2 = {
-		market_id: 2,
-		market_type: 1,
-		title: 'Liverpool vs Newcastle United',
-		description: 'Will Liverpool extend their lead at the top of the table?',
-		resolution_criteria: 'Three possible outcomes: The match is a drawer (select category 0), Liverpool win (select category 1) or Newcastle win (select category 2)',
-		outcome_categories: ['drawer', 'Liverpool win', 'Newcastle Win'],
-		resolves_at: 1747496563841,
-		sources: ['https://www.bbc.co.uk/sport/football/live/ce8j50rn3jyt#Scores']
-	};
-	const result = await llmResolveMarket(data2);
-	return result;
-}
-
 function flattenMarket(market: PredictionMarketCreateEvent): MarketLLMRequest {
 	const data = {
 		market_id: market.marketId,
@@ -106,4 +80,30 @@ function mapToMinMaxStrings(data: Array<string | ScalarMarketDataItem>): string[
 		return data as string[]; // Directly return if already an array of strings
 	}
 	return (data as { min: number; max: number }[]).map((item) => `${item.min},${item.max}`);
+}
+
+async function sweepAndResolveMarketsTest(): Promise<any> {
+	const data = {
+		market_id: 2,
+		market_type: 1,
+		title: 'Eurovision Winner 2025',
+		description: 'Who wins Eurovision 2025? Another glitter bomb of talentless noise or a rare gem drowning in sequins and autotune? Europe votes, but does anyone really win?',
+		resolution_criteria:
+			"If the winner’s a gimmick act, we’ll call it ironic. If it’s an actual talent, we’ll call it rigged. And if it’s Sweden—again—just cancel the whole thing. Eurovision doesn’t crown the best; it crowns the loudest. The real winners? Meme accounts and TikTok thirst traps. Europe unites for one night to argue, cry, and pretend it matters. And we'll all do it again next year.",
+		outcome_categories: ['Croatia', 'Sweeden', 'Malta', 'Greec', 'Greece', 'Romania', 'Bulgria', 'Slovenia', 'Italy', 'Austria'],
+		resolves_at: 1747496563841,
+		sources: ['https://en.wikipedia.org/wiki/Eurovision_Song_Contest_2025']
+	};
+	const data2 = {
+		market_id: 2,
+		market_type: 1,
+		title: 'Liverpool vs Newcastle United',
+		description: 'Will Liverpool extend their lead at the top of the table?',
+		resolution_criteria: 'Three possible outcomes: The match is a drawer (select category 0), Liverpool win (select category 1) or Newcastle win (select category 2)',
+		outcome_categories: ['drawer', 'Liverpool win', 'Newcastle Win'],
+		resolves_at: 1747496563841,
+		sources: ['https://www.bbc.co.uk/sport/football/live/ce8j50rn3jyt#Scores']
+	};
+	const result = await llmResolveMarket(data2);
+	return result;
 }
