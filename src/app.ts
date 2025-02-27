@@ -17,7 +17,7 @@ import { daoSip18VotingRoutes } from './routes/dao/sip18-voting/daoSip18VotingRo
 import { tokenSaleRoutes } from './routes/dao/token-sale/tokenSaleRoutes';
 import { exchangeRoutes } from './routes/rates/exchangeRoutes';
 import { pythRoutes } from './routes/oracle/pyth/pythRoutes';
-import { resolverRoutes } from './routes/resolver/resolverRoutes';
+import { agentRoutes } from './routes/agent/agentRoutes';
 import { initScanDaoEventsJob } from './routes/dao/events/eventScheduler';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao';
 import { initExchangeRatesJob } from './routes/rates/ratesScheduler';
@@ -68,7 +68,7 @@ app.use('/bigmarket-api/dao/token-sale', tokenSaleRoutes);
 app.use('/bigmarket-api/gating', gatingRoutes);
 app.use('/bigmarket-api/exchange', exchangeRoutes);
 app.use('/bigmarket-api/oracle', pythRoutes);
-app.use('/bigmarket-api/resolver', resolverRoutes);
+app.use('/bigmarket-api/agent', agentRoutes);
 
 console.log(`\n\nExpress is listening at http://localhost:${getConfig().port}`);
 console.log('Startup Environment: ', process.env.NODE_ENV);

@@ -8,7 +8,7 @@ import { fetchCreateMarketMerkleInput } from '../gating/gating_helper';
 import { getLeaderBoard } from './leader_board_helper';
 
 const router = express.Router();
-let cachedData: DaoOverview | null = null; // simpple cache
+export let cachedData: DaoOverview | null = null; // simpple cache
 let lastFetchTime = 0; // To track the last fetch timestamp
 //const CACHE_DURATION = 5 * 60 * 1000; // Cache duration in milliseconds (5 minutes)
 const CACHE_DURATION = 30 * 1000; // Cache duration in milliseconds (5 minutes)

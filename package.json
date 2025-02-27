@@ -7,7 +7,7 @@
 		"build:testnet": "NODE_ENV=testnet tsc",
 		"build:mainnet": "NODE_ENV=mainnet tsc",
 		"start": "NODE_ENV=testnet node dist/app.js",
-		"dev": "NODE_ENV=devnet npx ts-node-dev --respawn src/app.ts"
+		"dev": "NODE_ENV=testnet npx ts-node-dev --respawn src/app.ts"
 	},
 	"keywords": [],
 	"author": "",

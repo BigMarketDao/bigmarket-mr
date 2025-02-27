@@ -82,7 +82,7 @@ function mapToMinMaxStrings(data: Array<string | ScalarMarketDataItem>): string[
 	return (data as { min: number; max: number }[]).map((item) => `${item.min},${item.max}`);
 }
 
-async function sweepAndResolveMarketsTest(): Promise<any> {
+export async function sweepAndResolveMarketsTest(): Promise<any> {
 	const data = {
 		market_id: 2,
 		market_type: 1,
