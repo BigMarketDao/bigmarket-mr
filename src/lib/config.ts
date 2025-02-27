@@ -16,6 +16,7 @@ export function printConfig() {
 	console.log('publicAppName = ' + CONFIG.publicAppName);
 	console.log('publicAppVersion = ' + CONFIG.publicAppVersion);
 	console.log('walletKey = ' + CONFIG.walletKey);
+	console.log('llmServer = ' + CONFIG.llmServer);
 }
 
 export function setConfigOnStart() {
@@ -43,6 +44,7 @@ export function setConfigOnStart() {
 	CONFIG.publicAppName = process.env[network + '_sui_publicAppName'] || '';
 	CONFIG.publicAppVersion = process.env[network + '_sui_publicAppVersion'] || '';
 	CONFIG.walletKey = process.env[network + '_sui_walletKey'] || '';
+	CONFIG.llmServer = process.env[network + '_sui_llmServer'] || '';
 }
 
 export function getConfig() {

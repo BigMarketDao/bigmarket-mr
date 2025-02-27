@@ -78,7 +78,7 @@ async function llmResolveMarket(data: MarketLLMRequest) {
 	console.log('llmResolveMarkets: data:', data);
 
 	// Send market data to Python AI for resolution
-	const response = await axios.post('http://127.0.0.1:5000/resolve-market', data);
+	const response = await axios.post(`${getConfig().llmServer}/resolve-market`, data);
 	const llmResponse: MarketLLMResponse = response.data;
 	console.log('llmResolveMarket: llmResponse: ', llmResponse);
 	if (response.data.resolution !== undefined) {
