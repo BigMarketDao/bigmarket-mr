@@ -94,7 +94,7 @@ async function resolveMarketOnChain(data: MarketLLMRequest, outcomeIndex: number
 		contractName: market.votingContract.split('.')[0],
 		functionName: 'resolve-market',
 		functionArgs: [market.marketId, outcomeIndex],
-		senderKey: process.env.STACKS_WALLET_KEY,
+		senderKey: getConfig().walletKey,
 		network: getConfig().network
 	});
 	const txResult = await broadcastTransaction(transaction);
