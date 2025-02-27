@@ -1,10 +1,10 @@
 import express from 'express';
-import { fetchResolvableMarkets } from '../predictions/markets_helper';
+import { sweepAndResolveMarkets, sweepAndResolveMarketsTest } from './resolver-helper';
 
 const router = express.Router();
 
 router.get('/resolve', async (req, res) => {
-	const markets = await fetchResolvableMarkets();
+	const markets = await sweepAndResolveMarketsTest();
 	res.json(markets);
 });
 

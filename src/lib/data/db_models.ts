@@ -11,6 +11,7 @@ export let marketBatchVotingCollection: Collection;
 export let marketGatingCollection: Collection;
 export let marketInterestCollection: Collection;
 export let marketCategoriesCollection: Collection;
+export let marketLlmLogsCollection: Collection;
 
 export async function connect() {
 	let uriPrefix: string = 'mongodb+srv';
@@ -40,6 +41,9 @@ export async function connect() {
 
 	daoEventCollection = database.collection('daoEventCollection');
 	await daoEventCollection.createIndex({ txId: 1, event_index: 1 }, { unique: true });
+
+	marketLlmLogsCollection = database.collection('marketLlmLogsCollection');
+	await marketLlmLogsCollection.createIndex({ marketId: 1, marketType: 1, event: 1 }, { unique: true });
 
 	pythEventCollection = database.collection('pythEventCollection');
 	await pythEventCollection.createIndex({ txId: 1, event_index: 1 }, { unique: true });

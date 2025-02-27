@@ -268,8 +268,6 @@ async function saveOrUpdateEvent(votingContractEvent: VotingEventVoteOnProposal 
 		const pdb = await findVotingContractEventByContractAndIndex(votingContractEvent.event_index, votingContractEvent.txId);
 		if (!pdb) {
 			await saveDaoEvent(votingContractEvent);
-			//await updateDaoEvent(votingContractEvent._id, votingContractEvent);
-			// } else {
 		}
 	} catch (err: any) {
 		console.log('saveOrUpdateEvent: error2: ', err);
