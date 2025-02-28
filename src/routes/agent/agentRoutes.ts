@@ -9,13 +9,15 @@ router.get('/resolve', async (req, res) => {
 	res.json(markets);
 });
 
-router.get('/create/by-discovery/:proposer/:source', async (req, res) => {
-	const markets = await createMarketByDiscovery(req.params.proposer, req.params.source);
+router.post('/create/by-discovery', async (req, res) => {
+	const { proposer, source } = req.body;
+	const markets = await createMarketByDiscovery(proposer, source);
 	res.json(markets);
 });
 
-router.get('/create/by-suggestion/:proposer/:source', async (req, res) => {
-	const markets = await createMarketBySuggestion(req.params.proposer, req.params.source);
+router.post('/create/by-suggestion', async (req, res) => {
+	const { proposer, suggestion } = req.body;
+	const markets = await createMarketBySuggestion(proposer, suggestion);
 	res.json(markets);
 });
 
