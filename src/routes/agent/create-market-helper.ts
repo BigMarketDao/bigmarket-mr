@@ -30,13 +30,13 @@ export async function createMarketByDiscovery(proposer: string, source: string):
 	const response = await axios.post(`${getConfig().llmServer}/discover-markets`, {
 		news_url: source
 	});
-	const llmResponses: CreateMarketLLMResponse[] = response.data;
-	console.log('llmResolveMarket: createMarketByDiscovery: ', llmResponses);
+	const markets: CreateMarketLLMResponse[] = response.data.markets;
+	console.log('llmResolveMarket: createMarketByDiscovery: ', markets);
 	// if (response.data.resolution !== undefined) {
 	// 	await marketLlmLogsCollection.insertOne(llmResponse);
 	// 	await createMarketOnChain(proposer, llmResponse);
 	// }
-	return convertMarketToLocalFormat(proposer, llmResponses[0]);
+	return convertMarketToLocalFormat(proposer, markets[0]);
 }
 
 export async function createMarketBySuggestion(proposer: string, userIdea: string): Promise<StoredOpinionPoll> {
