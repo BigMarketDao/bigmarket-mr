@@ -14,4 +14,9 @@ router.get('/create/by-discovery/:proposer/:source', async (req, res) => {
 	res.json(markets);
 });
 
+router.get('/create/by-suggestion/:proposer/:source', async (req, res) => {
+	const markets = await createMarketBySuggestion(req.params.proposer, req.params.source);
+	res.json(markets);
+});
+
 export { router as agentRoutes };

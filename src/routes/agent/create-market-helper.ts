@@ -31,11 +31,24 @@ export async function createMarketByDiscovery(proposer: string, source: string):
 		news_url: source
 	});
 	const llmResponse: CreateMarketLLMResponse = response.data;
-	console.log('llmResolveMarket: llmResponse: ', llmResponse);
-	if (response.data.resolution !== undefined) {
-		await marketLlmLogsCollection.insertOne(llmResponse);
-		await createMarketOnChain(proposer, llmResponse);
-	}
+	console.log('llmResolveMarket: createMarketByDiscovery: ', llmResponse);
+	// if (response.data.resolution !== undefined) {
+	// 	await marketLlmLogsCollection.insertOne(llmResponse);
+	// 	await createMarketOnChain(proposer, llmResponse);
+	// }
+	return llmResponse;
+}
+
+export async function createMarketBySuggestion(proposer: string, userIdea: string): Promise<CreateMarketLLMResponse> {
+	const response = await axios.post(`${getConfig().llmServer}/create-market`, {
+		user_idea: userIdea
+	});
+	const llmResponse: CreateMarketLLMResponse = response.data;
+	console.log('llmResolveMarket: createMarketBySuggestion: ', llmResponse);
+	// if (response.data.resolution !== undefined) {
+	// 	await marketLlmLogsCollection.insertOne(llmResponse);
+	// 	await createMarketOnChain(proposer, llmResponse);
+	// }
 	return llmResponse;
 }
 
