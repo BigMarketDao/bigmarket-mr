@@ -78,7 +78,7 @@ async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateM
 	const marketMeta = {
 		name: llmResponse.title,
 		description: llmResponse.description,
-		category: matchMarketSector(llmResponse.market_sector),
+		category: await matchMarketSector(llmResponse.market_sector),
 		criterion: {
 			resolvesAt: new Date(llmResponse.earliest_resolution_date).getTime(),
 			sources: llmResponse.sources,
