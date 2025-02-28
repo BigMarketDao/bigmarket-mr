@@ -1,6 +1,6 @@
 import express from 'express';
 import { sweepAndResolveMarkets } from './resolver-helper';
-import { createMarketByDiscovery } from './create-market-helper';
+import { createMarketByDiscovery, createMarketBySuggestion } from './create-market-helper';
 
 const router = express.Router();
 
