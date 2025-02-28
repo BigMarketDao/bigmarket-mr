@@ -84,6 +84,7 @@ async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateM
 			sources: llmResponse.sources,
 			criteria: llmResponse.resolution_criteria
 		},
+		outcomes: llmResponse.outcome_categories,
 		startBurnHeight: 0,
 		endBurnHeight: 0,
 		createdAt: new Date().getTime(),
