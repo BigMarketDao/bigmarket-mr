@@ -8,6 +8,8 @@ import { bufferCV, Cl, ClarityValue, contractPrincipalCV, listCV, ListCV, noneCV
 import { hexToBytes } from '@stacks/common';
 import { fetchCreateMarketMerkleInput } from '../gating/gating_helper';
 import { cachedData } from '../predictions/predictionMarketRoutes';
+import { llm_markets } from './liverpool';
+import { matchMarketSector } from './matchMarketSector';
 
 const axios = require('axios');
 const { makeContractCall, broadcastTransaction } = require('@stacks/transactions');
@@ -27,10 +29,10 @@ export type CreateMarketLLMResponse = {
 
 // send user input to python server - await new market response
 export async function createMarketByDiscovery(proposer: string, source: string): Promise<StoredOpinionPoll> {
-	const response = await axios.post(`${getConfig().llmServer}/discover-markets`, {
-		news_url: source
-	});
-	const markets: CreateMarketLLMResponse[] = response.data.markets;
+	// const response = await axios.post(`${getConfig().llmServer}/discover-markets`, {
+	// 	news_url: source
+	// });
+	const markets: CreateMarketLLMResponse[] = llm_markets; //response.data.markets;
 	console.log('llmResolveMarket: createMarketByDiscovery: ', markets);
 	// if (response.data.resolution !== undefined) {
 	// 	await marketLlmLogsCollection.insertOne(llmResponse);
@@ -40,10 +42,10 @@ export async function createMarketByDiscovery(proposer: string, source: string):
 }
 
 export async function createMarketBySuggestion(proposer: string, userIdea: string): Promise<StoredOpinionPoll> {
-	const response = await axios.post(`${getConfig().llmServer}/create-market`, {
-		user_idea: userIdea
-	});
-	const llmResponse: CreateMarketLLMResponse = response.data;
+	// const response = await axios.post(`${getConfig().llmServer}/create-market`, {
+	// 	user_idea: userIdea
+	// });
+	const llmResponse: CreateMarketLLMResponse = llm_markets[1]; //response.data;
 	console.log('llmResolveMarket: createMarketBySuggestion: ', llmResponse);
 	// if (response.data.resolution !== undefined) {
 	// 	await marketLlmLogsCollection.insertOne(llmResponse);
@@ -76,7 +78,7 @@ async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateM
 	const marketMeta = {
 		name: llmResponse.title,
 		description: llmResponse.description,
-		category: llmResponse.market_sector,
+		category: matchMarketSector(llmResponse.market_sector),
 		criterion: {
 			resolvesAt: new Date(llmResponse.earliest_resolution_date).getTime(),
 			sources: llmResponse.sources,

@@ -268,6 +268,11 @@ export async function fetchActiveMarketCategories(): Promise<Array<MarketCategor
 	return result as unknown as Array<MarketCategory>;
 }
 
+export async function fetchAllMarketCategories(): Promise<Array<MarketCategory>> {
+	const result = await marketCategoriesCollection.find({}).toArray();
+	return result as unknown as Array<MarketCategory>;
+}
+
 export async function fetchMarketVotes(marketId: number): Promise<Array<PollVoteEvent>> {
 	const result = await daoEventCollection.find({ pollId: marketId, event: 'market-vote' }).toArray();
 	return result as unknown as Array<PollVoteEvent>;

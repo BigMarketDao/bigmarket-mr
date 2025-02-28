@@ -1,3 +1,33 @@
+export const llm_markets = [
+	{
+		description: "Predict whether The Guardian's cricket newsletter will see a subscriber count increase of at least 10% by March 15, 2025.",
+		earliest_resolution_date: '2025-03-15',
+		market_sector: 'Media',
+		outcome_categories: ['Yes', 'No'],
+		resolution_criteria: "The subscriber count will be verified by The Guardian's official subscriber data or a reputable third-party analytics platform.",
+		sources: ['The Guardian', 'Third-party analytics platforms'],
+		title: "Will The Guardian's cricket newsletter subscriber count increase by at least 10% by March 15, 2025?"
+	},
+	{
+		description: "Predict whether The Guardian's rugby union newsletter will receive more than 50,000 unique opens by March 20, 2025.",
+		earliest_resolution_date: '2025-03-20',
+		market_sector: 'Media',
+		outcome_categories: ['Yes', 'No'],
+		resolution_criteria: "The unique open count will be verified by The Guardian's official email analytics or a reputable third-party email marketing platform.",
+		sources: ['The Guardian', 'Third-party email marketing platforms'],
+		title: "Will The Guardian's rugby union newsletter receive more than 50,000 unique opens by March 20, 2025?"
+	},
+	{
+		description: "Predict whether The Guardian's sports weekend action preview article will receive over 100,000 page views by March 25, 2025.",
+		earliest_resolution_date: '2025-03-25',
+		market_sector: 'Media',
+		outcome_categories: ['Yes', 'No'],
+		resolution_criteria: "The page view count will be verified by The Guardian's official website analytics or a reputable third-party analytics platform.",
+		sources: ['The Guardian', 'Third-party analytics platforms'],
+		title: "Will The Guardian's sports weekend action preview article receive over 100,000 page views by March 25, 2025?"
+	}
+];
+
 export const liverpoolRequest = {
 	market_id: 2,
 	market_type: 1,
