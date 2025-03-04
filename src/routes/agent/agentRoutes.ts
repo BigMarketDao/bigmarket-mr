@@ -1,8 +1,14 @@
 import express from 'express';
-import { sweepAndResolveMarkets } from './resolver-helper';
+import { sweepAndResolveMarket, sweepAndResolveMarkets } from './resolver-helper';
 import { createMarketByDiscovery, createMarketBySuggestion } from './create-market-helper';
+import { timingSafeEqual } from 'crypto';
 
 const router = express.Router();
+
+router.get('/resolve/:marketId/:marketType', async (req, res) => {
+	const markets = await sweepAndResolveMarket(Number(req.params.marketId), Number(req.params.marketType));
+	res.json(markets);
+});
 
 router.get('/resolve', async (req, res) => {
 	const markets = await sweepAndResolveMarkets();

@@ -25,6 +25,13 @@ export type MarketLLMResponse = {
 	ai_response: string;
 	model: string;
 };
+export async function sweepAndResolveMarket(marketId: number, marketType: number): Promise<PredictionMarketCreateEvent> {
+	const market = (await fetchMarket(marketId, marketType)) as PredictionMarketCreateEvent;
+	console.log('sweepAndResolveMarkets: ', market);
+	await llmResolveMarket(flattenMarket(market));
+	return market;
+}
+
 export async function sweepAndResolveMarkets(): Promise<Array<PredictionMarketCreateEvent>> {
 	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market' }).toArray()) as Array<PredictionMarketCreateEvent>;
 	for (const market of markets) {
