@@ -17,6 +17,9 @@ export function printConfig() {
 	console.log('publicAppVersion = ' + CONFIG.publicAppVersion);
 	console.log('walletKey = ' + CONFIG.walletKey);
 	console.log('llmServer = ' + CONFIG.llmServer);
+	console.log('rpcUser = ' + CONFIG.rpcUser);
+	console.log('rpcHost = ' + CONFIG.rpcHost);
+	console.log('rpcPort = ' + CONFIG.rpcPort);
 }
 
 export function setConfigOnStart() {
@@ -45,10 +48,26 @@ export function setConfigOnStart() {
 	CONFIG.publicAppVersion = process.env[network + '_sui_publicAppVersion'] || '';
 	CONFIG.walletKey = process.env[network + '_sui_walletKey'] || '';
 	CONFIG.llmServer = process.env[network + '_sui_llmServer'] || '';
+	CONFIG.rpcUser = process.env[network + '_RPC_USER'] || '';
+	CONFIG.rpcPass = process.env[network + '_RPC_PASS'] || '';
+	CONFIG.rpcHost = process.env[network + '_RPC_HOST'] || '';
+	CONFIG.rpcPort = process.env[network + '_RPC_PORT'] || '';
+
+	CONFIG.mempoolUrl = 'https://mempool.space/api';
+	//CONFIG.mempoolUrl = 'https://beta.sbtc-mempool.tech/api/proxy';
 }
 
 export function getConfig() {
 	return CONFIG;
+}
+
+export function getRpcParams() {
+	return {
+		rpcHost: CONFIG.rpcHost,
+		rpcPort: CONFIG.rpcPort,
+		rpcPass: CONFIG.rpcPass,
+		rpcUser: CONFIG.rpcUser
+	};
 }
 
 export function isDev() {

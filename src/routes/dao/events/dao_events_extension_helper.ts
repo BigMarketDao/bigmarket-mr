@@ -85,7 +85,7 @@ async function processEvent(event: any, daoContract: string, votingContract: str
 	//     " / " +
 	//     event.tx_id
 	// );
-	console.log('resolvePredictionEvents: processing event: ' + result.value.event.value + ' : ' + event.event_index + ' events from ' + votingContract);
+	// TODO EVENT: console.log('resolvePredictionEvents: processing event: ' + result.value.event.value + ' : ' + event.event_index + ' events from ' + votingContract);
 
 	if (result.value.event.value === 'propose') {
 		const proposal = result.value.proposal.value;

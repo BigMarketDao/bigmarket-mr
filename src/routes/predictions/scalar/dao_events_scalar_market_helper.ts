@@ -89,7 +89,7 @@ async function resolveScalarEvents(url: string, currentOffset: number, count: nu
 async function processEvent(event: any, daoContract: string, votingContract: string) {
 	const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
 
-	console.log('resolvePredictionEvents: processing event: ' + result.value.event.value + ' : ' + event.event_index + ' events from ' + votingContract);
+	// TODO EVENT: console.log('resolvePredictionEvents: processing event: ' + result.value.event.value + ' : ' + event.event_index + ' events from ' + votingContract);
 
 	if (result.value.event.value === 'create-market') {
 		await updatePredictionMarketCreateEvent(2, event, result, daoContract, votingContract);

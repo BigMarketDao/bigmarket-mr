@@ -13,6 +13,12 @@ export type ConfigI = {
 	stacksApi: string;
 	walletKey: string;
 	llmServer: string;
+	rpcUser: string;
+	rpcPass: string;
+	rpcPort: string;
+	rpcHost: string;
+
+	mempoolUrl: string;
 
 	g_client_id: string;
 	g_project_id: string;

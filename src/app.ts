@@ -14,6 +14,7 @@ import { daoProposalRoutes } from './routes/dao/proposals/daoProposalRoutes';
 import { voterRoutes } from './routes/dao/voter/voterRoutes';
 import { gatingRoutes } from './routes/gating/gatingRoutes';
 import { daoSip18VotingRoutes } from './routes/dao/sip18-voting/daoSip18VotingRoutes';
+import { clarityBitcoinRoutes } from './routes/clarity-bitcoin/clarityBitcoinRoutes';
 import { tokenSaleRoutes } from './routes/dao/token-sale/tokenSaleRoutes';
 import { exchangeRoutes } from './routes/rates/exchangeRoutes';
 import { pythRoutes } from './routes/oracle/pyth/pythRoutes';
@@ -69,6 +70,7 @@ app.use('/bigmarket-api/gating', gatingRoutes);
 app.use('/bigmarket-api/exchange', exchangeRoutes);
 app.use('/bigmarket-api/oracle', pythRoutes);
 app.use('/bigmarket-api/agent', agentRoutes);
+app.use('/bigmarket-api/clarity-bitcoin', clarityBitcoinRoutes);
 
 console.log(`\n\nExpress is listening at http://localhost:${getConfig().port}`);
 console.log('Startup Environment: ', process.env.NODE_ENV);

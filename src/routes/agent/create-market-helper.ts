@@ -10,8 +10,8 @@ import { fetchCreateMarketMerkleInput } from '../gating/gating_helper';
 import { cachedData } from '../predictions/predictionMarketRoutes';
 import { llm_markets } from './liverpool';
 import { matchMarketSector } from './matchMarketSector';
-
-const axios = require('axios');
+import axios from 'axios';
+//const axios = require('axios');
 const { makeContractCall, broadcastTransaction } = require('@stacks/transactions');
 
 export type CreateMarketByDiscoveryLLMRequest = {
