@@ -3,7 +3,7 @@ import { concatBytes } from '@stacks/common';
 import { sha256 } from '@noble/hashes/sha256';
 import { reverseAndEven } from './bitcoin';
 import { ProofGenerationData, ProofRequest, TransactionProofSet } from './proof-types';
-import { calculateWitnessMerkleProof, calculateWTXID, getMerkleProof, MerkleProofStep, verifyMerkleProof } from './k-merkle';
+// import { calculateWitnessMerkleProof, calculateWTXID, getMerkleProof, MerkleProofStep, verifyMerkleProof } from './k-merkle';
 
 const LEFT = 'left';
 const RIGHT = 'right';
@@ -36,11 +36,11 @@ export function extractProofInfo(pgd: ProofGenerationData, data: ProofRequest): 
 			throw new Error('Transaction not found in the merkle tree');
 		}
 
-		const ktree = calculateWitnessMerkleProof(
-			data.block.tx.map((tx) => tx.hex),
-			txIndex
-		);
-		const kroot = hex.encode(ktree.root);
+		// const ktree = calculateWitnessMerkleProof(
+		// 	data.block.tx.map((tx) => tx.hex),
+		// 	txIndex
+		// );
+		// const kroot = hex.encode(ktree.root);
 		const merkleRoot = generateMerkleRoot(reversedTxIds);
 		const merkleHeaderRootLE = hex.encode(hex.decode(pgd.block.merkle_root).reverse());
 		if (merkleHeaderRootLE !== merkleRoot) {
@@ -53,22 +53,17 @@ export function extractProofInfo(pgd: ProofGenerationData, data: ProofRequest): 
 			console.log(`🔸 My WTXID: ${wtxids[i]}`);
 			console.log(`🔸 My WTXID-R: ${reversedWTxIds[i]}`);
 
-			const kennyWTXID = hex.encode(calculateWTXID(data.block.tx[i].hex));
-			console.log(`💎 Kenny's Proof TXID: ${kennyWTXID}`);
+			// // const kennyWTXID = hex.encode(calculateWTXID(data.block.tx[i].hex));
+			// console.log(`💎 Kenny's Proof TXID: ${kennyWTXID}`);
 
 			console.log('------------------------------------------------------');
 		}
 		// ✅ Generate Transaction Proof (wproof)
 		console.log('============================================================================');
-		console.log('extractProofInfo: data.block.tx    :' + data.block.tx.length);
-		console.log('extractProofInfo: data.block.tx[0] :' + data.block.tx[0]);
-		console.log('extractProofInfo: data.block.tx[i] :' + data.block.tx[txIndex]);
-		console.log('extractProofInfo: ktree    :', formatKennyProof(ktree));
 		let treeDepth = 0;
 		let computedWtxidRoot: string | undefined;
 		let wproof: Array<string>;
 		if (segwit) {
-			const witnessMerkleRootLE = hex.encode(hex.decode(pgd.witnessMerkleRoot).reverse());
 			const wtree = generateMerkleProof(reversedWTxIds[txIndex], reversedWTxIds);
 			treeDepth = wtree.treeDepth;
 			wproof = wtree.merkleProof;
@@ -76,11 +71,6 @@ export function extractProofInfo(pgd: ProofGenerationData, data: ProofRequest): 
 			computedWtxidRoot = generateMerkleRoot(reversedWTxIds);
 			const computedWtxidRootLE = hex.encode(hex.decode(computedWtxidRoot!).reverse());
 			const commitmentHash = calculateWitnessCommitment(computedWtxidRoot!, pgd.witnessReservedValue);
-			const commitmentHashLE = calculateWitnessCommitment(computedWtxidRootLE, pgd.witnessReservedValue);
-			// const commitmentKHash = calculateWitnessCommitment(kroot, pgd.witnessReservedValue);
-			// const commitmentKHashLE = calculateWitnessCommitment(hex.encode(hex.decode(kroot).reverse()), pgd.witnessReservedValue);
-			// const commitmentKHash = hex.encode(sha256(sha256(concatBytes(hex.decode(kroot), hex.decode(pgd.witnessReservedValue)))));
-			// const commitmentKHashLE = hex.encode(sha256(sha256(concatBytes(hex.decode(kroot).reverse(), hex.decode(pgd.witnessReservedValue)))));
 
 			pgd.witnessReservedValue = hex.encode(new Uint8Array(32)); // 32 bytes of 0x00
 
@@ -89,18 +79,12 @@ export function extractProofInfo(pgd: ProofGenerationData, data: ProofRequest): 
 			console.log(`💎 Kenny's Proof TXID: ${hash}`);
 
 			console.log('extractProofInfo: Witness Merkle Root                        :' + computedWtxidRoot);
-			console.log('extractProofInfo: Witness Merkle Root LE                     :' + commitmentHashLE);
 			console.log('extractProofInfo: Witness Merkle witnessReservedValue        :' + pgd.witnessReservedValue);
-			console.log('Witness Reserved Value Length                                :', hex.decode(pgd.witnessReservedValue).length);
-			console.log('extractProofInfo: Witness Merkle commitmentHash K            :' + hash);
-			console.log('extractProofInfo: Witness Merkle commitmentHash LE K         :' + hashLE);
 			console.log('extractProofInfo: Witness Merkle commitmentHash              :' + commitmentHash);
-			console.log('extractProofInfo: Witness Merkle commitmentHashLE            :' + commitmentHashLE);
-			console.log('extractProofInfo: Witness Merkle Root witnessMerkleRootLE    :' + witnessMerkleRootLE);
 			console.log('extractProofInfo: Witness Merkle Root witnessMerkleRoot      :' + pgd.witnessMerkleRoot);
-			if (kroot === computedWtxidRoot) {
-				console.log('✅ Consensus with Kenny!');
-			}
+			// if (kroot === computedWtxidRoot) {
+			// 	console.log('✅ Consensus with Kenny!');
+			// }
 			if (verifyWitnessCommitment(computedWtxidRoot!, pgd.witnessReservedValue, pgd.witnessMerkleRoot)) {
 				console.log('✅ Witness Commitment Matches!');
 			} else {
@@ -115,33 +99,27 @@ export function extractProofInfo(pgd: ProofGenerationData, data: ProofRequest): 
 			const isValid = verifyMerkleProofHex(reversedTxIds[txIndex], wproof, pgd.block.merkle_root, txIndex);
 			console.log('✅ Legacy proof:', isValid);
 		}
-
-		console.log('extractProofInfo: merkle treeDepth: ' + treeDepth);
-		console.log('extractProofInfo: merkle proof length: ' + wproof.length);
-		console.log('extractProofInfo: merkle root generated from tree: ' + merkleRoot);
-		console.log('extractProofInfo: merkle root taken from header  : ' + merkleHeaderRootLE);
-
 		// ✅ Generate Coinbase Proof (Always Standard Merkle Tree)
 		const coinbaseProof = generateMerkleProof(reversedTxIds[0], reversedTxIds);
 		const cproof = coinbaseProof.merkleProof;
 		const reversedTxIdsBuffer = reversedTxIds.map((txid) => Buffer.from(hex.decode(txid)));
-		const coinbaseProofKenny = getMerkleProof(reversedTxIdsBuffer, 0);
-		let isValid = verifyMerkleProof(Buffer.from(hex.decode(pgd.ctxhex)), coinbaseProofKenny, Buffer.from(hex.decode(pgd.block.merkle_root)));
-		console.log('✅ coinbaseProofKenny:', isValid);
+		// const coinbaseProofKenny = getMerkleProof(reversedTxIdsBuffer, 0);
+		// let isValid = verifyMerkleProof(Buffer.from(hex.decode(pgd.ctxhex)), coinbaseProofKenny, Buffer.from(hex.decode(pgd.block.merkle_root)));
+		// console.log('✅ coinbaseProofKenny:', isValid);
 
-		isValid = verifyMerkleProofHex(txids[0], cproof, pgd.block.merkle_root, 0);
+		let isValid = verifyMerkleProofHex(txids[0], cproof, pgd.block.merkle_root, 0);
 		console.log('✅ verifyMerkleProofHex:', isValid);
 
-		isValid = verifyMerkleProofHex(
-			txids[0],
-			coinbaseProofKenny.map((o) => hex.encode(o.data)),
-			pgd.block.merkle_root,
-			0
-		);
-		console.log('✅ verifyMerkleProofHexK:', isValid);
+		// isValid = verifyMerkleProofHex(
+		// 	txids[0],
+		// 	coinbaseProofKenny.map((o) => hex.encode(o.data)),
+		// 	pgd.block.merkle_root,
+		// 	0
+		// );
+		// console.log('✅ verifyMerkleProofHexK:', isValid);
 
-		isValid = verifyMerkleProof(Buffer.from(hex.decode(pgd.ctxhex)), convertToMerkleProofSteps(cproof), Buffer.from(hex.decode(pgd.block.merkle_root)));
-		console.log('✅ cproof:', isValid);
+		// isValid = verifyMerkleProof(Buffer.from(hex.decode(pgd.ctxhex)), convertToMerkleProofSteps(cproof), Buffer.from(hex.decode(pgd.block.merkle_root)));
+		// console.log('✅ cproof:', isValid);
 		// for (let i = 0; i < 10; i++) {
 		// 	console.log(`📌 Index ${i}:`);
 		// 	console.log(`🔹 Kenny CPROOF: ${hex.encode(coinbaseProofKenny[i].data)}`);
@@ -400,18 +378,7 @@ export function generateMerkleProof(hash: string, hashes: Array<string>) {
 
 	return { merkleProof, treeDepth };
 }
-function formatKennyProof(ktree: { proof: MerkleProofStep[]; root: Buffer }) {
-	console.log('📌 Kenny’s Witness Merkle Proof:');
 
-	console.log('🌳 Witness Merkle Root (Kenny):', hex.encode(ktree.root));
-
-	console.log('📜 Merkle Proof Steps:');
-	ktree.proof.forEach((step, index) => {
-		console.log(`  🧩 Step ${index}: ${hex.encode(step.data)}`);
-	});
-
-	console.log('------------------------------------------------------');
-}
 function verifyWitnessCommitment(witnessMerkleRoot: string, witnessReservedValue: string, expectedCommitment: string) {
 	// Decode hex values
 	const rootBytes = hex.decode(witnessMerkleRoot);
@@ -423,12 +390,13 @@ function verifyWitnessCommitment(witnessMerkleRoot: string, witnessReservedValue
 	// Compare with extracted witness commitment
 	return hex.encode(commitmentHash) === expectedCommitment;
 }
-function convertToMerkleProofSteps(hashes: string[]): MerkleProofStep[] {
-	return hashes.map((hash, index) => ({
-		position: index % 2 === 0 ? 'left' : 'right',
-		data: Buffer.from(hex.decode(hash))
-	}));
-}
+
+// function convertToMerkleProofSteps(hashes: string[]): MerkleProofStep[] {
+// 	return hashes.map((hash, index) => ({
+// 		position: index % 2 === 0 ? 'left' : 'right',
+// 		data: Buffer.from(hex.decode(hash))
+// 	}));
+// }
 
 /**
  * Verifies a Merkle proof using hex-encoded inputs.

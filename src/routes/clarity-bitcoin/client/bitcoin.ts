@@ -51,7 +51,7 @@ export function getProofGenerationData(data: ProofRequest): ProofGenerationData 
 	console.log('getProofGenerationData: numb txs segwit   :' + iddata.segCounter);
 	// const parsedTx = btc.Transaction.fromRaw(hex.decode(data.block.tx[txIndex].hex), { allowUnknownInputs: true, allowUnknownOutputs: true });
 	const parsedCTx = btc.Transaction.fromRaw(hex.decode(data.block.tx[0].hex), { allowUnknownInputs: true, allowUnknownOutputs: true, disableScriptCheck: true });
-	const { witnessReservedValue, witnessMerkleRoot } = getCommitmentHashFromRawCtx(data.block.tx[0].hex); //coinbaseWitness(parsedCTx);
+	const { witnessReservedValue, witnessMerkleRoot } = getCommitmentHashFromRawCtx(data.block.tx[0].hex);
 
 	console.log('getProofGenerationData: witnessReservedValue: ' + witnessReservedValue);
 	console.log('getProofGenerationData: witnessMerkleRoot: ' + witnessMerkleRoot);
@@ -139,72 +139,12 @@ function getTxDataEfficiently(data: ProofRequest): { segCounter: number; txids: 
 		// }
 		return {
 			txid: tx.txid, // TXID always stays big-endian
-			wtxid: tx.txid === tx.hash ? tx.hash : hex.encode(hex.decode(tx.hash)), // Reverse WTXID only for SegWit TXs
+			wtxid: tx.hash, //tx.txid === tx.hash ? tx.hash : hex.encode(hex.decode(tx.hash)), // Reverse WTXID only for SegWit TXs
 			segwit: tx.txid !== tx.hash
 		};
 	});
 
 	return { txids, segCounter };
-}
-
-// export function coinbaseWitness(parsedCTx: btc.Transaction) {
-// 	let witnessReservedValue: string = '00000000000000000000000000000000';
-// 	let witnessMerkleRoot: string = '00000000000000000000000000000000';
-// 	for (let i = 0; i < parsedCTx.outputsLength; i++) {
-// 		const output: TransactionOutput = parsedCTx.getOutput(i);
-// 		if (output.script && output.script[0] === 0x6a) {
-// 			// OP_RETURN check
-// 			if (hex.encode(output.script).startsWith('6a24aa21a9ed')) {
-// 				// OP_RETURN + Witness Commitment Tag
-// 				witnessMerkleRoot = hex.encode(output.script.slice(10, 74)); // Extract witness-merkle-root (32 bytes after tag)
-// 			}
-// 			const extractedData = hex.encode(output.script.slice(1)); // OP_RETURN data
-// 			witnessReservedValue = ensure32Bytes(extractedData);
-// 			break; // Stop after finding the first OP_RETURN
-// 		}
-// 	}
-// 	return { witnessReservedValue, witnessMerkleRoot };
-// }
-export function coinbaseWitness(parsedCTx: btc.Transaction) {
-	let witnessReservedValue = '000999000';
-	let witnessMerkleRoot = '000888000';
-
-	// 1️⃣ Extract witness merkle root from OP_RETURN output
-	for (let i = 0; i < parsedCTx.outputsLength; i++) {
-		const output: TransactionOutput = parsedCTx.getOutput(i);
-		if (output.script && output.script[0] === 0x6a) {
-			// OP_RETURN check (witness commitment)
-			const scriptHex = hex.encode(output.script);
-			// if (scriptHex.startsWith('6a24aa21a9ed')) {
-			// 	// OP_RETURN (0x6a) + Witness Commitment Tag (0x24aa21a9ed)
-			// 	witnessMerkleRoot = scriptHex.slice(10, 74); // Extract 32 bytes of witness merkle root
-			// 	console.log('Witness Merkle Root:' + witnessMerkleRoot);
-			// }
-			const scriptBytes = hex.decode(scriptHex); // Convert hex to bytes
-			if (scriptBytes[1] === 0x24 && scriptBytes[2] === 0xaa && scriptBytes[3] === 0x21 && scriptBytes[4] === 0xa9 && scriptBytes[5] === 0xed) {
-				// Extract 32 bytes (witness merkle root) starting from byte 6
-				witnessMerkleRoot = hex.encode(scriptBytes.slice(6, 38)); // 6 + 32 bytes
-				console.log('Witness Merkle Root:' + witnessMerkleRoot);
-			}
-
-			break; // Stop after finding the first OP_RETURN
-		}
-	}
-
-	// 2️⃣ Extract witness reserved value from coinbase transaction's first input
-	if (parsedCTx.inputsLength > 0) {
-		const coinbaseInput = parsedCTx.getInput(0);
-
-		// `finalScriptWitness` is an array of Uint8Array
-		if (coinbaseInput.finalScriptWitness && coinbaseInput.finalScriptWitness.length > 0) {
-			const firstWitnessEntry = coinbaseInput.finalScriptWitness[0]; // Extract first witness element
-			if (firstWitnessEntry.length >= 32) {
-				witnessReservedValue = ensure32Bytes(hex.encode(firstWitnessEntry.slice(0, 32)));
-			}
-		}
-	}
-
-	return { witnessReservedValue, witnessMerkleRoot };
 }
 
 function getCommitmentHashFromRawCtx(ctx: string) {
