@@ -1,5 +1,5 @@
 import express from 'express';
-import { fetchSip18Votes, findSip18VoteById, isPostValid, saveSip18Vote } from './sip18_voting_helper';
+import { fetchSip18Votes, findSip18VoteById, isPostValid, saveSip18Vote } from './sip18_voting_helper.js';
 
 const router = express.Router();
 

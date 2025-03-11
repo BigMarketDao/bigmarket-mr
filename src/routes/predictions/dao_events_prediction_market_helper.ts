@@ -2,11 +2,11 @@
  * sbtc - interact with Stacks Blockchain to read sbtc contract info
  */
 import { cvToJSON, deserializeCV } from '@stacks/transactions';
-import { ExtensionType, StoredOpinionPoll, PredictionMarketCreateEvent, PredictionMarketClaimEvent, PredictionMarketStakeEvent, ResolutionState, TokenPermissionEvent, getSip10Properties } from '@mijoco/stx_helpers/dist/index';
+import { ExtensionType, StoredOpinionPoll, PredictionMarketCreateEvent, PredictionMarketClaimEvent, PredictionMarketStakeEvent, ResolutionState, TokenPermissionEvent, getSip10Properties } from '@mijoco/stx_helpers/dist/index.js';
 import { ObjectId } from 'mongodb';
-import { getConfig } from '../../lib/config';
-import { daoEventCollection } from '../../lib/data/db_models';
-import { findUserEnteredPollByHash } from '../polling/polling_helper';
+import { getConfig } from '../../lib/config.js';
+import { daoEventCollection } from '../../lib/data/db_models.js';
+import { findUserEnteredPollByHash } from '../polling/polling_helper.js';
 import {
 	countCreateMarketEvents,
 	fetchMarket,
@@ -20,7 +20,7 @@ import {
 	updateResolveMarketUndisputedEvent,
 	updateResolveMarketVoteEvent,
 	updateTransferStakeEvent
-} from './markets_helper';
+} from './markets_helper.js';
 
 export async function readPredictionEvents(genesis: boolean, daoContract: string, extensionContract: string) {
 	// console.log('readPredictionMarketEvents: extension contract ', extensionContract);

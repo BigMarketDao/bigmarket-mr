@@ -1,5 +1,5 @@
 import express from 'express';
-import { getVotesByProposalAndVoter, getVotesByVoter } from './voter';
+import { getVotesByProposalAndVoter, getVotesByVoter } from './voter.js';
 
 const router = express.Router();
 

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getExchangeRates } from './rates_utils';
+import { getExchangeRates } from './rates_utils.js';
 
 const router = express.Router();
 

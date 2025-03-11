@@ -1,5 +1,5 @@
 import express from 'express';
-import { readPythEvents } from './pyth_events_helper';
+import { readPythEvents } from './pyth_events_helper.js';
 
 const router = express.Router();
 

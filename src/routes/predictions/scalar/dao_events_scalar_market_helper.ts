@@ -13,7 +13,7 @@ import {
 	getSip10Properties,
 	fetchMarketData,
 	MarketData
-} from '@mijoco/stx_helpers/dist/index';
+} from '@mijoco/stx_helpers/dist/index.js';
 import { ObjectId } from 'mongodb';
 import {
 	countCreateMarketEvents,
@@ -28,10 +28,10 @@ import {
 	updateResolveMarketUndisputedEvent,
 	updateResolveMarketVoteEvent,
 	updateTransferStakeEvent
-} from '../markets_helper';
-import { getConfig } from '../../../lib/config';
-import { findUserEnteredPollByHash } from '../../polling/polling_helper';
-import { daoEventCollection } from '../../../lib/data/db_models';
+} from '../markets_helper.js';
+import { getConfig } from '../../../lib/config.js';
+import { findUserEnteredPollByHash } from '../../polling/polling_helper.js';
+import { daoEventCollection } from '../../../lib/data/db_models.js';
 
 export async function readScalarEvents(genesis: boolean, daoContract: string, extensionContract: string) {
 	// console.log('readPredictionMarketEvents: extension contract ', extensionContract);

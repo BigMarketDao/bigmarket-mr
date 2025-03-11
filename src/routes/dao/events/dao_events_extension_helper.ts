@@ -2,13 +2,13 @@
  * sbtc - interact with Stacks Blockchain to read sbtc contract info
  */
 import { cvToJSON, deserializeCV } from '@stacks/transactions';
-import { VotingEventVoteOnProposal, VotingEventConcludeProposal, VotingEventProposeProposal, ExtensionType, getTransaction, ProposalContract, PollCreateEvent, PollVoteEvent } from '@mijoco/stx_helpers/dist/index';
+import { VotingEventVoteOnProposal, VotingEventConcludeProposal, VotingEventProposeProposal, ExtensionType, getTransaction, ProposalContract, PollCreateEvent, PollVoteEvent } from '@mijoco/stx_helpers/dist/index.js';
 import { ObjectId } from 'mongodb';
-import { fetchExtensions } from './dao_events_helper';
-import { getConfig } from '../../../lib/config';
-import { daoEventCollection } from '../../../lib/data/db_models';
-import { getMetaData, getProposalContractSource, getProposalData } from '../proposals/proposal';
-import { findPollByMarketId } from '../../polling/polling_helper';
+import { fetchExtensions } from './dao_events_helper.js';
+import { getConfig } from '../../../lib/config.js';
+import { daoEventCollection } from '../../../lib/data/db_models.js';
+import { getMetaData, getProposalContractSource, getProposalData } from '../proposals/proposal.js';
+import { findPollByMarketId } from '../../polling/polling_helper.js';
 import assert from 'assert';
 
 export async function readDaoExtensionEvents(genesis: boolean, daoContractId: string) {

@@ -1,4 +1,4 @@
-import { ConfigDaoI } from '../types/local_types';
+import { ConfigDaoI } from '../types/local_types.js';
 import process from 'process';
 
 let CONFIG = {} as ConfigDaoI;

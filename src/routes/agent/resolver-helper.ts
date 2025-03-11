@@ -1,7 +1,7 @@
-import { PredictionMarketCreateEvent, ScalarMarketDataItem } from '@mijoco/stx_helpers';
-import { getConfig } from '../../lib/config';
-import { daoEventCollection, marketLlmLogsCollection } from '../../lib/data/db_models';
-import { fetchMarket } from '../predictions/markets_helper';
+import { PredictionMarketCreateEvent, ScalarMarketDataItem } from '@mijoco/stx_helpers/dist/index.js';
+import { getConfig } from '../../lib/config.js';
+import { daoEventCollection, marketLlmLogsCollection } from '../../lib/data/db_models.js';
+import { fetchMarket } from '../predictions/markets_helper.js';
 import axios from 'axios';
 import { broadcastTransaction, Cl, makeContractCall } from '@stacks/transactions';
 

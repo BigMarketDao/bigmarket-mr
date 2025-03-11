@@ -1,6 +1,6 @@
 import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
 import type { Collection } from 'mongodb';
-import { getConfig, isDev } from '../config';
+import { getConfig, isDev } from '../config.js';
 
 export let exchangeRatesCollection: Collection;
 export let pythEventCollection: Collection;

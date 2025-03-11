@@ -1,7 +1,7 @@
 import { contractPrincipalCV, serializeCV } from '@stacks/transactions';
-import { callContractReadOnly, ProposalContract, ProposalData, ProposalMeta, VotingEventProposeProposal } from '@mijoco/stx_helpers/dist/index';
-import { getConfig } from '../../../lib/config';
-import { daoEventCollection } from '../../../lib/data/db_models';
+import { callContractReadOnly, ProposalContract, ProposalData, ProposalMeta, VotingEventProposeProposal } from '@mijoco/stx_helpers/dist/index.js';
+import { getConfig } from '../../../lib/config.js';
+import { daoEventCollection } from '../../../lib/data/db_models.js';
 
 export async function fetchProposeEvent(proposal: string): Promise<any> {
 	const result = await daoEventCollection.findOne({

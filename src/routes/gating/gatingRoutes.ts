@@ -1,6 +1,6 @@
 import express from 'express';
-import { fetchCreateMarketMerkleInput, registerInterest } from './gating_helper';
-import { GateKeeper } from '@mijoco/stx_helpers/dist/index';
+import { fetchCreateMarketMerkleInput, registerInterest } from './gating_helper.js';
+import { GateKeeper } from '@mijoco/stx_helpers/dist/index.js';
 
 const router = express.Router();
 

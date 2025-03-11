@@ -1,7 +1,7 @@
 import express from 'express';
-import { VotingEventProposeProposal } from '@mijoco/stx_helpers/dist/index';
-import { fetchAllProposals, fetchBootstrapProposals, fetchExecutedProposals, fetchExecutedProposalsByDao, fetchLatestProposal, fetchProposedProposals, fetchProposedProposalsByDao } from './proposal';
-import { getVotesByProposal } from '../events/dao_events_extension_helper';
+import { VotingEventProposeProposal } from '@mijoco/stx_helpers/dist/index.js';
+import { fetchAllProposals, fetchBootstrapProposals, fetchExecutedProposals, fetchExecutedProposalsByDao, fetchLatestProposal, fetchProposedProposals, fetchProposedProposalsByDao } from './proposal.js';
+import { getVotesByProposal } from '../events/dao_events_extension_helper.js';
 
 const router = express.Router();
 

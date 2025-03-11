@@ -1,5 +1,5 @@
-import { LeaderBoard, PredictionMarketStakeEvent, TopMarket } from '@mijoco/stx_helpers/dist/index';
-import { daoEventCollection } from '../../lib/data/db_models';
+import { LeaderBoard, PredictionMarketStakeEvent, TopMarket } from '@mijoco/stx_helpers/dist/index.js';
+import { daoEventCollection } from '../../lib/data/db_models.js';
 
 export async function getLeaderBoard(): Promise<LeaderBoard> {
 	const changes = {

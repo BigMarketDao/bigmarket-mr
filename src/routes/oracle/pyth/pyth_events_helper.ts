@@ -2,10 +2,10 @@
  * sbtc - interact with Stacks Blockchain to read sbtc contract info
  */
 import { cvToJSON, deserializeCV } from '@stacks/transactions';
-import { VotingEventVoteOnProposal, VotingEventConcludeProposal, VotingEventProposeProposal, ExtensionType, PollCreateEvent, PollVoteEvent } from '@mijoco/stx_helpers/dist/index';
+import { VotingEventVoteOnProposal, VotingEventConcludeProposal, VotingEventProposeProposal, ExtensionType, PollCreateEvent, PollVoteEvent } from '@mijoco/stx_helpers/dist/index.js';
 import { ObjectId } from 'mongodb';
-import { getConfig } from '../../../lib/config';
-import { daoEventCollection, pythEventCollection } from '../../../lib/data/db_models';
+import { getConfig } from '../../../lib/config.js';
+import { daoEventCollection, pythEventCollection } from '../../../lib/data/db_models.js';
 
 type PythEvent = {
 	type: string;

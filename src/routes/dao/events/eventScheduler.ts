@@ -1,10 +1,10 @@
 import cron from 'node-cron';
-import { readDaoEvents } from './dao_events_helper';
-import { daoEventCollection } from '../../../lib/data/db_models';
-import { readDaoExtensionEvents } from './dao_events_extension_helper';
-import { readPredictionEvents } from '../../predictions/dao_events_prediction_market_helper';
-import { getDaoConfig } from '../../../lib/config_dao';
-import { readScalarEvents } from '../../predictions/scalar/dao_events_scalar_market_helper';
+import { readDaoEvents } from './dao_events_helper.js';
+import { daoEventCollection } from '../../../lib/data/db_models.js';
+import { readDaoExtensionEvents } from './dao_events_extension_helper.js';
+import { readPredictionEvents } from '../../predictions/dao_events_prediction_market_helper.js';
+import { getDaoConfig } from '../../../lib/config_dao.js';
+import { readScalarEvents } from '../../predictions/scalar/dao_events_scalar_market_helper.js';
 
 // 30 mins past every second hour: 30 */2 * * *'
 export const initScanDaoEventsJob = cron.schedule('* * * * *', async (fireDate) => {

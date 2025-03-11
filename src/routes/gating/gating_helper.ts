@@ -1,5 +1,5 @@
-import { GateKeeper } from '@mijoco/stx_helpers/dist/index';
-import { marketGatingCollection, marketInterestCollection } from '../../lib/data/db_models';
+import { GateKeeper } from '@mijoco/stx_helpers/dist/index.js';
+import { marketGatingCollection, marketInterestCollection } from '../../lib/data/db_models.js';
 import { ObjectId } from 'mongodb';
 
 export const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

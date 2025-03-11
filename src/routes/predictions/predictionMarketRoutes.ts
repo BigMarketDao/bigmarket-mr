@@ -1,11 +1,11 @@
 import express from 'express';
-import { isCreatePollPostValid, savePoll } from '../polling/polling_helper';
-import { countCreateMarketEvents, fetchActiveMarketCategories, fetchAllowedTokens, fetchMarket, fetchMarketClaims, fetchMarkets, fetchMarketStakes, fetchMarketVotes, findOpinionPollByTitle } from './markets_helper';
-import { DaoOverview, fetchContractBalances, fetchTokenSaleStages, GateKeeper, readPredictionContractData, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index';
-import { getConfig } from '../../lib/config';
-import { getDaoConfig } from '../../lib/config_dao';
-import { fetchCreateMarketMerkleInput } from '../gating/gating_helper';
-import { getLeaderBoard } from './leader_board_helper';
+import { isCreatePollPostValid, savePoll } from '../polling/polling_helper.js';
+import { countCreateMarketEvents, fetchActiveMarketCategories, fetchAllowedTokens, fetchMarket, fetchMarketClaims, fetchMarkets, fetchMarketStakes, fetchMarketVotes, findOpinionPollByTitle } from './markets_helper.js';
+import { DaoOverview, fetchContractBalances, fetchTokenSaleStages, GateKeeper, readPredictionContractData, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
+import { getConfig } from '../../lib/config.js';
+import { getDaoConfig } from '../../lib/config_dao.js';
+import { fetchCreateMarketMerkleInput } from '../gating/gating_helper.js';
+import { getLeaderBoard } from './leader_board_helper.js';
 
 const router = express.Router();
 export let cachedData: DaoOverview | null = null; // simpple cache

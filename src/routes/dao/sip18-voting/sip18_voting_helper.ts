@@ -1,9 +1,9 @@
 import type { SignatureData } from '@stacks/connect';
 import { ObjectId } from 'mongodb';
-import { daoBatchVotingCollection } from '../../../lib/data/db_models';
-import { getConfig } from '../../../lib/config';
-import { getC32AddressFromPublicKey } from '../events/dao_events_helper';
-import { StoredVoteMessage, verifySip18VoteSignature } from '@mijoco/stx_helpers/dist/index';
+import { daoBatchVotingCollection } from '../../../lib/data/db_models.js';
+import { getConfig } from '../../../lib/config.js';
+import { getC32AddressFromPublicKey } from '../events/dao_events_helper.js';
+import { StoredVoteMessage, verifySip18VoteSignature } from '@mijoco/stx_helpers/dist/index.js';
 
 async function markVotesAsProcessed(voteIds: string[]) {
 	// Update votes to set `processed: true`

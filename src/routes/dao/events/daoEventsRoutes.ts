@@ -1,10 +1,10 @@
 import express from 'express';
-import { fetchBaseDaoEvents, fetchExtensionEvent, fetchExtensions, isPostValid, readDaoEvents } from './dao_events_helper';
-import { readDaoExtensionEvents } from './dao_events_extension_helper';
-import { getGovernanceData, isExecutiveTeamMember, isExtension } from './extension';
-import { getDaoConfig } from '../../../lib/config_dao';
-import { readPredictionEvents } from '../../predictions/dao_events_prediction_market_helper';
-import { readScalarEvents } from '../../predictions/scalar/dao_events_scalar_market_helper';
+import { fetchBaseDaoEvents, fetchExtensionEvent, fetchExtensions, isPostValid, readDaoEvents } from './dao_events_helper.js';
+import { readDaoExtensionEvents } from './dao_events_extension_helper.js';
+import { getGovernanceData, isExecutiveTeamMember, isExtension } from './extension.js';
+import { getDaoConfig } from '../../../lib/config_dao.js';
+import { readPredictionEvents } from '../../predictions/dao_events_prediction_market_helper.js';
+import { readScalarEvents } from '../../predictions/scalar/dao_events_scalar_market_helper.js';
 
 const router = express.Router();
 

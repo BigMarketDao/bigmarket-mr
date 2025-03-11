@@ -1,6 +1,6 @@
-import { ExchangeRate } from '@mijoco/stx_helpers/dist/index';
-import { currencies } from './utils_currencies';
-import { exchangeRatesCollection } from '../../lib/data/db_models';
+import { ExchangeRate } from '@mijoco/stx_helpers/dist/index.js';
+import { currencies } from './utils_currencies.js';
+import { exchangeRatesCollection } from '../../lib/data/db_models.js';
 
 export async function getRates(): Promise<any> {
 	const rates = await getExchangeRates();

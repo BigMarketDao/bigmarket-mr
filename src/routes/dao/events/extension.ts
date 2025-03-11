@@ -1,7 +1,7 @@
 import { hex } from '@scure/base';
 import { contractPrincipalCV, principalCV, serializeCV } from '@stacks/transactions';
-import { callContractReadOnly, GovernanceData } from '@mijoco/stx_helpers/dist/index';
-import { getConfig } from '../../../lib/config';
+import { callContractReadOnly, GovernanceData } from '@mijoco/stx_helpers/dist/index.js';
+import { getConfig } from '../../../lib/config.js';
 
 export async function isExtension(daoContractAddress: string, daoContractName: string, extensionCid: string): Promise<{ result: boolean }> {
 	const functionArgs = [`0x${serializeCV(contractPrincipalCV(extensionCid.split('.')[0], extensionCid.split('.')[1]))}`];

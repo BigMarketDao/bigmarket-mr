@@ -1,14 +1,14 @@
-import { dataHashSip18, GateKeeper, generateMerkleProof, generateMerkleTreeUsingStandardPrincipal, marketDataToTupleCV, proofToClarityValue, Sip10Data, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index';
-import { getConfig } from '../../lib/config';
-import { fetchAllowedTokens } from '../predictions/markets_helper';
-import { getDaoConfig } from '../../lib/config_dao';
-import { savePoll } from '../polling/polling_helper';
+import { dataHashSip18, GateKeeper, generateMerkleProof, generateMerkleTreeUsingStandardPrincipal, marketDataToTupleCV, proofToClarityValue, Sip10Data, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
+import { getConfig } from '../../lib/config.js';
+import { fetchAllowedTokens } from '../predictions/markets_helper.js';
+import { getDaoConfig } from '../../lib/config_dao.js';
+import { savePoll } from '../polling/polling_helper.js';
 import { broadcastTransaction, bufferCV, Cl, ClarityValue, contractPrincipalCV, listCV, ListCV, makeContractCall, noneCV, someCV, stringAsciiCV, tupleCV, uintCV } from '@stacks/transactions';
 import { hexToBytes } from '@stacks/common';
-import { fetchCreateMarketMerkleInput } from '../gating/gating_helper';
-import { cachedData } from '../predictions/predictionMarketRoutes';
-import { llm_markets } from './liverpool';
-import { matchMarketSector } from './matchMarketSector';
+import { fetchCreateMarketMerkleInput } from '../gating/gating_helper.js';
+import { cachedData } from '../predictions/predictionMarketRoutes.js';
+import { llm_markets } from './liverpool.js';
+import { matchMarketSector } from './matchMarketSector.js';
 import axios from 'axios';
 
 export type CreateMarketByDiscoveryLLMRequest = {

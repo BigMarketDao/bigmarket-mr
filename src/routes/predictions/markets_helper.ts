@@ -9,10 +9,10 @@ import {
 	StoredOpinionPoll,
 	TokenPermissionEvent,
 	type MarketCategory
-} from '@mijoco/stx_helpers/dist/index';
-import { daoEventCollection, marketCategoriesCollection, marketCollection } from '../../lib/data/db_models';
-import { findUserEnteredPollByHash } from '../polling/polling_helper';
-import { getConfig } from '../../lib/config';
+} from '@mijoco/stx_helpers/dist/index.js';
+import { daoEventCollection, marketCategoriesCollection, marketCollection } from '../../lib/data/db_models.js';
+import { findUserEnteredPollByHash } from '../polling/polling_helper.js';
+import { getConfig } from '../../lib/config.js';
 import { ObjectId } from 'mongodb';
 
 async function updateMarketData(marketId: number, marketType: number, marketContract: string) {

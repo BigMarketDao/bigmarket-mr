@@ -1,9 +1,9 @@
 import type { SignatureData } from '@stacks/connect';
 import { ObjectId } from 'mongodb';
-import { daoEventCollection, marketCollection } from '../../lib/data/db_models';
-import { getConfig } from '../../lib/config';
-import { getC32AddressFromPublicKey } from '../dao/events/dao_events_helper';
-import { PollCreateEvent, OpinionPoll, StoredOpinionPoll, PollVoteMessage, verifyDaoSignature, pollVoteMessageToTupleCV, marketDataToTupleCV } from '@mijoco/stx_helpers/dist/index';
+import { daoEventCollection, marketCollection } from '../../lib/data/db_models.js';
+import { getConfig } from '../../lib/config.js';
+import { getC32AddressFromPublicKey } from '../dao/events/dao_events_helper.js';
+import { PollCreateEvent, OpinionPoll, StoredOpinionPoll, PollVoteMessage, verifyDaoSignature, pollVoteMessageToTupleCV, marketDataToTupleCV } from '@mijoco/stx_helpers/dist/index.js';
 
 type BaseAdminMessage = {
 	message: string;

@@ -1,6 +1,6 @@
 import express from 'express';
-import { findPollByHash, findPolls, isCreatePollPostValid, isPostPollMessageValid, savePoll } from './polling_helper';
-import { findPollVoteByHash, findUnprocessedSip18PollMessages, saveSip18PollVote } from './poll_voting_helper';
+import { findPollByHash, findPolls, isCreatePollPostValid, isPostPollMessageValid, savePoll } from './polling_helper.js';
+import { findPollVoteByHash, findUnprocessedSip18PollMessages, saveSip18PollVote } from './poll_voting_helper.js';
 
 const router = express.Router();
 

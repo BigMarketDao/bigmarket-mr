@@ -1,5 +1,5 @@
 import express from 'express';
-import { getConfig } from '../../lib/config';
+import { getConfig } from '../../lib/config.js';
 import axios from 'axios';
 
 const router = express.Router();

@@ -1,11 +1,11 @@
 import express from 'express';
-import { getConfig, getRpcParams } from '../../lib/config';
+import { getConfig, getRpcParams } from '../../lib/config.js';
 import { bitcoinTxProof } from 'bitcoin-tx-proof';
-import { fetchTransaction } from '@mijoco/btc_helpers/dist/index';
-import { BlockChainInfo, ProofGenerationData, ProofRequest, RpcBlock, RpcTransaction, TransactionProofSet } from 'clarity-bitcoin-client';
-import { getProofData, getProofDataRecent, getProofGenerationData } from 'clarity-bitcoin-client';
-import { bitcoinRPC } from 'clarity-bitcoin-client';
-import { extractProofInfo } from 'clarity-bitcoin-client';
+import { fetchTransaction } from '@mijoco/btc_helpers/dist/index.js';
+import { bitcoinRPC } from './client/rpc.js';
+import { BlockChainInfo, ProofGenerationData, ProofRequest, RpcBlock, RpcTransaction, TransactionProofSet } from './client/proof-types.js';
+import { extractProofInfo } from './client/proof.js';
+import { getProofData, getProofDataRecent, getProofGenerationData } from './client/bitcoin.js';
 
 const router = express.Router();
 

@@ -1,7 +1,7 @@
 import type { SignatureData } from '@stacks/connect';
 import { ObjectId } from 'mongodb';
-import { marketBatchVotingCollection } from '../../lib/data/db_models';
-import { PollVoteEvent, StoredPollVoteMessage } from '@mijoco/stx_helpers/dist/index';
+import { marketBatchVotingCollection } from '../../lib/data/db_models.js';
+import { PollVoteEvent, StoredPollVoteMessage } from '@mijoco/stx_helpers/dist/index.js';
 
 export async function findPollVoteByHash(pollVoteObjectHash: string): Promise<PollVoteEvent> {
 	const result = await marketBatchVotingCollection.findOne({

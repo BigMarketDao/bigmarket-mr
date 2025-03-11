@@ -2,11 +2,11 @@
  * sbtc - interact with Stacks Blockchain to read sbtc contract info
  */
 import { cvToJSON, deserializeCV, publicKeyToAddressSingleSig } from '@stacks/transactions';
-import { DaoEventExecuteProposal, DaoEventEnableExtension, ExtensionType, verifyBaseAdminSignature } from '@mijoco/stx_helpers/dist/index';
-import { getConfig } from '../../../lib/config';
-import { isExtension } from './extension';
-import { daoEventCollection } from '../../../lib/data/db_models';
-import { BaseAdminMessage } from './dao_events_types';
+import { DaoEventExecuteProposal, DaoEventEnableExtension, ExtensionType, verifyBaseAdminSignature } from '@mijoco/stx_helpers/dist/index.js';
+import { getConfig } from '../../../lib/config.js';
+import { isExtension } from './extension.js';
+import { daoEventCollection } from '../../../lib/data/db_models.js';
+import { BaseAdminMessage } from './dao_events_types.js';
 import { SignatureData } from '@stacks/connect';
 
 export function getC32AddressFromPublicKey(publicKeyHex: string, network: string): string {

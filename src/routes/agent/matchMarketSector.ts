@@ -1,5 +1,5 @@
 import levenshtein from 'fast-levenshtein';
-import { fetchAllMarketCategories } from '../predictions/markets_helper';
+import { fetchAllMarketCategories } from '../predictions/markets_helper.js';
 
 /**
  * Matches the LLM's predicted market sector to the closest allowed category.

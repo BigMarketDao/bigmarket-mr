@@ -1,6 +1,6 @@
 import express from 'express';
-import { sweepAndResolveMarket, sweepAndResolveMarkets } from './resolver-helper';
-import { createMarketByDiscovery, createMarketBySuggestion } from './create-market-helper';
+import { sweepAndResolveMarket, sweepAndResolveMarkets } from './resolver-helper.js';
+import { createMarketByDiscovery, createMarketBySuggestion } from './create-market-helper.js';
 import { timingSafeEqual } from 'crypto';
 
 const router = express.Router();

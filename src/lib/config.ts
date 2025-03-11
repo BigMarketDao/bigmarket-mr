@@ -1,4 +1,4 @@
-import { ConfigI } from '../types/local_types';
+import { ConfigI } from '../types/local_types.js';
 import process from 'process';
 
 let CONFIG = {} as ConfigI;
