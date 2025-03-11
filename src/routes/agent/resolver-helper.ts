@@ -2,9 +2,8 @@ import { PredictionMarketCreateEvent, ScalarMarketDataItem } from '@mijoco/stx_h
 import { getConfig } from '../../lib/config';
 import { daoEventCollection, marketLlmLogsCollection } from '../../lib/data/db_models';
 import { fetchMarket } from '../predictions/markets_helper';
-
-const axios = require('axios');
-const { StacksTestnet, makeContractCall, broadcastTransaction } = require('@stacks/transactions');
+import axios from 'axios';
+import { broadcastTransaction, Cl, makeContractCall } from '@stacks/transactions';
 
 export type MarketLLMRequest = {
 	market_id: number;
@@ -74,11 +73,10 @@ async function resolveMarketOnChain(data: MarketLLMRequest, outcomeIndex: number
 		contractAddress: market.votingContract.split('.')[0],
 		contractName: market.votingContract.split('.')[0],
 		functionName: 'resolve-market',
-		functionArgs: [market.marketId, outcomeIndex],
-		senderKey: getConfig().walletKey,
-		network: getConfig().network
+		functionArgs: [Cl.uint(market.marketId), Cl.uint(outcomeIndex)],
+		senderKey: getConfig().walletKey
 	});
-	const txResult = await broadcastTransaction(transaction);
+	const txResult = await broadcastTransaction({ transaction });
 	console.log('resolveMarketOnChain: txResult:', txResult);
 }
 

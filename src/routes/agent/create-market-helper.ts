@@ -1,18 +1,15 @@
 import { dataHashSip18, GateKeeper, generateMerkleProof, generateMerkleTreeUsingStandardPrincipal, marketDataToTupleCV, proofToClarityValue, Sip10Data, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index';
 import { getConfig } from '../../lib/config';
-import { marketLlmLogsCollection } from '../../lib/data/db_models';
 import { fetchAllowedTokens } from '../predictions/markets_helper';
 import { getDaoConfig } from '../../lib/config_dao';
 import { savePoll } from '../polling/polling_helper';
-import { bufferCV, Cl, ClarityValue, contractPrincipalCV, listCV, ListCV, noneCV, someCV, stringAsciiCV, tupleCV, uintCV } from '@stacks/transactions';
+import { broadcastTransaction, bufferCV, Cl, ClarityValue, contractPrincipalCV, listCV, ListCV, makeContractCall, noneCV, someCV, stringAsciiCV, tupleCV, uintCV } from '@stacks/transactions';
 import { hexToBytes } from '@stacks/common';
 import { fetchCreateMarketMerkleInput } from '../gating/gating_helper';
 import { cachedData } from '../predictions/predictionMarketRoutes';
 import { llm_markets } from './liverpool';
 import { matchMarketSector } from './matchMarketSector';
 import axios from 'axios';
-//const axios = require('axios');
-const { makeContractCall, broadcastTransaction } = require('@stacks/transactions');
 
 export type CreateMarketByDiscoveryLLMRequest = {
 	news_url: string;
@@ -57,16 +54,14 @@ export async function createMarketBySuggestion(proposer: string, userIdea: strin
 async function createMarketOnChain(proposer: string, data: CreateMarketLLMResponse) {
 	const market = await convertMarketToLocalFormat(proposer, data);
 	await savePoll(market);
-
 	const transaction = await makeContractCall({
 		contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
 		contractName: getDaoConfig().VITE_DAO_MARKET_PREDICTING,
 		functionName: 'create-market',
 		functionArgs: await getArgsCV(proposer, market),
-		senderKey: getConfig().walletKey,
-		network: getConfig().network
+		senderKey: getConfig().walletKey
 	});
-	const txResult = await broadcastTransaction(transaction);
+	const txResult = await broadcastTransaction({ transaction });
 	console.log('resolveMarketOnChain: txResult:', txResult);
 }
 

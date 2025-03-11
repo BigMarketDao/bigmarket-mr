@@ -2,10 +2,10 @@ import express from 'express';
 import { getConfig, getRpcParams } from '../../lib/config';
 import { bitcoinTxProof } from 'bitcoin-tx-proof';
 import { fetchTransaction } from '@mijoco/btc_helpers/dist/index';
-import { BlockChainInfo, ProofGenerationData, ProofRequest, RpcBlock, RpcTransaction, TransactionProofSet } from './client/proof-types';
-import { extractProofInfo } from './client/proof';
-import { getProofData, getProofDataRecent, getProofGenerationData } from './client/bitcoin';
-import { bitcoinRPC } from './client/rpc';
+import { BlockChainInfo, ProofGenerationData, ProofRequest, RpcBlock, RpcTransaction, TransactionProofSet } from 'clarity-bitcoin-client';
+import { getProofData, getProofDataRecent, getProofGenerationData } from 'clarity-bitcoin-client';
+import { bitcoinRPC } from 'clarity-bitcoin-client';
+import { extractProofInfo } from 'clarity-bitcoin-client';
 
 const router = express.Router();
 
@@ -34,13 +34,18 @@ router.get('/tx/:txid', async (req, res) => {
 	// not with pruned node const rawTx = await bitcoinRPC('getrawtransaction', [req.params.txid, true], getRpcParams());
 	res.json(txM);
 });
-router.get('/tx/:txid/proof', async (req, res) => {
-	const txM: any = await fetchTransaction(getConfig().mempoolUrl, req.params.txid);
-	console.log('');
-	const data: ProofRequest = await getProofData(req.params.txid, txM.status.block_hash, getRpcParams());
-	const pgd: ProofGenerationData = getProofGenerationData(data);
-	const proof: TransactionProofSet = extractProofInfo(pgd, data);
-	res.json(proof);
+router.get('/tx/:txid/proof', async (req, res, next) => {
+	try {
+		const txM: any = await fetchTransaction(getConfig().mempoolUrl, req.params.txid);
+		console.log('');
+		const data: ProofRequest = await getProofData(req.params.txid, txM.status.block_hash, getRpcParams());
+		const pgd: ProofGenerationData = getProofGenerationData(data);
+		const proof: TransactionProofSet = extractProofInfo(pgd, data);
+		res.json({ proof, data });
+	} catch (error) {
+		console.log('Error in routes: ', error);
+		next('Error - check the transaction not older than 2 days.');
+	}
 });
 
 router.get('/tx-recent/:index', async (req, res) => {
