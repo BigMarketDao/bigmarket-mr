@@ -2,7 +2,6 @@
 	"name": "bigmarket-api",
 	"version": "1.0.0",
 	"main": "index.js",
-	"type": "module",
 	"scripts": {
 		"build": "tsc",
 		"build:testnet": "NODE_ENV=testnet tsc",
