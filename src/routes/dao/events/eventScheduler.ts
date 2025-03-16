@@ -5,6 +5,7 @@ import { readDaoExtensionEvents } from './dao_events_extension_helper.js';
 import { readPredictionEvents } from '../../predictions/dao_events_prediction_market_helper.js';
 import { getDaoConfig } from '../../../lib/config_dao.js';
 import { readScalarEvents } from '../../predictions/scalar/dao_events_scalar_market_helper.js';
+import { readBitcoinEvents } from '../../predictions/bitcoin/dao_events_bitcoin_market_helper.js';
 
 // 30 mins past every second hour: 30 */2 * * *'
 export const initScanDaoEventsJob = cron.schedule('* * * * *', async (fireDate) => {
@@ -35,6 +36,7 @@ export const initScanDaoEventsJob = cron.schedule('* * * * *', async (fireDate) 
 		}
 		await readPredictionEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
 		await readScalarEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
+		await readBitcoinEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_BITCOIN);
 	} catch (err: any) {
 		console.log('initScanDaoEventsJob: ', err);
 	}

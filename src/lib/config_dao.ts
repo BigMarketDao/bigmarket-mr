@@ -17,6 +17,7 @@ export function setDaoConfigOnStart() {
 	CONFIG.VITE_DAO_MARKET_GATING = process.env[network + '_' + 'VITE_DAO_MARKET_GATING'] || '';
 	CONFIG.VITE_DAO_MARKET_PREDICTING = process.env[network + '_' + 'VITE_DAO_MARKET_PREDICTING'] || '';
 	CONFIG.VITE_DAO_MARKET_SCALAR = process.env[network + '_' + 'VITE_DAO_MARKET_SCALAR'] || '';
+	CONFIG.VITE_DAO_MARKET_BITCOIN = process.env[network + '_' + 'VITE_DAO_MARKET_BITCOIN'] || 'bme023-0-market-bitcoin';
 	CONFIG.VITE_DAO_TREASURY = process.env[network + '_' + 'VITE_DAO_TREASURY'] || '';
 	CONFIG.VITE_DAO_TOKEN_SALE = process.env[network + '_' + 'VITE_DAO_TOKEN_SALE'] || '';
 }
@@ -38,6 +39,7 @@ export function printDaoConfig() {
 	console.log('VITE_DAO_MARKET_GATING = ' + CONFIG.VITE_DAO_MARKET_GATING);
 	console.log('VITE_DAO_MARKET_PREDICTING = ' + CONFIG.VITE_DAO_MARKET_PREDICTING);
 	console.log('VITE_DAO_MARKET_SCALAR = ' + CONFIG.VITE_DAO_MARKET_SCALAR);
+	console.log('VITE_DAO_MARKET_BITCOIN = ' + CONFIG.VITE_DAO_MARKET_BITCOIN);
 	console.log('VITE_DAO_TREASURY = ' + CONFIG.VITE_DAO_TREASURY);
 	console.log('VITE_DAO_TOKEN_SALE = ' + CONFIG.VITE_DAO_TOKEN_SALE);
 }

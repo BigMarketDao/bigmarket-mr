@@ -62,11 +62,22 @@ export function getConfig() {
 }
 
 export function getRpcParams() {
+	if (getConfig().network === 'devnet') {
+		console.log(' + getRpcParams ++++++++++++++++++++++++++++++++++++++++++++++++++++');
+		return {
+			rpcHost: 'http://127.0.0.1',
+			rpcPort: '18445',
+			rpcPass: 'devnet',
+			rpcUser: 'devnet',
+			wallet: 'bcrt1q3tj2fr9scwmcw3rq5m6jslva65f2rqjxfrjz47'
+		};
+	}
 	return {
 		rpcHost: CONFIG.rpcHost,
 		rpcPort: CONFIG.rpcPort,
 		rpcPass: CONFIG.rpcPass,
-		rpcUser: CONFIG.rpcUser
+		rpcUser: CONFIG.rpcUser,
+		wallet: 'bcrt1q3tj2fr9scwmcw3rq5m6jslva65f2rqjxfrjz47'
 	};
 }
 

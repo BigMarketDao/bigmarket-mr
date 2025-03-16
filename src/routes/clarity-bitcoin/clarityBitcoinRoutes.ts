@@ -5,12 +5,17 @@ import { fetchTransaction } from '@mijoco/btc_helpers/dist/index.js';
 import { bitcoinRPC } from './client/rpc.js';
 import { BlockChainInfo, ProofGenerationData, ProofRequest, RpcBlock, RpcTransaction, TransactionProofSet } from './client/proof-types.js';
 import { extractProofInfo } from './client/proof.js';
-import { getProofData, getProofDataRecent, getProofGenerationData } from './client/bitcoin.js';
+import { buildRegtestBitcoinSegwitTransaction, getProofData, getProofDataRecent, getProofGenerationData } from './client/bitcoin.js';
 
 const router = express.Router();
 
 router.get('/blockchain-info', async (req, res) => {
 	const block = await bitcoinRPC('getblockchaininfo', [], getRpcParams());
+	res.json(block);
+});
+
+router.get('/listunspent', async (req, res) => {
+	const block = await bitcoinRPC('listunspent', [1, 99999], getRpcParams());
 	res.json(block);
 });
 
@@ -29,6 +34,11 @@ router.get('/block/:hash', async (req, res) => {
 	const block: RpcBlock = await bitcoinRPC('getblock', [req.params.hash, 2], getRpcParams());
 	res.json(block);
 });
+router.get('/tx/:txid/rpc', async (req, res) => {
+	const tx: RpcTransaction = await bitcoinRPC('getrawtransaction', [req.params.txid, true], getRpcParams());
+	// not with pruned node const rawTx = await bitcoinRPC('getrawtransaction', [req.params.txid, true], getRpcParams());
+	res.json(tx);
+});
 router.get('/tx/:txid', async (req, res) => {
 	const txM: any = await fetchTransaction(getConfig().mempoolUrl, req.params.txid);
 	// not with pruned node const rawTx = await bitcoinRPC('getrawtransaction', [req.params.txid, true], getRpcParams());
@@ -36,9 +46,21 @@ router.get('/tx/:txid', async (req, res) => {
 });
 router.get('/tx/:txid/proof', async (req, res, next) => {
 	try {
-		const txM: any = await fetchTransaction(getConfig().mempoolUrl, req.params.txid);
-		console.log('');
-		const data: ProofRequest = await getProofData(req.params.txid, txM.status.block_hash, getRpcParams());
+		let txM: any;
+		let blockHash: string;
+		if (getConfig().network === 'devnet') {
+			txM = await bitcoinRPC('getrawtransaction', [req.params.txid, true], getRpcParams());
+			console.log('tx rpc: ', txM);
+			blockHash = txM.blockhash;
+		} else {
+			txM = await fetchTransaction(getConfig().mempoolUrl, req.params.txid);
+			console.log('tx mempool: ', txM);
+			blockHash = txM.status.block_hash;
+		}
+		console.log('txid' + req.params.txid);
+		console.log('network' + getConfig().network);
+		console.log('blockHash' + blockHash);
+		const data: ProofRequest = await getProofData(req.params.txid, blockHash, getRpcParams());
 		const pgd: ProofGenerationData = getProofGenerationData(data);
 		const proof: TransactionProofSet = extractProofInfo(pgd, data);
 		res.json({ proof, data });
@@ -81,6 +103,13 @@ router.get('/btc-proof/:txid/:height', async (req, res) => {
 	console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
 
 	res.json(proof);
+});
+
+router.get('/send-prediction/:marketId/:outcomeIndex/:stxAddress/:amountBtc', async (req, res) => {
+	const resp = await buildRegtestBitcoinSegwitTransaction(Number(req.params.marketId), Number(req.params.outcomeIndex), req.params.stxAddress, Number(req.params.amountBtc));
+	console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+
+	res.json(resp);
 });
 
 export { router as clarityBitcoinRoutes };

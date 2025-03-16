@@ -32,7 +32,7 @@ export async function updatePredictionMarketCreateEvent(marketType: number, even
 	metadataHash = metadataHash.replace(/^0x/, '');
 	const unhashedData: StoredOpinionPoll = await findUserEnteredPollByHash(metadataHash);
 	const marketId = Number(result.value['market-id'].value);
-
+	console.log(marketId, ' marketContract: ' + marketContract);
 	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
 	if (!marketData) throw new Error('Problem calling api - maybe rate limits?');
 	const createEvent = {
