@@ -5,7 +5,8 @@ import { ensureEven } from './proof.js';
 import { bitcoinRPC } from './rpc.js';
 import { getRpcParams } from '../../../lib/config.js';
 import { Cl } from '@stacks/transactions';
-import { concatBytes } from '@scure/btc-signer/utils';
+import { fetchTransaction, fetchTransactionHex } from '@mijoco/btc_helpers/dist/index.js';
+import { sha256 } from '@noble/hashes/sha256';
 
 export const REGTEST_NETWORK: typeof btc.NETWORK = {
 	bech32: 'bcrt',
@@ -81,7 +82,8 @@ export function getProofGenerationData(data: ProofRequest): ProofGenerationData 
 			id: data.block.hash,
 			txids: iddata.txids,
 			header,
-			merkle_root: data.block.merkleroot,
+			//	BEFORE		merkle_root: data.block.merkleroot,
+			merkle_root: data.block.merkleroot || data.block.merkle_root!,
 			height: data.block.height
 		}
 	};
@@ -89,8 +91,9 @@ export function getProofGenerationData(data: ProofRequest): ProofGenerationData 
 
 function getTxDataEfficiently(data: ProofRequest): { segCounter: number; txids: Array<{ txid: string; wtxid: string; segwit: boolean }> } {
 	let segCounter = 0;
+	let parsedCTx: btc.Transaction;
 	const txids = data.block.tx.map((tx, i) => {
-		// parsedCTx = btc.Transaction.fromRaw(hex.decode(data.block.tx[0].hex), { allowUnknownInputs: true, allowUnknownOutputs: true, disableScriptCheck: true });
+		parsedCTx = btc.Transaction.fromRaw(hex.decode(data.block.tx[0].hex), { allowUnknownInputs: true, allowUnknownOutputs: true, disableScriptCheck: true });
 		if (i === 0) {
 			// Always set coinbase WTXID to 000...000
 			//hex.encode(parsedCTx.toBytes(true, false))
@@ -103,12 +106,14 @@ function getTxDataEfficiently(data: ProofRequest): { segCounter: number; txids: 
 				wtxid: zerohash, //'0000000000000000000000000000000000000000000000000000000000000000',
 				segwit: false
 			};
+		} else {
+			return {
+				txid: tx.txid, // TXID always stays big-endian
+				wtxid: tx.hash ? tx.hash : hex.encode(sha256(sha256(parsedCTx.toBytes(true, true).reverse()))), //tx.txid === tx.hash ? tx.hash : hex.encode(hex.decode(tx.hash)), // Reverse WTXID only for SegWit TXs
+				// BEFORE: wtxid: tx.hash,
+				segwit: tx.txid !== tx.hash
+			};
 		}
-		return {
-			txid: tx.txid, // TXID always stays big-endian
-			wtxid: tx.hash, //tx.txid === tx.hash ? tx.hash : hex.encode(hex.decode(tx.hash)), // Reverse WTXID only for SegWit TXs
-			segwit: tx.txid !== tx.hash
-		};
 	});
 
 	return { txids, segCounter };
@@ -189,4 +194,32 @@ export async function buildRegtestBitcoinSegwitTransaction(marketId: number, out
 	const txid = await bitcoinRPC('sendrawtransaction', [signedTx.hex], getRpcParams());
 	console.log('buildMockBitcoinSegwitTransaction: broadcast result: ' + txid);
 	return { txid };
+}
+
+export async function getBitcoinBlockSbtcTestnet(txid: string, blockhash: string) {
+	let url = `https://beta.sbtc-mempool.tech/api/proxy/block/${blockhash}/txids`;
+	//console.log('getBitcoinBlockSbtcTestnet: url: ' + url);
+	let response = await fetch(url);
+	let txids = await response.json();
+	console.log('getBitcoinBlockSbtcTestnet: txids: ', txids);
+
+	url = `https://beta.sbtc-mempool.tech/api/proxy/block/${blockhash}`;
+	//console.log('getBitcoinBlockSbtcTestnet: url: ' + url);
+	response = await fetch(url);
+	let actualBlock = await response.json();
+
+	actualBlock.tx = [];
+
+	await Promise.all(
+		txids.map(async (txid: string) => {
+			const txM = await fetchTransaction('https://beta.sbtc-mempool.tech/api/proxy', txid);
+			const txMHex = await fetchTransactionHex('https://beta.sbtc-mempool.tech/api/proxy', txid);
+			txM.hex = txMHex;
+			actualBlock.tx.push(txM);
+			console.log('getBitcoinBlockSbtcTestnet: txM: ', txM);
+		})
+	);
+	console.log('getBitcoinBlockSbtcTestnet: actualBlock: ', actualBlock);
+
+	return actualBlock;
 }

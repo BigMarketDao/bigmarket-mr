@@ -4,7 +4,9 @@ export type RpcBlock = {
 	height: number;
 	version: number;
 	versionHex: string;
-	merkleroot: string;
+	// BEFORE merkleroot: string;
+	merkleroot?: string;
+	merkle_root?: string;
 	time: number;
 	mediantime: number;
 	nonce: number;

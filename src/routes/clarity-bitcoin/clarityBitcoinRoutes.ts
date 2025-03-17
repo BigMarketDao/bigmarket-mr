@@ -5,7 +5,7 @@ import { fetchTransaction } from '@mijoco/btc_helpers/dist/index.js';
 import { bitcoinRPC } from './client/rpc.js';
 import { BlockChainInfo, ProofGenerationData, ProofRequest, RpcBlock, RpcTransaction, TransactionProofSet } from './client/proof-types.js';
 import { extractProofInfo } from './client/proof.js';
-import { buildRegtestBitcoinSegwitTransaction, getProofData, getProofDataRecent, getProofGenerationData } from './client/bitcoin.js';
+import { buildRegtestBitcoinSegwitTransaction, getBitcoinBlockSbtcTestnet, getProofData, getProofDataRecent, getProofGenerationData } from './client/bitcoin.js';
 
 const router = express.Router();
 
@@ -44,6 +44,40 @@ router.get('/tx/:txid', async (req, res) => {
 	// not with pruned node const rawTx = await bitcoinRPC('getrawtransaction', [req.params.txid, true], getRpcParams());
 	res.json(txM);
 });
+router.get('/tx/:txid/sbtc-testnet', async (req, res) => {
+	const txM: any = await fetchTransaction('https://beta.sbtc-mempool.tech/api/proxy', req.params.txid);
+	// not with pruned node const rawTx = await bitcoinRPC('getrawtransaction', [req.params.txid, true], getRpcParams());
+	res.json(txM);
+});
+router.get('/tx/:txid/proof/sbtc-testnet', async (req, res, next) => {
+	try {
+		const tx = await fetchTransaction('https://beta.sbtc-mempool.tech/api/proxy', req.params.txid);
+		const blockhash = tx.status.block_hash;
+		//console.log('/tx/:txid/proof/sbtc-testnet: txid: ' + req.params.txid);
+		//console.log('/tx/:txid/proof/sbtc-testnet: blockHash: ' + blockhash);
+
+		const block = await getBitcoinBlockSbtcTestnet(req.params.txid, blockhash);
+		if (!block) {
+			throw new Error('not found: ' + req.params.txid);
+		}
+		//console.log('/tx/:txid/proof/sbtc-testnet:' + req.params.txid, block);
+		//res.json({ block, tx });
+		//const blockHex = await bitcoinRPC('getblock', [blockhash, 0], rpcParams);
+		const data: ProofRequest = {
+			txid: req.params.txid,
+			block,
+			blockHeader: block.header
+		};
+
+		const pgd: ProofGenerationData = getProofGenerationData(data);
+		const proof: TransactionProofSet = extractProofInfo(pgd, data);
+		res.json({ proof, data });
+	} catch (error) {
+		console.log('Error in routes: ', error);
+		next('Recent mainnet transactions only.');
+	}
+});
+
 router.get('/tx/:txid/proof', async (req, res, next) => {
 	try {
 		let txM: any;
