@@ -66,7 +66,7 @@ router.get('/tx/:txid/proof', async (req, res, next) => {
 		res.json({ proof, data });
 	} catch (error) {
 		console.log('Error in routes: ', error);
-		next('Error - check the transaction not older than 2 days.');
+		next('Recent mainnet transactions only.');
 	}
 });
 
