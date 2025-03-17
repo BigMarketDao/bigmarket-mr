@@ -18,7 +18,10 @@ import { ObjectId } from 'mongodb';
 async function updateMarketData(marketId: number, marketType: number, marketContract: string) {
 	// marketData is kept up to date on the create-market event when new events are detected!
 	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
-	if (!marketData) throw new Error('Problem calling api - maybe rate limits?');
+	if (!marketData) {
+		console.error('Problem calling api - maybe rate limits?');
+		return 'Problem calling api - maybe rate limits?';
+	}
 	const createEvent = await fetchMarket(marketId, marketType);
 	if (!createEvent) return; // events sequence can screw eg during development
 	const changes = {
@@ -34,7 +37,10 @@ export async function updatePredictionMarketCreateEvent(marketType: number, even
 	const marketId = Number(result.value['market-id'].value);
 	console.log(marketId, ' marketContract: ' + marketContract);
 	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
-	if (!marketData) throw new Error('Problem calling api - maybe rate limits?');
+	if (!marketData) {
+		console.error('Problem calling api - maybe rate limits?');
+		return 'Problem calling api - maybe rate limits?';
+	}
 	const createEvent = {
 		_id: new ObjectId(),
 		event: 'create-market',
