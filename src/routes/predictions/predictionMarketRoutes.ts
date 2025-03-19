@@ -89,8 +89,8 @@ router.get('/markets/categories', async (req, res) => {
 	res.json(polls);
 });
 
-router.get('/markets/votes/:marketId', async (req, res) => {
-	const polls = await fetchMarketVotes(Number(req.params.marketId));
+router.get('/markets/votes/:marketId/:marketType/:contract', async (req, res) => {
+	const polls = await fetchMarketVotes(Number(req.params.marketId), req.params.contract);
 	res.json(polls);
 });
 

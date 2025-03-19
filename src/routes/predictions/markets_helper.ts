@@ -14,6 +14,7 @@ import { daoEventCollection, marketCategoriesCollection, marketCollection } from
 import { findUserEnteredPollByHash } from '../polling/polling_helper.js';
 import { getConfig } from '../../lib/config.js';
 import { ObjectId } from 'mongodb';
+import { getDaoConfig } from '../../lib/config_dao.js';
 
 async function updateMarketData(marketId: number, marketType: number, marketContract: string) {
 	// marketData is kept up to date on the create-market event when new events are detected!
@@ -279,18 +280,24 @@ export async function fetchAllMarketCategories(): Promise<Array<MarketCategory>>
 	return result as unknown as Array<MarketCategory>;
 }
 
-export async function fetchMarketVotes(marketId: number): Promise<Array<PollVoteEvent>> {
-	const result = await daoEventCollection.find({ pollId: marketId, event: 'market-vote' }).toArray();
+export async function fetchMarketVotes(marketId: number, contract: string): Promise<Array<PollVoteEvent>> {
+	const result = await daoEventCollection.find({ pollId: marketId, votingContract: contract, event: 'market-vote' }).toArray();
 	return result as unknown as Array<PollVoteEvent>;
 }
 
+function getContract(marketType: number): string {
+	let contract = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_BITCOIN}`;
+	if (marketType === 1) contract = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`;
+	if (marketType === 2) contract = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`;
+	return contract;
+}
 export async function fetchMarketStakes(marketId: number, marketType: number): Promise<Array<PredictionMarketStakeEvent>> {
-	const result = await daoEventCollection.find({ marketId, marketType, event: 'market-stake' }).toArray();
+	const result = await daoEventCollection.find({ votingContract: getContract(marketType), marketId, marketType, event: 'market-stake' }).toArray();
 	return result as unknown as Array<PredictionMarketStakeEvent>;
 }
 
 export async function fetchMarketClaims(marketId: number, marketType: number): Promise<Array<PredictionMarketClaimEvent>> {
-	const result = await daoEventCollection.find({ marketId, marketType, event: 'claim-winnings' }).toArray();
+	const result = await daoEventCollection.find({ votingContract: getContract(marketType), marketId, marketType, event: 'claim-winnings' }).toArray();
 	return result as unknown as Array<PredictionMarketClaimEvent>;
 }
 
@@ -310,7 +317,8 @@ export async function fetchMarket(marketId: number, marketType?: number): Promis
 	const result = await daoEventCollection.findOne({
 		event: 'create-market',
 		marketId: marketId,
-		marketType: marketType ? marketType : 1
+		marketType: marketType ? marketType : 1,
+		votingContract: getContract(marketType || 1)
 	});
 	return result as unknown as PredictionMarketCreateEvent;
 }
