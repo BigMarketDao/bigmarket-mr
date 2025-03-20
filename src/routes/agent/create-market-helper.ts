@@ -151,7 +151,8 @@ const getArgsCV = async (proposer: string, examplePoll: StoredOpinionPoll) => {
 export async function getClarityProofForCreateMarket(proposer: string): Promise<ListCV<ClarityValue>> {
 	const gateKeeper: GateKeeper = await fetchCreateMarketMerkleInput();
 	const { tree, root } = generateMerkleTreeUsingStandardPrincipal(gateKeeper.merkleRootInput);
-
+	console.log('getClarityProofForCreateMarket: proposer: ' + proposer);
+	console.log('getClarityProofForCreateMarket: resolutionAgent: ' + cachedData?.contractData.resolutionAgent);
 	const { proof, valid } = generateMerkleProof(tree, cachedData?.contractData.resolutionAgent || proposer);
 	if (!valid) throw new Error('Invalid proof - user will be denied this operation in contract');
 	return proofToClarityValue(proof);
