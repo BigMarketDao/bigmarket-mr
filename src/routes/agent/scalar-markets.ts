@@ -102,6 +102,8 @@ async function createMarketOnChain(chain: number, ends: string, endBlockHeight: 
 	const market = await convertMarketToLocalFormat(meta);
 	await savePoll(market);
 	const network = getStacksNetwork(getConfig().network);
+	console.log('createMarketOnChain: network: ' + network);
+	console.log('createMarketOnChain: getConfig().walletKey: ' + getConfig().walletKey);
 	const transaction = await makeContractCall({
 		contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
 		contractName: getDaoConfig().VITE_DAO_MARKET_SCALAR,
@@ -110,16 +112,18 @@ async function createMarketOnChain(chain: number, ends: string, endBlockHeight: 
 		senderKey: getConfig().walletKey,
 		network
 	});
-	const txResult = await broadcastTransaction({ transaction });
-	console.log('resolveMarketOnChain: txResult:', txResult);
+	//const txResult = await broadcastTransaction({ transaction });
+	//console.log('resolveMarketOnChain: txResult:', txResult);
 }
 
 const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => {
 	const proposer = 'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY'; //getDaoConfig().VITE_DOA_DEPLOYER;
 	const marketFeeCV = examplePoll.marketFee === 0 ? Cl.none() : Cl.some(Cl.uint((examplePoll.marketFee || 0) * 100));
 	const metadataHash = bufferCV(hexToBytes(examplePoll.objectHash)); // Assumes the hash is a string of 32 bytes in hex format
-	let proof = cachedData?.contractData.creationGated ? await getClarityProofForCreateMarket(proposer) : Cl.list([]);
+	//let proof = cachedData?.contractData.creationGated ? await getClarityProofForCreateMarket(proposer) : Cl.list([]);
+	let proof = await getClarityProofForCreateMarket(proposer);
 	const genCats = examplePoll!.outcomes as Array<ScalarMarketDataItem>;
+	console.log('resolveMarketOnChain: getArgsCV: cachedData?.contractData: ', cachedData?.contractData);
 	console.log('resolveMarketOnChain: getArgsCV: proof: ', proof);
 	const cats = listCV(genCats.map((o) => Cl.tuple({ min: Cl.uint(o.min), max: Cl.uint(o.max) })));
 	return [cats, marketFeeCV, Cl.contractPrincipal(examplePoll.token.split('.')[0], examplePoll.token.split('.')[1]), metadataHash, proof, Cl.principal(examplePoll.treasury), Cl.none(), Cl.none(), Cl.bufferFromHex(priceFeeId)];
