@@ -153,7 +153,7 @@ async function convertMarketToLocalFormat(meta: any): Promise<StoredOpinionPoll>
 			website: { url: 'https://www.stacks.co/' }
 		},
 		marketType: 2,
-		marketFee: 200,
+		marketFee: 2,
 		objectHash: '',
 		signature: '',
 		publicKey: '',
