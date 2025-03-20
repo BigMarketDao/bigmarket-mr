@@ -120,7 +120,7 @@ const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => 
 	let proof = cachedData?.contractData.creationGated ? await getClarityProofForCreateMarket(proposer) : Cl.list([]);
 	const genCats = examplePoll!.outcomes as Array<ScalarMarketDataItem>;
 	console.log('resolveMarketOnChain: getArgsCV: genCats: ', genCats);
-	const cats = listCV(genCats.map((o) => Cl.tuple({ min: Cl.uint(o.min * ORACLE_MULTIPLIER), max: Cl.uint(o.max * ORACLE_MULTIPLIER) })));
+	const cats = listCV(genCats.map((o) => Cl.tuple({ min: Cl.uint(o.min), max: Cl.uint(o.max) })));
 	return [cats, marketFeeCV, Cl.contractPrincipal(examplePoll.token.split('.')[0], examplePoll.token.split('.')[1]), metadataHash, proof, Cl.principal(examplePoll.treasury), Cl.none(), Cl.none(), Cl.bufferFromHex(priceFeeId)];
 };
 
@@ -197,8 +197,8 @@ function generateOutcomeCategories(price: number, variance: number): Array<Scala
 	const step = price * variance; // 5% increment
 	const categories = [];
 	for (let i = -2; i <= 2; i++) {
-		const min = price + (i - 1) * step;
-		const max = price + i * step;
+		const min = (price + (i - 1) * step) * ORACLE_MULTIPLIER;
+		const max = (price + i * step) * ORACLE_MULTIPLIER;
 		categories.push({ min, max });
 	}
 	return categories;
