@@ -12,12 +12,33 @@ export const initResolveMarketsJob = cron.schedule('*/10 * * * *', async (fireDa
 });
 
 // every 10 minutes: * */1 * * *'
-export const initCreateMarketsJob = cron.schedule('0 12 * * *', async (fireDate) => {
+export const initCreateMarketsJobBitcoin = cron.schedule('0 12 * * *', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
 		await createScalarMarketsOnChain(1);
+	} catch (err: any) {
+		console.log('initScanDaoEventsJob: ', err);
+	}
+});
+export const initCreateMarketsJobStacks = cron.schedule('10 12 * * *', async (fireDate) => {
+	console.log('Running: initCreateMarketsJob at: ' + fireDate);
+	try {
 		await createScalarMarketsOnChain(2);
+	} catch (err: any) {
+		console.log('initScanDaoEventsJob: ', err);
+	}
+});
+export const initCreateMarketsJobSolana = cron.schedule('20 12 * * *', async (fireDate) => {
+	console.log('Running: initCreateMarketsJob at: ' + fireDate);
+	try {
 		await createScalarMarketsOnChain(3);
+	} catch (err: any) {
+		console.log('initScanDaoEventsJob: ', err);
+	}
+});
+export const initCreateMarketsJobEthereum = cron.schedule('30 12 * * *', async (fireDate) => {
+	console.log('Running: initCreateMarketsJob at: ' + fireDate);
+	try {
 		await createScalarMarketsOnChain(4);
 	} catch (err: any) {
 		console.log('initScanDaoEventsJob: ', err);

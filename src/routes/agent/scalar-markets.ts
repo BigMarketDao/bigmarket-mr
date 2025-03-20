@@ -29,25 +29,26 @@ const BTCUSD = '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b
 const SOLUSD = '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d';
 const ETHUSD = '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace';
 
-export type ScalarMarketData = {
-	title: string;
-	description: string;
-	outcome_categories: Array<{ min: number; max: number }>;
-	category: string;
-	criterion: {
-		resolvesAt: number;
-		sources: Array<string>;
-		criteria: string;
-	};
-};
+export async function resolveScalarMarketsOnChain(): Promise<Array<PredictionMarketCreateEvent>> {
+	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market', marketType: 2 }).toArray()) as Array<PredictionMarketCreateEvent>;
+	const resolvedMarkets: PredictionMarketCreateEvent[] = [];
+	for (const market of markets) {
+		console.log('resolveScalarMarketsOnChain: market: ' + market.votingContract.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
+		const rm = await resolveScalarMarketOnChain(market);
+		if (rm) resolvedMarkets.push(rm);
+		await sleep(30000); // Pause for 30 seconds to avoid nonce problems
+	}
+	return resolvedMarkets;
+}
 
-export async function createScalarMarketsOnChain(chainMode: number) {
+export async function createScalarMarketsOnChain(chain: number) {
 	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
 	const current = stacksInfo.burn_block_height;
 	const endCooling = current + ONE_DAY + ONE_DAY;
 	const ends = estimateBitcoinBlockTime(endCooling, current);
-	await createMarketOnChain(chainMode, ends, endCooling);
+	await createMarketOnChain(chain, ends, endCooling);
 }
+
 async function getMetaData(chain: number, endBlockHeight: number, ends: string) {
 	const rates = await getExchangeRates();
 	const rate = rates.find((o) => o.currency === 'USD');
@@ -159,15 +160,8 @@ async function convertMarketToLocalFormat(meta: any): Promise<StoredOpinionPoll>
 	return marketMeta;
 }
 
-export async function resolveScalarMarketsOnChain(): Promise<Array<PredictionMarketCreateEvent>> {
-	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market', marketType: 2 }).toArray()) as Array<PredictionMarketCreateEvent>;
-	const resolvedMarkets: PredictionMarketCreateEvent[] = [];
-	for (const market of markets) {
-		console.log('resolveScalarMarketsOnChain: market: ' + market.votingContract.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
-		const rm = await resolveScalarMarketOnChain(market);
-		if (rm) resolvedMarkets.push(rm);
-	}
-	return resolvedMarkets;
+function sleep(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {

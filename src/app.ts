@@ -22,7 +22,7 @@ import { agentRoutes } from './routes/agent/agentRoutes.js';
 import { initScanDaoEventsJob } from './routes/dao/events/eventScheduler.js';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
 import { initExchangeRatesJob } from './routes/rates/ratesScheduler.js';
-import { initResolveMarketsJob } from './routes/agent/agentScheduler.js';
+import { initCreateMarketsJobBitcoin, initCreateMarketsJobEthereum, initCreateMarketsJobSolana, initCreateMarketsJobStacks, initResolveMarketsJob } from './routes/agent/agentScheduler.js';
 
 if (process.env.NODE_ENV === 'development') {
 	dotenv.config();
@@ -87,6 +87,10 @@ async function connectToMongoCloud() {
 	initScanDaoEventsJob.start();
 	initExchangeRatesJob.start();
 	initResolveMarketsJob.start();
+	initCreateMarketsJobBitcoin.start();
+	initCreateMarketsJobStacks.start();
+	initCreateMarketsJobSolana.start();
+	initCreateMarketsJobEthereum.start();
 
 	const server = app.listen(getConfig().port, () => {
 		console.log('Server listening!');
