@@ -11,7 +11,7 @@ router.get('/resolve-auto/scalar', async (req, res) => {
 });
 
 router.get('/create-auto/scalar/:bitcoinMode', async (req, res) => {
-	const markets = await createScalarMarketsOnChain(Boolean(req.params.bitcoinMode));
+	const markets = await createScalarMarketsOnChain(Number(req.params.bitcoinMode));
 	res.json(markets);
 });
 

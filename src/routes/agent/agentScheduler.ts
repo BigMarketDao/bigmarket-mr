@@ -15,8 +15,10 @@ export const initResolveMarketsJob = cron.schedule('*/10 * * * *', async (fireDa
 export const initCreateMarketsJob = cron.schedule('0 12 * * *', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
-		await createScalarMarketsOnChain(true);
-		await createScalarMarketsOnChain(false);
+		await createScalarMarketsOnChain(1);
+		await createScalarMarketsOnChain(2);
+		await createScalarMarketsOnChain(3);
+		await createScalarMarketsOnChain(4);
 	} catch (err: any) {
 		console.log('initScanDaoEventsJob: ', err);
 	}
