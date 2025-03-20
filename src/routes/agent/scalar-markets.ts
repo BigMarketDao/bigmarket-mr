@@ -98,6 +98,7 @@ async function getMetaData(chain: number, endBlockHeight: number, ends: string) 
 }
 async function createMarketOnChain(chain: number, ends: string, endBlockHeight: number) {
 	const meta = await getMetaData(chain, endBlockHeight, ends);
+	console.log('createMarketOnChain: getArgsCV: meta: ', meta);
 	const market = await convertMarketToLocalFormat(meta);
 	await savePoll(market);
 	const transaction = await makeContractCall({
@@ -114,9 +115,11 @@ async function createMarketOnChain(chain: number, ends: string, endBlockHeight: 
 const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => {
 	const proposer = getDaoConfig().VITE_DOA_DEPLOYER;
 	const marketFeeCV = examplePoll.marketFee === 0 ? Cl.none() : Cl.some(Cl.uint((examplePoll.marketFee || 0) * 100));
+	console.log('resolveMarketOnChain: getArgsCV:' + examplePoll.marketFee);
 	const metadataHash = bufferCV(hexToBytes(examplePoll.objectHash)); // Assumes the hash is a string of 32 bytes in hex format
 	let proof = cachedData?.contractData.creationGated ? await getClarityProofForCreateMarket(proposer) : Cl.list([]);
 	const genCats = examplePoll!.outcomes as Array<ScalarMarketDataItem>;
+	console.log('resolveMarketOnChain: getArgsCV: genCats: ', genCats);
 	const cats = listCV(genCats.map((o) => Cl.tuple({ min: Cl.uint(o.min * ORACLE_MULTIPLIER), max: Cl.uint(o.max * ORACLE_MULTIPLIER) })));
 	return [cats, marketFeeCV, Cl.contractPrincipal(examplePoll.token.split('.')[0], examplePoll.token.split('.')[1]), metadataHash, proof, Cl.principal(examplePoll.treasury), Cl.none(), Cl.none(), Cl.bufferFromHex(priceFeeId)];
 };
