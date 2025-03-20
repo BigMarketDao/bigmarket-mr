@@ -116,7 +116,8 @@ const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => 
 	const marketFeeCV = examplePoll.marketFee === 0 ? Cl.none() : Cl.some(Cl.uint((examplePoll.marketFee || 0) * 100));
 	const metadataHash = bufferCV(hexToBytes(examplePoll.objectHash)); // Assumes the hash is a string of 32 bytes in hex format
 	let proof = cachedData?.contractData.creationGated ? await getClarityProofForCreateMarket(proposer) : Cl.list([]);
-	const cats = listCV(examplePoll.marketTypeDataScalar!.map((o) => Cl.tuple({ min: Cl.uint(o.min * ORACLE_MULTIPLIER), max: Cl.uint(o.max * ORACLE_MULTIPLIER) })));
+	const genCats = examplePoll!.outcomes as Array<ScalarMarketDataItem>;
+	const cats = listCV(genCats.map((o) => Cl.tuple({ min: Cl.uint(o.min * ORACLE_MULTIPLIER), max: Cl.uint(o.max * ORACLE_MULTIPLIER) })));
 	return [cats, marketFeeCV, Cl.contractPrincipal(examplePoll.token.split('.')[0], examplePoll.token.split('.')[1]), metadataHash, proof, Cl.principal(examplePoll.treasury), Cl.none(), Cl.none(), Cl.bufferFromHex(priceFeeId)];
 };
 
@@ -189,7 +190,7 @@ async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {
 	}
 }
 
-function generateOutcomeCategories(price: number, variance: number): Array<{ min: number; max: number }> {
+function generateOutcomeCategories(price: number, variance: number): Array<ScalarMarketDataItem> {
 	const step = price * variance; // 5% increment
 	const categories = [];
 	for (let i = -2; i <= 2; i++) {
