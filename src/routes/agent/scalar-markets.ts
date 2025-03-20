@@ -112,8 +112,8 @@ async function createMarketOnChain(chain: number, ends: string, endBlockHeight: 
 		senderKey: getConfig().walletKey,
 		network
 	});
-	//const txResult = await broadcastTransaction({ transaction });
-	//console.log('resolveMarketOnChain: txResult:', txResult);
+	const txResult = await broadcastTransaction({ transaction });
+	console.log('resolveMarketOnChain: txResult:', txResult);
 }
 
 const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => {
@@ -122,6 +122,7 @@ const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => 
 	const metadataHash = bufferCV(hexToBytes(examplePoll.objectHash)); // Assumes the hash is a string of 32 bytes in hex format
 	//let proof = cachedData?.contractData.creationGated ? await getClarityProofForCreateMarket(proposer) : Cl.list([]);
 	let proof = await getClarityProofForCreateMarket(proposer);
+	if (cachedData && !cachedData.contractData.creationGated) proof = Cl.list([]);
 	const genCats = examplePoll!.outcomes as Array<ScalarMarketDataItem>;
 	console.log('resolveMarketOnChain: getArgsCV: cachedData?.contractData: ', cachedData?.contractData);
 	console.log('resolveMarketOnChain: getArgsCV: proof: ', proof);
