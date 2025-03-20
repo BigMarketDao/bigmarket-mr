@@ -101,12 +101,14 @@ async function createMarketOnChain(chain: number, ends: string, endBlockHeight: 
 	console.log('createMarketOnChain: getArgsCV: meta: ', meta);
 	const market = await convertMarketToLocalFormat(meta);
 	await savePoll(market);
+	const network = getStacksNetwork(getConfig().network);
 	const transaction = await makeContractCall({
 		contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
 		contractName: getDaoConfig().VITE_DAO_MARKET_PREDICTING,
 		functionName: 'create-market',
 		functionArgs: await getArgsCV(meta.priceFeedId, market),
-		senderKey: getConfig().walletKey
+		senderKey: getConfig().walletKey,
+		network
 	});
 	const txResult = await broadcastTransaction({ transaction });
 	console.log('resolveMarketOnChain: txResult:', txResult);
