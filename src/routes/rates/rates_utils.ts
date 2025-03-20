@@ -14,9 +14,24 @@ export async function getStxToBtc(): Promise<any> {
 	return info;
 }
 
+export async function getEthToBtc(): Promise<any> {
+	const url = 'https://www.blockchain.com/en/tobtc?currency=ETH&value=1';
+	const response = await fetch(url);
+	const info = await response.json();
+	return info;
+}
+export async function getSolToBtc(): Promise<any> {
+	const url = 'https://www.blockchain.com/en/tobtc?currency=SOL&value=1';
+	const response = await fetch(url);
+	const info = await response.json();
+	return info;
+}
+
 export async function updateExchangeRates() {
 	try {
 		const stxToBtc = await getStxToBtc();
+		const ethToBtc = await getEthToBtc();
+		const solToBtc = await getSolToBtc();
 		const url = 'https://blockchain.info/ticker';
 		const response = await fetch(url);
 		const info = await response.json();
@@ -31,7 +46,9 @@ export async function updateExchangeRates() {
 					sell: info[key].sell,
 					symbol: currencies[key].symbol,
 					name: currencies[key].name,
-					stxToBtc
+					stxToBtc,
+					ethToBtc,
+					solToBtc
 				};
 				saveNewExchangeRate(newRate);
 			} else {
@@ -43,7 +60,9 @@ export async function updateExchangeRates() {
 					sell: info[key].sell,
 					symbol: currencies[key].symbol,
 					name: currencies[key].name,
-					stxToBtc
+					stxToBtc,
+					ethToBtc,
+					solToBtc
 				});
 			}
 		}
@@ -61,9 +80,9 @@ export async function delExchangeRates() {
 export async function setExchangeRates(ratesObj: any) {
 	return await exchangeRatesCollection.insertMany(ratesObj);
 }
-export async function getExchangeRates() {
+export async function getExchangeRates(): Promise<Array<ExchangeRate>> {
 	const result = await exchangeRatesCollection.find({}).sort({ currency: -1 }).toArray();
-	return result;
+	return result as unknown as Array<ExchangeRate>;
 }
 export async function findExchangeRateByCurrency(currency: string): Promise<any> {
 	const result = await exchangeRatesCollection.findOne({ currency });

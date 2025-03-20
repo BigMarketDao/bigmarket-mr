@@ -17,7 +17,7 @@ export const initScanDaoEventsJob = cron.schedule('* * * * *', async (fireDate) 
 				{ $project: { _id: 0, daoContract: '$_id' } } // Extract `daoContract`
 			])
 			.toArray();
-		console.log('Running: distinctDaoContracts: ', distinctDaoContracts);
+		//console.log('Running: distinctDaoContracts: ', distinctDaoContracts);
 		if (distinctDaoContracts.length === 0) {
 			distinctDaoContracts.push({
 				daoContract: getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DOA
@@ -26,7 +26,7 @@ export const initScanDaoEventsJob = cron.schedule('* * * * *', async (fireDate) 
 
 		for (const dao of distinctDaoContracts) {
 			const docContract = dao.daoContract;
-			console.log('Running: dao: ' + docContract);
+			//console.log('Running: dao: ' + docContract);
 			try {
 				await readDaoEvents(true, docContract);
 			} catch (err) {

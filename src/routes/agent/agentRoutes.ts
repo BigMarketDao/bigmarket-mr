@@ -1,9 +1,19 @@
 import express from 'express';
 import { sweepAndResolveMarket, sweepAndResolveMarkets } from './resolver-helper.js';
 import { createMarketByDiscovery, createMarketBySuggestion } from './create-market-helper.js';
-import { timingSafeEqual } from 'crypto';
+import { createScalarMarketsOnChain, resolveScalarMarketsOnChain } from './scalar-markets.js';
 
 const router = express.Router();
+
+router.get('/resolve-auto/scalar', async (req, res) => {
+	const markets = await resolveScalarMarketsOnChain();
+	res.json(markets);
+});
+
+router.get('/create-auto/scalar/:bitcoinMode', async (req, res) => {
+	const markets = await createScalarMarketsOnChain(Boolean(req.params.bitcoinMode));
+	res.json(markets);
+});
 
 router.get('/resolve/:marketId/:marketType', async (req, res) => {
 	const markets = await sweepAndResolveMarket(Number(req.params.marketId), Number(req.params.marketType));
