@@ -199,8 +199,8 @@ function generateOutcomeCategories(price: number, variance: number): Array<Scala
 	const step = price * variance; // 5% increment
 	const categories = [];
 	for (let i = -2; i <= 2; i++) {
-		const min = (price + (i - 1) * step) * ORACLE_MULTIPLIER;
-		const max = (price + i * step) * ORACLE_MULTIPLIER;
+		const min = Math.round((price + (i - 1) * step) * ORACLE_MULTIPLIER);
+		const max = Math.round((price + i * step) * ORACLE_MULTIPLIER);
 		categories.push({ min, max });
 	}
 	return categories;
