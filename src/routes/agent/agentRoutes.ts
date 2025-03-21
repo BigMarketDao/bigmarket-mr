@@ -15,10 +15,10 @@ router.get('/resolve-auto-undisputed/scalar', async (req, res) => {
 	res.json(markets);
 });
 
-// router.get('/create-auto/scalar/:chain', async (req, res) => {
-// 	const markets = await createScalarMarketsOnChain(Number(req.params.chain));
-// 	res.json(markets);
-// });
+router.get('/create-auto/scalar/:chain', async (req, res) => {
+	const markets = await createScalarMarketsOnChain(Number(req.params.chain));
+	res.json(markets);
+});
 
 router.get('/resolve/:marketId/:marketType', async (req, res) => {
 	const markets = await sweepAndResolveMarket(Number(req.params.marketId), Number(req.params.marketType));
