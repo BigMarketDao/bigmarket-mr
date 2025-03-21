@@ -36,6 +36,8 @@ db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345
 
 db.daoEventCollection.findAndModify({query: {marketId:0}, update: {$set: {featured: true }}, upsert: false, new: true, fields: {}})
 
+db.daoEventCollection.findAndModify({query: {event : 'create-market', marketId:2, votingContract: 'ST31A25YBK50KFJ2QS0EQK9FNXEQJD4PR0828789R.bme023-2-market-scalar'}, update: {$set: {processed: true }}, upsert: false, new: true, fields: {}})
+
 ````
     gateType: string;
     merkleRootInput: Array<string>;
