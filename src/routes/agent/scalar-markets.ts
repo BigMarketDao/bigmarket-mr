@@ -4,7 +4,7 @@ import { getConfig } from '../../lib/config.js';
 import { broadcastTransaction, bufferCV, Cl, listCV, makeContractCall } from '@stacks/transactions';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { daoEventCollection } from '../../lib/data/db_models.js';
-import { estimateBitcoinBlockTime } from '../../lib/utils.js';
+import { estimateBitcoinBlockTime, formatFiat } from '../../lib/utils.js';
 import { getExchangeRates } from '../rates/rates_utils.js';
 import { savePoll } from '../polling/polling_helper.js';
 import { fetchAllowedTokens } from '../predictions/markets_helper.js';
@@ -36,7 +36,7 @@ export async function resolveScalarMarketsOnChain(): Promise<Array<PredictionMar
 		console.log('resolveScalarMarketsOnChain: market: ' + market.votingContract.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
 		const rm = await resolveScalarMarketOnChain(market);
 		if (rm) resolvedMarkets.push(rm);
-		await sleep(30000); // Pause for 30 seconds to avoid nonce problems
+		await sleep(30000);
 	}
 	return resolvedMarkets;
 }
@@ -48,17 +48,13 @@ export async function resolveUndisputedScalarMarketsOnChain(): Promise<Array<Pre
 		console.log('resolveScalarMarketsOnChain: market: ' + market.votingContract.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
 		const rm = await resolveUndisputedScalarMarketOnChain(market);
 		if (rm) resolvedMarkets.push(rm);
-		await sleep(30000); // Pause for 30 seconds to avoid nonce problems
+		await sleep(30000);
 	}
 	return resolvedMarkets;
 }
 
 export async function createScalarMarketsOnChain(chain: number) {
-	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
-	const current = stacksInfo.burn_block_height;
-	const endCooling = current + ONE_DAY + ONE_DAY;
-	const ends = estimateBitcoinBlockTime(endCooling, current);
-	await createMarketOnChain(chain, ends, endCooling);
+	await createMarketOnChain(chain);
 }
 
 async function getMetaData(chain: number, endBlockHeight: number, ends: string) {
@@ -69,47 +65,51 @@ async function getMetaData(chain: number, endBlockHeight: number, ends: string) 
 	const stxPrice = rate.stxToBtc * btcPrice;
 	const ethPrice = rate.ethToBtc * btcPrice;
 	const solPrice = rate.solToBtc * btcPrice;
-	let coin = 'BTC (Bitcoin)';
-	let price = btcPrice;
+	let coin = 'BTC';
+	let price = formatFiat(btcPrice);
 	let priceFeedId = BTCUSD;
 	let cats = generateOutcomeCategories(btcPrice, 0.01);
 	let logo = bitcoinLogo;
 
 	if (chain === 2) {
-		coin = 'STX (Stacks)';
-		price = stxPrice;
+		coin = 'STX';
+		price = formatFiat(stxPrice);
 		cats = generateOutcomeCategories(stxPrice, 0.06);
 		priceFeedId = STXUSD;
 		logo = stacksLogo;
 	} else if (chain === 3) {
-		coin = 'SOL (Solana)';
-		price = solPrice;
+		coin = 'SOL';
+		price = formatFiat(solPrice);
 		cats = generateOutcomeCategories(solPrice, 0.04);
 		priceFeedId = SOLUSD;
 		logo = solanaLogo;
 	} else if (chain === 4) {
-		coin = 'ETH (Ethereum)';
-		price = ethPrice;
+		coin = 'ETH';
+		price = formatFiat(ethPrice);
 		cats = generateOutcomeCategories(ethPrice, 0.04);
 		priceFeedId = ETHUSD;
 		logo = ethereumLogo;
 	}
 
 	return {
-		title: `${coin} Price Prediction for ${ends}`,
-		description: `This market predicts the price of ${coin} on ${ends}. The current price is ${price} USD, and the market will resolve based on the price falling within one of the specified ranges.`,
+		title: `${coin} Price Prediction at Bitcoin Block Height: ${endBlockHeight.toLocaleString('en-US')}`,
+		description: `This market predicts the price of ${coin} at bitcoin block ${endBlockHeight.toLocaleString('en-US')} (roughly ${ends}). The current price is ${price} USD, and the market will resolve based on the price falling within one of the specified ranges. The market has two phases; active where users can stake and cool down where staking is prevented. The final price is taken at the end of the cool down period.`,
 		outcome_categories: cats,
 		logo,
 		priceFeedId,
 		criterion: {
 			resolvesAt: new Date(ends).getTime(),
 			sources: ['Pyth Oracle'],
-			criteria: `The market will resolve based on the ${coin} price at ${ends}, as reported https://www.pyth.network/price-feeds through the Pyth Stacks on-chain oracle. The price is resolved in the first bitcoin mainnet block following ${endBlockHeight} (or nearest equivalent on stacks)`
+			criteria: `The market will resolve based on the ${coin} price, at bitcoin block ${endBlockHeight.toLocaleString('en-US')} (roughly ${ends}), as reported on-chain by the Pyth price feed oracle on the Stacks blockchain.`
 		}
 	};
 }
-async function createMarketOnChain(chain: number, ends: string, endBlockHeight: number) {
-	const meta = await getMetaData(chain, endBlockHeight, ends);
+async function createMarketOnChain(chain: number) {
+	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+	const current = stacksInfo.burn_block_height;
+	const endCooling = current + ONE_DAY + ONE_DAY;
+	const ends = estimateBitcoinBlockTime(endCooling, current);
+	const meta = await getMetaData(chain, endCooling, ends);
 	console.log('createMarketOnChain: getArgsCV: meta: ', meta);
 	const market = await convertMarketToLocalFormat(meta);
 	await savePoll(market);

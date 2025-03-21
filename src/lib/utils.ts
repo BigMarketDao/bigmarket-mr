@@ -6,5 +6,15 @@ export function estimateBitcoinBlockTime(targetBlock: number, currentBlock: numb
 	const timeShiftSeconds = blockDifference * BLOCK_INTERVAL_SEC;
 	const currentTime = DateTime.fromISO(currentTimeUtc, { zone: 'utc' });
 	const estimatedTime = currentTime.plus({ seconds: timeShiftSeconds });
-	return estimatedTime.toFormat('yyyy-MM-dd HH:mm');
+	return estimatedTime.setZone('utc').toFormat('dd MMM yyyy HH:mm ZZZ');
+}
+export function formatFiat(raw: number): string {
+	const value = raw;
+	return value.toLocaleString('en-US', {
+		style: 'currency',
+		currency: 'USD',
+		currencyDisplay: 'code', // shows "USD 1,234.56"
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	});
 }
