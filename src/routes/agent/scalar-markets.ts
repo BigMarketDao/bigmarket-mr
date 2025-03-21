@@ -93,14 +93,14 @@ async function getMetaData(chain: number, endBlockHeight: number, ends: string) 
 
 	return {
 		title: `${coin} Price Prediction at Bitcoin Block Height: ${endBlockHeight.toLocaleString('en-US')}`,
-		description: `This market predicts the price of ${coin} at bitcoin block ${endBlockHeight.toLocaleString('en-US')} (roughly ${ends}). The current price is ${price} USD, and the market will resolve based on the price falling within one of the specified ranges. The market has two phases; active where users can stake and cool down where staking is prevented. The final price is taken at the end of the cool down period.`,
+		description: `Predicting the price of ${coin} at bitcoin block height ${endBlockHeight.toLocaleString('en-US')}, which is expected around ${ends}.<br/><br/>Current price: USD ${price} - The price will resolve into one of several ranges at that time. - The market has two phases: Active: Users can stake. - Cooldown: Staking closes, and final price is determined.`,
 		outcome_categories: cats,
 		logo,
 		priceFeedId,
 		criterion: {
 			resolvesAt: new Date(ends).getTime(),
 			sources: ['Pyth Oracle'],
-			criteria: `The market will resolve based on the ${coin} price, at bitcoin block ${endBlockHeight.toLocaleString('en-US')} (roughly ${ends}), as reported on-chain by the Pyth price feed oracle on the Stacks blockchain.`
+			criteria: `How the market resolves<br/><br/>BigMarket use the official Pyth price feed oracle on the Stacks blockchain* to determine the final ${coin} price, at bitcoin block ${endBlockHeight.toLocaleString('en-US')}. The result is taken after the cooldown period and locked in on-chain for full transparency..`
 		}
 	};
 }

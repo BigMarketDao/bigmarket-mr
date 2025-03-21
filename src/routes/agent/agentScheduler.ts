@@ -7,16 +7,16 @@ export const initResolveMarketsJob = cron.schedule('*/10 * * * *', async (fireDa
 	try {
 		await resolveScalarMarketsOnChain();
 	} catch (err: any) {
-		console.log('initScanDaoEventsJob: ', err);
+		console.log('initResolveMarketsJob: ', err);
 	}
 });
 
 export const initResolveUndisputedMarketsJob = cron.schedule('15 */1 * * *', async (fireDate) => {
-	console.log('Running: initResolveFinalMarketsJob at: ' + fireDate);
+	console.log('Running: initResolveUndisputedMarketsJob at: ' + fireDate);
 	try {
 		await resolveUndisputedScalarMarketsOnChain();
 	} catch (err: any) {
-		console.log('initScanDaoEventsJob: ', err);
+		console.log('initResolveUndisputedMarketsJob: ', err);
 	}
 });
 
@@ -26,7 +26,7 @@ export const initCreateMarketsJobBitcoin = cron.schedule('0 12 * * 1', async (fi
 	try {
 		await createScalarMarketsOnChain(1);
 	} catch (err: any) {
-		console.log('initScanDaoEventsJob: ', err);
+		console.log('initCreateMarketsJobBitcoin: ', err);
 	}
 });
 // 12 pm every tuesday
@@ -35,7 +35,7 @@ export const initCreateMarketsJobStacks = cron.schedule('0 12 * * 2', async (fir
 	try {
 		await createScalarMarketsOnChain(2);
 	} catch (err: any) {
-		console.log('initScanDaoEventsJob: ', err);
+		console.log('initCreateMarketsJobStacks: ', err);
 	}
 });
 // 12 pm every wednesday
@@ -44,7 +44,7 @@ export const initCreateMarketsJobSolana = cron.schedule('0 12 * * 3', async (fir
 	try {
 		await createScalarMarketsOnChain(3);
 	} catch (err: any) {
-		console.log('initScanDaoEventsJob: ', err);
+		console.log('initCreateMarketsJobSolana: ', err);
 	}
 });
 // 12 pm every thursday
@@ -53,6 +53,6 @@ export const initCreateMarketsJobEthereum = cron.schedule('0 12 * * 4', async (f
 	try {
 		await createScalarMarketsOnChain(4);
 	} catch (err: any) {
-		console.log('initScanDaoEventsJob: ', err);
+		console.log('initCreateMarketsJobEthereum: ', err);
 	}
 });
