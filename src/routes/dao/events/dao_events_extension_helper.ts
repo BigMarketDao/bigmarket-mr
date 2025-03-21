@@ -38,11 +38,11 @@ async function readVotingEvents(genesis: boolean, daoContract: string, extension
 				moreEvents = await resolveExtensionEvents(url, currentOffset, count, daoContract, extensionContract);
 				count++;
 			} catch (err: any) {
-				console.log('readVotingEvents: ' + err.message);
+				console.log('readVotingEvents: ' + extensionContract + '. error: ' + err.message);
 			}
 		} while (moreEvents);
-	} catch (err) {
-		console.log('readVotingEvents: error: ', err);
+	} catch (err: any) {
+		console.log('readVotingEvents: ' + extensionContract + '. error: ' + err.message);
 	}
 	return extensions;
 }

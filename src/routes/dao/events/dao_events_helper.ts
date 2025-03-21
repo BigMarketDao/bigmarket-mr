@@ -38,7 +38,7 @@ export async function readDaoEvents(genesis: boolean, daoContractId: string) {
 	if (!genesis) {
 		currentOffset = await countAllEvents();
 	}
-	console.log('readDaoEvents: from ' + currentOffset + ' contract: ' + daoContractId);
+	//console.log('readDaoEvents: from ' + currentOffset + ' contract: ' + daoContractId);
 	let count = 0;
 	let moreEvents = true;
 	try {

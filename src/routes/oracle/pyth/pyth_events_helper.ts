@@ -44,7 +44,7 @@ export async function readPythEvents(genesis: boolean) {
 			}
 		} while (count === 0); // (moreEvents);
 	} catch (err) {
-		console.log('readVotingEvents: error: ', err);
+		console.log('readPythEvents: error: ', err);
 	}
 	return extensions;
 }

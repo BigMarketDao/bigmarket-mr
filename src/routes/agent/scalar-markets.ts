@@ -41,6 +41,18 @@ export async function resolveScalarMarketsOnChain(): Promise<Array<PredictionMar
 	return resolvedMarkets;
 }
 
+export async function resolveUndisputedScalarMarketsOnChain(): Promise<Array<PredictionMarketCreateEvent>> {
+	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 1, event: 'create-market', marketType: 2 }).toArray()) as Array<PredictionMarketCreateEvent>;
+	const resolvedMarkets: PredictionMarketCreateEvent[] = [];
+	for (const market of markets) {
+		console.log('resolveScalarMarketsOnChain: market: ' + market.votingContract.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
+		const rm = await resolveUndisputedScalarMarketOnChain(market);
+		if (rm) resolvedMarkets.push(rm);
+		await sleep(30000); // Pause for 30 seconds to avoid nonce problems
+	}
+	return resolvedMarkets;
+}
+
 export async function createScalarMarketsOnChain(chain: number) {
 	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
 	const current = stacksInfo.burn_block_height;
@@ -180,8 +192,7 @@ async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {
 	const blockHeight = stacksInfo.burn_block_height;
 	const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
 	const network = getStacksNetwork(getConfig().network);
-	console.log('resolveScalarMarketOnChain: network: ' + network);
-	console.log('resolveScalarMarketOnChain: walletKey: ' + getConfig().walletKey);
+	console.log('resolveScalarMarketOnChain: market: ' + market.marketId + ':' + market.marketType + ' : ' + market.unhashedData.name);
 	if (blockHeight >= endCool) {
 		const transaction = await makeContractCall({
 			network,
@@ -194,8 +205,28 @@ async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {
 		const txResult = await broadcastTransaction({ transaction });
 		console.log('resolveScalarMarketOnChain: txResult: ', txResult);
 		return market;
-	} else {
-		console.log('resolveScalarMarketOnChain: market not ready to resolve is running or cooling');
+	}
+}
+
+async function resolveUndisputedScalarMarketOnChain(market: PredictionMarketCreateEvent) {
+	if (market.votingContract !== `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
+	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+	const blockHeight = stacksInfo.burn_block_height;
+	const endDispute = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod! + (cachedData?.contractData.disputeWindowLength || 144);
+	const network = getStacksNetwork(getConfig().network);
+	console.log('resolveScalarMarketOnChain: market: ' + market.marketId + ':' + market.marketType + ' : ' + market.unhashedData.name);
+	if (blockHeight >= endDispute) {
+		const transaction = await makeContractCall({
+			network,
+			contractAddress: market.votingContract.split('.')[0],
+			contractName: market.votingContract.split('.')[1],
+			functionName: 'resolve-market-undisputed',
+			functionArgs: [Cl.uint(market.marketId)],
+			senderKey: getConfig().walletKey
+		});
+		const txResult = await broadcastTransaction({ transaction });
+		console.log('resolveScalarMarketOnChain: txResult: ', txResult);
+		return market;
 	}
 }
 

@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { createScalarMarketsOnChain, resolveScalarMarketsOnChain } from './scalar-markets.js';
+import { createScalarMarketsOnChain, resolveScalarMarketsOnChain, resolveUndisputedScalarMarketsOnChain } from './scalar-markets.js';
 
 // every 10 minutes: */10 * * * *'
 export const initResolveMarketsJob = cron.schedule('*/10 * * * *', async (fireDate) => {
@@ -11,8 +11,17 @@ export const initResolveMarketsJob = cron.schedule('*/10 * * * *', async (fireDa
 	}
 });
 
-// every 10 minutes: * */1 * * *'
-export const initCreateMarketsJobBitcoin = cron.schedule('0 12 * * *', async (fireDate) => {
+export const initResolveUndisputedMarketsJob = cron.schedule('15 */1 * * *', async (fireDate) => {
+	console.log('Running: initResolveFinalMarketsJob at: ' + fireDate);
+	try {
+		await resolveUndisputedScalarMarketsOnChain();
+	} catch (err: any) {
+		console.log('initScanDaoEventsJob: ', err);
+	}
+});
+
+// 12 pm every monday
+export const initCreateMarketsJobBitcoin = cron.schedule('0 12 * * 1', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
 		await createScalarMarketsOnChain(1);
@@ -20,7 +29,8 @@ export const initCreateMarketsJobBitcoin = cron.schedule('0 12 * * *', async (fi
 		console.log('initScanDaoEventsJob: ', err);
 	}
 });
-export const initCreateMarketsJobStacks = cron.schedule('10 12 * * *', async (fireDate) => {
+// 12 pm every tuesday
+export const initCreateMarketsJobStacks = cron.schedule('0 12 * * 2', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
 		await createScalarMarketsOnChain(2);
@@ -28,7 +38,8 @@ export const initCreateMarketsJobStacks = cron.schedule('10 12 * * *', async (fi
 		console.log('initScanDaoEventsJob: ', err);
 	}
 });
-export const initCreateMarketsJobSolana = cron.schedule('20 12 * * *', async (fireDate) => {
+// 12 pm every wednesday
+export const initCreateMarketsJobSolana = cron.schedule('0 12 * * 3', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
 		await createScalarMarketsOnChain(3);
@@ -36,7 +47,8 @@ export const initCreateMarketsJobSolana = cron.schedule('20 12 * * *', async (fi
 		console.log('initScanDaoEventsJob: ', err);
 	}
 });
-export const initCreateMarketsJobEthereum = cron.schedule('30 12 * * *', async (fireDate) => {
+// 12 pm every thursday
+export const initCreateMarketsJobEthereum = cron.schedule('0 12 * * 4', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
 		await createScalarMarketsOnChain(4);

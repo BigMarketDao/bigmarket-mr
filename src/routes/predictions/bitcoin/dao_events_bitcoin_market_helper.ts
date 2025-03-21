@@ -50,11 +50,11 @@ export async function readBitcoinEvents(genesis: boolean, daoContract: string, e
 				moreEvents = await resolveBitcoinEvents(url, currentOffset, count, daoContract, extensionContract);
 				count++;
 			} catch (err: any) {
-				console.log('readVotingEvents: ' + err.message);
+				console.log('readBitcoinEvents: error 1: ' + extensionContract + ' : ' + err.message);
 			}
 		} while (moreEvents);
-	} catch (err) {
-		console.log('readVotingEvents: error: ', err);
+	} catch (err: any) {
+		console.log('readBitcoinEvents: error 2: ' + extensionContract + ' : ' + err.message);
 	}
 	return extensions;
 }

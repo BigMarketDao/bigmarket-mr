@@ -50,11 +50,11 @@ export async function readScalarEvents(genesis: boolean, daoContract: string, ex
 				moreEvents = await resolveScalarEvents(url, currentOffset, count, daoContract, extensionContract);
 				count++;
 			} catch (err: any) {
-				console.log('readVotingEvents: ' + err.message);
+				console.log('readScalarEvents: error1: ' + err.message);
 			}
 		} while (moreEvents);
 	} catch (err) {
-		console.log('readVotingEvents: error: ', err);
+		console.log('readScalarEvents: error2: ' + extensionContract, err);
 	}
 	return extensions;
 }

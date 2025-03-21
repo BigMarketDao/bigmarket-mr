@@ -39,11 +39,11 @@ export async function readPredictionEvents(genesis: boolean, daoContract: string
 				moreEvents = await resolvePredictionEvents(url, currentOffset, count, daoContract, extensionContract);
 				count++;
 			} catch (err: any) {
-				console.log('readVotingEvents: ' + err.message);
+				console.log('readPredictionEvents: error 1: ' + extensionContract + err.message);
 			}
 		} while (moreEvents);
 	} catch (err) {
-		console.log('readVotingEvents: error: ', err);
+		console.log('readPredictionEvents: error 2: ' + extensionContract, err);
 	}
 	return extensions;
 }
