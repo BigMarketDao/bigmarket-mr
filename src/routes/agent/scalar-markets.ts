@@ -33,6 +33,7 @@ export async function resolveScalarMarketsOnChain(): Promise<Array<PredictionMar
 	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market', marketType: 2 }).toArray()) as Array<PredictionMarketCreateEvent>;
 	const resolvedMarkets: PredictionMarketCreateEvent[] = [];
 	for (const market of markets) {
+		if (market.marketId === 2) continue;
 		console.log('resolveScalarMarketsOnChain: market: ' + market.votingContract.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
 		const rm = await resolveScalarMarketOnChain(market);
 		if (rm) resolvedMarkets.push(rm);
@@ -93,7 +94,7 @@ async function getMetaData(chain: number, endBlockHeight: number, ends: string) 
 
 	return {
 		title: `${coin} Price Prediction at Bitcoin Block Height: ${endBlockHeight.toLocaleString('en-US')}`,
-		description: `Predicting the price of ${coin} at bitcoin block height ${endBlockHeight.toLocaleString('en-US')}, which is expected around ${ends}.<br/><br/>Current price: USD ${price} - The price will resolve into one of several ranges at that time. - The market has two phases: Active: Users can stake. - Cooldown: Staking closes, and final price is determined.`,
+		description: `Predicting the price of ${coin} at bitcoin block height ${endBlockHeight.toLocaleString('en-US')}, which is expected around ${ends}.<br/><br/>Price at time of posting: USD ${price} - The price will resolve into one of several ranges at that time. - The market has two phases: Active: Users can stake. - Cooldown: Staking closes, and final price is determined.`,
 		outcome_categories: cats,
 		logo,
 		priceFeedId,

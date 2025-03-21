@@ -90,8 +90,8 @@ async function connectToMongoCloud() {
 	initResolveUndisputedMarketsJob.start();
 	initCreateMarketsJobBitcoin.start();
 	initCreateMarketsJobStacks.start();
-	initCreateMarketsJobSolana.start();
-	initCreateMarketsJobEthereum.start();
+	// initCreateMarketsJobSolana.start();
+	// initCreateMarketsJobEthereum.start();
 
 	const server = app.listen(getConfig().port, () => {
 		console.log('Server listening!');
