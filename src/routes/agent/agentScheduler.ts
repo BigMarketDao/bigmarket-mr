@@ -20,8 +20,8 @@ export const initResolveUndisputedMarketsJob = cron.schedule('15 */1 * * *', asy
 	}
 });
 
-// midnight sunday and wednesday
-export const initCreateMarketsJobBitcoin = cron.schedule('0 0 * * 0,3', async (fireDate) => {
+// midnight monday and thursday
+export const initCreateMarketsJobBitcoin = cron.schedule('0 0 * * 1,4', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
 		await createScalarMarketsOnChain(1);
@@ -30,7 +30,7 @@ export const initCreateMarketsJobBitcoin = cron.schedule('0 0 * * 0,3', async (f
 	}
 });
 // 12 pm every tuesday
-export const initCreateMarketsJobStacks = cron.schedule('20 0 * * 0,3', async (fireDate) => {
+export const initCreateMarketsJobStacks = cron.schedule('20 0 * * 1,4', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
 		await createScalarMarketsOnChain(2);
@@ -48,7 +48,7 @@ export const initCreateMarketsJobStacks = cron.schedule('20 0 * * 0,3', async (f
 // 	}
 // });
 // 12 pm every thursday
-export const initCreateMarketsJobEthereum = cron.schedule('40 0 * * 0,3', async (fireDate) => {
+export const initCreateMarketsJobEthereum = cron.schedule('40 0 * * 1,4', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
 		await createScalarMarketsOnChain(4);
