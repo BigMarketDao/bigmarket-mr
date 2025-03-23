@@ -20,8 +20,8 @@ export const initResolveUndisputedMarketsJob = cron.schedule('15 */1 * * *', asy
 	}
 });
 
-// 12 pm every monday
-export const initCreateMarketsJobBitcoin = cron.schedule('0 12 * * 1', async (fireDate) => {
+// midnight sunday and wednesday
+export const initCreateMarketsJobBitcoin = cron.schedule('0 0 * * 0,3', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
 		await createScalarMarketsOnChain(1);
@@ -30,7 +30,7 @@ export const initCreateMarketsJobBitcoin = cron.schedule('0 12 * * 1', async (fi
 	}
 });
 // 12 pm every tuesday
-export const initCreateMarketsJobStacks = cron.schedule('0 12 * * 2', async (fireDate) => {
+export const initCreateMarketsJobStacks = cron.schedule('20 0 * * 0,3', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
 		await createScalarMarketsOnChain(2);
@@ -39,16 +39,16 @@ export const initCreateMarketsJobStacks = cron.schedule('0 12 * * 2', async (fir
 	}
 });
 // 12 pm every wednesday
-export const initCreateMarketsJobSolana = cron.schedule('0 12 * * 3', async (fireDate) => {
-	console.log('Running: initCreateMarketsJob at: ' + fireDate);
-	try {
-		await createScalarMarketsOnChain(3);
-	} catch (err: any) {
-		console.log('initCreateMarketsJobSolana: ', err);
-	}
-});
+// export const initCreateMarketsJobSolana = cron.schedule('0 12 * * 3', async (fireDate) => {
+// 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
+// 	try {
+// 		await createScalarMarketsOnChain(3);
+// 	} catch (err: any) {
+// 		console.log('initCreateMarketsJobSolana: ', err);
+// 	}
+// });
 // 12 pm every thursday
-export const initCreateMarketsJobEthereum = cron.schedule('0 12 * * 4', async (fireDate) => {
+export const initCreateMarketsJobEthereum = cron.schedule('40 0 * * 0,3', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
 		await createScalarMarketsOnChain(4);
