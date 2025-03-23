@@ -43,13 +43,19 @@ export async function resolveScalarMarketsOnChain(): Promise<Array<PredictionMar
 }
 
 export async function resolveUndisputedScalarMarketsOnChain(): Promise<Array<PredictionMarketCreateEvent>> {
-	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 1, event: 'create-market', marketType: 2 }).toArray()) as Array<PredictionMarketCreateEvent>;
+	const markets = (await daoEventCollection
+		.find({ 'marketData.resolutionState': 1, event: 'create-market', marketType: 2, votingContract: `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}` })
+		.toArray()) as Array<PredictionMarketCreateEvent>;
 	const resolvedMarkets: PredictionMarketCreateEvent[] = [];
 	for (const market of markets) {
-		console.log('resolveScalarMarketsOnChain: market: ' + market.votingContract.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
-		const rm = await resolveUndisputedScalarMarketOnChain(market);
-		if (rm) resolvedMarkets.push(rm);
-		await sleep(30000);
+		try {
+			const rm = await resolveUndisputedScalarMarketOnChain(market);
+			if (rm) resolvedMarkets.push(rm);
+			console.log('resolveUndisputedScalarMarketsOnChain: market: ' + market.votingContract.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
+			await sleep(30000);
+		} catch (err: any) {
+			console.log('resolveUndisputedScalarMarketsOnChain: error: ', err);
+		}
 	}
 	return resolvedMarkets;
 }
