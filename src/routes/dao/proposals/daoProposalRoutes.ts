@@ -1,7 +1,7 @@
 import express from 'express';
 import { VotingEventProposeProposal } from '@mijoco/stx_helpers/dist/index.js';
-import { fetchAllProposals, fetchBootstrapProposals, fetchExecutedProposals, fetchExecutedProposalsByDao, fetchLatestProposal, fetchProposedProposals, fetchProposedProposalsByDao } from './proposal.js';
-import { getVotesByProposal } from '../events/dao_events_extension_helper.js';
+import { fetchAllProposals, fetchBootstrapProposals, fetchExecutedProposal, fetchExecutedProposals, fetchExecutedProposalsByDao, fetchLatestProposal, fetchProposedProposals, fetchProposedProposalsByDao } from './proposal.js';
+import { getVotesByProposal } from '../events/processors/process_core_voting_events.js';
 
 const router = express.Router();
 
@@ -60,6 +60,15 @@ router.get('/bootstrap', async (req, res, next) => {
 	}
 });
 
+router.get('/executed-proposal/:proposalContractId', async (req, res, next) => {
+	try {
+		res.send(await fetchExecutedProposal(req.params.proposalContractId));
+	} catch (error) {
+		console.log('Error in routes: ', error);
+		next('An error occurred fetching pox-info.');
+	}
+});
+
 router.get('/executed', async (req, res, next) => {
 	try {
 		res.send(await fetchExecutedProposals());
@@ -72,6 +81,7 @@ router.get('/executed', async (req, res, next) => {
 router.get('/proposal/:proposalContractId', async (req, res, next) => {
 	try {
 		const proposal: VotingEventProposeProposal = await fetchLatestProposal(req.params.proposalContractId);
+		console.log('/proposal/:proposalContractId', proposal.proposalData);
 		if (!proposal) res.sendStatus(404);
 		res.send(proposal);
 	} catch (error) {

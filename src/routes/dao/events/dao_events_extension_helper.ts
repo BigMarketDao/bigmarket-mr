@@ -1,252 +1,76 @@
 /**
  * sbtc - interact with Stacks Blockchain to read sbtc contract info
  */
-import { cvToJSON, deserializeCV } from '@stacks/transactions';
-import { VotingEventVoteOnProposal, VotingEventConcludeProposal, VotingEventProposeProposal, ExtensionType, getTransaction, ProposalContract, PollCreateEvent, PollVoteEvent } from '@mijoco/stx_helpers/dist/index.js';
-import { ObjectId } from 'mongodb';
+import { BasicEvent, createBasicEvent, ExtensionType } from '@mijoco/stx_helpers/dist/index.js';
 import { fetchExtensions } from './dao_events_helper.js';
 import { getConfig } from '../../../lib/config.js';
 import { daoEventCollection } from '../../../lib/data/db_models.js';
-import { getMetaData, getProposalContractSource, getProposalData } from '../proposals/proposal.js';
-import { findPollByMarketId } from '../../polling/polling_helper.js';
-import assert from 'assert';
+import { getDaoConfig } from '../../../lib/config_dao.js';
+import { processTokenSaleEvent } from './processors/process_token_sale_events.js';
+import { processGovernanceTokenEvent } from './processors/process_governance_token_events.js';
+import { processMarketVotingEvent } from './processors/process_market_voting_events.js';
+import { processMarketGatingEvent } from './processors/process_market_gating_events.js';
+import { processMarketPredicitonCategoricalEvent } from './processors/process_prediction_market_events.js';
+import { processCoreProposalsEvent } from './processors/process_core_proposals_events.js';
+import { processMarketPredicitonBitcoinEvent } from './processors/process_bitcoin_market_events.js';
+import { processMarketPredicitonScalarEvent } from './processors/process_scalar_market_events.js';
+import { processCoreVotingEvent } from './processors/process_core_voting_events.js';
+import { ObjectId } from 'mongodb';
+import { cvToJSON, deserializeCV } from '@stacks/transactions';
 
 export async function readDaoExtensionEvents(genesis: boolean, daoContractId: string) {
 	const extensions = await fetchExtensions(daoContractId);
 	let predictions = false;
 	for (const extensionObj of extensions) {
 		// skip prediction market event as they have their own handlers
-		if (!extensionObj.extension.startsWith('bme023')) {
-			await readVotingEvents(genesis, daoContractId, extensionObj.extension);
-		}
+		//if (extensionObj.extension.indexOf('bme023') === -1) {
+		await readExtensionEvents(genesis, daoContractId, extensionObj.extension);
+		//}
+	}
+}
+async function countEventsByVotingContract(daoContract: string, extension: string): Promise<number> {
+	try {
+		const result = await daoEventCollection.countDocuments({
+			daoContract,
+			extension
+		});
+		return Number(result);
+	} catch (err: any) {
+		return 0;
 	}
 }
 
-async function readVotingEvents(genesis: boolean, daoContract: string, extensionContract: string) {
-	const url = getConfig().stacksApi + '/extended/v1/contract/' + extensionContract + '/events?limit=20';
+async function readExtensionEvents(genesis: boolean, daoContract: string, extensionContract: string) {
+	const urlBase = getConfig().stacksApi + '/extended/v1/contract/' + extensionContract + '/events?limit=20';
 	const extensions: Array<ExtensionType> = [];
-	let currentOffset = 0;
+	//console.log('readExtensionEvents: genesis: ' + genesis);
+	//console.log('readExtensionEvents: daoContract: ' + daoContract);
+	let dbEventCount = 0;
 	if (!genesis) {
-		currentOffset = await countEventsByVotingContract(daoContract, extensionContract);
-		if (currentOffset > 10) currentOffset -= 10;
+		dbEventCount = await countEventsByVotingContract(daoContract, extensionContract);
 	}
-	let count = 0;
-	let moreEvents = true;
+	let fetchedCount = 0;
+	let offset = 0;
+	let keepGoing = true;
 	try {
-		do {
-			try {
-				moreEvents = await resolveExtensionEvents(url, currentOffset, count, daoContract, extensionContract);
-				count++;
-			} catch (err: any) {
-				console.log('readVotingEvents: ' + extensionContract + '. error: ' + err.message);
+		while (keepGoing) {
+			const url = `${urlBase}&offset=${offset}`;
+			const numEvents = await resolveExtensionEvents(url, daoContract, extensionContract);
+
+			if (numEvents === 0) break;
+
+			fetchedCount += numEvents;
+			offset += 20;
+
+			if (!genesis && fetchedCount >= dbEventCount) {
+				keepGoing = false;
 			}
-		} while (moreEvents);
+		}
 	} catch (err: any) {
-		console.log('readVotingEvents: ' + extensionContract + '. error: ' + err.message);
+		console.log('readExtensionEvents: ' + extensionContract + '. error: ' + err.message);
 	}
 	return extensions;
 }
-
-async function resolveExtensionEvents(url: string, currentOffset: number, count: number, daoContract: string, extensionContract: string): Promise<any> {
-	let urlOffset = url + '&offset=' + (currentOffset + count * 20);
-	const response = await fetch(urlOffset);
-	const val = await response.json();
-
-	if (!val || !val.results || typeof val.results !== 'object' || val.results.length === 0) {
-		return false;
-	}
-
-	//console.log('resolveExtensionEvents: val: ', val)
-	for (const event of val.results) {
-		const pdb = await findVotingContractEventByContractAndIndex(Number(event.event_index), event.tx_id);
-		if (!pdb) {
-			try {
-				processEvent(event, daoContract, extensionContract);
-			} catch (err: any) {
-				console.log('resolveExtensionEvents: ', err);
-			}
-		}
-	}
-	return val.results?.length > 0 || false;
-}
-
-async function processEvent(event: any, daoContract: string, votingContract: string) {
-	const eventContract = event.contract_log.contract_id;
-	const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
-	const event_index = Number(event.event_index);
-	const txId = event.tx_id;
-	const pdb = await findVotingContractEventByTxIdAndEventIndex(event_index, txId);
-	if (pdb) return;
-	// console.log(
-	//   "processEvent: new event: " +
-	//     result.value.event.value +
-	//     " contract=" +
-	//     event.event_index +
-	//     " / " +
-	//     event.tx_id
-	// );
-	// TODO EVENT: console.log('resolvePredictionEvents: processing event: ' + result.value.event.value + ' : ' + event.event_index + ' events from ' + votingContract);
-
-	if (result.value.event.value === 'propose') {
-		const proposal = result.value.proposal.value;
-
-		let contract: ProposalContract = await getProposalContractSource(proposal);
-		//console.log('resolveExtensionEvents: execute: ', util.inspect(event, false, null, true /* enable colors */))
-		const votingContractEvent = {
-			_id: new ObjectId(),
-			event: 'propose',
-			event_index: Number(event.event_index),
-			txId: event.tx_id,
-			daoContract,
-			votingContract,
-			submissionContract: await getSubmissionContract(event.tx_id),
-			proposal,
-			proposalMeta: getMetaData(contract.source),
-			contract,
-			proposalData: await getProposalData(votingContract, proposal),
-			proposer: result.value.proposer.value
-		} as VotingEventProposeProposal;
-		//console.log("processEvent: votingContractEvent", votingContractEvent);
-		await saveOrUpdateEvent(votingContractEvent);
-		//await updateStackerData(false, proposal);
-	} else if (result.value.event.value === 'vote') {
-		//console.log('resolveExtensionEvents: extension: ', util.inspect(event, false, null, true /* enable colors */))
-		const votingContractEvent = {
-			_id: new ObjectId(),
-			event: 'vote',
-			event_index: Number(event.event_index),
-			txId: event.tx_id,
-			daoContract,
-			votingContract,
-			proposal: result.value.proposal.value,
-			sip18: result.value.sip18?.value,
-			voter: result.value.voter.value,
-			for: result.value.for.value,
-			amount: Number(result.value.amount.value)
-		} as VotingEventVoteOnProposal;
-
-		//console.log('resolveExtensionEvents: extension: enabled=' + votingContractEvent.enabled + ' contract=' + votingContractEvent.extension + ' contract=' + votingContractEvent.extension + ' event.event_index=' + event.event_index)
-		await saveOrUpdateEvent(votingContractEvent);
-	} else if (result.value.event.value === 'conclude') {
-		const proposal = result.value.proposal.value;
-		let contract: ProposalContract = await getProposalContractSource(proposal);
-		const votingContractEvent = {
-			_id: new ObjectId(),
-			event: 'conclude',
-			event_index: Number(event.event_index),
-			txId: event.tx_id,
-			daoContract,
-			votingContract,
-			proposal,
-			passed: Boolean(result.value.passed.value),
-			proposalMeta: getMetaData(contract.source),
-			contract,
-			proposalData: await getProposalData(votingContract, proposal)
-		} as VotingEventConcludeProposal;
-
-		//console.log('resolveExtensionEvents: extension: enabled=' + votingContractEvent.enabled + ' contract=' + votingContractEvent.extension + ' contract=' + votingContractEvent.extension + ' event.event_index=' + event.event_index)
-		await saveOrUpdateEvent(votingContractEvent);
-	} else if (result.value.event.value === 'create-market-vote') {
-		let metadataHash = result.value['market-data-hash'].value;
-		metadataHash = metadataHash.replace(/^0x/, '');
-		const o = {
-			_id: new ObjectId(),
-			event: result.value.event.value,
-			event_index: Number(event.event_index),
-			txId: event.tx_id,
-			daoContract,
-			votingContract: eventContract,
-			pollId: Number(result.value['market-id'].value),
-			isGated: false,
-			metadataHash: metadataHash,
-			proposer: result.value.proposer.value
-		} as PollCreateEvent;
-
-		console.log('resolveExtensionEvents: PollCreateEvent=', o);
-		await saveOrUpdateEvent(o);
-	} else if (result.value.event.value === 'market-vote') {
-		console.log('resolveExtensionEvents: PollVoteEvent=' + result.value.event.value);
-		const o: PollVoteEvent = {
-			_id: new ObjectId(),
-			event: result.value.event.value,
-			event_index: Number(event.event_index),
-			txId: event.tx_id,
-			daoContract,
-			votingContract: eventContract,
-			pollId: Number(result.value['market-id'].value),
-			sip18: result.value.sip18.value,
-			voter: result.value.voter.value,
-			for: Number(result.value['category-for'].value),
-			amount: Number(result.value.amount?.value || 0),
-			reclaimId: result.value['prev-market-id']?.value
-		} as PollVoteEvent;
-
-		await saveOrUpdateEvent(o);
-	} else if (result.value.event.value === 'conclude-market-vote') {
-		let pollId = Number(result.value['market-id'].value);
-		const marketPoll = await findPollByMarketId(pollId);
-		if (!marketPoll) return;
-		assert(marketPoll.pollId === Number(result.value['market-id'].value), 'wrong market?');
-		marketPoll.marketId = Number(result.value['market-id'].value);
-		marketPoll.winningCategory = Boolean(result.value['winning-category'].value);
-		marketPoll.concludeTxId = txId;
-		await updateDaoEvent(marketPoll._id, marketPoll);
-	} else {
-		//console.log("processEvent: new event: ", event);
-	}
-}
-
-// Mongo collection methods
-export async function countAllEvents(): Promise<number> {
-	try {
-		const result = await daoEventCollection.countDocuments();
-		return Number(result);
-	} catch (err: any) {
-		return 0;
-	}
-}
-
-export async function countEventsByVotingContract(daoContract: string, votingContract: string): Promise<number> {
-	try {
-		const result = await daoEventCollection.countDocuments({
-			daoContract,
-			votingContract
-		});
-		return Number(result);
-	} catch (err: any) {
-		return 0;
-	}
-}
-
-export async function countVotes(proposal: string): Promise<number> {
-	try {
-		const result = await daoEventCollection.countDocuments({
-			proposal,
-			event: 'vote'
-		});
-		return Number(result);
-	} catch (err: any) {
-		return 0;
-	}
-}
-
-async function getSubmissionContract(txId: string): Promise<string> {
-	const fundingTx = await getTransaction(getConfig().stacksApi, txId);
-	return fundingTx.contract_call.contract_id;
-}
-
-/**
- * Vote methods
- */
-export async function getVotesByProposal(proposal: string): Promise<any> {
-	const result = await daoEventCollection.find({ proposal, event: 'vote' }).toArray();
-	return result;
-}
-
-/**
- * Proposal methods
- */
-
 export async function findVotingContractEventByContractAndIndex(event_index: number, txId: string): Promise<any> {
 	const result = await daoEventCollection.findOne({
 		event_index,
@@ -255,36 +79,63 @@ export async function findVotingContractEventByContractAndIndex(event_index: num
 	return result;
 }
 
-export async function findVotingContractEventByTxIdAndEventIndex(event_index: number, txId: string): Promise<any> {
-	const result = await daoEventCollection.findOne({
-		event_index,
-		txId
-	});
-	return result;
-}
+async function resolveExtensionEvents(url: string, daoContract: string, extensionContract: string): Promise<any> {
+	const response = await fetch(url);
+	const val = await response.json();
 
-async function saveOrUpdateEvent(votingContractEvent: VotingEventVoteOnProposal | VotingEventConcludeProposal | VotingEventProposeProposal | PollCreateEvent | PollVoteEvent) {
-	try {
-		const pdb = await findVotingContractEventByContractAndIndex(votingContractEvent.event_index, votingContractEvent.txId);
-		if (!pdb) {
-			await saveDaoEvent(votingContractEvent);
-		}
-	} catch (err: any) {
-		console.log('saveOrUpdateEvent: error2: ', err);
+	if (!val || !val.results || typeof val.results !== 'object' || val.results.length === 0) {
+		return 0;
 	}
-}
-async function saveDaoEvent(proposal: VotingEventVoteOnProposal | VotingEventConcludeProposal | VotingEventProposeProposal | PollCreateEvent | PollVoteEvent) {
-	proposal._id = new ObjectId();
-	const result = await daoEventCollection.insertOne(proposal);
-	return result;
+
+	console.log('resolveExtensionEvents: extension: ' + extensionContract + ' : events: ' + val.results.length);
+	for (const event of val.results) {
+		const pdb = await findVotingContractEventByContractAndIndex(Number(event.event_index), event.tx_id);
+		//const pdb = await findPredictionContractEventByContractAndIndex(extensionContract, Number(event.event_index), event.tx_id);
+		if (!pdb) {
+			const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
+			const basicEvent = createBasicEvent(new ObjectId().toString(), event, daoContract, extensionContract, result.value.event.value);
+			console.log('processEvent: new event: ', result);
+			try {
+				if (extensionContract.indexOf(getDaoConfig().VITE_DAO_TOKEN_SALE) > -1) {
+					processTokenSaleEvent(basicEvent, result);
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_GOVERNANCE_TOKEN) > -1) {
+					processGovernanceTokenEvent(basicEvent, result);
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_CORE_PROPOSALS) > -1) {
+					processCoreProposalsEvent(basicEvent, result);
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_CORE_VOTING) > -1) {
+					processCoreVotingEvent(basicEvent, result);
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_TREASURY) > -1) {
+					// no events
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_VOTING) > -1) {
+					processMarketVotingEvent(basicEvent, result);
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_GATING) > -1) {
+					processMarketGatingEvent(basicEvent, result);
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_BITCOIN) > -1) {
+					processMarketPredicitonBitcoinEvent(basicEvent, result);
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_PREDICTING) > -1) {
+					processMarketPredicitonCategoricalEvent(basicEvent, result);
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_SCALAR) > -1) {
+					processMarketPredicitonScalarEvent(basicEvent, result);
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DOA_EMERGENCY_EXECUTE_EXTENSION) > -1) {
+					// no events
+				} else {
+					console.log('processEvent: unexpected event: ', event);
+				}
+			} catch (err: any) {
+				console.log('resolveExtensionEvents: ', err);
+			}
+		} else {
+			//console.log('resolveExtensionEvents: skipping event: ' + pdb.event);
+		}
+	}
+	return val.results?.length || 0;
 }
 
-async function updateDaoEvent(_id: ObjectId, changes: VotingEventVoteOnProposal | VotingEventConcludeProposal | VotingEventProposeProposal | PollCreateEvent | PollVoteEvent) {
-	const result = await daoEventCollection.updateOne(
-		{
-			_id
-		},
-		{ $set: changes }
-	);
+export async function saveDaoEvent(contractEvent: BasicEvent) {
+	const doc = {
+		...contractEvent,
+		_id: new ObjectId(contractEvent._id) // ← convert string to ObjectId
+	};
+	const result = await daoEventCollection.insertOne(doc);
 	return result;
 }

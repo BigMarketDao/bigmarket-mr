@@ -80,7 +80,12 @@ router.get('/markets/leader-board', async (req, res) => {
 });
 
 router.get('/markets/allowed-tokens', async (req, res) => {
-	const polls = await fetchAllowedTokens();
+	const polls = await fetchAllowedTokens(1);
+	res.json(polls);
+});
+
+router.get('/markets/allowed-tokens/:marketType', async (req, res) => {
+	const polls = await fetchAllowedTokens(Number(req.params.marketType));
 	res.json(polls);
 });
 
@@ -89,8 +94,8 @@ router.get('/markets/categories', async (req, res) => {
 	res.json(polls);
 });
 
-router.get('/markets/votes/:marketId/:marketType/:contract', async (req, res) => {
-	const polls = await fetchMarketVotes(Number(req.params.marketId), req.params.contract);
+router.get('/markets/votes/:marketId/:marketType', async (req, res) => {
+	const polls = await fetchMarketVotes(Number(req.params.marketId));
 	res.json(polls);
 });
 

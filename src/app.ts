@@ -19,6 +19,7 @@ import { tokenSaleRoutes } from './routes/dao/token-sale/tokenSaleRoutes.js';
 import { exchangeRoutes } from './routes/rates/exchangeRoutes.js';
 import { pythRoutes } from './routes/oracle/pyth/pythRoutes.js';
 import { agentRoutes } from './routes/agent/agentRoutes.js';
+import { reputationRoutes } from './routes/reputation/reputationRoutes.js';
 import { initScanDaoEventsJob } from './routes/dao/events/eventScheduler.js';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
 import { initExchangeRatesJob } from './routes/rates/ratesScheduler.js';
@@ -71,6 +72,7 @@ app.use('/bigmarket-api/gating', gatingRoutes);
 app.use('/bigmarket-api/exchange', exchangeRoutes);
 app.use('/bigmarket-api/oracle', pythRoutes);
 app.use('/bigmarket-api/agent', agentRoutes);
+app.use('/bigmarket-api/reputation', reputationRoutes);
 app.use('/bigmarket-api/clarity-bitcoin', clarityBitcoinRoutes);
 
 console.log(`\n\nExpress is listening at http://localhost:${getConfig().port}`);

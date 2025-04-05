@@ -13,7 +13,7 @@ async function getLatestPredictEvents(): Promise<Array<PredictionMarketStakeEven
 	const latestEvents = await daoEventCollection.find({ event: 'market-stake' }).sort({ _id: -1 }).limit(10).toArray();
 
 	// console.log(latestEvents);
-	return latestEvents as Array<PredictionMarketStakeEvent>;
+	return latestEvents as unknown as Array<PredictionMarketStakeEvent>;
 }
 async function topTVLMarkets(): Promise<Array<TopMarket>> {
 	const topMarketData = await daoEventCollection

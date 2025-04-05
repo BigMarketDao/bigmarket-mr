@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb';
 import { daoEventCollection, marketCollection } from '../../lib/data/db_models.js';
 import { getConfig } from '../../lib/config.js';
 import { getC32AddressFromPublicKey } from '../dao/events/dao_events_helper.js';
-import { PollCreateEvent, OpinionPoll, StoredOpinionPoll, PollVoteMessage, verifyDaoSignature, pollVoteMessageToTupleCV, marketDataToTupleCV } from '@mijoco/stx_helpers/dist/index.js';
+import { StoredOpinionPoll, PollVoteMessage, verifyDaoSignature, pollVoteMessageToTupleCV, marketDataToTupleCV, MarketVotingCreateEvent } from '@mijoco/stx_helpers/dist/index.js';
 
 type BaseAdminMessage = {
 	message: string;
@@ -49,36 +49,34 @@ export function isPostPollMessageValid(signature: SignatureData, message: PollVo
 		return false;
 	}
 	const stacksAddress = verifyDaoSignature(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, pollVoteMessageToTupleCV(message), signature.publicKey, signature.signature);
-	console.log('/votes: correct voter: ' + stacksAddress);
+	//console.log('/votes: correct voter: ' + stacksAddress);
 	if (!stacksAddress) return false;
 	return true;
 }
 
 export async function savePoll(poll: StoredOpinionPoll) {
-	poll._id = poll._id || new ObjectId();
-	try {
-		const result = await marketCollection.insertOne(poll);
-		return await findPollByHash(poll._id.toString());
-	} catch (err: any) {
-		console.log('savePoll: ', err);
-		return;
-	}
+	const doc = {
+		...poll,
+		_id: new ObjectId() // ← convert string to ObjectId
+	};
+	const result = await marketCollection.insertOne(doc);
+	return result;
 }
 
-export async function findPollByHash(objectHash: string): Promise<PollCreateEvent> {
+export async function findPollByHash(objectHash: string): Promise<MarketVotingCreateEvent> {
 	const result = await daoEventCollection.findOne({
 		event: 'create-market-vote',
 		objectHash: objectHash
 	});
-	return result as unknown as PollCreateEvent;
+	return result as unknown as MarketVotingCreateEvent;
 }
 
-export async function findPollByMarketId(pollId: number): Promise<PollCreateEvent> {
+export async function findPollByMarketId(pollId: number): Promise<MarketVotingCreateEvent> {
 	const result = await daoEventCollection.findOne({
 		event: 'create-market-vote',
 		pollId: pollId
 	});
-	return result as unknown as PollCreateEvent;
+	return result as unknown as MarketVotingCreateEvent;
 }
 
 export async function findUserEnteredPollByHash(objectHash: string): Promise<StoredOpinionPoll> {
@@ -88,12 +86,12 @@ export async function findUserEnteredPollByHash(objectHash: string): Promise<Sto
 	return result as unknown as StoredOpinionPoll;
 }
 
-export async function findPolls(): Promise<Array<PollCreateEvent>> {
+export async function findPolls(): Promise<Array<MarketVotingCreateEvent>> {
 	const events = await daoEventCollection.find({ event: 'create-market-vote' }).toArray();
-	return events as unknown as Array<PollCreateEvent>;
+	return events as unknown as Array<MarketVotingCreateEvent>;
 }
 
-export async function findPollsEndingBefore(endBurnHeight: number): Promise<Array<PollCreateEvent>> {
+export async function findPollsEndingBefore(endBurnHeight: number): Promise<Array<MarketVotingCreateEvent>> {
 	const result = await daoEventCollection.find({ endBurnHeight: { $lt: endBurnHeight } }).toArray();
-	return result as unknown as Array<PollCreateEvent>;
+	return result as unknown as Array<MarketVotingCreateEvent>;
 }

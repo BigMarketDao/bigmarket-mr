@@ -2,10 +2,9 @@
  * sbtc - interact with Stacks Blockchain to read sbtc contract info
  */
 import { cvToJSON, deserializeCV } from '@stacks/transactions';
-import { VotingEventVoteOnProposal, VotingEventConcludeProposal, VotingEventProposeProposal, ExtensionType, PollCreateEvent, PollVoteEvent } from '@mijoco/stx_helpers/dist/index.js';
+import { ExtensionType } from '@mijoco/stx_helpers/dist/index.js';
 import { ObjectId } from 'mongodb';
-import { getConfig } from '../../../lib/config.js';
-import { daoEventCollection, pythEventCollection } from '../../../lib/data/db_models.js';
+import { pythEventCollection } from '../../../lib/data/db_models.js';
 
 type PythEvent = {
 	type: string;
@@ -73,7 +72,7 @@ async function resolveEvents(url: string, currentOffset: number, count: number):
 
 async function processEvent(event: any) {
 	const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
-	console.log('processEvent: new event: ', event);
+	//console.log('processEvent: new event: ', event);
 	const data = result.value.data;
 	const pythEvent = {
 		_id: new ObjectId(),
@@ -115,32 +114,4 @@ export async function findPythEvent(txId: string, event_index: string): Promise<
 	} catch (err: any) {
 		return 0;
 	}
-}
-
-async function saveOrUpdateEvent(pythEvent: any) {
-	try {
-		const pdb = await findPythEvent(pythEvent.event_index, pythEvent.txId);
-		if (!pdb) {
-			await saveDaoEvent(pythEvent);
-			//await updateDaoEvent(votingContractEvent._id, votingContractEvent);
-			// } else {
-		}
-	} catch (err: any) {
-		console.log('saveOrUpdateEvent: error2: ', err);
-	}
-}
-async function saveDaoEvent(proposal: VotingEventVoteOnProposal | VotingEventConcludeProposal | VotingEventProposeProposal | PollCreateEvent | PollVoteEvent) {
-	proposal._id = new ObjectId();
-	const result = await daoEventCollection.insertOne(proposal);
-	return result;
-}
-
-async function updateDaoEvent(_id: ObjectId, changes: VotingEventVoteOnProposal | VotingEventConcludeProposal | VotingEventProposeProposal | PollCreateEvent | PollVoteEvent) {
-	const result = await daoEventCollection.updateOne(
-		{
-			_id
-		},
-		{ $set: changes }
-	);
-	return result;
 }

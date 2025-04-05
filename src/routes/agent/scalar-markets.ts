@@ -30,11 +30,11 @@ const SOLUSD = '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b5
 const ETHUSD = '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace';
 
 export async function resolveScalarMarketsOnChain(): Promise<Array<PredictionMarketCreateEvent>> {
-	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market', marketType: 2 }).toArray()) as Array<PredictionMarketCreateEvent>;
+	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market', marketType: 2 }).toArray()) as unknown as Array<PredictionMarketCreateEvent>;
 	const resolvedMarkets: PredictionMarketCreateEvent[] = [];
 	for (const market of markets) {
 		if (market.marketId === 2) continue;
-		console.log('resolveScalarMarketsOnChain: market: ' + market.votingContract.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
+		console.log('resolveScalarMarketsOnChain: market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
 		const rm = await resolveScalarMarketOnChain(market);
 		if (rm) resolvedMarkets.push(rm);
 		await sleep(30000);
@@ -44,14 +44,14 @@ export async function resolveScalarMarketsOnChain(): Promise<Array<PredictionMar
 
 export async function resolveUndisputedScalarMarketsOnChain(): Promise<Array<PredictionMarketCreateEvent>> {
 	const markets = (await daoEventCollection
-		.find({ 'marketData.resolutionState': 1, event: 'create-market', marketType: 2, votingContract: `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}` })
-		.toArray()) as Array<PredictionMarketCreateEvent>;
+		.find({ 'marketData.resolutionState': 1, event: 'create-market', marketType: 2, extension: `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}` })
+		.toArray()) as unknown as Array<PredictionMarketCreateEvent>;
 	const resolvedMarkets: PredictionMarketCreateEvent[] = [];
 	for (const market of markets) {
 		try {
 			const rm = await resolveUndisputedScalarMarketOnChain(market);
 			if (rm) resolvedMarkets.push(rm);
-			console.log('resolveUndisputedScalarMarketsOnChain: market: ' + market.votingContract.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
+			console.log('resolveUndisputedScalarMarketsOnChain: market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
 			await sleep(30000);
 		} catch (err: any) {
 			console.log('resolveUndisputedScalarMarketsOnChain: error: ', err);
@@ -194,7 +194,7 @@ function sleep(ms: number) {
 }
 
 async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {
-	if (market.votingContract !== `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
+	if (market.extension !== `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
 	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
 	const blockHeight = stacksInfo.burn_block_height;
 	const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
@@ -203,8 +203,8 @@ async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {
 	if (blockHeight >= endCool) {
 		const transaction = await makeContractCall({
 			network,
-			contractAddress: market.votingContract.split('.')[0],
-			contractName: market.votingContract.split('.')[1],
+			contractAddress: market.extension.split('.')[0],
+			contractName: market.extension.split('.')[1],
 			functionName: 'resolve-market',
 			functionArgs: [Cl.uint(market.marketId)],
 			senderKey: getConfig().walletKey
@@ -216,7 +216,7 @@ async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {
 }
 
 async function resolveUndisputedScalarMarketOnChain(market: PredictionMarketCreateEvent) {
-	if (market.votingContract !== `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
+	if (market.extension !== `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
 	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
 	const blockHeight = stacksInfo.burn_block_height;
 	const endDispute = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod! + (cachedData?.contractData.disputeWindowLength || 144);
@@ -225,8 +225,8 @@ async function resolveUndisputedScalarMarketOnChain(market: PredictionMarketCrea
 	if (blockHeight >= endDispute) {
 		const transaction = await makeContractCall({
 			network,
-			contractAddress: market.votingContract.split('.')[0],
-			contractName: market.votingContract.split('.')[1],
+			contractAddress: market.extension.split('.')[0],
+			contractName: market.extension.split('.')[1],
 			functionName: 'resolve-market-undisputed',
 			functionArgs: [Cl.uint(market.marketId)],
 			senderKey: getConfig().walletKey

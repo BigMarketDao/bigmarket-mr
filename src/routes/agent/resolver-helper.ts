@@ -32,7 +32,7 @@ export async function sweepAndResolveMarket(marketId: number, marketType: number
 }
 
 export async function sweepAndResolveMarkets(): Promise<Array<PredictionMarketCreateEvent>> {
-	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market' }).toArray()) as Array<PredictionMarketCreateEvent>;
+	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market' }).toArray()) as unknown as Array<PredictionMarketCreateEvent>;
 	for (const market of markets) {
 		console.log('sweepAndResolveMarkets: ', market);
 		if (market.marketType !== 2) {
@@ -72,8 +72,8 @@ async function llmResolveMarket(data: MarketLLMRequest) {
 async function resolveMarketOnChain(data: MarketLLMRequest, outcomeIndex: number) {
 	const market = await fetchMarket(data.market_id, data.market_type);
 	const transaction = await makeContractCall({
-		contractAddress: market.votingContract.split('.')[0],
-		contractName: market.votingContract.split('.')[1],
+		contractAddress: market.extension.split('.')[0],
+		contractName: market.extension.split('.')[1],
 		functionName: 'resolve-market',
 		functionArgs: [Cl.uint(market.marketId), Cl.uint(outcomeIndex)],
 		senderKey: getConfig().walletKey

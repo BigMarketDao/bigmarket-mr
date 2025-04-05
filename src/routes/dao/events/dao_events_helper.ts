@@ -2,12 +2,13 @@
  * sbtc - interact with Stacks Blockchain to read sbtc contract info
  */
 import { cvToJSON, deserializeCV, publicKeyToAddressSingleSig } from '@stacks/transactions';
-import { DaoEventExecuteProposal, DaoEventEnableExtension, ExtensionType, verifyBaseAdminSignature } from '@mijoco/stx_helpers/dist/index.js';
+import { DaoEventExecuteProposal, DaoEventEnableExtension, ExtensionType, verifyBaseAdminSignature, BasicEvent } from '@mijoco/stx_helpers/dist/index.js';
 import { getConfig } from '../../../lib/config.js';
 import { isExtension } from './extension.js';
 import { daoEventCollection } from '../../../lib/data/db_models.js';
 import { BaseAdminMessage } from './dao_events_types.js';
 import { SignatureData } from '@stacks/connect';
+import { saveDaoEvent } from './dao_events_extension_helper.js';
 
 export function getC32AddressFromPublicKey(publicKeyHex: string, network: string): string {
 	//console.log("getC32AddressFromPublicKey: auth check");
@@ -26,7 +27,7 @@ export function isPostValid(signature: SignatureData, message: BaseAdminMessage)
 		return false;
 	}
 	const stacksAddress = verifyBaseAdminSignature(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, message, signature.publicKey, signature.signature);
-	console.log('/votes: correct voter: ' + stacksAddress);
+	//console.log('/votes: correct voter: ' + stacksAddress);
 	if (!stacksAddress) return false;
 	return true;
 }
@@ -38,17 +39,12 @@ export async function readDaoEvents(genesis: boolean, daoContractId: string) {
 	if (!genesis) {
 		currentOffset = await countAllEvents();
 	}
-	//console.log('readDaoEvents: from ' + currentOffset + ' contract: ' + daoContractId);
 	let count = 0;
 	let moreEvents = true;
 	try {
 		do {
-			try {
-				moreEvents = await resolveExtensionEvents(url, currentOffset, count, daoContractId);
-				count++;
-			} catch (err: any) {
-				console.log('readDaoEvents: ' + err.message);
-			}
+			moreEvents = await resolveExtensionEvents(url, currentOffset, count, daoContractId);
+			count++;
 		} while (moreEvents);
 	} catch (err) {
 		console.log('readDaoEvents: error: ', err);
@@ -80,14 +76,7 @@ async function resolveExtensionEvents(url: string, currentOffset: number, total:
 
 async function processEvent(event: any, daoContract: string) {
 	const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
-	// console.log(
-	//   "processEvent: new event: " +
-	//     result.value.event.value +
-	//     " contract=" +
-	//     event.event_index +
-	//     " / " +
-	//     event.tx_id
-	// );
+	//console.log('processEvent: new event: ' + result.value.event.value + ' contract=' + event.event_index + ' / ' + event.contract_log.contract_id);
 	if (result.value.event.value === 'execute') {
 		//console.log('resolveExtensionEvents: execute: ', util.inspect(event, false, null, true /* enable colors */))
 		const daoEvent = {
@@ -137,10 +126,6 @@ async function saveOrUpdateDaoEvent(tp: DaoEventExecuteProposal | DaoEventEnable
 	} catch (err: any) {
 		console.log('saveOrUpdateDaoEvent: error', err);
 	}
-}
-async function saveDaoEvent(proposal: DaoEventExecuteProposal | DaoEventEnableExtension) {
-	const result = await daoEventCollection.insertOne(proposal);
-	return result;
 }
 
 async function updateDaoEvent(event: DaoEventExecuteProposal | DaoEventEnableExtension, changes: any) {

@@ -3,9 +3,6 @@ import { fetchBaseDaoEvents, fetchExtensionEvent, fetchExtensions, isPostValid, 
 import { readDaoExtensionEvents } from './dao_events_extension_helper.js';
 import { getGovernanceData, isExecutiveTeamMember, isExtension } from './extension.js';
 import { getDaoConfig } from '../../../lib/config_dao.js';
-import { readPredictionEvents } from '../../predictions/dao_events_prediction_market_helper.js';
-import { readScalarEvents } from '../../predictions/scalar/dao_events_scalar_market_helper.js';
-import { readBitcoinEvents } from '../../predictions/bitcoin/dao_events_bitcoin_market_helper.js';
 
 const router = express.Router();
 
@@ -18,9 +15,9 @@ router.post('/extensions/:daoContractId', async (req, res, next) => {
 			await readDaoEvents(true, req.params.daoContractId);
 			await readDaoExtensionEvents(false, req.params.daoContractId);
 			const events = await fetchBaseDaoEvents();
-			await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
-			await readScalarEvents(false, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
-			await readBitcoinEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_BITCOIN);
+			// await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
+			// await readScalarEvents(false, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
+			// await readBitcoinEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_BITCOIN);
 			res.send(events);
 		}
 	} catch (error) {

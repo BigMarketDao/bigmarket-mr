@@ -16,7 +16,7 @@ export function isPostValid(signature: SignatureData, message: StoredVoteMessage
 		console.log('/votes: wrong voter: ' + message.voter + ' signer: ' + stxAddressFromKey);
 		return false;
 	}
-	console.log('/votes: correct voter: ' + message.voter + ' signer: ' + stxAddressFromKey);
+	//console.log('/votes: correct voter: ' + message.voter + ' signer: ' + stxAddressFromKey);
 
 	const address = verifySip18VoteSignature(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, message, signature.publicKey, signature.signature);
 	return address != undefined;
@@ -28,22 +28,30 @@ export async function fetchSip18Votes(fitler: any): Promise<Array<StoredVoteMess
 }
 
 export async function saveSip18Vote(hash: string, voteMessage: StoredVoteMessage, signature: SignatureData) {
-	voteMessage._id = voteMessage._id || new ObjectId();
+	voteMessage._id = voteMessage._id ? new ObjectId(voteMessage._id).toString() : new ObjectId().toString();
 	voteMessage.voteObjectHash = hash;
 	voteMessage.signature = signature.signature;
 	voteMessage.publicKey = signature.publicKey;
-	const result = await daoBatchVotingCollection.insertOne(voteMessage);
-	return await findSip18VoteById(voteMessage._id.toString());
+	const result = await saveDaoEvent(voteMessage);
+	return result;
+}
+async function saveDaoEvent(voteMessage: any) {
+	const doc = {
+		...voteMessage,
+		_id: new ObjectId(voteMessage._id) // ← convert string to ObjectId
+	};
+	const result = await daoBatchVotingCollection.insertOne(doc);
+	return result;
 }
 
 export async function updateSip18Vote(poll: StoredVoteMessage, changes: any) {
 	const result = await daoBatchVotingCollection.updateOne(
 		{
-			_id: poll._id
+			_id: new ObjectId(poll._id)
 		},
 		{ $set: changes }
 	);
-	poll = await findSip18VoteById(poll._id.toString());
+	poll = await findSip18VoteById(poll._id!.toString());
 	return poll;
 }
 

@@ -1,20 +1,33 @@
 import { contractPrincipalCV, serializeCV } from '@stacks/transactions';
-import { callContractReadOnly, ProposalContract, ProposalData, ProposalMeta, VotingEventProposeProposal } from '@mijoco/stx_helpers/dist/index.js';
+import { callContractReadOnly, DaoEventExecuteProposal, ProposalContract, ProposalData, ProposalMeta, VotingEventProposeProposal } from '@mijoco/stx_helpers/dist/index.js';
 import { getConfig } from '../../../lib/config.js';
 import { daoEventCollection } from '../../../lib/data/db_models.js';
 
-export async function fetchProposeEvent(proposal: string): Promise<any> {
+export async function fetchProposeEvent(proposal: string): Promise<VotingEventProposeProposal> {
 	const result = await daoEventCollection.findOne({
 		proposal,
 		event: 'propose'
 	});
-	return result;
+	return result as unknown as VotingEventProposeProposal;
+}
+
+export async function fetchExecuteEvent(proposal: string): Promise<DaoEventExecuteProposal> {
+	const result = await daoEventCollection.findOne({
+		proposal,
+		event: 'execute'
+	});
+	return result as unknown as DaoEventExecuteProposal;
 }
 
 export async function fetchLatestProposal(proposalId: string): Promise<any> {
 	const proposal: VotingEventProposeProposal = await fetchProposeEvent(proposalId);
-	const pd = await getProposalData(proposal.votingContract, proposal.proposal);
+	const pd = await getProposalData(proposal.extension, proposal.proposal);
 	proposal.proposalData = pd;
+	return proposal;
+}
+
+export async function fetchExecutedProposal(proposalId: string): Promise<DaoEventExecuteProposal> {
+	const proposal: DaoEventExecuteProposal = await fetchExecuteEvent(proposalId);
 	return proposal;
 }
 
@@ -202,6 +215,7 @@ export async function fetchProposedProposals(): Promise<Array<VotingEventPropose
 	const results = await daoEventCollection.aggregate(pipeline).toArray();
 	return results as unknown as Array<VotingEventProposeProposal>;
 }
+
 export async function fetchBootstrapProposals(): Promise<Array<VotingEventProposeProposal>> {
 	const pipeline = [
 		{
