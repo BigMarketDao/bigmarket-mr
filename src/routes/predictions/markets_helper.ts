@@ -31,7 +31,12 @@ async function updateMarketData(marketId: number, marketType: number, marketCont
 		marketData
 	};
 	// if (!createEvent || changes.resolutionState < createEvent.resolutionState) return;
-	await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	if (createEvent && createEvent._id) {
+		await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	} else {
+		console.error('createEvent is null or missing _id', createEvent);
+		// Optionally throw or return here if this is a blocking issue
+	}
 }
 export async function updatePredictionMarketCreateEvent(marketType: number, result: any, basicEvent: BasicEvent) {
 	let metadataHash = result.value['market-data-hash'].value;
@@ -68,7 +73,12 @@ export async function updateResolveMarketEvent(marketType: number, result: any, 
 		stacksHeight: stacksHeight
 	};
 	// if (!createEvent || changes.resolutionState < createEvent.resolutionState) return;
-	await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	if (createEvent && createEvent._id) {
+		await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	} else {
+		console.error('createEvent is null or missing _id', createEvent);
+		// Optionally throw or return here if this is a blocking issue
+	}
 
 	const resolveEvent = {
 		...basicEvent,
@@ -90,7 +100,12 @@ export async function updateResolveMarketUndisputedEvent(marketType: number, res
 		marketData
 	};
 	console.log('resolve-market-undisputed: changes: ' + new ObjectId(createEvent._id), changes);
-	await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	if (createEvent && createEvent._id) {
+		await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	} else {
+		console.error('createEvent is null or missing _id', createEvent);
+		// Optionally throw or return here if this is a blocking issue
+	}
 
 	const resolveEvent = {
 		...basicEvent,
@@ -109,7 +124,12 @@ export async function updateResolveMarketVoteEvent(marketType: number, result: a
 		marketData,
 		resolver: result.value.resolver.value
 	};
-	await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	if (createEvent && createEvent._id) {
+		await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	} else {
+		console.error('createEvent is null or missing _id', createEvent);
+		// Optionally throw or return here if this is a blocking issue
+	}
 	const resolveEvent = {
 		...basicEvent,
 		marketId,
@@ -128,7 +148,12 @@ export async function updateDisputeResolutionEvent(marketType: number, result: a
 		marketData,
 		disputer: result.value.disputer.value
 	};
-	await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	if (createEvent && createEvent._id) {
+		await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	} else {
+		console.error('createEvent is null or missing _id', createEvent);
+		// Optionally throw or return here if this is a blocking issue
+	}
 	const resolveEvent = {
 		...basicEvent,
 		marketId,
@@ -145,7 +170,12 @@ export async function updateTransferStakeEvent(marketType: number, result: any, 
 	const changes = {
 		transferLosingStakes: Number(result.value.balance.value)
 	};
-	await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	if (createEvent && createEvent._id) {
+		await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	} else {
+		console.error('createEvent is null or missing _id', createEvent);
+		// Optionally throw or return here if this is a blocking issue
+	}
 	const resolveEvent = {
 		...basicEvent,
 		marketId,
