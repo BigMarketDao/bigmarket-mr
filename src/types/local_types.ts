@@ -47,4 +47,6 @@ export type ConfigDaoI = {
 	VITE_DAO_CORE_PROPOSALS: string;
 	VITE_DAO_CORE_VOTING: string;
 	VITE_DAO_TOKEN_SALE: string;
+	VITE_DAO_REPUTATION_TOKEN: string;
+	VITE_DAO_LIQUIDITY_CONTRIBUTION: string;
 };

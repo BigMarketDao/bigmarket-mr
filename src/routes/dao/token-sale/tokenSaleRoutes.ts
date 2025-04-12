@@ -1,7 +1,7 @@
 import express from 'express';
 import { getConfig } from '../../../lib/config.js';
 import { getDaoConfig } from '../../../lib/config_dao.js';
-import { fetchTokenSaleStages, fetchTokenSaleUserData } from '@mijoco/stx_helpers/dist/index.js';
+import { fetchTokenSaleStages, fetchTokenSaleUserData, TokenSalePurchase } from '@mijoco/stx_helpers/dist/index.js';
 
 const router = express.Router();
 

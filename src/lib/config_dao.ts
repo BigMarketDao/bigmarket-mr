@@ -22,7 +22,9 @@ export function setDaoConfigOnStart() {
 	CONFIG.VITE_DAO_CORE_PROPOSALS = process.env[network + '_' + 'VITE_DAO_CORE_PROPOSALS'] || 'bme003-0-core-proposals';
 	CONFIG.VITE_DAO_CORE_VOTING = process.env[network + '_' + 'VITE_DAO_CORE_VOTING'] || 'bme001-0-proposal-voting';
 	CONFIG.VITE_DAO_GOVERNANCE_TOKEN = process.env[network + '_' + 'VITE_DAO_GOVERNANCE_TOKEN'] || 'bme000-0-governance-token';
+	CONFIG.VITE_DAO_REPUTATION_TOKEN = process.env[network + '_' + 'VITE_DAO_REPUTATION_TOKEN'] || 'bme030-0-reputation-token';
 	CONFIG.VITE_DAO_TOKEN_SALE = process.env[network + '_' + 'VITE_DAO_TOKEN_SALE'] || '';
+	CONFIG.VITE_DAO_LIQUIDITY_CONTRIBUTION = process.env[network + '_' + 'VITE_DAO_LIQUIDITY_CONTRIBUTION'] || 'bme010-0-liquidity-contribution';
 }
 
 export function getDaoConfig() {
@@ -46,4 +48,6 @@ export function printDaoConfig() {
 	console.log('VITE_DAO_TREASURY = ' + CONFIG.VITE_DAO_TREASURY);
 	console.log('VITE_DAO_GOVERNANCE_TOKEN = ' + CONFIG.VITE_DAO_GOVERNANCE_TOKEN);
 	console.log('VITE_DAO_TOKEN_SALE = ' + CONFIG.VITE_DAO_TOKEN_SALE);
+	console.log('VITE_DAO_REPUTATION_TOKEN = ' + CONFIG.VITE_DAO_REPUTATION_TOKEN);
+	console.log('VITE_DAO_LIQUIDITY_CONTRIBUTION = ' + CONFIG.VITE_DAO_LIQUIDITY_CONTRIBUTION);
 }

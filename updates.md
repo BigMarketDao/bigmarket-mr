@@ -22,7 +22,7 @@ db.marketCategoriesCollection.insertMany([
 { name : 'nsfw', information: '', displayName: 'NSFW', active: true},
 { name : 'banter', information: '', displayName: 'Banter', active: true}])
 
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST31A25YBK50KFJ2QS0EQK9FNXEQJD4PR0828789R", "ST2ZGXYF58V9D2HXDTP3N02DC3F8G2251PPGRXDQD", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ"]})
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1SV7MYKRKKDG8PHSSKZ0W66DPKRPB5KV8ACN62G", "ST2F4ZBBV22RF2WYR424HKX5RDN6XRK19X37YEVGG", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ"]})
 
 db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5", "ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG", "ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC"]})
 
@@ -36,9 +36,9 @@ db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345
 
 db.daoEventCollection.findAndModify({query: {marketId:0}, update: {$set: {featured: true }}, upsert: false, new: true, fields: {}})
 
-db.daoEventCollection.findAndModify({query: {event : 'create-market', marketId:2, extension: 'ST31A25YBK50KFJ2QS0EQK9FNXEQJD4PR0828789R.bme023-2-market-scalar'}, update: {$set: {processed: true }}, upsert: false, new: true, fields: {}})
+db.daoEventCollection.findAndModify({query: {event : 'create-market', marketId:2, extension: 'ST1SV7MYKRKKDG8PHSSKZ0W66DPKRPB5KV8ACN62G.bme023-2-market-scalar'}, update: {$set: {processed: true }}, upsert: false, new: true, fields: {}})
 
-db.daoEventCollection.updateMany({event: 'create-market',extension: 'ST31A25YBK50KFJ2QS0EQK9FNXEQJD4PR0828789R.bme023-0-market-scalar'},{$set: {'unhashedData.processed': true}})
+db.daoEventCollection.updateMany({event: 'create-market',extension: 'ST1SV7MYKRKKDG8PHSSKZ0W66DPKRPB5KV8ACN62G.bme023-0-market-scalar'},{$set: {'unhashedData.processed': true}})
 
 ````
     gateType: string;

@@ -44,6 +44,7 @@ export async function readDaoEvents(genesis: boolean, daoContractId: string) {
 	try {
 		do {
 			moreEvents = await resolveExtensionEvents(url, currentOffset, count, daoContractId);
+			console.log('Running: moreEvents: ', moreEvents);
 			count++;
 		} while (moreEvents);
 	} catch (err) {
@@ -56,12 +57,13 @@ async function resolveExtensionEvents(url: string, currentOffset: number, total:
 	let urlOffset = url + '&offset=' + (currentOffset + total * 20);
 	const response = await fetch(urlOffset);
 	const val = await response.json();
+	console.log('resolveExtensionEvents: for url ' + urlOffset, val);
 	if (!val || !val.results || typeof val.results !== 'object' || val.results.length === 0) {
-		//console.log("resolveExtensionEvents: for url " + urlOffset, val.results);
+		console.log('resolveExtensionEvents: for url ' + urlOffset, val.results);
 		return false;
 	}
 	for (const event of val.results) {
-		//console.log("resolveExtensionEvents: processing: ", event);
+		console.log('resolveExtensionEvents: processing: ', event);
 		const pdb = await findBaseDaoEventByContractAndIndex(daoContractId, Number(event.event_index), event.tx_id);
 		if (!pdb) {
 			try {

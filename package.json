@@ -8,14 +8,14 @@
 		"build:testnet": "NODE_ENV=testnet tsc",
 		"build:mainnet": "NODE_ENV=mainnet tsc",
 		"start": "NODE_ENV=testnet node dist/app.js",
-		"dev": "NODE_ENV=devnet nodemon --watch src --ext ts --exec tsx src/app.ts"
+		"dev": "NODE_ENV=testnet nodemon --watch src --ext ts --exec tsx src/app.ts"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"description": "",
 	"dependencies": {
-		"@mijoco/stx_helpers": "^0.6.99",
+		"@mijoco/stx_helpers": "^0.7.3",
 		"@stacks/common": "^7.0.2",
 		"@stacks/connect": "^7.9.0",
 		"@stacks/encryption": "^7.0.2",
@@ -23,7 +23,7 @@
 		"axios": "^1.7.9",
 		"bitcoin-tx-proof": "^1.0.0",
 		"bitcoinjs-lib": "^6.1.7",
-		"clarity-bitcoin-client": "^1.0.16",
+		"clarity-bitcoin-client": "^1.0.17",
 		"cors": "^2.8.5",
 		"dotenv": "^16.4.7",
 		"express": "^5.0.1",

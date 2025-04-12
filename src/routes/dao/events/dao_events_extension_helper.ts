@@ -17,6 +17,8 @@ import { processMarketPredicitonScalarEvent } from './processors/process_scalar_
 import { processCoreVotingEvent } from './processors/process_core_voting_events.js';
 import { ObjectId } from 'mongodb';
 import { cvToJSON, deserializeCV } from '@stacks/transactions';
+import { processReputationEvents } from './processors/process_reputation_events.js';
+import { processLiquidityContributionEvents } from './processors/process_liquidity_contribution_events.js';
 
 export async function readDaoExtensionEvents(genesis: boolean, daoContractId: string) {
 	const extensions = await fetchExtensions(daoContractId);
@@ -116,6 +118,10 @@ async function resolveExtensionEvents(url: string, daoContract: string, extensio
 					processMarketPredicitonCategoricalEvent(basicEvent, result);
 				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_SCALAR) > -1) {
 					processMarketPredicitonScalarEvent(basicEvent, result);
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_LIQUIDITY_CONTRIBUTION) > -1) {
+					processLiquidityContributionEvents(basicEvent, result);
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_REPUTATION_TOKEN) > -1) {
+					processReputationEvents(basicEvent, result);
 				} else if (extensionContract.indexOf(getDaoConfig().VITE_DOA_EMERGENCY_EXECUTE_EXTENSION) > -1) {
 					// no events
 				} else {

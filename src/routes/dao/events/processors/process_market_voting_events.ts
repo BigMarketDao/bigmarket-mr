@@ -18,7 +18,7 @@ export async function processMarketVotingEvent(basicEvent: BasicEvent, result: a
 		const contractEvent: MarketVotingCreateEvent = {
 			...basicEvent,
 			marketId: Number(result.value['market-id'].value),
-			marketDataHash: result.value['market-data-hash'].value,
+			market: result.value.market.value,
 			proposer: result.value.proposer.value
 		} as MarketVotingCreateEvent;
 		await saveOrUpdateEvent(contractEvent);

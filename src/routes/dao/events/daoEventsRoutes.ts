@@ -13,7 +13,7 @@ router.post('/extensions/:daoContractId', async (req, res, next) => {
 			res.status(401).json({ error: 'Invalid request' });
 		} else {
 			await readDaoEvents(true, req.params.daoContractId);
-			await readDaoExtensionEvents(false, req.params.daoContractId);
+			await readDaoExtensionEvents(true, req.params.daoContractId);
 			const events = await fetchBaseDaoEvents();
 			// await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
 			// await readScalarEvents(false, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
