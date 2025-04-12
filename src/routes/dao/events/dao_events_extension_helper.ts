@@ -89,14 +89,14 @@ async function resolveExtensionEvents(url: string, daoContract: string, extensio
 		return 0;
 	}
 
-	console.log('resolveExtensionEvents: extension: ' + extensionContract + ' : events: ' + val.results.length);
+	//console.log('resolveExtensionEvents: extension: ' + extensionContract + ' : events: ' + val.results.length);
 	for (const event of val.results) {
 		const pdb = await findVotingContractEventByContractAndIndex(Number(event.event_index), event.tx_id);
 		//const pdb = await findPredictionContractEventByContractAndIndex(extensionContract, Number(event.event_index), event.tx_id);
 		if (!pdb) {
 			const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
 			const basicEvent = createBasicEvent(new ObjectId().toString(), event, daoContract, extensionContract, result.value.event.value);
-			console.log('processEvent: new event: ', result);
+			//console.log('processEvent: new event: ', result);
 			try {
 				if (extensionContract.indexOf(getDaoConfig().VITE_DAO_TOKEN_SALE) > -1) {
 					processTokenSaleEvent(basicEvent, result);
