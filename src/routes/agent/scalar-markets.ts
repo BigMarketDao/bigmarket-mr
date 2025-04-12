@@ -150,7 +150,7 @@ const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => 
 };
 
 async function convertMarketToLocalFormat(meta: any): Promise<StoredOpinionPoll> {
-	const tokens = await fetchAllowedTokens();
+	const tokens = await fetchAllowedTokens(1);
 	const stxToken = tokens.find((t) => t.token.indexOf('wrapped-stx') > -1);
 	if (!stxToken) throw new Error('warapped stx token not found');
 

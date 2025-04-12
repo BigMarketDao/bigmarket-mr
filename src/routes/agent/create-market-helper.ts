@@ -66,7 +66,7 @@ async function createMarketOnChain(proposer: string, data: CreateMarketLLMRespon
 }
 
 async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateMarketLLMResponse): Promise<StoredOpinionPoll> {
-	const tokens = await fetchAllowedTokens();
+	const tokens = await fetchAllowedTokens(1);
 	const stxToken = tokens.find((t) => t.token.indexOf('wrapped-stx') > -1);
 	if (!stxToken) throw new Error('warapped stx token not found');
 
