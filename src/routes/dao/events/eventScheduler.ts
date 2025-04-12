@@ -21,7 +21,7 @@ export const initScanDaoEventsJob = cron.schedule('* * * * *', async (fireDate) 
 		}
 		for (const dao of distinctDaoContracts) {
 			const docContract = dao.daoContract;
-			console.log('Running: dao: ' + docContract);
+			//console.log('Running: dao: ' + docContract);
 			try {
 				await readDaoEvents(true, docContract);
 			} catch (err) {
