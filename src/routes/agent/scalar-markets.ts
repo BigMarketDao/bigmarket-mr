@@ -1,7 +1,7 @@
 import { dataHashSip18, ExchangeRate, fetchStacksInfo, getStacksNetwork, marketDataToTupleCV, PredictionMarketCreateEvent, ScalarMarketDataItem, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
 import { type StacksInfo } from '@mijoco/stx_helpers/dist/index.js';
 import { getConfig } from '../../lib/config.js';
-import { broadcastTransaction, bufferCV, Cl, listCV, makeContractCall } from '@stacks/transactions';
+import { broadcastTransaction, bufferCV, Cl, listCV, makeContractCall, PostConditionMode } from '@stacks/transactions';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { daoEventCollection } from '../../lib/data/db_models.js';
 import { estimateBitcoinBlockTime, formatFiat } from '../../lib/utils.js';
@@ -125,6 +125,8 @@ async function createMarketOnChain(chain: number) {
 	console.log('createMarketOnChain: network: ' + network);
 	console.log('createMarketOnChain: getConfig().walletKey: ' + getConfig().walletKey);
 	const transaction = await makeContractCall({
+		postConditions: [],
+		postConditionMode: PostConditionMode.Allow,
 		contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
 		contractName: getDaoConfig().VITE_DAO_MARKET_SCALAR,
 		functionName: 'create-market',
