@@ -1,7 +1,7 @@
 import express from 'express';
 import { isCreatePollPostValid, savePoll } from '../polling/polling_helper.js';
 import { countCreateMarketEvents, fetchActiveMarketCategories, fetchAllowedTokens, fetchMarket, fetchMarketClaims, fetchMarkets, fetchMarketStakes, fetchMarketVotes, findOpinionPollByTitle } from './markets_helper.js';
-import { DaoOverview, fetchContractBalances, fetchTokenSaleStages, GateKeeper, readPredictionContractData, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
+import { DaoOverview, fetchContractBalances, fetchTokenSaleStages, GateKeeper, readPredictionContractData, readReputationContractData, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
 import { getConfig } from '../../lib/config.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { fetchCreateMarketMerkleInput } from '../gating/gating_helper.js';
@@ -22,7 +22,8 @@ router.get('/market-dao-data', async (req, res) => {
 		try {
 			// Fetch contract data
 			const contractData = await readPredictionContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING);
-
+			const reputationData = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN);
+			console.log('/market-dao-data: ', reputationData);
 			// Fetch contract balances
 			const scalarBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`);
 			const contractBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`);
@@ -31,6 +32,7 @@ router.get('/market-dao-data', async (req, res) => {
 
 			// Update cache
 			cachedData = {
+				reputationData,
 				contractData,
 				contractBalances,
 				scalarBalances,
