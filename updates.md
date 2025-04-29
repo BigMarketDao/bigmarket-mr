@@ -22,7 +22,8 @@ db.marketCategoriesCollection.insertMany([
 { name : 'nsfw', information: '', displayName: 'NSFW', active: true},
 { name : 'banter', information: '', displayName: 'Banter', active: true}])
 
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1SV7MYKRKKDG8PHSSKZ0W66DPKRPB5KV8ACN62G", "ST2F4ZBBV22RF2WYR424HKX5RDN6XRK19X37YEVGG", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ"]})
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1SV7MYKRKKDG8PHSSKZ0W66DPKRPB5KV8ACN62G", "ST2F4ZBBV22RF2WYR424HKX5RDN6XRK19X37YEVGG", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ",
+"ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM"]})
 
 db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5", "ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG", "ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC"]})
 
@@ -56,3 +57,8 @@ where dao contract is
 
 - SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.bigmarket-dao (nakamoto)
 - SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.ecosystem-dao (2.1 upgrade)
+
+If you want maximum performance:
+db.events.createIndex({ voter: 1, event: 1, marketId: 1, extension: 1 })
+db.events.createIndex({ claimer: 1, event: 1, marketId: 1, extension: 1 })
+db.events.createIndex({ event: 1, marketId: 1, extension: 1 })
