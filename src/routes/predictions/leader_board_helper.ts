@@ -38,6 +38,6 @@ async function topTVLMarkets(): Promise<Array<TopMarket>> {
 			totalStakes: o.totalStakes
 		};
 	});
-	console.log(topMarkets);
+	//console.log(topMarkets);
 	return topMarkets as Array<TopMarket>;
 }
