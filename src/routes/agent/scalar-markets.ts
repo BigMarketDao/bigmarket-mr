@@ -135,7 +135,7 @@ async function createMarketOnChain(chain: number) {
 		network
 	});
 	const txResult = await broadcastTransaction({ transaction });
-	console.log('resolveMarketOnChain: txResult:', txResult);
+	console.log('createMarketOnChain: txResult:', txResult);
 }
 
 const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => {
@@ -196,7 +196,7 @@ function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {
+export async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {
 	if (market.extension !== `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
 	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
 	const blockHeight = stacksInfo.burn_block_height;

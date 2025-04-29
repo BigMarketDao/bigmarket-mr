@@ -51,19 +51,19 @@ export async function createMarketBySuggestion(proposer: string, userIdea: strin
 	return convertMarketToLocalFormat(proposer, llmResponse);
 }
 
-async function createMarketOnChain(proposer: string, data: CreateMarketLLMResponse) {
-	const market = await convertMarketToLocalFormat(proposer, data);
-	await savePoll(market);
-	const transaction = await makeContractCall({
-		contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
-		contractName: getDaoConfig().VITE_DAO_MARKET_PREDICTING,
-		functionName: 'create-market',
-		functionArgs: await getArgsCV(proposer, market),
-		senderKey: getConfig().walletKey
-	});
-	const txResult = await broadcastTransaction({ transaction });
-	console.log('resolveMarketOnChain: txResult:', txResult);
-}
+// async function createMarketOnChain(proposer: string, data: CreateMarketLLMResponse) {
+// 	const market = await convertMarketToLocalFormat(proposer, data);
+// 	await savePoll(market);
+// 	const transaction = await makeContractCall({
+// 		contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
+// 		contractName: getDaoConfig().VITE_DAO_MARKET_PREDICTING,
+// 		functionName: 'create-market',
+// 		functionArgs: await getArgsCV(proposer, market),
+// 		senderKey: getConfig().walletKey
+// 	});
+// 	const txResult = await broadcastTransaction({ transaction });
+// 	console.log('createMarketOnChain: txResult:', txResult);
+// }
 
 async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateMarketLLMResponse): Promise<StoredOpinionPoll> {
 	const tokens = await fetchAllowedTokens(1);

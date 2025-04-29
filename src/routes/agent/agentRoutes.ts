@@ -1,7 +1,8 @@
 import express from 'express';
 import { sweepAndResolveMarket, sweepAndResolveMarkets } from './resolver-helper.js';
 import { createMarketByDiscovery, createMarketBySuggestion } from './create-market-helper.js';
-import { createScalarMarketsOnChain, resolveScalarMarketsOnChain, resolveUndisputedScalarMarketsOnChain } from './scalar-markets.js';
+import { createScalarMarketsOnChain, resolveScalarMarketOnChain, resolveScalarMarketsOnChain, resolveUndisputedScalarMarketsOnChain } from './scalar-markets.js';
+import { fetchMarket } from '../predictions/markets_helper.js';
 
 const router = express.Router();
 
@@ -21,8 +22,16 @@ router.get('/create-auto/scalar/:chain', async (req, res) => {
 });
 
 router.get('/resolve/:marketId/:marketType', async (req, res) => {
-	const markets = await sweepAndResolveMarket(Number(req.params.marketId), Number(req.params.marketType));
-	res.json(markets);
+	const marketType = Number(req.params.marketType);
+	const marketId = Number(req.params.marketId);
+	if (marketType !== 2) {
+		const markets = await sweepAndResolveMarket(marketId, marketType);
+		res.json(markets);
+	} else {
+		const market = await fetchMarket(marketId, marketType);
+		const markets = await resolveScalarMarketOnChain(market);
+		res.json(markets);
+	}
 });
 
 router.get('/resolve', async (req, res) => {
