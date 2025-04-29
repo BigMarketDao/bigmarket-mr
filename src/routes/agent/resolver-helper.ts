@@ -26,7 +26,7 @@ export type MarketLLMResponse = {
 };
 export async function sweepAndResolveMarket(marketId: number, marketType: number): Promise<PredictionMarketCreateEvent> {
 	const market = (await fetchMarket(marketId, marketType)) as PredictionMarketCreateEvent;
-	console.log('sweepAndResolveMarkets: ', market);
+	console.log('sweepAndResolveMarket: ' + marketId + ' / ' + marketType);
 	await llmResolveMarket(flattenMarket(market));
 	return market;
 }
@@ -64,7 +64,18 @@ async function llmResolveMarket(data: MarketLLMRequest) {
 	const llmResponse: MarketLLMResponse = response.data;
 	console.log('llmResolveMarket: llmResponse: ', llmResponse);
 	if (response.data.resolution !== undefined) {
-		await marketLlmLogsCollection.insertOne(llmResponse);
+		try {
+			const existing = await marketLlmLogsCollection.findOne({
+				marketId: llmResponse.market_id,
+				marketType: llmResponse.market_type,
+				event: llmResponse.event
+			});
+			if (!existing) {
+				await marketLlmLogsCollection.insertOne(llmResponse);
+			} else {
+				console.log('Already exists, skipping insert.');
+			}
+		} catch (err: any) {}
 		await resolveMarketOnChain(data, response.data.resolution);
 	}
 }
