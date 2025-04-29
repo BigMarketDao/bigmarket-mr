@@ -16,14 +16,14 @@ const CACHE_DURATION = 30 * 1000; // Cache duration in milliseconds (5 minutes)
 router.get('/market-dao-data', async (req, res) => {
 	const now = Date.now();
 	if (cachedData && now - lastFetchTime < CACHE_DURATION) {
-		console.log('Serving from cache');
+		//console.log('Serving from cache');
 		res.json(cachedData);
 	} else {
 		try {
 			// Fetch contract data
 			const contractData = await readPredictionContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING);
 			const reputationData = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN);
-			console.log('/market-dao-data: ', reputationData);
+			//console.log('/market-dao-data: ', reputationData);
 			// Fetch contract balances
 			const scalarBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`);
 			const contractBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`);
@@ -64,7 +64,7 @@ router.post('/markets', async (req, res) => {
 			res.status(401).json({ error: 'Invalid request' });
 		} else {
 			const p = await findOpinionPollByTitle(newPoll.name);
-			console.log('isCreatePollPostValid: p =', p);
+			//console.log('isCreatePollPostValid: p =', p);
 			if (p) {
 				res.status(502).json({ error: 'Market with this question already exists' });
 			} else {
