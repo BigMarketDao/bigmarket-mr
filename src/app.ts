@@ -10,6 +10,7 @@ import { pollingRoutes } from './routes/polling/pollingRoutes.js';
 import { connect } from './lib/data/db_models.js';
 import { daoEventRoutes } from './routes/dao/events/daoEventsRoutes.js';
 import { predictionMarketRoutes } from './routes/predictions/predictionMarketRoutes.js';
+import { myMarketRoutes } from './routes/predictions/my_markets/myMarketRoutes.js';
 import { daoProposalRoutes } from './routes/dao/proposals/daoProposalRoutes.js';
 import { voterRoutes } from './routes/dao/voter/voterRoutes.js';
 import { gatingRoutes } from './routes/gating/gatingRoutes.js';
@@ -63,6 +64,7 @@ app.use((req, res, next) => {
 app.use('/bigmarket-api/jwt', jwtRoutes);
 app.use('/bigmarket-api/pm', predictionMarketRoutes);
 app.use('/bigmarket-api/polling', pollingRoutes);
+app.use('/bigmarket-api/my-markets', myMarketRoutes);
 app.use('/bigmarket-api/dao/events', daoEventRoutes);
 app.use('/bigmarket-api/dao/proposals', daoProposalRoutes);
 app.use('/bigmarket-api/dao/voter', voterRoutes);
