@@ -99,7 +99,7 @@ export async function updateResolveMarketUndisputedEvent(marketType: number, res
 		concluded: true,
 		marketData
 	};
-	console.log('resolve-market-undisputed: changes: ' + new ObjectId(createEvent._id), changes);
+	//console.log('resolve-market-undisputed: changes: ' + new ObjectId(createEvent._id), changes);
 	if (createEvent && createEvent._id) {
 		await updateDaoEvent(new ObjectId(createEvent._id), changes);
 	} else {

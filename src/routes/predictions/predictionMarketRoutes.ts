@@ -22,7 +22,7 @@ router.get('/market-dao-data', async (req, res) => {
 		try {
 			// Fetch contract data
 			const contractData = await readPredictionContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING);
-			const reputationData = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN);
+			// const reputationData = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN);
 			//console.log('/market-dao-data: ', reputationData);
 			// Fetch contract balances
 			const scalarBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`);
@@ -32,7 +32,6 @@ router.get('/market-dao-data', async (req, res) => {
 
 			// Update cache
 			cachedData = {
-				reputationData,
 				contractData,
 				contractBalances,
 				scalarBalances,
