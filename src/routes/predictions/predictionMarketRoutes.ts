@@ -10,13 +10,13 @@ import { getLeaderBoard } from './leader_board_helper.js';
 const router = express.Router();
 export let cachedData: DaoOverview | null = null; // simpple cache
 let lastFetchTime = 0; // To track the last fetch timestamp
-//const CACHE_DURATION = 5 * 60 * 1000; // Cache duration in milliseconds (5 minutes)
-const CACHE_DURATION = 30 * 1000; // Cache duration in milliseconds (5 minutes)
+const CACHE_DURATION = 5 * 60 * 1000; // Cache duration in milliseconds (5 minutes)
+//const CACHE_DURATION = 30 * 1000; // Cache duration in milliseconds (5 minutes)
 
 router.get('/market-dao-data', async (req, res) => {
 	const now = Date.now();
 	if (cachedData && now - lastFetchTime < CACHE_DURATION) {
-		//console.log('Serving from cache');
+		console.log('Serving from cache');
 		res.json(cachedData);
 	} else {
 		try {
