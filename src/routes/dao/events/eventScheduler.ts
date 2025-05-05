@@ -6,7 +6,7 @@ import { getDaoConfig } from '../../../lib/config_dao.js';
 
 // 30 mins past every second hour: 30 */2 * * *'
 export const initScanDaoEventsJob = cron.schedule('* * * * *', async (fireDate) => {
-	//console.log('Running: initScanDaoEventsJob at: ' + fireDate);
+	console.log('Running: initScanDaoEventsJob at: ' + fireDate);
 	try {
 		const distinctDaoContracts = await daoEventCollection
 			.aggregate([
