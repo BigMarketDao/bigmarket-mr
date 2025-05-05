@@ -22,13 +22,6 @@ db.marketCategoriesCollection.insertMany([
 { name : 'nsfw', information: '', displayName: 'NSFW', active: true},
 { name : 'banter', information: '', displayName: 'Banter', active: true}])
 
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST2P1A2ECDAT2053BMYKHCN3ZTRKPX2RAKKY9WJ38", "ST15GF59RDTKS7YY8VMKREQ7A0C1CP1NEJE23DMJA", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ",
-"ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM"]})
-
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5", "ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG", "ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC"]})
-
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"]})
-
 db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345904d2936')}, update: {$set: {resolutionState: 237 }}, upsert: false, new: true, fields: {}})
 
 db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345904d2936')}, update: {$set: {marketType: 233 }}, upsert: false, new: true, fields: {}})
@@ -62,3 +55,20 @@ If you want maximum performance:
 db.events.createIndex({ voter: 1, event: 1, marketId: 1, extension: 1 })
 db.events.createIndex({ claimer: 1, event: 1, marketId: 1, extension: 1 })
 db.events.createIndex({ event: 1, marketId: 1, extension: 1 })
+
+## Backups
+
+mongodump --uri "mongodb://dockerdev1:OLrs4ve3wT3ypQSK@clusterbm0-shard-00-00.ci36c.mongodb.net:27017,clusterbm0-shard-00-01.ci36c.mongodb.net:27017,clusterbm0-shard-00-02.ci36c.mongodb.net:27017/?replicaSet=atlas-no3ycr-shard-0&ssl=true&authSource=admin&retryWrites=true&w=majority&appName=ClusterBM0" --out ~/hubgit/backup
+
+## Rollover
+
+```
+db.marketCollection.deleteMany()
+db.daoEventCollection.deleteMany({})
+db.marketGatingCollection.deleteMany({})
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST2P1A2ECDAT2053BMYKHCN3ZTRKPX2RAKKY9WJ38", "ST15GF59RDTKS7YY8VMKREQ7A0C1CP1NEJE23DMJA", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ","ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM"]})
+
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5", "ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG", "ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC"]})
+
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"]})
+```
