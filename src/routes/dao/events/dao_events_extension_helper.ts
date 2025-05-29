@@ -125,7 +125,9 @@ async function resolveExtensionEvents(url: string, daoContract: string, extensio
 				} else if (extensionContract.indexOf(getDaoConfig().VITE_DOA_EMERGENCY_EXECUTE_EXTENSION) > -1) {
 					// no events
 				} else {
-					console.log('processEvent: unexpected event: ', event);
+					if (extensionContract.indexOf('bme023') === -1) {
+						console.log('processEvent: unexpected event: ', event);
+					}
 				}
 			} catch (err: any) {
 				console.log('resolveExtensionEvents: ', err);
