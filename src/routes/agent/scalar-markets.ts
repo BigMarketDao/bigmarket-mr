@@ -149,7 +149,18 @@ const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => 
 	console.log('resolveMarketOnChain: getArgsCV: cachedData?.contractData: ', cachedData?.contractData);
 	console.log('resolveMarketOnChain: getArgsCV: proof: ', proof);
 	const cats = listCV(genCats.map((o) => Cl.tuple({ min: Cl.uint(o.min), max: Cl.uint(o.max) })));
-	return [cats, marketFeeCV, Cl.contractPrincipal(examplePoll.token.split('.')[0], examplePoll.token.split('.')[1]), metadataHash, proof, Cl.principal(examplePoll.treasury), Cl.some(Cl.uint(6 * 144)), Cl.none(), Cl.bufferFromHex(priceFeeId)];
+	return [
+		cats,
+		marketFeeCV,
+		Cl.contractPrincipal(examplePoll.token.split('.')[0], examplePoll.token.split('.')[1]),
+		metadataHash,
+		proof,
+		Cl.principal(examplePoll.treasury),
+		Cl.some(Cl.uint(6 * 144)),
+		Cl.none(),
+		Cl.bufferFromHex(priceFeeId),
+		Cl.uint(100000000)
+	];
 };
 
 async function convertMarketToLocalFormat(meta: any): Promise<StoredOpinionPoll> {
