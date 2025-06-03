@@ -221,6 +221,7 @@ export async function getMyStakesAndClaims(voter: string): Promise<Array<any>> {
 					'marketData.resolutionState': 1,
 					'marketData.priceFeedId': 1,
 					'marketData.categories': 1,
+					'marketData.marketFeeBips': 1,
 					'marketData.stakes': 1,
 					'marketData.stakeTokens': 1
 				}
