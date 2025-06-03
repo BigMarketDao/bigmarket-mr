@@ -5,9 +5,13 @@ export async function getMyStakedMarkets(voter: string): Promise<Array<Predictio
 	const result = await daoEventCollection.find({ event: 'market-stake', voter }).toArray();
 	return result as unknown as Array<PredictionMarketStakeEvent>;
 }
-export async function getMyClaimedMarkets(voter: string): Promise<Array<PredictionMarketClaimEvent>> {
-	const result = await daoEventCollection.find({ event: 'market-stake', voter }).toArray();
+export async function getMyClaimedMarkets(claimer: string): Promise<Array<PredictionMarketClaimEvent>> {
+	const result = await daoEventCollection.find({ event: 'claim-winnings', claimer }).toArray();
 	return result as unknown as Array<PredictionMarketClaimEvent>;
+}
+export async function getMyClaimedMarket(marketId: number, extension: string, claimer: string): Promise<PredictionMarketClaimEvent> {
+	const result = await daoEventCollection.findOne({ event: 'claim-winnings', claimer, marketId, extension });
+	return result as unknown as PredictionMarketClaimEvent;
 }
 export async function getMyStakesAndClaims1(voter: string): Promise<Array<any>> {
 	const result = await daoEventCollection
