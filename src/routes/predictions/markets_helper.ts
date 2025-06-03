@@ -204,13 +204,13 @@ export async function updateAllowedTokensEvent(marketType: number, result: any, 
 }
 
 export async function updateClaimWinningsEvent(marketType: number, result: any, basicEvent: BasicEvent) {
-	const marketId = Number(result.value['market-id'].value);
-	const indexWon = Number(result.value['index-won'].value);
+	const marketId = Number(result.value['market-id']?.value || 0);
+	const indexWon = Number(result.value['index-won']?.value || 0);
 	const claimer = result.value.claimer.value;
-	const userStake = Number(result.value['user-stake'].value);
-	const userShare = Number(result.value['user-share'].value);
-	const winningPool = Number(result.value['winning-pool'].value);
-	const totalPool = Number(result.value['total-pool'].value);
+	const userStake = Number(result.value['user-stake']?.value || 0);
+	const userShare = Number(result.value['user-share']?.value || 0);
+	const winningPool = Number(result.value['winning-pool']?.value || 0);
+	const totalPool = Number(result.value['total-pool']?.value || 0);
 	const daoFee = Number(result.value.daofee?.value);
 	const marketFee = Number(result.value.marketfee?.value);
 
