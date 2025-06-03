@@ -207,8 +207,9 @@ export async function updateClaimWinningsEvent(marketType: number, result: any, 
 	const marketId = Number(result.value['market-id']?.value || 0);
 	const indexWon = Number(result.value['index-won']?.value || 0);
 	const claimer = result.value.claimer.value;
-	const userStake = Number(result.value['user-stake']?.value || 0);
-	const userShare = Number(result.value['user-share']?.value || 0);
+	const userTokensInOutcome = Number(result.value['user-tokens']?.value || 0);
+	let userSharesInOutcome = Number(result.value['user-stake']?.value || 0);
+	if (userSharesInOutcome === 0) userSharesInOutcome = Number(result.value['user-shares']?.value || 0);
 	const winningPool = Number(result.value['winning-pool']?.value || 0);
 	const totalPool = Number(result.value['total-pool']?.value || 0);
 	const daoFee = Number(result.value.daofee?.value);
@@ -220,8 +221,8 @@ export async function updateClaimWinningsEvent(marketType: number, result: any, 
 		marketId,
 		claimer,
 		indexWon,
-		userStake,
-		userShare,
+		userTokensInOutcome,
+		userSharesInOutcome,
 		winningPool,
 		daoFee,
 		marketFee,
