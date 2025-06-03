@@ -214,6 +214,7 @@ export async function updateClaimWinningsEvent(marketType: number, result: any, 
 	const totalPool = Number(result.value['total-pool']?.value || 0);
 	const daoFee = Number(result.value.daofee?.value);
 	const marketFee = Number(result.value.marketfee?.value);
+	const netRefund = Number(result.value.refund?.value || 0);
 
 	const contractEvent = {
 		...basicEvent,
@@ -226,6 +227,7 @@ export async function updateClaimWinningsEvent(marketType: number, result: any, 
 		winningPool,
 		daoFee,
 		marketFee,
+		netRefund,
 		totalPool
 	} as PredictionMarketClaimEvent;
 	await saveOrUpdateEvent(contractEvent);
