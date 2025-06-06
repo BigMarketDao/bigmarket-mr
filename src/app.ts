@@ -25,6 +25,7 @@ import { initScanDaoEventsJob } from './routes/dao/events/eventScheduler.js';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
 import { initExchangeRatesJob } from './routes/rates/ratesScheduler.js';
 import { initCreateMarketsJobBitcoin, initCreateMarketsJobEthereum, initCreateMarketsJobStacks, initResolveMarketsJob, initResolveUndisputedMarketsJob } from './routes/agent/agentScheduler.js';
+import { startUICacheWarming } from './routes/cache/cache_utils.js';
 
 if (process.env.NODE_ENV === 'development') {
 	dotenv.config();
@@ -96,6 +97,7 @@ async function connectToMongoCloud() {
 	initCreateMarketsJobStacks.start();
 	// initCreateMarketsJobSolana.start();
 	initCreateMarketsJobEthereum.start();
+	startUICacheWarming(); // runs ui caching every 25s
 
 	const server = app.listen(getConfig().port, () => {
 		console.log('Server listening!');

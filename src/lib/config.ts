@@ -44,6 +44,7 @@ export function setConfigOnStart() {
 
 	CONFIG.network = process.env[network + '_sui_network'] || '';
 	CONFIG.stacksApi = process.env[network + '_sui_stacksApi'] || '';
+	CONFIG.publicAppBaseUrl = network === 'devnet' ? 'http://localhost:8081' : 'https://bigmarket.ai';
 	CONFIG.publicAppName = process.env[network + '_sui_publicAppName'] || '';
 	CONFIG.publicAppVersion = process.env[network + '_sui_publicAppVersion'] || '';
 	CONFIG.walletKey = process.env[network + '_sui_walletKey'] || '';

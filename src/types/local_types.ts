@@ -8,6 +8,7 @@ export type ConfigI = {
 	host: string;
 	port: number;
 	network: string;
+	publicAppBaseUrl: string;
 	publicAppName: string;
 	publicAppVersion: string;
 	stacksApi: string;
