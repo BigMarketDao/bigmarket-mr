@@ -19,9 +19,15 @@ export async function updateUICache() {
 	for (const url of urls) {
 		let res;
 		try {
-			res = await fetch(url, { method: 'GET' });
-			// console.log(`[cache] warmed ${url} (${res.status})`);
-			console.log(`[cache] warmed ${url} (${res.status}) [x: ${res.headers.get('x-powered-by')}]`);
+			res = await fetch(url, {
+				method: 'GET',
+				headers: {
+					Accept: 'text/html',
+					'X-Cache-Warm': '1' // Optional debug header
+				}
+			});
+
+			//console.log(`[cache] warmed ${url} (${res.status}) [x: ${res.headers.get('x-powered-by')}]`);
 		} catch (err) {
 			console.error(`[cache] failed ${url}`, err);
 		}
