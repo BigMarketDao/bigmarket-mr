@@ -123,6 +123,12 @@ async function createMarketOnChain(chain: number) {
 	const network = getStacksNetwork(getConfig().network);
 	console.log('createMarketOnChain: network: ' + network);
 	const gateKeeper: GateKeeper = await fetchCreateMarketMerkleInput();
+	console.log('gateKeeper: ', gateKeeper);
+	console.log('market.priceFeedId: ' + market.priceFeedId);
+	console.log('market.token: ' + market.token);
+	console.log('market.treasury: ' + market.treasury);
+	console.log('market.marketFee: ' + market.marketFee);
+	console.log('market.objectHash: ' + market.objectHash);
 
 	const fa = await getArgsCV(
 		gateKeeper,
