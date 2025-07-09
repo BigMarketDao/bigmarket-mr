@@ -32,7 +32,7 @@ export const initCreateMarketsJobBitcoin = cron.schedule('26 15 * * 3', async (f
 });
 // 40 0 * * 1,4 = At 00:40 (12:20 AM) every Monday and Thursday
 // 30 0 * * 0 = 20 past midnight on Sunday
-export const initCreateMarketsJobStacks = cron.schedule('20 15 * * 3', async (fireDate) => {
+export const initCreateMarketsJobStacks = cron.schedule('29 15 * * 3', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
 		await createScalarMarketsOnChain(2);
