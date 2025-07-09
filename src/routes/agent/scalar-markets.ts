@@ -139,7 +139,7 @@ async function createMarketOnChain(chain: number) {
 		market.marketFee,
 		market.objectHash,
 		100000000,
-		market.priceFeedId! //market.marketType === 2 ? market.priceFeedId! : market.marketTypeDataCategorical!
+		meta.priceFeedId! //market.marketType === 2 ? market.priceFeedId! : market.marketTypeDataCategorical!
 	);
 
 	const transaction = await makeContractCall({
