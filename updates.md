@@ -30,9 +30,9 @@ db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345
 
 db.daoEventCollection.findAndModify({query: {marketId:0}, update: {$set: {featured: true }}, upsert: false, new: true, fields: {}})
 
-db.daoEventCollection.findAndModify({query: {event : 'create-market', marketId:2, extension: 'ST3FM52ANQES92X27AP9ZV9Z676MHP7QP2J79RTH9.bme023-2-market-scalar'}, update: {$set: {processed: true }}, upsert: false, new: true, fields: {}})
+db.daoEventCollection.findAndModify({query: {event : 'create-market', marketId:2, extension: 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme023-2-market-scalar'}, update: {$set: {processed: true }}, upsert: false, new: true, fields: {}})
 
-db.daoEventCollection.updateMany({event: 'create-market',extension: 'ST3FM52ANQES92X27AP9ZV9Z676MHP7QP2J79RTH9.bme023-0-market-scalar'},{$set: {'unhashedData.processed': true}})
+db.daoEventCollection.updateMany({event: 'create-market',extension: 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme023-0-market-scalar'},{$set: {'unhashedData.processed': true}})
 
 ````
     gateType: string;
@@ -66,7 +66,7 @@ mongodump --uri "mongodb://dockerdev1:OLrs4ve3wT3ypQSK@clusterbm0-shard-00-00.ci
 db.marketCollection.deleteMany()
 db.daoEventCollection.deleteMany({})
 db.marketGatingCollection.deleteMany({})
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST3FM52ANQES92X27AP9ZV9Z676MHP7QP2J79RTH9", "ST2MEFKR0BDYC9V8QDMZ13T4B9R7XASKAX24ETX9K", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ","ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM"]})
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B", "ST1WBKBD16E10AAX6F3Z54ARM2S1Q4AVRW1CYZVH", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ","ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM"]})
 
 db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5", "ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG", "ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC"]})
 
