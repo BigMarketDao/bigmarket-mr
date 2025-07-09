@@ -1,17 +1,16 @@
-import { dataHashSip18, ExchangeRate, fetchStacksInfo, getStacksNetwork, marketDataToTupleCV, PredictionMarketCreateEvent, ScalarMarketDataItem, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
+import { dataHashSip18, fetchStacksInfo, GateKeeper, getArgsCV, getStacksNetwork, marketDataToTupleCV, PredictionMarketCreateEvent, ScalarMarketDataItem, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
 import { type StacksInfo } from '@mijoco/stx_helpers/dist/index.js';
 import { getConfig } from '../../lib/config.js';
-import { broadcastTransaction, bufferCV, Cl, listCV, makeContractCall, PostConditionMode } from '@stacks/transactions';
+import { broadcastTransaction, bufferCV, Cl, makeContractCall, PostConditionMode } from '@stacks/transactions';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { daoEventCollection } from '../../lib/data/db_models.js';
 import { estimateBitcoinBlockTime, formatFiat } from '../../lib/utils.js';
 import { getExchangeRates } from '../rates/rates_utils.js';
 import { savePoll } from '../polling/polling_helper.js';
 import { fetchAllowedTokens } from '../predictions/markets_helper.js';
-import { matchMarketSector } from './matchMarketSector.js';
 import { cachedData } from '../predictions/predictionMarketRoutes.js';
 import { hexToBytes } from '@stacks/common';
-import { getClarityProofForCreateMarket } from './create-market-helper.js';
+import { fetchCreateMarketMerkleInput } from '../gating/gating_helper.js';
 
 const bitcoinLogo = 'https://media.istockphoto.com/id/1139020309/vector/bitcoin-internet-money-icon-vector.jpg?s=612x612&w=0&k=20&c=vcRUEDzhndMOctdM7PN1qmipo5rY_aOByWFW0IkW8bs=';
 const stacksLogo =
@@ -124,13 +123,27 @@ async function createMarketOnChain(chain: number) {
 	const network = getStacksNetwork(getConfig().network);
 	console.log('createMarketOnChain: network: ' + network);
 	console.log('createMarketOnChain: getConfig().walletKey: ' + getConfig().walletKey);
+	const gateKeeper: GateKeeper = await fetchCreateMarketMerkleInput();
+
+	const fa = await getArgsCV(
+		gateKeeper,
+		cachedData?.contractData.creationGated || false,
+		market.token,
+		market.treasury,
+		'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY',
+		market.marketFee,
+		market.objectHash,
+		100000000,
+		market.marketType === 2 ? market.priceFeedId! : market.marketTypeDataCategorical!
+	);
+
 	const transaction = await makeContractCall({
 		postConditions: [],
 		postConditionMode: PostConditionMode.Allow,
 		contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
 		contractName: getDaoConfig().VITE_DAO_MARKET_SCALAR,
 		functionName: 'create-market',
-		functionArgs: await getArgsCV(meta.priceFeedId, market),
+		functionArgs: fa,
 		senderKey: getConfig().walletKey,
 		network
 	});
@@ -138,30 +151,30 @@ async function createMarketOnChain(chain: number) {
 	console.log('createMarketOnChain: txResult:', txResult);
 }
 
-const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => {
-	const proposer = 'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY'; //getDaoConfig().VITE_DOA_DEPLOYER;
-	const marketFeeCV = examplePoll.marketFee === 0 ? Cl.none() : Cl.some(Cl.uint((examplePoll.marketFee || 0) * 100));
-	const metadataHash = bufferCV(hexToBytes(examplePoll.objectHash)); // Assumes the hash is a string of 32 bytes in hex format
-	//let proof = cachedData?.contractData.creationGated ? await getClarityProofForCreateMarket(proposer) : Cl.list([]);
-	let proof = await getClarityProofForCreateMarket(proposer);
-	if (cachedData && !cachedData.contractData.creationGated) proof = Cl.list([]);
-	const genCats = examplePoll!.outcomes as Array<ScalarMarketDataItem>;
-	console.log('resolveMarketOnChain: getArgsCV: cachedData?.contractData: ', cachedData?.contractData);
-	console.log('resolveMarketOnChain: getArgsCV: proof: ', proof);
-	const cats = listCV(genCats.map((o) => Cl.tuple({ min: Cl.uint(o.min), max: Cl.uint(o.max) })));
-	return [
-		cats,
-		marketFeeCV,
-		Cl.contractPrincipal(examplePoll.token.split('.')[0], examplePoll.token.split('.')[1]),
-		metadataHash,
-		proof,
-		Cl.principal(examplePoll.treasury),
-		Cl.some(Cl.uint(6 * 144)),
-		Cl.none(),
-		Cl.bufferFromHex(priceFeeId),
-		Cl.uint(100000000)
-	];
-};
+// const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => {
+// 	const proposer = 'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY'; //getDaoConfig().VITE_DOA_DEPLOYER;
+// 	const marketFeeCV = examplePoll.marketFee === 0 ? Cl.none() : Cl.some(Cl.uint((examplePoll.marketFee || 0) * 100));
+// 	const metadataHash = bufferCV(hexToBytes(examplePoll.objectHash)); // Assumes the hash is a string of 32 bytes in hex format
+// 	//let proof = cachedData?.contractData.creationGated ? await getClarityProofForCreateMarket(proposer) : Cl.list([]);
+// 	let proof = await getClarityProofForCreateMarket(proposer);
+// 	if (cachedData && !cachedData.contractData.creationGated) proof = Cl.list([]);
+// 	const genCats = examplePoll!.outcomes as Array<ScalarMarketDataItem>;
+// 	console.log('resolveMarketOnChain: getArgsCV: cachedData?.contractData: ', cachedData?.contractData);
+// 	console.log('resolveMarketOnChain: getArgsCV: proof: ', proof);
+// 	const cats = listCV(genCats.map((o) => Cl.tuple({ min: Cl.uint(o.min), max: Cl.uint(o.max) })));
+// 	return [
+// 		cats,
+// 		marketFeeCV,
+// 		Cl.contractPrincipal(examplePoll.token.split('.')[0], examplePoll.token.split('.')[1]),
+// 		metadataHash,
+// 		proof,
+// 		Cl.principal(examplePoll.treasury),
+// 		Cl.some(Cl.uint(6 * 144)),
+// 		Cl.none(),
+// 		Cl.bufferFromHex(priceFeeId),
+// 		Cl.uint(100000000)
+// 	];
+// };
 
 async function convertMarketToLocalFormat(meta: any): Promise<StoredOpinionPoll> {
 	const tokens = await fetchAllowedTokens(1);
