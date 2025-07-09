@@ -122,7 +122,6 @@ async function createMarketOnChain(chain: number) {
 	await savePoll(market);
 	const network = getStacksNetwork(getConfig().network);
 	console.log('createMarketOnChain: network: ' + network);
-	console.log('createMarketOnChain: getConfig().walletKey: ' + getConfig().walletKey);
 	const gateKeeper: GateKeeper = await fetchCreateMarketMerkleInput();
 
 	const fa = await getArgsCV(
@@ -134,7 +133,7 @@ async function createMarketOnChain(chain: number) {
 		market.marketFee,
 		market.objectHash,
 		100000000,
-		market.marketType === 2 ? market.priceFeedId! : market.marketTypeDataCategorical!
+		market.priceFeedId! //market.marketType === 2 ? market.priceFeedId! : market.marketTypeDataCategorical!
 	);
 
 	const transaction = await makeContractCall({
