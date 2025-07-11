@@ -45,8 +45,8 @@ async function countEventsByVotingContract(daoContract: string, extension: strin
 async function readExtensionEvents(genesis: boolean, daoContract: string, extensionContract: string) {
 	const urlBase = getConfig().stacksApi + '/extended/v1/contract/' + extensionContract + '/events?limit=20';
 	const extensions: Array<ExtensionType> = [];
-	//console.log('readExtensionEvents: genesis: ' + genesis);
-	//console.log('readExtensionEvents: daoContract: ' + daoContract);
+	console.log('readExtensionEvents: genesis: ' + genesis);
+	console.log('readExtensionEvents: extensionContract: ' + extensionContract);
 	let dbEventCount = 0;
 	if (!genesis) {
 		dbEventCount = await countEventsByVotingContract(daoContract, extensionContract);
@@ -96,7 +96,7 @@ async function resolveExtensionEvents(url: string, daoContract: string, extensio
 		if (!pdb) {
 			const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
 			const basicEvent = createBasicEvent(new ObjectId().toString(), event, daoContract, extensionContract, result.value.event.value);
-			//console.log('processEvent: new event: ', result);
+			console.log('processEvent: new event: ', result);
 			try {
 				if (extensionContract.indexOf(getDaoConfig().VITE_DAO_TOKEN_SALE) > -1) {
 					processTokenSaleEvent(basicEvent, result);
