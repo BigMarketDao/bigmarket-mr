@@ -13,6 +13,7 @@ import { predictionMarketRoutes } from './routes/predictions/predictionMarketRou
 import { myMarketRoutes } from './routes/predictions/my_markets/myMarketRoutes.js';
 import { daoProposalRoutes } from './routes/dao/proposals/daoProposalRoutes.js';
 import { voterRoutes } from './routes/dao/voter/voterRoutes.js';
+import { forumRoutes } from './routes/forum/forumRoutes.js';
 import { gatingRoutes } from './routes/gating/gatingRoutes.js';
 import { daoSip18VotingRoutes } from './routes/dao/sip18-voting/daoSip18VotingRoutes.js';
 import { clarityBitcoinRoutes } from './routes/clarity-bitcoin/clarityBitcoinRoutes.js';
@@ -38,7 +39,7 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.json());
 app.use(
 	cors({
-		origin: ['http://localhost:8060', 'http://localhost:8080', 'http://localhost:8081', 'https://brightblock.org', 'https://bigmarket.ai', 'https://dao.bigmarket.ai']
+		origin: ['http://localhost:5173', 'http://localhost:8060', 'http://localhost:8080', 'http://localhost:8081', 'https://brightblock.org', 'https://bigmarket.ai', 'https://dao.bigmarket.ai']
 	})
 );
 
@@ -71,6 +72,7 @@ app.use('/bigmarket-api/dao/proposals', daoProposalRoutes);
 app.use('/bigmarket-api/dao/voter', voterRoutes);
 app.use('/bigmarket-api/dao/sip18-voting', daoSip18VotingRoutes);
 app.use('/bigmarket-api/dao/token-sale', tokenSaleRoutes);
+app.use('/bigmarket-api/forum', forumRoutes);
 app.use('/bigmarket-api/gating', gatingRoutes);
 app.use('/bigmarket-api/exchange', exchangeRoutes);
 app.use('/bigmarket-api/oracle', pythRoutes);

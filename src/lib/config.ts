@@ -6,10 +6,8 @@ export let BASE_URL: string;
 
 export function printConfig() {
 	console.log('== ' + process.env.NODE_ENV + ' ==========================================================');
-	console.log('mongoDbUrl = ' + CONFIG.mongoDbUrl);
 	console.log('mongoDbName = ' + CONFIG.mongoDbName);
 	console.log('mongoUser = ' + CONFIG.mongoUser);
-	console.log('mongoPwd = ' + CONFIG.mongoPwd);
 	console.log('host = ' + CONFIG.host + ':' + CONFIG.port);
 	console.log('stacksApi = ' + CONFIG.stacksApi);
 	console.log('network = ' + CONFIG.network);
@@ -35,7 +33,6 @@ export function setConfigOnStart() {
 
 	CONFIG.host = process.env[network + '_sui_host'] || '';
 	CONFIG.port = Number(process.env[network + '_sui_port']) || 6060;
-	CONFIG.host = process.env[network + '_sui_host'] || '';
 
 	CONFIG.mongoDbUrl = process.env[network + '_sui_mongoDbUrl'] || '';
 	CONFIG.mongoDbName = process.env[network + '_sui_mongoDbName'] || '';

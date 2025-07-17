@@ -38,6 +38,7 @@
 		"prettier-plugin-svelte": "^3.3.3",
 		"prettier-plugin-tailwindcss": "^0.6.11",
 		"sats-connect": "^3.0.1",
+		"sip18-forum-types": "^1.1.4",
 		"ws": "^8.17.1"
 	},
 	"devDependencies": {
