@@ -60,7 +60,7 @@ router.post('/markets', async (req, res) => {
 	if (gated && !data.merkleRootInput.includes(newPoll1.proposer)) {
 		res.status(401).json({ error: 'no create market privileges' });
 	} else {
-		if (!isCreatePollPostValid(newPoll)) {
+		if (!(await isCreatePollPostValid(newPoll))) {
 			res.status(401).json({ error: 'Invalid request' });
 		} else {
 			const p = await findOpinionPollByTitle(newPoll.name);

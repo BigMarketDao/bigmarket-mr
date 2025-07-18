@@ -9,7 +9,7 @@ const SUPER_ADMIN_ADDRESS = '';
 
 router.post('/polls', async (req, res) => {
 	const { poll, auth } = req.body;
-	if (!isCreatePollPostValid(poll)) {
+	if (!(await isCreatePollPostValid(poll))) {
 		res.status(401).json({ error: 'Invalid request' });
 	} else {
 		console.log('/polls', poll);
