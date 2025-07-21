@@ -35,6 +35,14 @@ export async function processReputationEvents(basicEvent: BasicEvent, result: an
 			rewardPerEpoch: Number(result.value['reward-per-epoch'].value)
 		} as ReputationBigClaimEvent;
 		await saveOrUpdateEvent(contractEvent);
+	} else if (result.value.event.value === 'set-tier-weight') {
+		//    (print { event: "set-tier-weight", token-id: token-id, weight: weight })
+		const contractEvent: ReputationSetTierEvent = {
+			...basicEvent,
+			weight: Number(result.value.weight.value),
+			tokenId: Number(result.value['token-id'].value)
+		} as ReputationSetTierEvent;
+		await saveOrUpdateEvent(contractEvent);
 	} else if (result.value.event.value === 'big-claim') {
 		const contractEvent: ReputationBigClaimEvent = {
 			...basicEvent,

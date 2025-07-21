@@ -187,6 +187,30 @@ export async function updateTransferStakeEvent(marketType: number, result: any, 
 	await saveOrUpdateEvent(resolveEvent);
 }
 
+export async function updatePriceBandWidth(marketType: number, result: any, basicEvent: BasicEvent) {
+	// (print {event: "price-band-width", feed-id: feed-id, precent: band-bips})
+	const marketId = Number(result.value['market-id'].value);
+	const createEvent = await fetchMarket(marketId, marketType);
+	if (!createEvent) return;
+	const changes = {
+		transferLosingStakes: Number(result.value.balance.value)
+	};
+	if (createEvent && createEvent._id) {
+		await updateDaoEvent(new ObjectId(createEvent._id), changes);
+	} else {
+		console.error('createEvent is null or missing _id', createEvent);
+		// Optionally throw or return here if this is a blocking issue
+	}
+	const resolveEvent = {
+		...basicEvent,
+		marketId,
+		marketType,
+		feedId: Number(result.value['feed-id'].value),
+		bandBips: Number(result.value['band-bips'].value)
+	};
+	await saveOrUpdateEvent(resolveEvent);
+}
+
 export async function updateAllowedTokensEvent(marketType: number, result: any, basicEvent: BasicEvent) {
 	console.log('allowed-token: ', result.value.event);
 	const allowed = Boolean(result.value.enabled.value);

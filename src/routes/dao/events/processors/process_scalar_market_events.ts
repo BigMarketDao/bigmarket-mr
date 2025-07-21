@@ -91,10 +91,13 @@ export async function processMarketPredicitonScalarEvent(basicEvent: BasicEvent,
 		await updateTransferStakeEvent(2, result, basicEvent);
 	} else if (result.value.event.value === 'claim-winnings') {
 		await updateClaimWinningsEvent(2, result, basicEvent);
+	} else if (result.value.event.value === 'price-band-width') {
+		await updatePriceBandWidth(2, result, basicEvent);
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}
 }
+//		(print {event: "price-band-width", feed-id: feed-id, precent: band-bips})
 
 async function saveOrUpdateEvent(contractEvent: PredictionMarketCreateEvent | PredictionMarketStakeEvent | PredictionMarketClaimEvent | TokenPermissionEvent) {
 	let pdb;
