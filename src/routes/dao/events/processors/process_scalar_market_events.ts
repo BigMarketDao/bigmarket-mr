@@ -11,6 +11,7 @@ import {
 	updateDisputeResolutionEvent,
 	updateMarketStakeEvent,
 	updatePredictionMarketCreateEvent,
+	updatePriceBandWidth,
 	updateResolveMarketEvent,
 	updateResolveMarketUndisputedEvent,
 	updateResolveMarketVoteEvent,
