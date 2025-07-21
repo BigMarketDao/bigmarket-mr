@@ -191,7 +191,7 @@ export async function updatePriceBandWidth(marketType: number, result: any, basi
 	// (print {event: "price-band-width", feed-id: feed-id, precent: band-bips})
 	const resolveEvent = {
 		...basicEvent,
-		feedId: Number(result.value['feed-id']?.value || 'unknown'),
+		feedId: result.value['feed-id']?.value || 'unknown',
 		bandBips: Number(result.value.precent?.value || 0)
 	};
 	await saveOrUpdateEvent(resolveEvent);
