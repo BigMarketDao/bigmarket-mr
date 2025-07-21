@@ -8,6 +8,7 @@ import {
 	BasicEvent,
 	createBasicEvent,
 	ReputationBigClaimEvent,
+	ReputationSetTierEvent,
 	ReputationSftBurnEvent,
 	ReputationSftMintEvent,
 	ReputationSftTransferEvent,
