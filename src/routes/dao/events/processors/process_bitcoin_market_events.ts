@@ -68,26 +68,43 @@ import { saveDaoEvent } from '../dao_events_extension_helper.js';
 // 	}
 // 	return val.results?.length > 0 || false;
 // }
+export async function safeCall(fn: () => Promise<any>) {
+	try {
+		return await fn();
+	} catch (err) {
+		console.error('safeCall error', err);
+		return null; // or custom fallback
+	}
+}
 
 export async function processMarketPredicitonBitcoinEvent(basicEvent: BasicEvent, result: any) {
 	if (result.value.event.value === 'create-market') {
-		await updatePredictionMarketCreateEvent(3, result, basicEvent);
+		// await updatePredictionMarketCreateEvent(3, result, basicEvent);
+		await safeCall(async () => await updatePredictionMarketCreateEvent(3, result, basicEvent));
 	} else if (result.value.event.value === 'allowed-token') {
-		await updateAllowedTokensEvent(3, result, basicEvent);
+		// await updateAllowedTokensEvent(3, result, basicEvent);
+		await safeCall(async () => await updateAllowedTokensEvent(3, result, basicEvent));
 	} else if (result.value.event.value === 'market-stake') {
-		await updateMarketStakeEvent(3, result, basicEvent);
+		// await updateMarketStakeEvent(3, result, basicEvent);
+		await safeCall(async () => await updateMarketStakeEvent(3, result, basicEvent));
 	} else if (result.value.event.value === 'resolve-market') {
-		await updateResolveMarketEvent(3, result, basicEvent);
+		// await updateResolveMarketEvent(3, result, basicEvent);
+		await safeCall(async () => await updateResolveMarketEvent(3, result, basicEvent));
 	} else if (result.value.event.value === 'resolve-market-undisputed') {
-		await updateResolveMarketUndisputedEvent(3, result, basicEvent);
+		// await updateResolveMarketUndisputedEvent(3, result, basicEvent);
+		await safeCall(async () => await updateResolveMarketUndisputedEvent(3, result, basicEvent));
 	} else if (result.value.event.value === 'resolve-market-vote') {
 		await updateResolveMarketVoteEvent(3, result, basicEvent);
+		await safeCall(async () => await updateResolveMarketVoteEvent(3, result, basicEvent));
 	} else if (result.value.event.value === 'dispute-resolution') {
-		await updateDisputeResolutionEvent(3, result, basicEvent);
+		// await updateDisputeResolutionEvent(3, result, basicEvent);
+		await safeCall(async () => await updateDisputeResolutionEvent(3, result, basicEvent));
 	} else if (result.value.event.value === 'transfer-losing-stakes') {
-		await updateTransferStakeEvent(3, result, basicEvent);
+		// await updateTransferStakeEvent(3, result, basicEvent);
+		await safeCall(async () => await updateTransferStakeEvent(3, result, basicEvent));
 	} else if (result.value.event.value === 'claim-winnings') {
-		await updateClaimWinningsEvent(3, result, basicEvent);
+		// await updateClaimWinningsEvent(3, result, basicEvent);
+		await safeCall(async () => await updateClaimWinningsEvent(3, result, basicEvent));
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}

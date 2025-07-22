@@ -34,6 +34,8 @@ db.daoEventCollection.findAndModify({query: {event : 'create-market', marketId:2
 
 db.daoEventCollection.updateMany({event: 'create-market',extension: 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme023-0-market-scalar'},{$set: {'unhashedData.processed': true}})
 
+db.daoEventCollection.updateMany({event: 'create-market','unhashedData.name':'Will Paul Biya officially announce his candidacy for the October 2025 Cameroon presidential election by August 20, 2025?'},{$set: {'unhashedData.forumMessageId': '66b40856-470c-4ed6-8925-8047b08c782b'}})
+
 ````
     gateType: string;
     merkleRootInput: Array<string>;
