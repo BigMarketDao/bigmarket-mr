@@ -2,20 +2,31 @@ import { UserReputationContractData } from '@mijoco/stx_helpers';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { daoEventCollection } from '../../lib/data/db_models.js';
 
-export async function getUserReputationContractData(address: string): Promise<any> {
-	const extension = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_REPUTATION_TOKEN}`;
+export async function getUserReputationContractData(address: string): Promise<UserReputationContractData> {
+	const { VITE_DOA_DEPLOYER, VITE_DAO_REPUTATION_TOKEN } = getDaoConfig();
+	const extension = `${VITE_DOA_DEPLOYER}.${VITE_DAO_REPUTATION_TOKEN}`;
+
+	// Fetch reputation mint history
 	const rows = await daoEventCollection.aggregate([{ $match: { event: 'sft_mint', extension, recipient: address } }, { $group: { _id: '$tokenId', total: { $sum: '$amount' } } }, { $project: { tokenId: '$_id', amount: '$total', _id: 0 } }]).toArray();
-	const result = rows as unknown as Array<any>;
+
 	const balances: number[] = Array(10).fill(0);
 	let overallBalance = 0;
 	let weightedReputation = 0;
-	for (let i = 1; i < 11; i++) {
-		const index = rows.findIndex((t) => t.tokenId === i);
-		if (index > -1) balances[i - 1] = rows[index].amount;
-		overallBalance += rows[index]?.amount || 0;
-		weightedReputation += (rows[index]?.amount || 0) * (WEIGHTS[rows[index]?.tokenId] || 0);
+
+	for (let i = 1; i <= 10; i++) {
+		const row = rows.find((t) => t.tokenId === i);
+		const amount = row?.amount || 0;
+		balances[i - 1] = amount;
+		overallBalance += amount;
+		weightedReputation += amount * (WEIGHTS[i] || 0);
 	}
-	return { balances, overallBalance, weightedReputation };
+
+	// Fetch last claimed epoch
+	const claimEvent = await daoEventCollection.find({ event: 'big-claim', extension, user: address }).sort({ epoch: -1 }).limit(1).toArray();
+
+	const lastClaimedEpoch = claimEvent.length > 0 ? claimEvent[0].epoch : null;
+
+	return { balances, overallBalance, weightedReputation, lastClaimedEpoch };
 }
 
 export async function getTotalSupplies(): Promise<Array<number>> {

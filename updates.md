@@ -36,6 +36,8 @@ db.daoEventCollection.updateMany({event: 'create-market',extension: 'ST2X0FMCBMB
 
 db.daoEventCollection.updateMany({event: 'create-market','unhashedData.name':'Will Paul Biya officially announce his candidacy for the October 2025 Cameroon presidential election by August 20, 2025?'},{$set: {'unhashedData.forumMessageId': '66b40856-470c-4ed6-8925-8047b08c782b'}})
 
+db.daoEventCollection.updateMany({event: 'create-market','unhashedData.name':'Will South Africa announce a new solar power subsidy program by August 21, 2025?'},{$set: {'unhashedData.processed': true}})
+
 ````
     gateType: string;
     merkleRootInput: Array<string>;
@@ -68,7 +70,7 @@ mongodump --uri "mongodb://dockerdev1:OLrs4ve3wT3ypQSK@clusterbm0-shard-00-00.ci
 db.marketCollection.deleteMany()
 db.daoEventCollection.deleteMany({})
 db.marketGatingCollection.deleteMany({})
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B", "ST1WBKBD16E10AAX6F3Z54ARM2S1Q4AVRW1CYZVH", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ","ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM"]})
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B", "ST1WBKBD16E10AAX6F3Z54ARM2S1Q4AVRW1CYZVH", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ","ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM","STQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRNM0T1J8","ST2RNHHQDTHGHPEVX83291K4AQZVGWEJ7WD7SDHD8"]})
 
 db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5", "ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG", "ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC"]})
 
