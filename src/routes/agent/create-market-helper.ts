@@ -77,7 +77,10 @@ async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateM
 		criterion: {
 			resolvesAt: new Date(llmResponse.earliest_resolution_date).getTime(),
 			sources: llmResponse.sources,
-			criteria: llmResponse.resolution_criteria
+			criteria: llmResponse.resolution_criteria,
+			marketCloseHeight: 0,
+			marketCoolDownDuration: 0,
+			marketDurationts: 0
 		},
 		outcomes: llmResponse.outcome_categories,
 		startBurnHeight: 0,
