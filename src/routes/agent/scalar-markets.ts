@@ -102,6 +102,7 @@ async function getMetaData(chain: number, endBlockHeight: number, ends: string) 
 		title: `${coin} Price Prediction at Bitcoin Block Height: ${endBlockHeight.toLocaleString('en-US')}`,
 		description: `Predicting the price of ${coin} at bitcoin block height ${endBlockHeight.toLocaleString('en-US')}, which is expected around ${ends}.<br/><br/>Price at time of posting: ${price}. The price will resolve into one of several ranges at that time. The market has two phases: Active: Users can stake. Cool down: Staking closes, the final price is determined at the end of one day (approx) cool down.`,
 		outcome_categories: cats,
+		marketType: 2,
 		logo,
 		priceFeedId,
 		criterion: {
@@ -201,6 +202,8 @@ async function convertMarketToLocalFormat(meta: any): Promise<StoredOpinionPoll>
 
 	const marketMeta = {
 		name: meta.title,
+		marketType: 2,
+		priceFeedId: meta.priceFeedId,
 		description: meta.description,
 		category: 'crypto',
 		criterion: meta.criterion,
@@ -220,7 +223,6 @@ async function convertMarketToLocalFormat(meta: any): Promise<StoredOpinionPoll>
 			discord: { serverId: '1306302974515089510' },
 			website: { url: 'https://www.stacks.co/' }
 		},
-		marketType: 2,
 		marketFee: 2,
 		objectHash: '',
 		signature: '',
