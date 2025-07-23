@@ -1,6 +1,18 @@
-import { UserReputationContractData } from '@mijoco/stx_helpers';
+import { fetchCurrentEpoch, getStacksNetwork, UserReputationContractData } from '@mijoco/stx_helpers';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { daoEventCollection } from '../../lib/data/db_models.js';
+import { broadcastTransaction, listCV, makeContractCall, standardPrincipalCV } from '@stacks/transactions';
+import { getConfig } from '../../lib/config.js';
+import cron from 'node-cron';
+
+export const runWeeklyClaimSweepJob = cron.schedule('30 0 * * 0', async (fireDate) => {
+	console.log('Running: runWeeklyClaimSweep at: ' + fireDate);
+	try {
+		await runWeeklyClaimSweep();
+	} catch (err: any) {
+		console.log('runWeeklyClaimSweep: ', err);
+	}
+});
 
 export async function getUserReputationContractData(address: string): Promise<UserReputationContractData> {
 	const { VITE_DOA_DEPLOYER, VITE_DAO_REPUTATION_TOKEN } = getDaoConfig();
@@ -190,3 +202,66 @@ const WEIGHTS: Record<number, number> = {
 
 // 	return { balances, overallBalance, weightedReputation };
 // }
+
+export async function runWeeklyClaimSweep() {
+	const currentEpoch = await fetchCurrentEpoch(getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN);
+
+	const { VITE_DOA_DEPLOYER, VITE_DAO_REPUTATION_TOKEN } = getDaoConfig();
+	const extension = `${VITE_DOA_DEPLOYER}.${VITE_DAO_REPUTATION_TOKEN}`;
+
+	// Step 1: Find users who ever received BIGR
+	const uniqueUsers = await daoEventCollection.distinct('recipient', {
+		event: 'sft_mint',
+		extension
+	});
+
+	// Step 2: Get most recent big-claim per user
+	const claimCursor = daoEventCollection.aggregate([
+		{ $match: { event: 'big-claim', extension } },
+		{ $sort: { epoch: -1 } },
+		{
+			$group: {
+				_id: '$user',
+				lastClaimedEpoch: { $first: '$epoch' }
+			}
+		}
+	]);
+	const claimMap = new Map<string, number>();
+	for await (const doc of claimCursor) {
+		claimMap.set(doc._id, doc.lastClaimedEpoch);
+	}
+
+	// Step 3: Compare and filter eligible users
+	const eligibleUsers = uniqueUsers.filter((user) => {
+		const last = claimMap.get(user) ?? 0;
+		return last < currentEpoch;
+	});
+
+	if (eligibleUsers.length === 0) {
+		console.log('No eligible users this epoch.');
+		return;
+	}
+
+	// Step 4: Call batch claim contract method
+	if (eligibleUsers.length) {
+		return await makeBatchClaimTx(eligibleUsers);
+	}
+}
+
+async function makeBatchClaimTx(eligibleUsers: Array<string>) {
+	getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN;
+	const network = getStacksNetwork(getConfig().network);
+	const principalList = listCV(eligibleUsers.map((user) => standardPrincipalCV(user)));
+
+	const transaction = await makeContractCall({
+		network,
+		contractAddress: getDaoConfig().VITE_DOA,
+		contractName: getDaoConfig().VITE_DAO_REPUTATION_TOKEN,
+		functionName: 'claim-big-reward-batch',
+		functionArgs: [principalList],
+		senderKey: getConfig().walletKey
+	});
+	const txResult = await broadcastTransaction({ transaction });
+	console.log('resolveScalarMarketOnChain: txResult: ', txResult);
+	return txResult;
+}

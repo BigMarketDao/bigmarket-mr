@@ -17,7 +17,12 @@ router.get('/resolve-auto-undisputed/scalar', async (req, res) => {
 });
 
 router.get('/create-auto/scalar/:chain', async (req, res) => {
-	const markets = await createScalarMarketsOnChain(Number(req.params.chain));
+	const markets = await createScalarMarketsOnChain(Number(req.params.chain), true);
+	res.json(markets);
+});
+
+router.get('/quick/scalar/:chain', async (req, res) => {
+	const markets = await createScalarMarketsOnChain(Number(req.params.chain), false);
 	res.json(markets);
 });
 

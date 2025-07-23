@@ -60,8 +60,8 @@ export async function resolveUndisputedScalarMarketsOnChain(): Promise<Array<Pre
 	return resolvedMarkets;
 }
 
-export async function createScalarMarketsOnChain(chain: number) {
-	await createMarketOnChain(chain);
+export async function createScalarMarketsOnChain(chain: number, creation: boolean) {
+	await createMarketOnChain(chain, creation);
 }
 
 async function getMetaData(chain: number, endBlockHeight: number, ends: string) {
@@ -111,7 +111,7 @@ async function getMetaData(chain: number, endBlockHeight: number, ends: string) 
 		}
 	};
 }
-async function createMarketOnChain(chain: number) {
+async function createMarketOnChain(chain: number, creation: boolean): Promise<any> {
 	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
 	const current = stacksInfo.burn_block_height;
 	const endCooling = current + DURATION + COOL_DOWN;
@@ -129,33 +129,52 @@ async function createMarketOnChain(chain: number) {
 	console.log('market.treasury: ' + market.treasury);
 	console.log('market.marketFee: ' + market.marketFee);
 	console.log('market.objectHash: ' + market.objectHash);
-
-	const fa = await getArgsCV(
+	const marketArgs = {
 		gateKeeper,
-		cachedData?.contractData.creationGated || false,
-		market.token,
-		market.treasury,
-		'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY',
-		market.marketFee,
-		market.objectHash,
-		100000000,
-		meta.priceFeedId!, //market.marketType === 2 ? market.priceFeedId! : market.marketTypeDataCategorical!
-		DURATION,
-		endCooling
-	);
+		creationGated: cachedData?.contractData.creationGated || false,
+		token: market.token,
+		treasury: market.treasury,
+		stxAddress: 'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY',
+		marketFee: market.marketFee,
+		objectHash: market.objectHash,
+		marketInitialLiquidity: 100000000,
+		priceFeedIdOrCatData: meta.priceFeedId!, //market.marketType === 2 ? market.priceFeedId! : market.marketTypeDataCategorical!
+		marketDuration: DURATION,
+		coolDownDuration: endCooling,
+		meta
+	};
 
-	const transaction = await makeContractCall({
-		postConditions: [],
-		postConditionMode: PostConditionMode.Allow,
-		contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
-		contractName: getDaoConfig().VITE_DAO_MARKET_SCALAR,
-		functionName: 'create-market',
-		functionArgs: fa,
-		senderKey: getConfig().walletKey,
-		network
-	});
-	const txResult = await broadcastTransaction({ transaction });
-	console.log('createMarketOnChain: txResult:', txResult);
+	if (creation) {
+		const fa = await getArgsCV(
+			gateKeeper,
+			cachedData?.contractData.creationGated || false,
+			market.token,
+			market.treasury,
+			'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY',
+			market.marketFee,
+			market.objectHash,
+			100000000,
+			meta.priceFeedId!, //market.marketType === 2 ? market.priceFeedId! : market.marketTypeDataCategorical!
+			DURATION,
+			endCooling
+		);
+
+		const transaction = await makeContractCall({
+			postConditions: [],
+			postConditionMode: PostConditionMode.Allow,
+			contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
+			contractName: getDaoConfig().VITE_DAO_MARKET_SCALAR,
+			functionName: 'create-market',
+			functionArgs: fa,
+			senderKey: getConfig().walletKey,
+			network
+		});
+		const txResult = await broadcastTransaction({ transaction });
+		console.log('createMarketOnChain: txResult:', txResult);
+		return txResult;
+	} else {
+		return market;
+	}
 }
 
 // const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => {
