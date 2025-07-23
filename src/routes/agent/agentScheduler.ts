@@ -26,7 +26,7 @@ export const initResolveUndisputedMarketsJob = cron.schedule('15 */1 * * *', asy
 export const initCreateMarketsJobBitcoin = cron.schedule('26 15 * * 3', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
-		await createScalarMarketsOnChain(1, true);
+		await createScalarMarketsOnChain(1);
 	} catch (err: any) {
 		console.log('initCreateMarketsJobBitcoin: ', err);
 	}
@@ -36,7 +36,7 @@ export const initCreateMarketsJobBitcoin = cron.schedule('26 15 * * 3', async (f
 export const initCreateMarketsJobStacks = cron.schedule('29 15 * * 3', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
-		await createScalarMarketsOnChain(2, true);
+		await createScalarMarketsOnChain(2);
 	} catch (err: any) {
 		console.log('initCreateMarketsJobStacks: ', err);
 	}
@@ -45,7 +45,7 @@ export const initCreateMarketsJobStacks = cron.schedule('29 15 * * 3', async (fi
 // export const initCreateMarketsJobSolana = cron.schedule('0 12 * * 3', async (fireDate) => {
 // 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 // 	try {
-// 		await createScalarMarketsOnChain(3, true);
+// 		await createScalarMarketsOnChain(3);
 // 	} catch (err: any) {
 // 		console.log('initCreateMarketsJobSolana: ', err);
 // 	}
@@ -55,7 +55,7 @@ export const initCreateMarketsJobStacks = cron.schedule('29 15 * * 3', async (fi
 export const initCreateMarketsJobEthereum = cron.schedule('23 15 * * 3', async (fireDate) => {
 	console.log('Running: initCreateMarketsJob at: ' + fireDate);
 	try {
-		await createScalarMarketsOnChain(4, true);
+		await createScalarMarketsOnChain(4);
 	} catch (err: any) {
 		console.log('initCreateMarketsJobEthereum: ', err);
 	}

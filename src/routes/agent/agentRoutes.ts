@@ -1,8 +1,9 @@
 import express from 'express';
 import { sweepAndResolveMarket, sweepAndResolveMarkets } from './resolver-helper.js';
 import { createMarketByDiscovery, createMarketBySuggestion } from './create-market-helper.js';
-import { createScalarMarketsOnChain, resolveScalarMarketOnChain, resolveScalarMarketsOnChain, resolveUndisputedScalarMarketsOnChain } from './scalar-markets.js';
+import { createScalarMarketsOnChain, fetchScalarMarketData, resolveScalarMarketOnChain, resolveScalarMarketsOnChain, resolveUndisputedScalarMarketsOnChain } from './scalar-markets.js';
 import { fetchMarket } from '../predictions/markets_helper.js';
+import { fetchMarketData } from '@mijoco/stx_helpers';
 
 const router = express.Router();
 
@@ -17,12 +18,12 @@ router.get('/resolve-auto-undisputed/scalar', async (req, res) => {
 });
 
 router.get('/create-auto/scalar/:chain', async (req, res) => {
-	const markets = await createScalarMarketsOnChain(Number(req.params.chain), true);
+	const markets = await createScalarMarketsOnChain(Number(req.params.chain));
 	res.json(markets);
 });
 
 router.get('/quick/scalar/:chain', async (req, res) => {
-	const markets = await createScalarMarketsOnChain(Number(req.params.chain), false);
+	const markets = await fetchScalarMarketData(Number(req.params.chain));
 	res.json(markets);
 });
 
