@@ -1,4 +1,4 @@
-import { PredictionMarketClaimEvent, PredictionMarketStakeEvent } from '@mijoco/stx_helpers';
+import { PredictionMarketClaimEvent, PredictionMarketStakeEvent } from '@mijoco/stx_helpers/dist/index.js';
 import { daoEventCollection } from '../../../lib/data/db_models.js';
 
 export async function getMyStakedMarkets(voter: string): Promise<Array<PredictionMarketStakeEvent>> {

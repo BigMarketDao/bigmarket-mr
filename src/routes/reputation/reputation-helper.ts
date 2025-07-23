@@ -1,4 +1,4 @@
-import { fetchCurrentEpoch, getStacksNetwork, UserReputationContractData } from '@mijoco/stx_helpers';
+import { fetchCurrentEpoch, getStacksNetwork, UserReputationContractData } from '@mijoco/stx_helpers/dist/index.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { daoEventCollection } from '../../lib/data/db_models.js';
 import { broadcastTransaction, listCV, makeContractCall, standardPrincipalCV } from '@stacks/transactions';
