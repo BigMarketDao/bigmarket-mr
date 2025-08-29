@@ -3,7 +3,7 @@ import { sweepAndResolveMarket, sweepAndResolveMarkets } from './resolver-helper
 import { createMarketByDiscovery, createMarketBySuggestion } from './create-market-helper.js';
 import { createScalarMarketsOnChain, fetchScalarMarketData, resolveScalarMarketOnChain, resolveScalarMarketsOnChain, resolveUndisputedScalarMarketsOnChain } from './scalar-markets.js';
 import { fetchMarket } from '../predictions/markets_helper.js';
-import { fetchMarketData } from '@mijoco/stx_helpers';
+import { asyncHandler } from '../../lib/utils.js';
 
 const router = express.Router();
 
@@ -45,11 +45,25 @@ router.get('/resolve', async (req, res) => {
 	res.json(markets);
 });
 
-router.post('/create/by-discovery', async (req, res) => {
-	const { proposer, source } = req.body;
-	const markets = await createMarketByDiscovery(proposer, source);
-	res.json(markets);
-});
+// router.post('/create/by-discovery', async (req, res) => {
+// 	const { proposer, source } = req.body;
+// 	const markets = await createMarketByDiscovery(proposer, source);
+// 	res.json(markets);
+// });
+router.post(
+	'/create/by-discovery',
+	asyncHandler(async (req, res) => {
+		const { proposer, source } = req.body ?? {};
+		if (!proposer || !source) {
+			return res.status(400).json({ error: 'Missing proposer or source' });
+		}
+
+		// If this throws/rejects, it goes to errorHandler automatically
+		const markets = await createMarketByDiscovery(proposer, source);
+
+		res.json(markets);
+	})
+);
 
 router.post('/create/by-suggestion', async (req, res) => {
 	const { proposer, suggestion } = req.body;

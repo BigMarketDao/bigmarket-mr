@@ -27,6 +27,7 @@ import { initExchangeRatesJob } from './routes/rates/ratesScheduler.js';
 import { initCreateMarketsJobBitcoin, initCreateMarketsJobEthereum, initCreateMarketsJobStacks, initResolveMarketsJob, initResolveUndisputedMarketsJob } from './routes/agent/agentScheduler.js';
 import { startUICacheWarming } from './routes/cache/cache_utils.js';
 import { runWeeklyClaimSweepJob } from './routes/reputation/reputation-helper.js';
+import type { ErrorRequestHandler } from 'express';
 
 if (process.env.NODE_ENV === 'development') {
 	dotenv.config();
@@ -78,6 +79,19 @@ app.use('/bigmarket-api/oracle', pythRoutes);
 app.use('/bigmarket-api/agent', agentRoutes);
 app.use('/bigmarket-api/reputation', reputationRoutes);
 app.use('/bigmarket-api/clarity-bitcoin', clarityBitcoinRoutes);
+
+const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
+	// Optionally narrow:
+	const status = (err as any)?.status ?? 500;
+	const code = (err as any)?.code ?? 'INTERNAL';
+	const msg = process.env.NODE_ENV === 'production' ? 'Something went wrong' : ((err as any)?.message ?? 'Unhandled error');
+
+	console.error('[ERROR]', err);
+	res.status(status).json({ error: { code, message: msg } });
+};
+
+// Must be AFTER all routes
+app.use(errorHandler);
 
 console.log(`\n\nExpress is listening at http://localhost:${getConfig().port}`);
 console.log('Startup Environment: ', process.env.NODE_ENV);
