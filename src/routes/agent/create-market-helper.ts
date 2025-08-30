@@ -113,29 +113,28 @@ async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateM
 
 function generateMarketLogo(title: string, marketSector: string): string {
 	// Limit title to avoid long text
-	const shortTitle = title.length > 12 ? title.substring(0, 12) + '...' : title;
+	const shortTitle = `Logo for prediction market ${title.length > 12 ? title.substring(0, 12) + '...' : title}`;
 
 	// Randomly select a background color based on the sector
-	const sectorColors: Record<string, string> = {
-		politics: '#ff4d4d', // Red
-		crypto: '#ffcc00', // Yellow
-		sports: '#00cc99', // Green
-		economy: '#007bff', // Blue
-		technology: '#8c52ff', // Purple
-		miscellaneous: '#999999' // Gray
-	};
+	// const sectorColors: Record<string, string> = {
+	// 	politics: '#ff4d4d', // Red
+	// 	crypto: '#ffcc00', // Yellow
+	// 	sports: '#00cc99', // Green
+	// 	economy: '#007bff', // Blue
+	// 	technology: '#8c52ff', // Purple
+	// 	miscellaneous: '#999999' // Gray
+	// };
 
-	const backgroundColor = sectorColors[marketSector.toLowerCase()] || '#999999';
+	// const backgroundColor = sectorColors[marketSector.toLowerCase()] || '#999999';
 
 	// Generate the SVG logo
-	return `
-    <svg width="200" height="100" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100%" height="100%" fill="${backgroundColor}"/>
-        <text x="50%" y="50%" font-size="20" font-family="Arial" fill="white" text-anchor="middle" dominant-baseline="middle">
-            ${shortTitle}
-        </text>
-    </svg>
-    `;
+	return `<img src="https://bigmarket.ai/holding_image.png" alt="${shortTitle}"/>`;
+	// <svg width="200" height="100" xmlns="http://www.w3.org/2000/svg">
+	//     <rect width="100%" height="100%" fill="${backgroundColor}"/>
+	//     <text x="50%" y="50%" font-size="20" font-family="Arial" fill="white" text-anchor="middle" dominant-baseline="middle">
+	//         ${shortTitle}
+	//     </text>
+	// </svg>
 }
 
 const getArgsCV = async (proposer: string, examplePoll: StoredOpinionPoll) => {
