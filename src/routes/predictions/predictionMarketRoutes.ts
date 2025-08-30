@@ -52,9 +52,8 @@ router.get('/market-dao-data', async (req, res) => {
 
 router.post('/markets', async (req, res) => {
 	const { newPoll } = req.body;
-	// console.log("isCreatePollPostValid: ", newPoll);
-
-	const gated = cachedData?.contractData.creationGated || false;
+	// TODO MJC bug https://github.com/BigMarketDao/bigmarket-ui/issues/40
+	const gated = false; //cachedData?.contractData.creationGated || false;
 	const data: GateKeeper = await fetchCreateMarketMerkleInput();
 	const newPoll1: StoredOpinionPoll = newPoll;
 	if (gated && !data.merkleRootInput.includes(newPoll1.proposer)) {
