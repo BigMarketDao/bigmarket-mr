@@ -16,6 +16,7 @@
 	"description": "",
 	"dependencies": {
 		"@mijoco/stx_helpers": "^0.7.29",
+		"@reclaimprotocol/js-sdk": "^4.4.0",
 		"@stacks/common": "^7.0.2",
 		"@stacks/connect": "^7.9.0",
 		"@stacks/encryption": "^7.0.2",

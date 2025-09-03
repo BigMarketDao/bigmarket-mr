@@ -13,7 +13,7 @@ export function printConfig() {
 	console.log('network = ' + CONFIG.network);
 	console.log('publicAppName = ' + CONFIG.publicAppName);
 	console.log('publicAppVersion = ' + CONFIG.publicAppVersion);
-	console.log('walletKey = ' + CONFIG.walletKey);
+	console.log('zkTlsAppId = ' + CONFIG.zkTlsAppId);
 	console.log('llmServer = ' + CONFIG.llmServer);
 	console.log('rpcUser = ' + CONFIG.rpcUser);
 	console.log('rpcHost = ' + CONFIG.rpcHost);
@@ -50,6 +50,13 @@ export function setConfigOnStart() {
 	CONFIG.rpcPass = process.env[network + '_RPC_PASS'] || '';
 	CONFIG.rpcHost = process.env[network + '_RPC_HOST'] || '';
 	CONFIG.rpcPort = process.env[network + '_RPC_PORT'] || '';
+
+	CONFIG.zkTlsAppId = process.env[network + '_ZKTLS_APP_ID'] || '';
+	CONFIG.zkTlsAppSecret = process.env[network + '_ZKTLS_APP_SECRET'] || '';
+	CONFIG.zkTlsProviderGoogle = process.env[network + '_ZKTLS_PROVIDER_GOOGLE'] || '';
+	CONFIG.zkTlsProviderTwitter = process.env[network + '_ZKTLS_PROVIDER_TWITTER'] || '';
+	CONFIG.zkTlsProviderLinkedIn = process.env[network + '_ZKTLS_PROVIDER_LINKEDIN'] || '';
+	CONFIG.zkTlsProviderGithub = process.env[network + '_ZKTLS_PROVIDER_GITHUB'] || '';
 
 	CONFIG.mempoolUrl = 'https://mempool.space/api';
 	//CONFIG.mempoolUrl = 'https://beta.sbtc-mempool.tech/api/proxy';

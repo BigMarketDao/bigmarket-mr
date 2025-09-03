@@ -28,6 +28,13 @@ export type ConfigI = {
 	g_client_secret: string;
 	g_redirect_uris: string;
 	g_javascript_origins: string;
+
+	zkTlsAppId: string;
+	zkTlsAppSecret: string;
+	zkTlsProviderGoogle: string;
+	zkTlsProviderTwitter: string;
+	zkTlsProviderLinkedIn: string;
+	zkTlsProviderGithub: string;
 };
 
 export type ConfigDaoI = {

@@ -21,6 +21,7 @@ import { exchangeRoutes } from './routes/rates/exchangeRoutes.js';
 import { pythRoutes } from './routes/oracle/pyth/pythRoutes.js';
 import { agentRoutes } from './routes/agent/agentRoutes.js';
 import { reputationRoutes } from './routes/reputation/reputationRoutes.js';
+import { zktlsRoutes } from './routes/zktls/zkRoutes.js';
 import { initScanDaoEventsJob } from './routes/dao/events/eventScheduler.js';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
 import { initExchangeRatesJob } from './routes/rates/ratesScheduler.js';
@@ -79,6 +80,7 @@ app.use('/bigmarket-api/oracle', pythRoutes);
 app.use('/bigmarket-api/agent', agentRoutes);
 app.use('/bigmarket-api/reputation', reputationRoutes);
 app.use('/bigmarket-api/clarity-bitcoin', clarityBitcoinRoutes);
+app.use('/bigmarket-api/zktls', zktlsRoutes);
 
 const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 	// Optionally narrow:
