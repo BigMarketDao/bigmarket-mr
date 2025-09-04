@@ -58,18 +58,21 @@ const ALLOWED_ORIGINS = [
 
 const corsOptions: cors.CorsOptions = {
 	origin(origin, cb) {
-		if (!origin) return cb(null, true); // allow curl/postman
+		if (!origin) return cb(null, true);
 		cb(null, ALLOWED_ORIGINS.includes(origin));
 	},
 	credentials: true,
 	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 	allowedHeaders: ['Content-Type', 'Authorization'],
-	maxAge: 86400
+	maxAge: 86400,
+	preflightContinue: false,
+	optionsSuccessStatus: 204
 };
+// order matters: put CORS before routes
 app.use(cors(corsOptions));
-
 // make sure preflight OPTIONS is handled
-app.options('*', cors(corsOptions));
+app.options(/.*/, cors(corsOptions)); // ✅ regex works on Express 5
+
 app.use(morgan('tiny'));
 app.use(express.static('public'));
 app.use(cors());
