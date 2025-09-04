@@ -60,6 +60,7 @@ export function setConfigOnStart() {
 
 	CONFIG.mempoolUrl = 'https://mempool.space/api';
 	CONFIG.bigmarketUrl = 'https://bigmarket.ai';
+
 	//CONFIG.mempoolUrl = 'https://beta.sbtc-mempool.tech/api/proxy';
 }
 

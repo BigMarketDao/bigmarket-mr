@@ -22,9 +22,10 @@ const REFRESH_COOKIE_NAME = 'bm_rt';
 const ACCESS_TTL_S = 15 * 60;
 const REFRESH_TTL_S = 30 * 24 * 3600;
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
-const FRONTEND_RETURN = process.env.OAUTH_RETURN_URL!; // e.g. https://app.bigmarket.ai/auth/callback
+const GOOGLE_CLIENT_ID = getConfig().g_client_id!;
+const GOOGLE_CLIENT_SECRET = getConfig().g_client_secret!;
+//const FRONTEND_RETURN = 'https://bigmarket.ai/auth/callback'
+const FRONTEND_RETURN = 'http://localhost:8081/auth/callback';
 
 // util
 const b64url = (buf: Buffer) => buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -46,8 +47,8 @@ async function signAccessJWT(payload: any) {
 
 // GET /oauth/google/start?redirect_uri=<frontend url you want to land on>
 export const oauthGoogleStart: RequestHandler = async (req, res) => {
-	const redirectUri = `${getConfig().bigmarketUrl}${AUTH_BASE_PATH}/oauth/google/callback`;
-	const returnTo = (req.query.redirect_uri as string) || process.env.OAUTH_RETURN_URL || 'http://localhost:8081/auth/callback';
+	const redirectUri = `${getConfig().bigmarketUrl}/auth/oauth/google/callback`;
+	const returnTo = (req.query.redirect_uri as string) || FRONTEND_RETURN;
 
 	// PKCE
 	const code_verifier = b64url(crypto.randomBytes(64));
@@ -95,7 +96,7 @@ export const oauthGoogleCallback: RequestHandler = async (req, res) => {
 		}
 
 		// Exchange code for tokens
-		const redirectUri = `${getConfig().bigmarketUrl}${AUTH_BASE_PATH}/oauth/google/callback`;
+		const redirectUri = `${getConfig().bigmarketUrl}/auth/oauth/google/callback`;
 		const form = new URLSearchParams({
 			client_id: GOOGLE_CLIENT_ID,
 			client_secret: GOOGLE_CLIENT_SECRET,
@@ -181,7 +182,7 @@ export const oauthGoogleCallback: RequestHandler = async (req, res) => {
 		});
 
 		// (Option A) Redirect back to app; client calls /refresh to get access token
-		res.redirect(sess.returnTo || process.env.OAUTH_RETURN_URL || '/');
+		res.redirect(sess.returnTo || FRONTEND_RETURN || '/');
 
 		// (Option B) If you prefer, you could also issue an access token here and append a short flag to the redirect
 		// const access = await signAccessJWT({ uid: String(userId), subh: subjectHash, prv: providerId, sid, v: 'oauth:v1' });
