@@ -59,6 +59,7 @@ export function setConfigOnStart() {
 	CONFIG.zkTlsProviderGithub = process.env[network + '_ZKTLS_PROVIDER_GITHUB'] || '';
 
 	CONFIG.mempoolUrl = 'https://mempool.space/api';
+	CONFIG.bigmarketUrl = 'https://bigmarket.ai';
 	//CONFIG.mempoolUrl = 'https://beta.sbtc-mempool.tech/api/proxy';
 }
 

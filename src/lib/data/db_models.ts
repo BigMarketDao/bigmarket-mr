@@ -15,6 +15,14 @@ export let marketInterestCollection: Collection;
 export let marketCategoriesCollection: Collection;
 export let marketLlmLogsCollection: Collection;
 
+export let authUserCollection: Collection;
+export let authProviderAccountCollection: Collection;
+export let authZkSessionCollection: Collection;
+export let authJwtSessionCollection: Collection;
+export let authRefreshTokenCollection: Collection;
+export let authProofCollection: Collection;
+export let walletLinksCollection: Collection;
+
 export async function connect() {
 	let uriPrefix: string = 'mongodb+srv';
 	if (isDev()) {
@@ -72,4 +80,55 @@ export async function connect() {
 
 	marketInterestCollection = database.collection('marketInterestCollection');
 	await marketInterestCollection.createIndex({ email: 1 }, { unique: true });
+
+	// USERS (no PII; durable)
+	const authUserCollection = database.collection('authUserCollection');
+	await authUserCollection.createIndex({ createdAt: -1 });
+	await authUserCollection.createIndex({ lastLoginAt: -1 });
+	// (optional) if you’ll look users up by display:
+	// await authUserCollection.createIndex({ display: 1 }, { unique: true, sparse: true });
+
+	// PROVIDER ACCOUNTS (stable identity per provider)
+	const authProviderAccountCollection = database.collection('authProviderAccountCollection');
+	await authProviderAccountCollection.createIndex({ providerId: 1, subjectHash: 1 }, { unique: true }); // primary lookup + uniqueness
+	await authProviderAccountCollection.createIndex({ userId: 1 }); // list all providers for a user
+	// (remove the duplicate createIndex you had)
+
+	// ZK SESSIONS (short-lived, string sessionId)
+	const authZkSessionCollection = database.collection('authZkSessionCollection');
+	await authZkSessionCollection.createIndex({ sessionId: 1 }, { unique: true }); // you query by sessionId
+	await authZkSessionCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL on per-doc expiresAt
+	await authZkSessionCollection.createIndex({ contextId: 1 });
+	await authZkSessionCollection.createIndex({ providerId: 1 });
+	await authZkSessionCollection.createIndex({ status: 1, createdAt: -1 });
+
+	// JWT SESSIONS (device/browser sessions, string sid)
+	const authJwtSessionCollection = database.collection('authJwtSessionCollection');
+	await authJwtSessionCollection.createIndex({ sid: 1 }, { unique: true }); // you reference by sid
+	await authJwtSessionCollection.createIndex({ userId: 1, createdAt: -1 });
+	await authJwtSessionCollection.createIndex({ revokedAt: 1 });
+
+	// REFRESH TOKENS (opaque, rotated; string tokenId, references sessionSid)
+	const authRefreshTokenCollection = database.collection('authRefreshTokenCollection');
+	await authRefreshTokenCollection.createIndex({ tokenId: 1 }, { unique: true }); // you look up by tokenId from cookie
+	await authRefreshTokenCollection.createIndex({ sessionSid: 1 }); // join to session by sid
+	await authRefreshTokenCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL
+	await authRefreshTokenCollection.createIndex({ revokedAt: 1 });
+
+	// PROOF BLOBS (optional; can grow)
+	const authProofCollection = database.collection('authProofCollection');
+	await authProofCollection.createIndex({ zkSessionId: 1 });
+	await authProofCollection.createIndex({ storedAt: -1 });
+	// (optional TTL to keep storage in check, e.g., 30 days)
+	// await authProofCollection.createIndex({ storedAt: 1 }, { expireAfterSeconds: 30 * 24 * 3600 });
+
+	// WALLET LINKS (bind Stacks addresses)
+	// Decide your policy:
+	// - One address can belong to only one user (common): unique on stxAddress, plus index on userId.
+	// - If you’ll support multiple chains in same collection, use a composite unique on (chain, stxAddress).
+	const walletLinksCollection = database.collection('walletLinksCollection');
+	await walletLinksCollection.createIndex({ userId: 1 });
+	await walletLinksCollection.createIndex({ stxAddress: 1 }, { unique: true });
+	// If multi-chain:
+	// await walletLinksCollection.createIndex({ chain: 1, stxAddress: 1 }, { unique: true });
 }

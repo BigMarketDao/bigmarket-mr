@@ -20,6 +20,7 @@ export type ConfigI = {
 	rpcHost: string;
 
 	mempoolUrl: string;
+	bigmarketUrl: string;
 
 	g_client_id: string;
 	g_project_id: string;

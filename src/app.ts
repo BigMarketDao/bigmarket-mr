@@ -21,7 +21,7 @@ import { exchangeRoutes } from './routes/rates/exchangeRoutes.js';
 import { pythRoutes } from './routes/oracle/pyth/pythRoutes.js';
 import { agentRoutes } from './routes/agent/agentRoutes.js';
 import { reputationRoutes } from './routes/reputation/reputationRoutes.js';
-import { zktlsRoutes } from './routes/zktls/zkRoutes.js';
+import { authRoutes } from './routes/auth/authRoutes.js';
 import { initScanDaoEventsJob } from './routes/dao/events/eventScheduler.js';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
 import { initExchangeRatesJob } from './routes/rates/ratesScheduler.js';
@@ -29,6 +29,7 @@ import { initCreateMarketsJobBitcoin, initCreateMarketsJobEthereum, initCreateMa
 import { startUICacheWarming } from './routes/cache/cache_utils.js';
 import { runWeeklyClaimSweepJob } from './routes/reputation/reputation-helper.js';
 import type { ErrorRequestHandler } from 'express';
+import cookieParser from 'cookie-parser';
 
 if (process.env.NODE_ENV === 'development') {
 	dotenv.config();
@@ -38,7 +39,7 @@ const app = express();
 const port = process.env.PORT || 3020;
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' })); // for /reclaim/start & most routes
 app.use(
 	cors({
 		origin: ['http://localhost:5173', 'http://localhost:8060', 'http://localhost:8080', 'http://localhost:8081', 'https://brightblock.org', 'https://bigmarket.ai', 'https://dao.bigmarket.ai']
@@ -64,6 +65,11 @@ app.use((req, res, next) => {
 		next();
 	}
 });
+app.use(cookieParser());
+// If you ever disable jsonProofResponse, allow text on the callback:
+app.use('/bigmarket-api/auth/reclaim/receive-proofs', express.text({ type: '*/*', limit: '5mb' }));
+
+// Example protected route
 
 app.use('/bigmarket-api/jwt', jwtRoutes);
 app.use('/bigmarket-api/pm', predictionMarketRoutes);
@@ -80,7 +86,7 @@ app.use('/bigmarket-api/oracle', pythRoutes);
 app.use('/bigmarket-api/agent', agentRoutes);
 app.use('/bigmarket-api/reputation', reputationRoutes);
 app.use('/bigmarket-api/clarity-bitcoin', clarityBitcoinRoutes);
-app.use('/bigmarket-api/zktls', zktlsRoutes);
+app.use('/bigmarket-api/auth', authRoutes);
 
 const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 	// Optionally narrow:
