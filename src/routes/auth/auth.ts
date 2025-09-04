@@ -22,7 +22,6 @@ const REFRESH_TTL_S = 30 * 24 * 3600; // 30 days
 const JWT_ISSUER = 'bigmarket';
 const JWT_AUD = 'bigmarket-ui';
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!); // 32+ bytes
-const REFRESH_COOKIE_NAME = 'bm_rt';
 const AUTH_BASE_PATH = '/bigmarket-api/auth';
 const ZK_TTL_MS = 10 * 60 * 1000;
 
@@ -233,7 +232,7 @@ export const issueTokensFromZkTLS: RequestHandler = async (req, res) => {
 	res.cookie('bm_rt', `${tokenId}.${refreshRaw}`, {
 		httpOnly: true,
 		secure: true,
-		sameSite: 'lax',
+		sameSite: 'none',
 		path: AUTH_BASE_PATH,
 		maxAge: REFRESH_TTL_S * 1000
 	});
@@ -292,7 +291,7 @@ export const refreshAccess: RequestHandler = async (req, res) => {
 	res.cookie('bm_rt', `${newTokenId}.${newRaw}`, {
 		httpOnly: true,
 		secure: true,
-		sameSite: 'lax',
+		sameSite: 'none',
 		path: AUTH_BASE_PATH,
 		maxAge: REFRESH_TTL_S * 1000
 	});
