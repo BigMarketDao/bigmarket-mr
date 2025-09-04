@@ -233,7 +233,7 @@ export const issueTokensFromZkTLS: RequestHandler = async (req, res) => {
 		httpOnly: true,
 		secure: true,
 		sameSite: 'none',
-		path: AUTH_BASE_PATH,
+		path: '/bigmarket-api/auth',
 		maxAge: REFRESH_TTL_S * 1000
 	});
 
@@ -292,7 +292,7 @@ export const refreshAccess: RequestHandler = async (req, res) => {
 		httpOnly: true,
 		secure: true,
 		sameSite: 'none',
-		path: AUTH_BASE_PATH,
+		path: '/bigmarket-api/auth',
 		maxAge: REFRESH_TTL_S * 1000
 	});
 
