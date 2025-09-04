@@ -21,6 +21,8 @@ export let authZkSessionCollection: Collection;
 export let authJwtSessionCollection: Collection;
 export let authRefreshTokenCollection: Collection;
 export let authProofCollection: Collection;
+export let authOauthSessionCollection: Collection;
+
 export let walletLinksCollection: Collection;
 
 export async function connect() {
@@ -131,4 +133,8 @@ export async function connect() {
 	await walletLinksCollection.createIndex({ stxAddress: 1 }, { unique: true });
 	// If multi-chain:
 	// await walletLinksCollection.createIndex({ chain: 1, stxAddress: 1 }, { unique: true });
+
+	authOauthSessionCollection = database.collection('authOauthSessionCollection');
+	await authOauthSessionCollection.createIndex({ state: 1 }, { unique: true });
+	await authOauthSessionCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 }
