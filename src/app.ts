@@ -40,38 +40,38 @@ const port = process.env.PORT || 3020;
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.json({ limit: '1mb' })); // for /reclaim/start & most routes
-// app.use(
-// 	cors({
-// 		origin: ['https://api.testnet.bigmarket.ai', 'http://localhost:5173', 'http://localhost:8060', 'http://localhost:8080', 'http://localhost:8081', 'https://brightblock.org', 'https://bigmarket.ai', 'https://dao.bigmarket.ai']
-// 	})
-// );
-const ALLOWED_ORIGINS = [
-	'http://localhost:5173',
-	'http://localhost:8060',
-	'http://localhost:8080',
-	'http://localhost:8081',
-	'https://brightblock.org',
-	'https://bigmarket.ai',
-	'https://dao.bigmarket.ai',
-	'https://api.testnet.bigmarket.ai' // if you ever embed from here too
-];
+app.use(
+	cors({
+		origin: ['https://api.testnet.bigmarket.ai', 'http://localhost:5173', 'http://localhost:8060', 'http://localhost:8080', 'http://localhost:8081', 'https://bigmarket.ai', 'https://dao.bigmarket.ai']
+	})
+);
+// const ALLOWED_ORIGINS = [
+// 	'http://localhost:5173',
+// 	'http://localhost:8060',
+// 	'http://localhost:8080',
+// 	'http://localhost:8081',
+// 	'https://brightblock.org',
+// 	'https://bigmarket.ai',
+// 	'https://dao.bigmarket.ai',
+// 	'https://api.testnet.bigmarket.ai' // if you ever embed from here too
+// ];
 
-const corsOptions: cors.CorsOptions = {
-	origin(origin, cb) {
-		if (!origin) return cb(null, true);
-		cb(null, ALLOWED_ORIGINS.includes(origin));
-	},
-	credentials: true,
-	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-	allowedHeaders: ['Content-Type', 'Authorization'],
-	maxAge: 86400,
-	preflightContinue: false,
-	optionsSuccessStatus: 204
-};
-// order matters: put CORS before routes
-app.use(cors(corsOptions));
-// make sure preflight OPTIONS is handled
-app.options(/.*/, cors(corsOptions)); // ✅ regex works on Express 5
+// const corsOptions: cors.CorsOptions = {
+// 	origin(origin, cb) {
+// 		if (!origin) return cb(null, true);
+// 		cb(null, ALLOWED_ORIGINS.includes(origin));
+// 	},
+// 	credentials: true,
+// 	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+// 	allowedHeaders: ['Content-Type', 'Authorization'],
+// 	maxAge: 86400,
+// 	preflightContinue: false,
+// 	optionsSuccessStatus: 204
+// };
+// // order matters: put CORS before routes
+// app.use(cors(corsOptions));
+// // make sure preflight OPTIONS is handled
+// app.options(/.*/, cors(corsOptions)); // ✅ regex works on Express 5
 
 app.use(morgan('tiny'));
 app.use(express.static('public'));
