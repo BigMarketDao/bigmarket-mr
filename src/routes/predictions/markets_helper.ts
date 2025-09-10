@@ -68,11 +68,13 @@ export async function updateResolveMarketEvent(marketType: number, result: any, 
 	const createEvent = await fetchMarket(marketId, marketType);
 	const priceOutcome = Number(result.value['price']?.value || 0);
 	const stacksHeight = Number(result.value['stacks-height']?.value || 0);
+	const resolutionBurnHeight = Number(result.value['resolution-burn-height']?.value || 0);
 	const changes = {
 		marketData,
 		resolver: result.value.resolver?.value || undefined,
 		priceOutcome: priceOutcome,
-		stacksHeight: stacksHeight
+		stacksHeight: stacksHeight,
+		resolutionBurnHeight
 	};
 	// if (!createEvent || changes.resolutionState < createEvent.resolutionState) return;
 	if (createEvent && createEvent._id) {
@@ -87,7 +89,8 @@ export async function updateResolveMarketEvent(marketType: number, result: any, 
 		marketId,
 		marketType,
 		priceOutcome,
-		stacksHeight
+		stacksHeight,
+		resolutionBurnHeight
 	};
 	await saveOrUpdateEvent(resolveEvent);
 }

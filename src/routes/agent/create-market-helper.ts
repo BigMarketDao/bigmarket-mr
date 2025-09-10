@@ -128,7 +128,7 @@ function generateMarketLogo(title: string, marketSector: string): string {
 	// const backgroundColor = sectorColors[marketSector.toLowerCase()] || '#999999';
 
 	// Generate the SVG logo
-	return `<img src="https://bigmarket.ai/holding_image.png" alt="${shortTitle}"/>`;
+	return `https://bigmarket.ai/holding_image.png`;
 	// <svg width="200" height="100" xmlns="http://www.w3.org/2000/svg">
 	//     <rect width="100%" height="100%" fill="${backgroundColor}"/>
 	//     <text x="50%" y="50%" font-size="20" font-family="Arial" fill="white" text-anchor="middle" dominant-baseline="middle">
