@@ -270,6 +270,8 @@ async function makeBatchClaimTx(eligibleUsers: Array<string>) {
 		contractName: getDaoConfig().VITE_DAO_REPUTATION_TOKEN,
 		functionName: 'claim-big-reward-batch',
 		functionArgs: [principalList],
+		postConditions: [],
+		postConditionMode: 'allow',
 		senderKey: getConfig().walletKey
 	});
 	const txResult = await broadcastTransaction({ transaction });
