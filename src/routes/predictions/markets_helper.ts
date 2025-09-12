@@ -1,5 +1,6 @@
 import {
 	BasicEvent,
+	callContractReadOnly,
 	fetchMarketData,
 	getSip10Properties,
 	MarketData,
@@ -17,6 +18,54 @@ import { getConfig } from '../../lib/config.js';
 import { ObjectId } from 'mongodb';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { saveDaoEvent } from '../dao/events/dao_events_extension_helper.js';
+import { principalCV, serializeCV } from '@stacks/transactions';
+
+export async function readMinTokenLiquidity(deployer: string, contractName: string): Promise<any> {
+	const tokens1 = await fetchAllowedTokens(1);
+	for (let t of tokens1) {
+		const l = await readMinTokenLiquidityToken(deployer, contractName, t.token);
+		const atok = (await daoEventCollection.findOne({ event: 'allowed-token', token: t.token, extension: `${deployer}.${contractName}` })) as unknown as TokenPermissionEvent;
+		atok.minLiquidity = l;
+		await saveOrUpdateEvent(atok);
+		console.log('readMinTokenLiquidity: saved: ' + atok);
+	}
+}
+
+async function readMinTokenLiquidityToken(deployer: string, contractName: string, token: string): Promise<any> {
+	try {
+		const functionArgs = [`0x${serializeCV(principalCV(token))}`];
+		const data = {
+			contractAddress: deployer,
+			contractName: contractName,
+			functionName: 'get-token-minimum-seed',
+			functionArgs
+		};
+		const result = await callContractReadOnly(getConfig().stacksApi, data);
+		console.log('readMinTokenLiquidityToken: ', result);
+		return result;
+	} catch (e: any) {
+		console.log('readMinTokenLiquidity: ' + e.message);
+		if (contractName === getDaoConfig().VITE_DAO_MARKET_PREDICTING) {
+			if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx') return 100000000;
+			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme000-0-governance-token') return 100000000;
+			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tpepe') return 100000000;
+			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tusdh') return 100000000;
+			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.sbtc-token') return 100000000;
+		} else if (contractName === getDaoConfig().VITE_DAO_MARKET_SCALAR) {
+			if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx') return 100000000;
+			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme000-0-governance-token') return 100000000;
+			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tpepe') return 100000000;
+			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tusdh') return 100000000;
+			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.sbtc-token') return 100000000;
+		}
+		return 0;
+	}
+}
+// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx u100000000))
+// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme000-0-governance-token u100000000))
+// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tpepe u100000000))
+// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tusdh u100000000))
+// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token u100000000))
 
 async function updateMarketData(marketId: number, marketType: number, marketContract: string) {
 	// marketData is kept up to date on the create-market event when new events are detected!
@@ -201,6 +250,22 @@ export async function updatePriceBandWidth(marketType: number, result: any, basi
 }
 
 export async function updateAllowedTokensEvent(marketType: number, result: any, basicEvent: BasicEvent) {
+	console.log('allowed-token: ', result.value.event);
+	const allowed = Boolean(result.value.enabled.value);
+	const token = result.value.token.value;
+
+	const contractEvent = {
+		...basicEvent,
+		marketType,
+		allowed,
+		token
+	} as TokenPermissionEvent;
+	const sip10Data = await getSip10Properties(getConfig().stacksApi, contractEvent);
+	contractEvent.sip10Data = sip10Data;
+	await saveOrUpdateEvent(contractEvent);
+}
+
+export async function updateAllowedTokensEventForSeed(marketType: number, result: any, basicEvent: BasicEvent) {
 	console.log('allowed-token: ', result.value.event);
 	const allowed = Boolean(result.value.enabled.value);
 	const token = result.value.token.value;
