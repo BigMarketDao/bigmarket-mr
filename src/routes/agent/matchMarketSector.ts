@@ -13,14 +13,16 @@ export async function matchMarketSector(predictedSector: string): Promise<string
 	let lowestDistance = Infinity;
 
 	for (const sector of categories) {
-		const distance = levenshtein.get(predictedSector, sector.name.toLowerCase());
+		const distance = levenshtein.get(predictedSector, sector.name.trim().toLowerCase());
 
 		if (distance < lowestDistance) {
 			lowestDistance = distance;
 			bestMatch = sector.name;
 		}
 	}
-
-	// If no good match, return a default category
-	return lowestDistance <= 3 ? bestMatch : 'LLM - ' + predictedSector;
+	if (lowestDistance <= 3 && bestMatch.length > 0) return bestMatch;
+	for (const sector of categories) {
+		if (predictedSector.indexOf(sector.name) > -1) return sector.name;
+	}
+	return 'crypto';
 }
