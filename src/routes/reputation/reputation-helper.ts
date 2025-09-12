@@ -239,6 +239,7 @@ export async function runBatchClaimSweep() {
 	for await (const doc of claimCursor) {
 		claimMap.set(doc._id, doc.lastClaimedEpoch);
 	}
+	console.log('eligibleUsers: claimMap: ', claimMap);
 
 	// Step 3: Compare and filter eligible users
 	const eligibleUsers = uniqueUsers.filter((user) => {
@@ -258,8 +259,9 @@ export async function runBatchClaimSweep() {
 }
 
 async function makeBatchClaimTx(eligibleUsers: Array<string>) {
-	getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN;
+	//getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN;
 	const network = getStacksNetwork(getConfig().network);
+	console.log('eligibleUsers: ', eligibleUsers);
 	const principalList = listCV(eligibleUsers.map((user) => standardPrincipalCV(user)));
 
 	const transaction = await makeContractCall({
