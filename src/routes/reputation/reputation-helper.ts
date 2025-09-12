@@ -218,10 +218,10 @@ export async function runBatchClaimSweep() {
 	const extension = `${VITE_DOA_DEPLOYER}.${VITE_DAO_REPUTATION_TOKEN}`;
 
 	// Step 1: Find users who ever received BIGR
-	const uniqueUsers = await daoEventCollection.distinct('recipient', {
-		event: 'sft_mint',
-		extension
-	});
+	const usersCursor = daoEventCollection.aggregate([{ $match: { event: 'sft_mint', extension, recipient: { $type: 'string' } } }, { $group: { _id: '$recipient' } }, { $project: { _id: 0, recipient: '$_id' } }]);
+
+	const uniqueUsers: string[] = [];
+	for await (const doc of usersCursor) uniqueUsers.push(doc.recipient);
 
 	// Step 2: Get most recent big-claim per user
 	const claimCursor = daoEventCollection.aggregate([
