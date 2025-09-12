@@ -1,7 +1,7 @@
 import { fetchCurrentEpoch, getPoxInfo, getStacksNetwork, UserReputationContractData } from '@mijoco/stx_helpers/dist/index.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { daoEventCollection } from '../../lib/data/db_models.js';
-import { broadcastTransaction, listCV, makeContractCall, standardPrincipalCV } from '@stacks/transactions';
+import { broadcastTransaction, listCV, makeContractCall, principalCV, standardPrincipalCV } from '@stacks/transactions';
 import { getConfig } from '../../lib/config.js';
 import cron from 'node-cron';
 
@@ -261,8 +261,8 @@ export async function runBatchClaimSweep() {
 async function makeBatchClaimTx(eligibleUsers: Array<string>) {
 	//getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN;
 	const network = getStacksNetwork(getConfig().network);
-	console.log('eligibleUsers: ', eligibleUsers);
-	const principalList = listCV(eligibleUsers.map((user) => standardPrincipalCV(user)));
+	const principalList = listCV(eligibleUsers.map((user) => principalCV(user)));
+	console.log('principalList: ', principalList);
 
 	const transaction = await makeContractCall({
 		network,
