@@ -50,13 +50,13 @@ async function readMinTokenLiquidityToken(deployer: string, contractName: string
 			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme000-0-governance-token') return 100000000;
 			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tpepe') return 100000000;
 			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tusdh') return 100000000;
-			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.sbtc-token') return 100000000;
+			else if (token === 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token') return 100000000;
 		} else if (contractName === getDaoConfig().VITE_DAO_MARKET_SCALAR) {
 			if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx') return 100000000;
 			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme000-0-governance-token') return 100000000;
 			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tpepe') return 100000000;
 			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tusdh') return 100000000;
-			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.sbtc-token') return 100000000;
+			else if (token === 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token') return 100000000;
 		}
 		return 0;
 	}
