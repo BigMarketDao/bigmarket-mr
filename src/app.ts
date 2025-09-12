@@ -27,7 +27,7 @@ import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
 import { initExchangeRatesJob } from './routes/rates/ratesScheduler.js';
 import { initCreateMarketsJobBitcoin, initCreateMarketsJobEthereum, initCreateMarketsJobStacks, initResolveMarketsJob, initResolveUndisputedMarketsJob } from './routes/agent/agentScheduler.js';
 import { startUICacheWarming } from './routes/cache/cache_utils.js';
-import { runWeeklyClaimSweepJob } from './routes/reputation/reputation-helper.js';
+import { runBatchClaimSweepJob } from './routes/reputation/reputation-helper.js';
 import type { ErrorRequestHandler } from 'express';
 import cookieParser from 'cookie-parser';
 
@@ -147,7 +147,7 @@ async function connectToMongoCloud() {
 	initCreateMarketsJobStacks.start();
 	// initCreateMarketsJobSolana.start();
 	initCreateMarketsJobEthereum.start();
-	runWeeklyClaimSweepJob.start();
+	runBatchClaimSweepJob.start();
 	startUICacheWarming(); // runs ui caching every 25s
 
 	const server = app.listen(getConfig().port, () => {

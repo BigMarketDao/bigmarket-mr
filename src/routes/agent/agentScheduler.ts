@@ -1,6 +1,5 @@
 import cron from 'node-cron';
 import { createScalarMarketsOnChain, resolveScalarMarketsOnChain, resolveUndisputedScalarMarketsOnChain } from './scalar-markets.js';
-import { runWeeklyClaimSweep } from '../reputation/reputation-helper.js';
 
 // every 10 minutes: */10 * * * *'
 export const initResolveMarketsJob = cron.schedule('*/10 * * * *', async (fireDate) => {

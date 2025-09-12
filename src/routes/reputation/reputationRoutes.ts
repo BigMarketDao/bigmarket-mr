@@ -2,12 +2,12 @@ import express from 'express';
 import { getConfig } from '../../lib/config.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { fetchBalanceAtTier, readReputationContractData } from '@mijoco/stx_helpers/dist/index.js';
-import { getReputationLeaderBoard, getTotalSupplies, getTotalWeightedSupply, getUserReputationContractData, runWeeklyClaimSweep } from './reputation-helper.js';
+import { getReputationLeaderBoard, getTotalSupplies, getTotalWeightedSupply, getUserReputationContractData, runBatchClaimSweep } from './reputation-helper.js';
 
 const router = express.Router();
 
 router.get('/batch-claims', async (req, res) => {
-	const data = await runWeeklyClaimSweep();
+	const data = await runBatchClaimSweep();
 	res.json(data);
 });
 

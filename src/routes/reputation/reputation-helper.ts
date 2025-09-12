@@ -1,16 +1,16 @@
-import { fetchCurrentEpoch, getStacksNetwork, UserReputationContractData } from '@mijoco/stx_helpers/dist/index.js';
+import { fetchCurrentEpoch, getPoxInfo, getStacksNetwork, UserReputationContractData } from '@mijoco/stx_helpers/dist/index.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { daoEventCollection } from '../../lib/data/db_models.js';
 import { broadcastTransaction, listCV, makeContractCall, standardPrincipalCV } from '@stacks/transactions';
 import { getConfig } from '../../lib/config.js';
 import cron from 'node-cron';
 
-export const runWeeklyClaimSweepJob = cron.schedule('30 0 * * 0', async (fireDate) => {
-	console.log('Running: runWeeklyClaimSweep at: ' + fireDate);
+export const runBatchClaimSweepJob = cron.schedule('30 0 * * 0', async (fireDate) => {
+	console.log('Running: runBatchClaimSweep at: ' + fireDate);
 	try {
-		await runWeeklyClaimSweep();
+		await runBatchClaimSweep();
 	} catch (err: any) {
-		console.log('runWeeklyClaimSweep: ', err);
+		console.log('runBatchClaimSweep: ', err);
 	}
 });
 
@@ -203,8 +203,16 @@ const WEIGHTS: Record<number, number> = {
 // 	return { balances, overallBalance, weightedReputation };
 // }
 
-export async function runWeeklyClaimSweep() {
-	const currentEpoch = await fetchCurrentEpoch(getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN);
+export async function runBatchClaimSweep() {
+	let currentEpoch = -1;
+	try {
+		currentEpoch = (await getPoxInfo(getConfig().stacksApi))?.current_burnchain_block_height || -1;
+		console.log('runBatchClaimSweep: currentEpoch=' + currentEpoch);
+		if (currentEpoch < 0) currentEpoch = await fetchCurrentEpoch(getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN);
+	} catch (err: any) {
+		console.log('runBatchClaimSweep: ', err);
+		return;
+	}
 
 	const { VITE_DOA_DEPLOYER, VITE_DAO_REPUTATION_TOKEN } = getDaoConfig();
 	const extension = `${VITE_DOA_DEPLOYER}.${VITE_DAO_REPUTATION_TOKEN}`;
