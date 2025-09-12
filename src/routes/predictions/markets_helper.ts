@@ -41,10 +41,10 @@ async function readMinTokenLiquidityToken(deployer: string, contractName: string
 			functionArgs
 		};
 		const result = await callContractReadOnly(getConfig().stacksApi, data);
+		if (!result || !result.okay) throw new Error('Unable to read liquidity at present');
 		console.log('readMinTokenLiquidityToken: ', result);
 		return result;
 	} catch (e: any) {
-		console.log('readMinTokenLiquidity: ' + e.message);
 		if (contractName === getDaoConfig().VITE_DAO_MARKET_PREDICTING) {
 			if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx') return 100000000;
 			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme000-0-governance-token') return 100000000;
