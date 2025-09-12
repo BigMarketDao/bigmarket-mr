@@ -207,9 +207,9 @@ export async function runBatchClaimSweep() {
 	let currentEpoch = -1;
 	try {
 		currentEpoch = (await getPoxInfo(getConfig().stacksApi))?.current_burnchain_block_height || -1;
-		console.log('runBatchClaimSweep: currentEpoch=' + currentEpoch);
 		if (currentEpoch < 0) currentEpoch = await fetchCurrentEpoch(getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN);
 		else currentEpoch = currentEpoch / 4000;
+		console.log('runBatchClaimSweep: currentEpoch=' + currentEpoch);
 	} catch (err: any) {
 		console.log('runBatchClaimSweep: ', err);
 		return;
@@ -239,7 +239,7 @@ export async function runBatchClaimSweep() {
 	for await (const doc of claimCursor) {
 		claimMap.set(doc._id, doc.lastClaimedEpoch);
 	}
-	console.log('eligibleUsers: claimMap: ', claimMap);
+	//console.log('eligibleUsers: claimMap: ', claimMap);
 
 	// Step 3: Compare and filter eligible users
 	const eligibleUsers = uniqueUsers.filter((user) => {
@@ -262,11 +262,11 @@ async function makeBatchClaimTx(eligibleUsers: Array<string>) {
 	//getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN;
 	const network = getStacksNetwork(getConfig().network);
 	const principalList = listCV(eligibleUsers.map((user) => principalCV(user)));
-	console.log('principalList: ', principalList);
+	//console.log('principalList: ', principalList);
 
 	const transaction = await makeContractCall({
 		network,
-		contractAddress: getDaoConfig().VITE_DOA,
+		contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
 		contractName: getDaoConfig().VITE_DAO_REPUTATION_TOKEN,
 		functionName: 'claim-big-reward-batch',
 		functionArgs: [principalList],
