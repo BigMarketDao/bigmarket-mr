@@ -273,7 +273,6 @@ export async function resolveScalarMarketOnChain(market: PredictionMarketCreateE
 }
 
 async function resolveUndisputedMarketOnChain(market: PredictionMarketCreateEvent) {
-	if (market.extension !== `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
 	const network = getStacksNetwork(getConfig().network);
 	console.log('resolveUndisputedScalarMarketOnChain: market: ' + market.marketId + ':' + market.marketType + ' : ' + market.unhashedData.name);
 	const transaction = await makeContractCall({

@@ -90,13 +90,15 @@ async function llmResolveMarket(data: MarketLLMRequest) {
 async function resolveCategoricalMarket(data: MarketLLMRequest, outcomeIndex: number) {
 	const market = await fetchMarket(data.market_id, data.market_type);
 	console.log('resolveCategoricalMarket: market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name + ' outcome=' + outcomeIndex);
-	const transaction = await makeContractCall({
+	const dataTx = {
 		contractAddress: market.extension.split('.')[0],
 		contractName: market.extension.split('.')[1],
 		functionName: 'resolve-market',
 		functionArgs: [Cl.uint(market.marketId), Cl.stringAscii(market.marketData.categories[outcomeIndex] as string)],
 		senderKey: getConfig().walletKey
-	});
+	};
+	console.log('resolveCategoricalMarket: dataTx: ', dataTx);
+	const transaction = await makeContractCall(dataTx);
 	const txResult = await broadcastTransaction({ transaction });
 	console.log('resolveCategoricalMarket: tx sent: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name, txResult);
 }
