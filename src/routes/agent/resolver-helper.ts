@@ -42,6 +42,7 @@ export async function sweepAndResolveCategoricalMarkets(): Promise<Array<Predict
 		if (market.marketType !== 2) {
 			const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
 			if (blockHeight >= endCool) {
+				console.log('sweepAndResolveCategoricalMarkets: found market: ' + market.unhashedData.name);
 				await llmResolveMarket(flattenMarket(market));
 				resolved.push(market);
 			}
@@ -93,7 +94,7 @@ async function resolveCategoricalMarket(data: MarketLLMRequest, outcomeIndex: nu
 		contractAddress: market.extension.split('.')[0],
 		contractName: market.extension.split('.')[1],
 		functionName: 'resolve-market',
-		functionArgs: [Cl.uint(market.marketId), Cl.uint(outcomeIndex)],
+		functionArgs: [Cl.uint(market.marketId), Cl.stringAscii(market.marketData.categories[outcomeIndex] as string)],
 		senderKey: getConfig().walletKey
 	});
 	const txResult = await broadcastTransaction({ transaction });

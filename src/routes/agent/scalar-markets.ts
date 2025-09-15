@@ -40,6 +40,7 @@ export async function sweepAndResolveScalarMarkets(): Promise<Array<PredictionMa
 		if (market.marketId === 2) {
 			const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
 			if (blockHeight >= endCool) {
+				console.log('sweepAndResolveScalarMarkets: found market: ' + market.unhashedData.name);
 				const rm = await resolveScalarMarketOnChain(market);
 				if (rm) resolvedMarkets.push(rm);
 				await sleep(30000);
@@ -61,6 +62,7 @@ export async function resolveUndisputedScalarMarketsOnChain(): Promise<Array<Pre
 		try {
 			const endDispute = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod! + (cachedData?.contractData.disputeWindowLength || 144);
 			if (blockHeight >= endDispute) {
+				console.log('resolveUndisputedScalarMarketsOnChain: found market: ' + market.unhashedData.name);
 				const rm = await resolveUndisputedMarketOnChain(market);
 				if (rm) resolvedMarkets.push(rm);
 				console.log('resolveUndisputedScalarMarketsOnChain: market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
