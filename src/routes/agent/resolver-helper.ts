@@ -1,4 +1,4 @@
-import { PredictionMarketCreateEvent, ScalarMarketDataItem } from '@mijoco/stx_helpers/dist/index.js';
+import { fetchStacksInfo, PredictionMarketCreateEvent, ScalarMarketDataItem, StacksInfo } from '@mijoco/stx_helpers/dist/index.js';
 import { getConfig } from '../../lib/config.js';
 import { daoEventCollection, marketLlmLogsCollection } from '../../lib/data/db_models.js';
 import { fetchMarket } from '../predictions/markets_helper.js';
@@ -31,16 +31,22 @@ export async function sweepAndResolveMarket(marketId: number, marketType: number
 	return market;
 }
 
-export async function sweepAndResolveMarkets(): Promise<Array<PredictionMarketCreateEvent>> {
+export async function sweepAndResolveCategoricalMarkets(): Promise<Array<PredictionMarketCreateEvent>> {
 	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market' }).toArray()) as unknown as Array<PredictionMarketCreateEvent>;
+	const resolved = [];
+	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+	const blockHeight = stacksInfo.burn_block_height;
 	for (const market of markets) {
-		console.log('sweepAndResolveMarkets: ', market);
 		if (market.marketType !== 2) {
-			await llmResolveMarket(flattenMarket(market));
+			const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
+			if (blockHeight >= endCool) {
+				await llmResolveMarket(flattenMarket(market));
+				resolved.push(market);
+			}
 		}
 	}
 
-	return markets;
+	return resolved;
 }
 
 function flattenMarket(market: PredictionMarketCreateEvent): MarketLLMRequest {
@@ -76,12 +82,13 @@ async function llmResolveMarket(data: MarketLLMRequest) {
 				console.log('Already exists, skipping insert.');
 			}
 		} catch (err: any) {}
-		await resolveMarketOnChain(data, response.data.resolution);
+		await resolveCategoricalMarket(data, response.data.resolution);
 	}
 }
 
-async function resolveMarketOnChain(data: MarketLLMRequest, outcomeIndex: number) {
+async function resolveCategoricalMarket(data: MarketLLMRequest, outcomeIndex: number) {
 	const market = await fetchMarket(data.market_id, data.market_type);
+	console.log('resolveCategoricalMarket: market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name + ' outcome=' + outcomeIndex);
 	const transaction = await makeContractCall({
 		contractAddress: market.extension.split('.')[0],
 		contractName: market.extension.split('.')[1],
@@ -90,7 +97,7 @@ async function resolveMarketOnChain(data: MarketLLMRequest, outcomeIndex: number
 		senderKey: getConfig().walletKey
 	});
 	const txResult = await broadcastTransaction({ transaction });
-	console.log('resolveMarketOnChain: txResult:', txResult);
+	console.log('resolveCategoricalMarket: txResult:', txResult);
 }
 
 function mapToMinMaxStrings(data: Array<string | ScalarMarketDataItem>): string[] {

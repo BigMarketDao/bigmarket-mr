@@ -1,11 +1,13 @@
 import cron from 'node-cron';
-import { createScalarMarketsOnChain, resolveScalarMarketsOnChain, resolveUndisputedScalarMarketsOnChain } from './scalar-markets.js';
+import { createScalarMarketsOnChain, sweepAndResolveScalarMarkets, resolveUndisputedScalarMarketsOnChain } from './scalar-markets.js';
+import { sweepAndResolveCategoricalMarkets } from './resolver-helper.js';
 
 // every 10 minutes: */10 * * * *'
 export const initResolveMarketsJob = cron.schedule('*/10 * * * *', async (fireDate) => {
 	console.log('Running: initResolveMarketsJob at: ' + fireDate);
 	try {
-		await resolveScalarMarketsOnChain();
+		await sweepAndResolveScalarMarkets();
+		await sweepAndResolveCategoricalMarkets();
 	} catch (err: any) {
 		console.log('initResolveMarketsJob: ', err);
 	}

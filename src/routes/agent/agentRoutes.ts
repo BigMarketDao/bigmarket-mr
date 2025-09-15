@@ -1,18 +1,25 @@
 import express from 'express';
-import { sweepAndResolveMarket, sweepAndResolveMarkets } from './resolver-helper.js';
+import { sweepAndResolveMarket, sweepAndResolveCategoricalMarkets } from './resolver-helper.js';
 import { createMarketByDiscovery, createMarketBySuggestion } from './create-market-helper.js';
-import { createScalarMarketsOnChain, fetchScalarMarketData, resolveScalarMarketOnChain, resolveScalarMarketsOnChain, resolveUndisputedScalarMarketsOnChain } from './scalar-markets.js';
+import { createScalarMarketsOnChain, fetchScalarMarketData, resolveScalarMarketOnChain, sweepAndResolveScalarMarkets, resolveUndisputedScalarMarketsOnChain } from './scalar-markets.js';
 import { fetchMarket } from '../predictions/markets_helper.js';
 import { asyncHandler } from '../../lib/utils.js';
+import { fetchStacksInfo, StacksInfo } from '@mijoco/stx_helpers';
+import { getConfig } from '../../lib/config.js';
 
 const router = express.Router();
 
-router.get('/resolve-auto/scalar', async (req, res) => {
-	const markets = await resolveScalarMarketsOnChain();
+router.get('/resolve-markets/scalar', async (req, res) => {
+	const markets = await sweepAndResolveScalarMarkets();
 	res.json(markets);
 });
 
-router.get('/resolve-auto-undisputed/scalar', async (req, res) => {
+router.get('/resolve-markets/categorical', async (req, res) => {
+	const markets = await sweepAndResolveCategoricalMarkets();
+	res.json(markets);
+});
+
+router.get('/resolve-markets-undisputed', async (req, res) => {
 	const markets = await resolveUndisputedScalarMarketsOnChain();
 	res.json(markets);
 });
@@ -35,14 +42,16 @@ router.get('/resolve/:marketId/:marketType', async (req, res) => {
 		res.json(markets);
 	} else {
 		const market = await fetchMarket(marketId, marketType);
-		const markets = await resolveScalarMarketOnChain(market);
-		res.json(markets);
+		const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+		const blockHeight = stacksInfo.burn_block_height;
+		const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
+		if (blockHeight >= endCool) {
+			const markets = await resolveScalarMarketOnChain(market);
+			res.json(markets);
+		} else {
+			res.status(500);
+		}
 	}
-});
-
-router.get('/resolve', async (req, res) => {
-	const markets = await sweepAndResolveMarkets();
-	res.json(markets);
 });
 
 // router.post('/create/by-discovery', async (req, res) => {

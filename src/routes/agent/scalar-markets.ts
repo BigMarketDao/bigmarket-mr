@@ -29,30 +29,38 @@ const BTCUSD = '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b
 const SOLUSD = '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d';
 const ETHUSD = '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace';
 
-export async function resolveScalarMarketsOnChain(): Promise<Array<PredictionMarketCreateEvent>> {
+export async function sweepAndResolveScalarMarkets(): Promise<Array<PredictionMarketCreateEvent>> {
 	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market', marketType: 2 }).toArray()) as unknown as Array<PredictionMarketCreateEvent>;
 	const resolvedMarkets: PredictionMarketCreateEvent[] = [];
+	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+	const blockHeight = stacksInfo.burn_block_height;
 	for (const market of markets) {
 		if (market.marketId === 2) continue;
-		console.log('resolveScalarMarketsOnChain: market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
-		const rm = await resolveScalarMarketOnChain(market);
-		if (rm) resolvedMarkets.push(rm);
-		await sleep(30000);
+		const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
+		if (blockHeight >= endCool) {
+			const rm = await resolveScalarMarketOnChain(market);
+			if (rm) resolvedMarkets.push(rm);
+			await sleep(30000);
+		}
 	}
 	return resolvedMarkets;
 }
 
 export async function resolveUndisputedScalarMarketsOnChain(): Promise<Array<PredictionMarketCreateEvent>> {
-	const markets = (await daoEventCollection
-		.find({ 'marketData.resolutionState': 1, event: 'create-market', marketType: 2, extension: `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}` })
-		.toArray()) as unknown as Array<PredictionMarketCreateEvent>;
+	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 1, event: 'create-market' }).toArray()) as unknown as Array<PredictionMarketCreateEvent>;
 	const resolvedMarkets: PredictionMarketCreateEvent[] = [];
+	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+	const blockHeight = stacksInfo.burn_block_height;
+
 	for (const market of markets) {
 		try {
-			const rm = await resolveUndisputedScalarMarketOnChain(market);
-			if (rm) resolvedMarkets.push(rm);
-			console.log('resolveUndisputedScalarMarketsOnChain: market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
-			await sleep(30000);
+			const endDispute = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod! + (cachedData?.contractData.disputeWindowLength || 144);
+			if (blockHeight >= endDispute) {
+				const rm = await resolveUndisputedMarketOnChain(market);
+				if (rm) resolvedMarkets.push(rm);
+				console.log('resolveUndisputedScalarMarketsOnChain: market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
+				await sleep(30000);
+			}
 		} catch (err: any) {
 			console.log('resolveUndisputedScalarMarketsOnChain: error: ', err);
 		}
@@ -178,8 +186,8 @@ async function createMarketOnChain(chain: number): Promise<any> {
 // 	let proof = await getClarityProofForCreateMarket(proposer);
 // 	if (cachedData && !cachedData.contractData.creationGated) proof = Cl.list([]);
 // 	const genCats = examplePoll!.outcomes as Array<ScalarMarketDataItem>;
-// 	console.log('resolveMarketOnChain: getArgsCV: cachedData?.contractData: ', cachedData?.contractData);
-// 	console.log('resolveMarketOnChain: getArgsCV: proof: ', proof);
+// 	console.log('resolveCategoricalMarket: getArgsCV: cachedData?.contractData: ', cachedData?.contractData);
+// 	console.log('resolveCategoricalMarket: getArgsCV: proof: ', proof);
 // 	const cats = listCV(genCats.map((o) => Cl.tuple({ min: Cl.uint(o.min), max: Cl.uint(o.max) })));
 // 	return [
 // 		cats,
@@ -242,46 +250,36 @@ function sleep(ms: number) {
 
 export async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {
 	if (market.extension !== `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
-	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
-	const blockHeight = stacksInfo.burn_block_height;
-	const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
 	const network = getStacksNetwork(getConfig().network);
-	console.log('resolveScalarMarketOnChain: market: ' + market.marketId + ':' + market.marketType + ' : ' + market.unhashedData.name);
-	if (blockHeight >= endCool) {
-		const transaction = await makeContractCall({
-			network,
-			contractAddress: market.extension.split('.')[0],
-			contractName: market.extension.split('.')[1],
-			functionName: 'resolve-market',
-			functionArgs: [Cl.uint(market.marketId)],
-			senderKey: getConfig().walletKey
-		});
-		const txResult = await broadcastTransaction({ transaction });
-		console.log('resolveScalarMarketOnChain: txResult: ', txResult);
-		return market;
-	}
+	console.log('resolveScalarMarketOnChain: market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
+	const transaction = await makeContractCall({
+		network,
+		contractAddress: market.extension.split('.')[0],
+		contractName: market.extension.split('.')[1],
+		functionName: 'resolve-market',
+		functionArgs: [Cl.uint(market.marketId)],
+		senderKey: getConfig().walletKey
+	});
+	const txResult = await broadcastTransaction({ transaction });
+	console.log('resolveScalarMarketOnChain: txResult: ', txResult);
+	return market;
 }
 
-async function resolveUndisputedScalarMarketOnChain(market: PredictionMarketCreateEvent) {
+async function resolveUndisputedMarketOnChain(market: PredictionMarketCreateEvent) {
 	if (market.extension !== `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
-	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
-	const blockHeight = stacksInfo.burn_block_height;
-	const endDispute = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod! + (cachedData?.contractData.disputeWindowLength || 144);
 	const network = getStacksNetwork(getConfig().network);
-	console.log('resolveScalarMarketOnChain: market: ' + market.marketId + ':' + market.marketType + ' : ' + market.unhashedData.name);
-	if (blockHeight >= endDispute) {
-		const transaction = await makeContractCall({
-			network,
-			contractAddress: market.extension.split('.')[0],
-			contractName: market.extension.split('.')[1],
-			functionName: 'resolve-market-undisputed',
-			functionArgs: [Cl.uint(market.marketId)],
-			senderKey: getConfig().walletKey
-		});
-		const txResult = await broadcastTransaction({ transaction });
-		console.log('resolveScalarMarketOnChain: txResult: ', txResult);
-		return market;
-	}
+	console.log('resolveUndisputedScalarMarketOnChain: market: ' + market.marketId + ':' + market.marketType + ' : ' + market.unhashedData.name);
+	const transaction = await makeContractCall({
+		network,
+		contractAddress: market.extension.split('.')[0],
+		contractName: market.extension.split('.')[1],
+		functionName: 'resolve-market-undisputed',
+		functionArgs: [Cl.uint(market.marketId)],
+		senderKey: getConfig().walletKey
+	});
+	const txResult = await broadcastTransaction({ transaction });
+	console.log('resolveUndisputedScalarMarketOnChain: txResult: ', txResult);
+	return market;
 }
 
 function generateOutcomeCategories(price: number, variance: number): Array<ScalarMarketDataItem> {
