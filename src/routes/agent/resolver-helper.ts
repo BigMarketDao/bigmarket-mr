@@ -32,6 +32,8 @@ export async function sweepAndResolveMarket(marketId: number, marketType: number
 }
 
 export async function sweepAndResolveCategoricalMarkets(): Promise<Array<PredictionMarketCreateEvent>> {
+	console.log('================================================');
+	console.log('sweepAndResolveCategoricalMarkets: starting task');
 	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market' }).toArray()) as unknown as Array<PredictionMarketCreateEvent>;
 	const resolved = [];
 	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
@@ -63,12 +65,10 @@ function flattenMarket(market: PredictionMarketCreateEvent): MarketLLMRequest {
 	return data;
 }
 async function llmResolveMarket(data: MarketLLMRequest) {
-	console.log('llmResolveMarkets: data:', data);
-
 	// Send market data to Python AI for resolution
 	const response = await axios.post(`${getConfig().llmServer}/resolve-market`, data);
 	const llmResponse: MarketLLMResponse = response.data;
-	console.log('llmResolveMarket: llmResponse: ', llmResponse);
+	console.log('llmResolveMarket: llmResponse: ' + llmResponse.ai_response);
 	if (response.data.resolution !== undefined) {
 		try {
 			const existing = await marketLlmLogsCollection.findOne({
@@ -97,7 +97,7 @@ async function resolveCategoricalMarket(data: MarketLLMRequest, outcomeIndex: nu
 		senderKey: getConfig().walletKey
 	});
 	const txResult = await broadcastTransaction({ transaction });
-	console.log('resolveCategoricalMarket: txResult:', txResult);
+	console.log('resolveCategoricalMarket: tx sent: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name, txResult);
 }
 
 function mapToMinMaxStrings(data: Array<string | ScalarMarketDataItem>): string[] {
