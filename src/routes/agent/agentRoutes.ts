@@ -4,8 +4,8 @@ import { createMarketByDiscovery, createMarketBySuggestion } from './create-mark
 import { createScalarMarketsOnChain, fetchScalarMarketData, resolveScalarMarketOnChain, sweepAndResolveScalarMarkets, resolveUndisputedScalarMarketsOnChain } from './scalar-markets.js';
 import { fetchMarket } from '../predictions/markets_helper.js';
 import { asyncHandler } from '../../lib/utils.js';
-import { fetchStacksInfo, StacksInfo } from '@mijoco/stx_helpers';
 import { getConfig } from '../../lib/config.js';
+import { fetchStacksInfo, StacksInfo } from '@mijoco/stx_helpers/dist/index.js';
 
 const router = express.Router();
 
