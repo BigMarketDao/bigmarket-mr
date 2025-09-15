@@ -42,7 +42,7 @@ export async function sweepAndResolveCategoricalMarkets(): Promise<Array<Predict
 		if (market.marketType !== 2) {
 			const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
 			if (blockHeight >= endCool) {
-				console.log('sweepAndResolveCategoricalMarkets: found market: ' + market.unhashedData.name);
+				console.log('sweepAndResolveCategoricalMarkets: found candidate market: ' + market.unhashedData.name);
 				await llmResolveMarket(flattenMarket(market));
 				resolved.push(market);
 			}
