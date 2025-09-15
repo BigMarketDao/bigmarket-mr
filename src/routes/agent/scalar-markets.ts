@@ -37,12 +37,13 @@ export async function sweepAndResolveScalarMarkets(): Promise<Array<PredictionMa
 	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
 	const blockHeight = stacksInfo.burn_block_height;
 	for (const market of markets) {
-		if (market.marketId === 2) continue;
-		const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
-		if (blockHeight >= endCool) {
-			const rm = await resolveScalarMarketOnChain(market);
-			if (rm) resolvedMarkets.push(rm);
-			await sleep(30000);
+		if (market.marketId === 2) {
+			const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
+			if (blockHeight >= endCool) {
+				const rm = await resolveScalarMarketOnChain(market);
+				if (rm) resolvedMarkets.push(rm);
+				await sleep(30000);
+			}
 		}
 	}
 	return resolvedMarkets;

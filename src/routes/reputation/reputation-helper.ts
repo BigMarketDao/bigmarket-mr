@@ -275,6 +275,6 @@ async function makeBatchClaimTx(eligibleUsers: Array<string>) {
 		senderKey: getConfig().walletKey
 	});
 	const txResult = await broadcastTransaction({ transaction });
-	console.log('resolveScalarMarketOnChain: txResult: ', txResult);
+	console.log('makeBatchClaimTx: txResult: ', txResult);
 	return txResult;
 }
