@@ -1,4 +1,4 @@
-import { fetchStacksInfo, PredictionMarketCreateEvent, ScalarMarketDataItem, StacksInfo } from '@mijoco/stx_helpers/dist/index.js';
+import { fetchStacksInfo, getStacksNetwork, PredictionMarketCreateEvent, ScalarMarketDataItem, StacksInfo } from '@mijoco/stx_helpers/dist/index.js';
 import { getConfig } from '../../lib/config.js';
 import { daoEventCollection, marketLlmLogsCollection } from '../../lib/data/db_models.js';
 import { fetchMarket } from '../predictions/markets_helper.js';
@@ -90,7 +90,9 @@ async function llmResolveMarket(data: MarketLLMRequest) {
 async function resolveCategoricalMarket(data: MarketLLMRequest, outcomeIndex: number) {
 	const market = await fetchMarket(data.market_id, data.market_type);
 	console.log('resolveCategoricalMarket: market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name + ' outcome=' + outcomeIndex);
+	const network = getStacksNetwork(getConfig().network);
 	const dataTx = {
+		network,
 		contractAddress: market.extension.split('.')[0],
 		contractName: market.extension.split('.')[1],
 		functionName: 'resolve-market',
