@@ -1,7 +1,7 @@
 import { dataHashSip18, fetchStacksInfo, GateKeeper, getArgsCV, getStacksNetwork, marketDataToTupleCV, PredictionMarketCreateEvent, ScalarMarketDataItem, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
 import { type StacksInfo } from '@mijoco/stx_helpers/dist/index.js';
 import { getConfig } from '../../lib/config.js';
-import { broadcastTransaction, bufferCV, Cl, makeContractCall, PostConditionMode } from '@stacks/transactions';
+import { broadcastTransaction, Cl, makeContractCall, PostConditionMode } from '@stacks/transactions';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { daoEventCollection } from '../../lib/data/db_models.js';
 import { estimateBitcoinBlockTime, formatFiat } from '../../lib/utils.js';
@@ -185,31 +185,6 @@ async function createMarketOnChain(chain: number): Promise<any> {
 	console.log('createMarketOnChain: txResult:', txResult);
 	return txResult;
 }
-
-// const getArgsCV = async (priceFeeId: string, examplePoll: StoredOpinionPoll) => {
-// 	const proposer = 'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY'; //getDaoConfig().VITE_DOA_DEPLOYER;
-// 	const marketFeeCV = examplePoll.marketFee === 0 ? Cl.none() : Cl.some(Cl.uint((examplePoll.marketFee || 0) * 100));
-// 	const metadataHash = bufferCV(hexToBytes(examplePoll.objectHash)); // Assumes the hash is a string of 32 bytes in hex format
-// 	//let proof = cachedData?.contractData.creationGated ? await getClarityProofForCreateMarket(proposer) : Cl.list([]);
-// 	let proof = await getClarityProofForCreateMarket(proposer);
-// 	if (cachedData && !cachedData.contractData.creationGated) proof = Cl.list([]);
-// 	const genCats = examplePoll!.outcomes as Array<ScalarMarketDataItem>;
-// 	console.log('resolveCategoricalMarket: getArgsCV: cachedData?.contractData: ', cachedData?.contractData);
-// 	console.log('resolveCategoricalMarket: getArgsCV: proof: ', proof);
-// 	const cats = listCV(genCats.map((o) => Cl.tuple({ min: Cl.uint(o.min), max: Cl.uint(o.max) })));
-// 	return [
-// 		cats,
-// 		marketFeeCV,
-// 		Cl.contractPrincipal(examplePoll.token.split('.')[0], examplePoll.token.split('.')[1]),
-// 		metadataHash,
-// 		proof,
-// 		Cl.principal(examplePoll.treasury),
-// 		Cl.some(Cl.uint(6 * 144)),
-// 		Cl.none(),
-// 		Cl.bufferFromHex(priceFeeId),
-// 		Cl.uint(100000000)
-// 	];
-// };
 
 async function convertMarketToLocalFormat(meta: any): Promise<StoredOpinionPoll> {
 	const tokens = await fetchAllowedTokens(1);
