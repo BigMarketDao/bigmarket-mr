@@ -1,9 +1,9 @@
-import * as btc from '@scure/btc-signer';
 import { hex } from '@scure/base';
-import { getRpcParams } from '../../../lib/config.js';
+import * as btc from '@scure/btc-signer';
 import { Cl } from '@stacks/transactions';
-import { fetchTransaction, fetchTransactionHex, REGTEST_NETWORK } from '@mijoco/btc_helpers/dist/index.js';
 import { bitcoinRPC } from 'clarity-bitcoin-client';
+import { getRpcParams } from '../../../lib/config.js';
+import { fetchTransaction } from '../clarityBitcoinRoutes.js';
 
 export async function buildRegtestBitcoinSegwitTransaction(marketId: number, outcomeIndex: number, stxAddress: string, amountBtc: number): Promise<{ txid: string }> {
 	// Define a SegWit-compatible UTXO (mocked)
@@ -104,3 +104,22 @@ export async function getBitcoinBlockSbtcTestnet(txid: string, blockhash: string
 
 	return actualBlock;
 }
+export async function fetchTransactionHex(mempoolUrl: string, txid: string) {
+	try {
+		//https://api.blockcypher.com/v1/btc/test3/txs/<txID here>?includeHex=true
+		//https://mempool.space/api/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/hex
+		const url = mempoolUrl + '/tx/' + txid + '/hex';
+		const response = await fetch(url);
+		const hex = await response.text();
+		return hex;
+	} catch (err) {
+		console.log(err);
+		return;
+	}
+}
+export const REGTEST_NETWORK: typeof btc.NETWORK = {
+	bech32: 'bcrt',
+	pubKeyHash: 0x6f,
+	scriptHash: 0xc4,
+	wif: 0xc4
+};

@@ -1,8 +1,7 @@
+import { bitcoinTxProof } from 'bitcoin-tx-proof';
+import { bitcoinRPC, BlockChainInfo, extractProofInfo, getProofData, getProofDataRecent, getProofGenerationData, ProofGenerationData, ProofRequest, RpcBlock, RpcTransaction, TransactionProofSet } from 'clarity-bitcoin-client';
 import express from 'express';
 import { getConfig, getRpcParams } from '../../lib/config.js';
-import { bitcoinTxProof } from 'bitcoin-tx-proof';
-import { fetchTransaction } from '@mijoco/btc_helpers/dist/index.js';
-import { bitcoinRPC, BlockChainInfo, extractProofInfo, getProofData, getProofDataRecent, getProofGenerationData, ProofGenerationData, ProofRequest, RpcBlock, RpcTransaction, TransactionProofSet } from 'clarity-bitcoin-client';
 import { buildRegtestBitcoinSegwitTransaction, getBitcoinBlockSbtcTestnet } from './client/bitcoin.js';
 
 const router = express.Router();
@@ -145,3 +144,16 @@ router.get('/send-prediction/:marketId/:outcomeIndex/:stxAddress/:amountBtc', as
 });
 
 export { router as clarityBitcoinRoutes };
+
+export async function fetchTransaction(mempoolUrl: string, txid: string) {
+	try {
+		const url = mempoolUrl + '/tx/' + txid;
+		const response = await fetch(url);
+		if (response.status !== 200) throw new Error('fetchTransaction: Unable to fetch transaction for: ' + txid);
+		const tx = await response.json();
+		return tx;
+	} catch (err) {
+		console.log(err);
+		return;
+	}
+}
