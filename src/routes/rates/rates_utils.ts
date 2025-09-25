@@ -27,11 +27,27 @@ export async function getSolToBtc(): Promise<any> {
 	return info;
 }
 
+export async function getSuiToBtc(): Promise<any> {
+	const url = 'https://www.blockchain.com/en/tobtc?currency=SUI&value=1';
+	const response = await fetch(url);
+	const info = await response.json();
+	return info;
+}
+
+export async function getTonToBtc(): Promise<any> {
+	const url = 'https://www.blockchain.com/en/tobtc?currency=TON&value=1';
+	const response = await fetch(url);
+	const info = await response.json();
+	return info;
+}
+
 export async function updateExchangeRates() {
 	try {
 		const stxToBtc = await getStxToBtc();
 		const ethToBtc = await getEthToBtc();
 		const solToBtc = await getSolToBtc();
+		const suiToBtc = await getSuiToBtc();
+		const tonToBtc = await getTonToBtc();
 		const url = 'https://blockchain.info/ticker';
 		const response = await fetch(url);
 		const info = await response.json();
@@ -48,7 +64,9 @@ export async function updateExchangeRates() {
 					name: currencies[key].name,
 					stxToBtc,
 					ethToBtc,
-					solToBtc
+					solToBtc,
+					suiToBtc,
+					tonToBtc
 				};
 				saveNewExchangeRate(newRate);
 			} else {
@@ -62,7 +80,9 @@ export async function updateExchangeRates() {
 					name: currencies[key].name,
 					stxToBtc,
 					ethToBtc,
-					solToBtc
+					solToBtc,
+					suiToBtc,
+					tonToBtc
 				});
 			}
 		}
