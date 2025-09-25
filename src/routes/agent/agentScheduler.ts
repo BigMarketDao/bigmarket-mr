@@ -61,3 +61,19 @@ export const initCreateMarketsJobEthereum = cron.schedule('23 15 * * 3', async (
 		console.log('initCreateMarketsJobEthereum: ', err);
 	}
 });
+export const initCreateMarketsJobSui = cron.schedule('23 17 * * 3', async (fireDate) => {
+	console.log('Running: initCreateMarketsJob at: ' + fireDate);
+	try {
+		await createScalarMarketsOnChain(5);
+	} catch (err: any) {
+		console.log('initCreateMarketsJobEthereum: ', err);
+	}
+});
+export const initCreateMarketsJobTon = cron.schedule('23 20 * * 3', async (fireDate) => {
+	console.log('Running: initCreateMarketsJob at: ' + fireDate);
+	try {
+		await createScalarMarketsOnChain(6);
+	} catch (err: any) {
+		console.log('initCreateMarketsJobEthereum: ', err);
+	}
+});

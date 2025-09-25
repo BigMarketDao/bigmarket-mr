@@ -28,6 +28,8 @@ const STXUSD = '0xec7a775f46379b5e943c3526b1c8d54cd49749176b0b98e02dde68d1bd335c
 const BTCUSD = '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43';
 const SOLUSD = '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d';
 const ETHUSD = '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace';
+const SUIUSD = '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace';
+const TONUSD = '0x8963217838ab4cf5cadc172203c1f0b763fbaa45f346d8ee50ba994bbcac3026';
 
 export async function sweepAndResolveScalarMarkets(): Promise<Array<PredictionMarketCreateEvent>> {
 	console.log('================================================');
@@ -87,6 +89,8 @@ async function getMetaData(chain: number, endBlockHeight: number, ends: string) 
 	const btcPrice = rate.fifteen;
 	const stxPrice = rate.stxToBtc * btcPrice;
 	const ethPrice = rate.ethToBtc * btcPrice;
+	const suiPrice = rate.suiToBtc * btcPrice;
+	const tonPrice = rate.tonToBtc * btcPrice;
 	const solPrice = rate.solToBtc * btcPrice;
 	let coin = 'BTC';
 	let price = formatFiat(btcPrice);
@@ -111,6 +115,18 @@ async function getMetaData(chain: number, endBlockHeight: number, ends: string) 
 		price = formatFiat(ethPrice);
 		cats = generateOutcomeCategories(ethPrice, 0.04);
 		priceFeedId = ETHUSD;
+		logo = ethereumLogo;
+	} else if (chain === 5) {
+		coin = 'SUI';
+		price = formatFiat(suiPrice);
+		cats = generateOutcomeCategories(suiPrice, 0.04);
+		priceFeedId = SUIUSD;
+		logo = ethereumLogo;
+	} else if (chain === 6) {
+		coin = 'TON';
+		price = formatFiat(tonPrice);
+		cats = generateOutcomeCategories(tonPrice, 0.04);
+		priceFeedId = TONUSD;
 		logo = ethereumLogo;
 	}
 

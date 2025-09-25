@@ -46,26 +46,26 @@ async function readMinTokenLiquidityToken(deployer: string, contractName: string
 		return result;
 	} catch (e: any) {
 		if (contractName === getDaoConfig().VITE_DAO_MARKET_PREDICTING) {
-			if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx') return 100000000;
-			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme000-0-governance-token') return 100000000;
-			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tpepe') return 100000000;
-			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tusdh') return 100000000;
-			else if (token === 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token') return 100000000;
+			if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.wrapped-stx`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.bme000-0-governance-token`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.tpepe`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.tusdh`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token`) return 100000000;
 		} else if (contractName === getDaoConfig().VITE_DAO_MARKET_SCALAR) {
-			if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx') return 100000000;
-			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme000-0-governance-token') return 100000000;
-			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tpepe') return 100000000;
-			else if (token === 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tusdh') return 100000000;
-			else if (token === 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token') return 100000000;
+			if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.wrapped-stx`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.bme000-0-governance-token`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.tpepe`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.tusdh`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token`) return 100000000;
 		}
 		return 0;
 	}
 }
-// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx u100000000))
-// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme000-0-governance-token u100000000))
-// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tpepe u100000000))
-// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.tusdh u100000000))
-// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token u100000000))
+// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed '${getDaoConfig().VITE_DOA_DEPLOYER}.wrapped-stx u100000000))
+// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed '${getDaoConfig().VITE_DOA_DEPLOYER}.bme000-0-governance-token u100000000))
+// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed '${getDaoConfig().VITE_DOA_DEPLOYER}.tpepe u100000000))
+// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed '${getDaoConfig().VITE_DOA_DEPLOYER}.tusdh u100000000))
+// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed '${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token u100000000))
 
 async function updateMarketData(marketId: number, marketType: number, marketContract: string) {
 	// marketData is kept up to date on the create-market event when new events are detected!

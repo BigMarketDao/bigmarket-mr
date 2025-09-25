@@ -42,6 +42,7 @@ export type ConfigDaoI = {
 	VITE_DOA: string;
 	VITE_DOAS: string;
 	VITE_DOA_VOTING_CONTRACTS: string;
+	VITE_SBTC_DEPLOYER: string;
 	VITE_DOA_SIP_VOTES: string;
 	VITE_DOA_DEPLOYER: string;
 	VITE_DOA_EMERGENCY_EXECUTE_EXTENSION: string;

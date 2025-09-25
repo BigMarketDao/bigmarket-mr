@@ -25,7 +25,7 @@ import { authRoutes } from './routes/auth/authRoutes.js';
 import { initScanDaoEventsJob } from './routes/dao/events/eventScheduler.js';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
 import { initExchangeRatesJob } from './routes/rates/ratesScheduler.js';
-import { initCreateMarketsJobBitcoin, initCreateMarketsJobEthereum, initCreateMarketsJobStacks, initResolveMarketsJob, initResolveUndisputedMarketsJob } from './routes/agent/agentScheduler.js';
+import { initCreateMarketsJobBitcoin, initCreateMarketsJobEthereum, initCreateMarketsJobStacks, initCreateMarketsJobSui, initCreateMarketsJobTon, initResolveMarketsJob, initResolveUndisputedMarketsJob } from './routes/agent/agentScheduler.js';
 import { startUICacheWarming } from './routes/cache/cache_utils.js';
 import { runBatchClaimSweepJob } from './routes/reputation/reputation-helper.js';
 import type { ErrorRequestHandler } from 'express';
@@ -143,10 +143,12 @@ async function connectToMongoCloud() {
 	initExchangeRatesJob.start();
 	initResolveMarketsJob.start();
 	initResolveUndisputedMarketsJob.start();
-	initCreateMarketsJobBitcoin.start();
-	initCreateMarketsJobStacks.start();
+	// initCreateMarketsJobBitcoin.start();
+	// initCreateMarketsJobStacks.start();
 	// initCreateMarketsJobSolana.start();
-	initCreateMarketsJobEthereum.start();
+	// initCreateMarketsJobEthereum.start();
+	// initCreateMarketsJobSui.start();
+	// initCreateMarketsJobTon.start();
 	runBatchClaimSweepJob.start();
 	startUICacheWarming(); // runs ui caching every 25s
 
