@@ -103,7 +103,8 @@ async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateM
 		signature: '',
 		publicKey: '',
 		featured: true,
-		processed: false
+		processed: false,
+		liquidity: stxToken.minLiquidity || 0
 	};
 	const tupleMessage = marketDataToTupleCV(marketMeta.name, marketMeta.category, marketMeta.createdAt, marketMeta.proposer, marketMeta.token);
 	const dataHash = dataHashSip18(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, tupleMessage);
