@@ -19,6 +19,7 @@ import { ObjectId } from 'mongodb';
 import { cvToJSON, deserializeCV } from '@stacks/transactions';
 import { processReputationEvents } from './processors/process_reputation_events.js';
 import { processLiquidityContributionEvents } from './processors/process_liquidity_contribution_events.js';
+import { processHedgeStrategyEvents } from './processors/process_hedge_strategy_events.js';
 
 export async function readDaoExtensionEvents(genesis: boolean, daoContractId: string) {
 	const extensions = await fetchExtensions(daoContractId);
@@ -122,6 +123,8 @@ async function resolveExtensionEvents(url: string, daoContract: string, extensio
 					processLiquidityContributionEvents(basicEvent, result);
 				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_REPUTATION_TOKEN) > -1) {
 					processReputationEvents(basicEvent, result);
+				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_SCALAR_HEDGE_STRATEGY) > -1) {
+					processHedgeStrategyEvents(basicEvent, result);
 				} else if (extensionContract.indexOf(getDaoConfig().VITE_DOA_EMERGENCY_EXECUTE_EXTENSION) > -1) {
 					// no events
 				} else {

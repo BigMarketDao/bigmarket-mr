@@ -25,6 +25,7 @@ export function setDaoConfigOnStart() {
 	CONFIG.VITE_DAO_REPUTATION_TOKEN = process.env[network + '_' + 'VITE_DAO_REPUTATION_TOKEN'] || 'bme030-0-reputation-token';
 	CONFIG.VITE_DAO_TOKEN_SALE = process.env[network + '_' + 'VITE_DAO_TOKEN_SALE'] || '';
 	CONFIG.VITE_DAO_LIQUIDITY_CONTRIBUTION = process.env[network + '_' + 'VITE_DAO_LIQUIDITY_CONTRIBUTION'] || 'bme010-0-liquidity-contribution';
+	CONFIG.VITE_DAO_SCALAR_HEDGE_STRATEGY = process.env[network + '_' + 'VITE_DAO_SCALAR_HEDGE_STRATEGY'] || 'bme032-0-scalar-strategy-hedge';
 
 	CONFIG.VITE_SBTC_DEPLOYER = network === 'mainnet' ? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4' : 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT';
 }

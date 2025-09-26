@@ -59,4 +59,5 @@ export type ConfigDaoI = {
 	VITE_DAO_TOKEN_SALE: string;
 	VITE_DAO_REPUTATION_TOKEN: string;
 	VITE_DAO_LIQUIDITY_CONTRIBUTION: string;
+	VITE_DAO_SCALAR_HEDGE_STRATEGY: string;
 };
