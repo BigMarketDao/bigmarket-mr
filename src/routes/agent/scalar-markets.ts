@@ -155,7 +155,7 @@ export async function fetchScalarMarketData(chain: number): Promise<StoredOpinio
 	const meta = await getMetaData(chain, endCooling, ends);
 	const market = await convertMarketToLocalFormat(meta, current);
 	market.criterionDays = { duration: DURATION, coolDown: COOL_DOWN, startHeight: current };
-	market.criterionSources = { criteria: '', sources: [] };
+	market.criterionSources = meta.criterionSources;
 	return market;
 }
 
