@@ -58,10 +58,10 @@ function flattenMarket(market: PredictionMarketCreateEvent): MarketLLMRequest {
 		market_type: market.marketType,
 		title: market.unhashedData.name,
 		description: market.unhashedData.description,
-		resolution_criteria: market.unhashedData.criterion.criteria,
+		resolution_criteria: market.unhashedData.criterionSources.criteria,
 		outcome_categories: mapToMinMaxStrings(market.marketData.categories),
-		resolves_at: market.unhashedData.criterion.resolvesAt,
-		sources: market.unhashedData.criterion.sources
+		resolves_at: market.unhashedData.criterionDays.startHeight + market.unhashedData.criterionDays.duration + market.unhashedData.criterionDays.coolDown,
+		sources: market.unhashedData.criterionSources.sources
 	};
 	return data;
 }

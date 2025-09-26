@@ -1,4 +1,4 @@
-import { dataHashSip18, GateKeeper, generateMerkleProof, generateMerkleTreeUsingStandardPrincipal, marketDataToTupleCV, proofToClarityValue, Sip10Data, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
+import { dataHashSip18, fetchStacksInfo, GateKeeper, generateMerkleProof, generateMerkleTreeUsingStandardPrincipal, marketDataToTupleCV, proofToClarityValue, Sip10Data, StacksInfo, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
 import { getConfig } from '../../lib/config.js';
 import { fetchAllowedTokens } from '../predictions/markets_helper.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
@@ -21,6 +21,8 @@ export type CreateMarketLLMResponse = {
 	market_sector: string;
 	resolution_criteria: string;
 	earliest_resolution_date: string;
+	duration: number;
+	coolDown: number;
 	sources: Array<string>;
 };
 
@@ -51,40 +53,22 @@ export async function createMarketBySuggestion(proposer: string, userIdea: strin
 	return convertMarketToLocalFormat(proposer, llmResponse);
 }
 
-// async function createMarketOnChain(proposer: string, data: CreateMarketLLMResponse) {
-// 	const market = await convertMarketToLocalFormat(proposer, data);
-// 	await savePoll(market);
-// 	const transaction = await makeContractCall({
-// 		contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
-// 		contractName: getDaoConfig().VITE_DAO_MARKET_PREDICTING,
-// 		functionName: 'create-market',
-// 		functionArgs: await getArgsCV(proposer, market),
-// 		senderKey: getConfig().walletKey
-// 	});
-// 	const txResult = await broadcastTransaction({ transaction });
-// 	console.log('createMarketOnChain: txResult:', txResult);
-// }
-
 async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateMarketLLMResponse): Promise<StoredOpinionPoll> {
+	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+	const current = stacksInfo.burn_block_height;
 	const tokens = await fetchAllowedTokens(1);
 	const stxToken = tokens.find((t) => t.token.indexOf('wrapped-stx') > -1);
 	if (!stxToken) throw new Error('warapped stx token not found');
+
+	const ms = new Date(llmResponse.earliest_resolution_date).getTime();
+	const days = (ms - Date.now()) / (1000 * 60 * 60 * 24);
+	const blocks = Math.round(days * 144);
 
 	const marketMeta = {
 		name: llmResponse.title,
 		description: llmResponse.description,
 		category: await matchMarketSector(llmResponse.market_sector),
-		criterion: {
-			resolvesAt: new Date(llmResponse.earliest_resolution_date).getTime(),
-			sources: llmResponse.sources,
-			criteria: llmResponse.resolution_criteria,
-			marketCloseHeight: 0,
-			marketCoolDownDuration: 0,
-			marketDurationts: 0
-		},
 		outcomes: llmResponse.outcome_categories,
-		startBurnHeight: 0,
-		endBurnHeight: 0,
 		createdAt: new Date().getTime(),
 		proposer,
 		treasury: `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`,
@@ -104,8 +88,10 @@ async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateM
 		publicKey: '',
 		featured: true,
 		processed: false,
-		liquidity: stxToken.minLiquidity || 0
-	};
+		liquidity: stxToken.minLiquidity || 0,
+		criterionDays: { duration: blocks, coolDown: 144, startHeight: current },
+		criterionSources: { criteria: llmResponse.resolution_criteria, sources: llmResponse.sources }
+	} as StoredOpinionPoll;
 	const tupleMessage = marketDataToTupleCV(marketMeta.name, marketMeta.category, marketMeta.createdAt, marketMeta.proposer, marketMeta.token);
 	const dataHash = dataHashSip18(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, tupleMessage);
 	marketMeta.objectHash = dataHash;
