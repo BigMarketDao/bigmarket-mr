@@ -89,7 +89,7 @@ async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateM
 		featured: true,
 		processed: false,
 		liquidity: stxToken.minLiquidity || 0,
-		criterionDays: { duration: blocks, coolDown: 144, startHeight: current },
+		criterionDays: { duration: blocks, coolDown: 144, startHeight: current, earliest_resolution_date: llmResponse.earliest_resolution_date },
 		criterionSources: { criteria: llmResponse.resolution_criteria, sources: llmResponse.sources }
 	} as StoredOpinionPoll;
 	const tupleMessage = marketDataToTupleCV(marketMeta.name, marketMeta.category, marketMeta.createdAt, marketMeta.proposer, marketMeta.token);
