@@ -141,7 +141,7 @@ async function getMetaData(chain: number, endBlockHeight: number, ends: string) 
 		marketType: 2,
 		logo,
 		priceFeedId,
-		criterion: {
+		criterionSources: {
 			sources: ['Pyth Oracle'],
 			criteria: `How the market resolves<br/><br/>BigMarket use the official Pyth price feed oracle on the Stacks blockchain to determine the final ${coin} price, at bitcoin block ${endBlockHeight.toLocaleString('en-US')}. The result is taken after the cool down period and locked in on-chain for full transparency.`
 		}
@@ -218,7 +218,6 @@ async function convertMarketToLocalFormat(meta: any, current: number): Promise<S
 		priceFeedId: meta.priceFeedId,
 		description: meta.description,
 		category: 'crypto',
-		criterion: meta.criterion,
 		outcomes: meta.outcome_categories,
 		logo: meta.logo,
 		createdAt: new Date().getTime(),
@@ -240,7 +239,7 @@ async function convertMarketToLocalFormat(meta: any, current: number): Promise<S
 		processed: false,
 		liquidity: stxToken.minLiquidity || 0,
 		criterionDays: { duration: DURATION, coolDown: COOL_DOWN, startHeight: current },
-		criterionSources: { criteria: '', sources: [] }
+		criterionSources: meta.criterionSources
 	} as StoredOpinionPoll;
 	const tupleMessage = marketDataToTupleCV(marketMeta.name, marketMeta.category, marketMeta.createdAt, marketMeta.proposer, marketMeta.token);
 	const dataHash = dataHashSip18(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, tupleMessage);
