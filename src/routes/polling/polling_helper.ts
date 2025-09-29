@@ -25,15 +25,6 @@ export async function getBnsNameFromAddress(api: string, address: string): Promi
 }
 
 export async function isCreatePollPostValid(message: StoredOpinionPoll): Promise<boolean> {
-	// console.log("-------------------------------------------");
-	// console.log("isCreatePollPostValid: ", message);
-	// console.log("isCreatePollPostValid: network: " + getConfig().network);
-	// console.log(
-	//   "isCreatePollPostValid: publicAppName: " + getConfig().publicAppName
-	// );
-	// console.log(
-	//   "isCreatePollPostValid: publicAppVersion: " + getConfig().publicAppVersion
-	// );
 	const stxAddressFromKey = getC32AddressFromPublicKey(message.publicKey, getConfig().network);
 	console.log('isCreatePollPostValid: stxAddressFromKey: ' + stxAddressFromKey);
 	if (message.proposer !== stxAddressFromKey) {
@@ -62,8 +53,7 @@ function forumMessageToTupleCV(message: BaseForumContent): TupleCV<TupleData<Cla
 		identifier: stringAsciiCV(la.identifier),
 		created: uintCV(message.created),
 		title: stringAsciiCV(message.title),
-		content: stringAsciiCV(message.content),
-		name: stringAsciiCV(la.displayName || 'unknown')
+		content: stringAsciiCV(message.content)
 	});
 }
 function getDefaultStacksLinkedAccount(stxAddress: string, bnsName: string): LinkedAccount {

@@ -72,7 +72,6 @@ router.post('/markets', async (req, res) => {
 			res.status(401).json({ error: 'Invalid request' });
 		} else {
 			const p = await findOpinionPollByTitle(newPoll.name);
-			//console.log('isCreatePollPostValid: p =', p);
 			if (p) {
 				res.status(502).json({ error: 'Market with this question already exists' });
 			} else {
