@@ -6,6 +6,10 @@ let CONFIG = {} as ConfigDaoI;
 export function setDaoConfigOnStart() {
 	const network = process.env.NODE_ENV;
 
+	CONFIG.VITE_PEPE_FULL_CONTRACT = process.env[network + '_' + 'VITE_PEPE_FULL_CONTRACT'] || '';
+	CONFIG.VITE_USDH_FULL_CONTRACT = process.env[network + '_' + 'VITE_USDH_FULL_CONTRACT'] || '';
+	CONFIG.VITE_WRAPPED_STX_FULL_CONTRACT = process.env[network + '_' + 'VITE_WRAPPED_STX_FULL_CONTRACT'] || '';
+
 	CONFIG.VITE_DOA = process.env[network + '_' + 'VITE_DOA'] || '';
 	CONFIG.VITE_DOAS = 'ecosystem-dao,bigmarket-dao';
 	CONFIG.VITE_DOA_SIP_VOTES = process.env[network + '_' + 'VITE_DOA_SIP_VOTES'] || '';

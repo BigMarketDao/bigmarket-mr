@@ -46,26 +46,21 @@ async function readMinTokenLiquidityToken(deployer: string, contractName: string
 		return result;
 	} catch (e: any) {
 		if (contractName === getDaoConfig().VITE_DAO_MARKET_PREDICTING) {
-			if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.wrapped-stx`) return 100000000;
+			if (token === `${getDaoConfig().VITE_WRAPPED_STX_FULL_CONTRACT}`) return 100000000;
 			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.bme000-0-governance-token`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.tpepe`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.tusdh`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_PEPE_FULL_CONTRACT}`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_USDH_FULL_CONTRACT}`) return 100000000;
 			else if (token === `${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token`) return 100000000;
 		} else if (contractName === getDaoConfig().VITE_DAO_MARKET_SCALAR) {
-			if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.wrapped-stx`) return 100000000;
+			if (token === `${getDaoConfig().VITE_WRAPPED_STX_FULL_CONTRACT}`) return 100000000;
 			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.bme000-0-governance-token`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.tpepe`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.tusdh`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_PEPE_FULL_CONTRACT}`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_USDH_FULL_CONTRACT}`) return 100000000;
 			else if (token === `${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token`) return 100000000;
 		}
 		return 0;
 	}
 }
-// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed '${getDaoConfig().VITE_DOA_DEPLOYER}.wrapped-stx u100000000))
-// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed '${getDaoConfig().VITE_DOA_DEPLOYER}.bme000-0-governance-token u100000000))
-// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed '${getDaoConfig().VITE_DOA_DEPLOYER}.tpepe u100000000))
-// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed '${getDaoConfig().VITE_DOA_DEPLOYER}.tusdh u100000000))
-// (try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed '${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token u100000000))
 
 async function updateMarketData(marketId: number, marketType: number, marketContract: string) {
 	// marketData is kept up to date on the create-market event when new events are detected!

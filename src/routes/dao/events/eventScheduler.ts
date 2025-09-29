@@ -8,27 +8,28 @@ import { getDaoConfig } from '../../../lib/config_dao.js';
 export const initScanDaoEventsJob = cron.schedule('* * * * *', async (fireDate) => {
 	console.log('Running: initScanDaoEventsJob at: ' + fireDate);
 	try {
-		const distinctDaoContracts = await daoEventCollection
-			.aggregate([
-				{ $group: { _id: '$daoContract' } }, // Group by `daoContract`
-				{ $project: { _id: 0, daoContract: '$_id' } } // Extract `daoContract`
-			])
-			.toArray();
-		if (distinctDaoContracts.length === 0) {
-			distinctDaoContracts.push({
-				daoContract: getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DOA
-			});
+		// const distinctDaoContracts = await daoEventCollection
+		// 	.aggregate([
+		// 		{ $group: { _id: '$daoContract' } }, // Group by `daoContract`
+		// 		{ $project: { _id: 0, daoContract: '$_id' } } // Extract `daoContract`
+		// 	])
+		// 	.toArray();
+		// if (distinctDaoContracts.length === 0) {
+		// 	distinctDaoContracts.push({
+		// 		daoContract: getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DOA
+		// 	});
+		// }
+		const daoContract = getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DOA;
+		// for (const dao of distinctDaoContracts) {
+		// const daoContract = dao.daoContract;
+		console.log('initScanDaoEventsJob: Running: dao: ' + daoContract);
+		try {
+			await readDaoEvents(true, daoContract);
+		} catch (err) {
+			console.log('Error running: ecosystem-dao: ', err);
 		}
-		for (const dao of distinctDaoContracts) {
-			const docContract = dao.daoContract;
-			//console.log('Running: dao: ' + docContract);
-			try {
-				await readDaoEvents(true, docContract);
-			} catch (err) {
-				console.log('Error running: ecosystem-dao: ', err);
-			}
-			await readDaoExtensionEvents(false, docContract);
-		}
+		await readDaoExtensionEvents(false, daoContract);
+		// }
 		// await readPredictionEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
 		// await readScalarEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
 		// await readBitcoinEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_BITCOIN);
