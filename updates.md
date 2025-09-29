@@ -19,9 +19,9 @@ db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345
 
 db.daoEventCollection.findAndModify({query: {marketId:0}, update: {$set: {featured: true }}, upsert: false, new: true, fields: {}})
 
-db.daoEventCollection.findAndModify({query: {event : 'create-market', marketId:2, extension: 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme023-2-market-scalar'}, update: {$set: {processed: true }}, upsert: false, new: true, fields: {}})
+db.daoEventCollection.findAndModify({query: {event : 'create-market', marketId:2, extension: 'ST2TQ069HEM31JMBNSMBP7MQDKDTB56F6M0AKT00W.bme023-2-market-scalar'}, update: {$set: {processed: true }}, upsert: false, new: true, fields: {}})
 
-db.daoEventCollection.updateMany({event: 'create-market',extension: 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.bme023-0-market-scalar'},{$set: {'unhashedData.processed': true}})
+db.daoEventCollection.updateMany({event: 'create-market',extension: 'ST2TQ069HEM31JMBNSMBP7MQDKDTB56F6M0AKT00W.bme023-0-market-scalar'},{$set: {'unhashedData.processed': true}})
 
 db.daoEventCollection.updateMany({event: 'create-market','unhashedData.name':'Will Paul Biya officially announce his candidacy for the October 2025 Cameroon presidential election by August 20, 2025?'},{$set: {'unhashedData.forumMessageId': '66b40856-470c-4ed6-8925-8047b08c782b'}})
 
@@ -62,11 +62,11 @@ db.marketCollection.deleteMany()
 db.daoEventCollection.deleteMany({})
 db.marketGatingCollection.deleteMany({})
 
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B", "ST1WBKBD16E10AAX6F3Z54ARM2S1Q4AVRW1CYZVH", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ","ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM","STQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRNM0T1J8","ST2RNHHQDTHGHPEVX83291K4AQZVGWEJ7WD7SDHD8"]})
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST2TQ069HEM31JMBNSMBP7MQDKDTB56F6M0AKT00W", "ST2XHA15V40FAP9QZ0KMR7KBZ4NREV937QHZNT6B4", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ","ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM","STQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRNM0T1J8","ST2RNHHQDTHGHPEVX83291K4AQZVGWEJ7WD7SDHD8"]})
 
 # Testnet
 
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B", "ST1WBKBD16E10AAX6F3Z54ARM2S1Q4AVRW1CYZVH", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ","ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM","STQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRNM0T1J8","ST2RNHHQDTHGHPEVX83291K4AQZVGWEJ7WD7SDHD8"]})
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST2TQ069HEM31JMBNSMBP7MQDKDTB56F6M0AKT00W", "ST2XHA15V40FAP9QZ0KMR7KBZ4NREV937QHZNT6B4", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ","ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM","STQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRNM0T1J8","ST2RNHHQDTHGHPEVX83291K4AQZVGWEJ7WD7SDHD8"]})
 
 db.marketCategoriesCollection.insertMany([
 { name : 'crypto', information: '', displayName: 'Crypto', active: true},
@@ -99,6 +99,6 @@ db.marketCategoriesCollection.insertMany([
 
 
 
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["SP22NW0RYCW4GFZRPE8VGJRCKGQMRMMX4903A2TRG", "SP3QT57B9T88KPJ76BAKYTC9HV48QN35HA3XEN6AZ", "SP2PT3VET633B5JR9KM8SS7JD0F089M9AAX5KFEP7", "SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29"]})
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["SP2TQ069HEM31JMBNSMBP7MQDKDTB56F6M2B632JJ", "SP2XHA15V40FAP9QZ0KMR7KBZ4NREV937QH668MB9", "SP2PT3VET633B5JR9KM8SS7JD0F089M9AAX5KFEP7", "SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29"]})
 
 ```
