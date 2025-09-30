@@ -93,10 +93,26 @@ export async function getTotalWeightedSupply(): Promise<number> {
 					weight: {
 						$switch: {
 							branches: [
-								{ case: { $in: ['$tokenId', [1, 2, 3]] }, then: 1 },
-								{ case: { $in: ['$tokenId', [4, 5, 6]] }, then: 2 },
-								{ case: { $in: ['$tokenId', [7, 8, 9]] }, then: 3 },
-								{ case: { $eq: ['$tokenId', 10] }, then: 5 }
+								{ case: { $eq: ['$tokenId', 1] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 2] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 3] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 4] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 5] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 6] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 7] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 8] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 9] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 10] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 11] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 12] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 13] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 14] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 15] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 16] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 17] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 18] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 19] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 20] }, then: 1 }
 							],
 							default: 0
 						}
@@ -139,10 +155,26 @@ export async function getReputationLeaderBoard(): Promise<Array<any>> {
 					weight: {
 						$switch: {
 							branches: [
-								{ case: { $in: ['$tokenId', [1, 2, 3]] }, then: 1 },
-								{ case: { $in: ['$tokenId', [4, 5, 6]] }, then: 2 },
-								{ case: { $in: ['$tokenId', [7, 8, 9]] }, then: 3 },
-								{ case: { $eq: ['$tokenId', 10] }, then: 5 }
+								{ case: { $eq: ['$tokenId', 1] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 2] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 3] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 4] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 5] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 6] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 7] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 8] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 9] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 10] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 11] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 12] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 13] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 14] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 15] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 16] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 17] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 18] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 19] }, then: 1 },
+								{ case: { $eq: ['$tokenId', 20] }, then: 1 }
 							],
 							default: 0
 						}
@@ -174,13 +206,23 @@ const WEIGHTS: Record<number, number> = {
 	1: 1,
 	2: 1,
 	3: 1,
-	4: 2,
-	5: 2,
-	6: 2,
-	7: 3,
-	8: 3,
-	9: 3,
-	10: 5
+	4: 1,
+	5: 1,
+	6: 1,
+	7: 1,
+	8: 1,
+	9: 1,
+	10: 1,
+	11: 1,
+	12: 1,
+	13: 1,
+	14: 1,
+	15: 1,
+	16: 1,
+	17: 1,
+	18: 1,
+	19: 1,
+	20: 1
 };
 
 // function fromMongoToUserReputation(rows: { tokenId: number; amount: number }[]): UserReputationContractData {

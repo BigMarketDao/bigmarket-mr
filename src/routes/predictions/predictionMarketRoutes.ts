@@ -1,7 +1,7 @@
 import express from 'express';
 import { isCreatePollPostValid, savePoll } from '../polling/polling_helper.js';
 import { countCreateMarketEvents, fetchActiveMarketCategories, fetchAllowedTokens, fetchMarket, fetchMarketClaims, fetchMarkets, fetchMarketStakes, fetchMarketVotes, findOpinionPollByTitle, readMinTokenLiquidity } from './markets_helper.js';
-import { callContractReadOnly, DaoOverview, fetchContractBalances, fetchTokenSaleStages, GateKeeper, readPredictionContractData, readReputationContractData, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
+import { DaoOverview, fetchContractBalances, fetchTokenSaleStages, GateKeeper, readPredictionContractData, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
 import { getConfig } from '../../lib/config.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { fetchCreateMarketMerkleInput } from '../gating/gating_helper.js';

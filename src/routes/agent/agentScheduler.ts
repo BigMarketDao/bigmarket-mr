@@ -17,7 +17,7 @@ export const initResolveMarketsJob = cron.schedule('*/10 * * * *', async (fireDa
 	}
 });
 
-export const initResolveUndisputedMarketsJob = cron.schedule('15 */1 * * *', async (fireDate) => {
+export const initResolveUndisputedMarketsJob = cron.schedule('30 * * * *', async (fireDate) => {
 	console.log('Running: initResolveUndisputedMarketsJob at: ' + fireDate);
 	try {
 		await resolveUndisputedScalarMarketsOnChain();
