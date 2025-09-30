@@ -43,7 +43,9 @@ export async function sweepAndResolveScalarMarkets(): Promise<Array<PredictionMa
 	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
 	const blockHeight = stacksInfo.burn_block_height;
 	for (const market of markets) {
-		if (market.marketId === 2) {
+		console.log('sweepAndResolveScalarMarkets: scanning: ' + market.unhashedData.name);
+		if (market.marketType === 2) {
+			console.log('sweepAndResolveScalarMarkets: found scalar: ' + market.unhashedData.name);
 			const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
 			if (blockHeight >= endCool) {
 				console.log('sweepAndResolveScalarMarkets: found candidate market: ' + market.unhashedData.name);

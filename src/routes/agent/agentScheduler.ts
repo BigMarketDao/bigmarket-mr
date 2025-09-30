@@ -6,8 +6,12 @@ import { sweepAndResolveCategoricalMarkets } from './resolver-helper.js';
 export const initResolveMarketsJob = cron.schedule('*/10 * * * *', async (fireDate) => {
 	console.log('Running: initResolveMarketsJob at: ' + fireDate);
 	try {
-		await sweepAndResolveScalarMarkets();
 		await sweepAndResolveCategoricalMarkets();
+	} catch (err: any) {
+		console.log('initResolveMarketsJob: ', err);
+	}
+	try {
+		await sweepAndResolveScalarMarkets();
 	} catch (err: any) {
 		console.log('initResolveMarketsJob: ', err);
 	}
