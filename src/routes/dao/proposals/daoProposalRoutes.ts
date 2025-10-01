@@ -26,7 +26,7 @@ router.get('/proposals', async (req, res, next) => {
 
 router.get('/', async (req, res, next) => {
 	try {
-		res.send(await fetchAllProposals());
+		res.send(await fetchProposals());
 	} catch (error) {
 		console.log('Error in routes: ', error);
 		next('An error occurred fetching pox-info.');
