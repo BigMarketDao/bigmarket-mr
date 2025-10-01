@@ -131,12 +131,12 @@ export async function getProposalContractSource(principle: string): Promise<Prop
 }
 
 export async function fetchExecutedProposalsByDao(daoContract: string): Promise<Array<VotingEventProposeProposal>> {
-	const results = await daoEventCollection.find({ daoContract, event: 'execute' }).toArray();
+	const results = await daoEventCollection.find({ daoContract, event: 'conclude' }).toArray();
 	return results as unknown as Array<VotingEventProposeProposal>;
 }
 
-export async function fetchExecutedProposals(): Promise<Array<VotingEventProposeProposal>> {
-	const results = await daoEventCollection.find({ event: 'execute' }).toArray();
+export async function fetchConcludedProposals(): Promise<Array<VotingEventProposeProposal>> {
+	const results = await daoEventCollection.find({ event: 'conclude' }).toArray();
 	return results as unknown as Array<VotingEventProposeProposal>;
 }
 
@@ -158,7 +158,7 @@ export async function fetchProposedProposalsByDao(daoContractId: string): Promis
 	const pipeline = [
 		{
 			$match: {
-				event: { $in: ['propose', 'execute'] },
+				event: { $in: ['propose', 'conclude'] },
 				daoContract: daoContractId
 			}
 		},
@@ -171,7 +171,7 @@ export async function fetchProposedProposalsByDao(daoContractId: string): Promis
 		},
 		{
 			$match: {
-				events: { $in: ['propose'], $nin: ['execute'] }
+				events: { $in: ['propose'], $nin: ['conclude'] }
 			}
 		},
 		{

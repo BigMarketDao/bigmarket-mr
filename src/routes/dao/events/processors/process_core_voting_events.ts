@@ -48,53 +48,8 @@ export async function processCoreVotingEvent(basicEvent: BasicEvent, result: any
 			proposalData: await getProposalData(basicEvent.extension, proposal)
 		} as VotingEventConcludeProposal;
 		await saveOrUpdateEvent(votingContractEvent);
-		// } else if (result.value.event.value === 'create-market-vote') {
-		// 	let metadataHash = result.value['market-data-hash'].value;
-		// 	metadataHash = metadataHash.replace(/^0x/, '');
-		// 	const o = {
-		// 		_id: new ObjectId(),
-		// 		event: result.value.event.value,
-		// 		event_index: Number(event.event_index),
-		// 		txId: event.tx_id,
-		// 		daoContract,
-		// 		extension: eventContract,
-		// 		pollId: Number(result.value['market-id'].value),
-		// 		isGated: false,
-		// 		metadataHash: metadataHash,
-		// 		proposer: result.value.proposer.value
-		// 	} as PollCreateEvent;
-
-		// 	console.log('resolveExtensionEvents: PollCreateEvent=', o);
-		// 	await saveOrUpdateEvent(o);
-		// } else if (result.value.event.value === 'market-vote') {
-		// 	console.log('resolveExtensionEvents: PollVoteEvent=' + result.value.event.value);
-		// 	const o: PollVoteEvent = {
-		// 		_id: new ObjectId(),
-		// 		event: result.value.event.value,
-		// 		event_index: Number(event.event_index),
-		// 		txId: event.tx_id,
-		// 		daoContract,
-		// 		extension: eventContract,
-		// 		pollId: Number(result.value['market-id'].value),
-		// 		sip18: result.value.sip18.value,
-		// 		voter: result.value.voter.value,
-		// 		for: Number(result.value['category-for'].value),
-		// 		amount: Number(result.value.amount?.value || 0),
-		// 		reclaimId: result.value['prev-market-id']?.value
-		// 	} as PollVoteEvent;
-
-		// 	await saveOrUpdateEvent(o);
-		// } else if (result.value.event.value === 'conclude-market-vote') {
-		// 	let pollId = Number(result.value['market-id'].value);
-		// 	const marketPoll = await findPollByMarketId(pollId);
-		// 	if (!marketPoll) return;
-		// 	assert(marketPoll.pollId === Number(result.value['market-id'].value), 'wrong market?');
-		// 	marketPoll.marketId = Number(result.value['market-id'].value);
-		// 	marketPoll.winningCategory = Boolean(result.value['winning-category'].value);
-		// 	marketPoll.concludeTxId = txId;
-		// 	await updateDaoEvent(marketPoll._id, marketPoll);
 	} else {
-		//console.log("processEvent: new event: ", event);
+		console.log('processEvent: new event: ', event);
 	}
 }
 

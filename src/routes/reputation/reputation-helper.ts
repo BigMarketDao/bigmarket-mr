@@ -25,7 +25,7 @@ export async function getUserReputationContractData(address: string): Promise<Us
 	let overallBalance = 0;
 	let weightedReputation = 0;
 
-	for (let i = 1; i <= 10; i++) {
+	for (let i = 1; i <= 20; i++) {
 		const row = rows.find((t) => t.tokenId === i);
 		const amount = row?.amount || 0;
 		balances[i - 1] = amount;
