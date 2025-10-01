@@ -154,35 +154,42 @@ export async function findBaseDaoEventByTxId(txId: string): Promise<any> {
 	return result;
 }
 
-export async function fetchProposedProposalsByDao(daoContractId: string): Promise<Array<VotingEventProposeProposal>> {
-	const pipeline = [
-		{
-			$match: {
-				event: { $in: ['propose', 'conclude'] },
-				daoContract: daoContractId
-			}
-		},
-		{
-			$group: {
-				_id: '$proposal',
-				originalDocs: { $push: '$$ROOT' }, // Retain all original documents
-				events: { $addToSet: '$event' }
-			}
-		},
-		{
-			$match: {
-				events: { $in: ['propose'], $nin: ['conclude'] }
-			}
-		},
-		{
-			$unwind: '$originalDocs'
-		},
-		{
-			$replaceRoot: { newRoot: '$originalDocs' } // Replace the root with the original document
-		}
-	];
+export async function fetchProposals(): Promise<Array<VotingEventProposeProposal>> {
+	const results = await daoEventCollection
+		.aggregate([
+			{ $match: { event: 'propose' } },
 
-	const results = await daoEventCollection.aggregate(pipeline).toArray();
+			{
+				$lookup: {
+					from: 'daoEventCollection',
+					let: { proposalId: '$proposal' },
+					pipeline: [{ $match: { event: 'conclude' } }, { $match: { $expr: { $eq: ['$proposal', '$$proposalId'] } } }, { $sort: { event_index: -1 } }, { $limit: 1 }],
+					as: 'concludeEvent'
+				}
+			},
+
+			// flatten out the concludeEvent array
+			{
+				$addFields: {
+					concludeEvent: { $arrayElemAt: ['$concludeEvent', 0] }
+				}
+			},
+
+			// overwrite proposalData by merging
+			{
+				$addFields: {
+					proposalData: {
+						$mergeObjects: ['$proposalData', '$concludeEvent.proposalData']
+					},
+					// optional: pull out top-level fields from conclude
+					passed: '$concludeEvent.passed',
+					concludeTxId: '$concludeEvent.txId'
+				}
+			},
+
+			{ $project: { concludeEvent: 0 } }
+		])
+		.toArray();
 	return results as unknown as Array<VotingEventProposeProposal>;
 }
 export async function fetchProposedProposals(): Promise<Array<VotingEventProposeProposal>> {

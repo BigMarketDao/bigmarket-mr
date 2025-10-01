@@ -1,6 +1,6 @@
 import express from 'express';
 import { VotingEventProposeProposal } from '@mijoco/stx_helpers/dist/index.js';
-import { fetchAllProposals, fetchBootstrapProposals, fetchConcludedProposals, fetchExecutedProposal, fetchExecutedProposalsByDao, fetchLatestProposal, fetchProposedProposals, fetchProposedProposalsByDao } from './proposal.js';
+import { fetchAllProposals, fetchBootstrapProposals, fetchConcludedProposals, fetchExecutedProposal, fetchExecutedProposalsByDao, fetchLatestProposal, fetchProposals, fetchProposedProposals } from './proposal.js';
 import { getVotesByProposal } from '../events/processors/process_core_voting_events.js';
 
 const router = express.Router();
@@ -15,18 +15,9 @@ router.get('/votes/:proposal', async (req, res, next) => {
 	}
 });
 
-router.get('/proposed/:daoContractId', async (req, res, next) => {
+router.get('/proposals', async (req, res, next) => {
 	try {
-		res.send(await fetchProposedProposalsByDao(req.params.daoContractId));
-	} catch (error) {
-		console.log('Error in routes: ', error);
-		next('An error occurred fetching pox-info.');
-	}
-});
-
-router.get('/proposed', async (req, res, next) => {
-	try {
-		res.send(await fetchProposedProposals());
+		res.send(await fetchProposals());
 	} catch (error) {
 		console.log('Error in routes: ', error);
 		next('An error occurred fetching pox-info.');
