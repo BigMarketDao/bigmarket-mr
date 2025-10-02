@@ -26,6 +26,7 @@ import { initScanDaoEventsJob } from './routes/dao/events/eventScheduler.js';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
 import { initExchangeRatesJob } from './routes/rates/ratesScheduler.js';
 import { initCreateMarketsJobBitcoin, initCreateMarketsJobEthereum, initCreateMarketsJobStacks, initCreateMarketsJobSui, initCreateMarketsJobTon, initResolveMarketsJob, initResolveUndisputedMarketsJob } from './routes/agent/agentScheduler.js';
+import { imageRoutes } from './routes/image-proxy/imageRoutes.js';
 import { startUICacheWarming } from './routes/cache/cache_utils.js';
 import { runBatchClaimSweepJob } from './routes/reputation/reputation-helper.js';
 import type { ErrorRequestHandler } from 'express';
@@ -114,6 +115,7 @@ app.use('/bigmarket-api/agent', agentRoutes);
 app.use('/bigmarket-api/reputation', reputationRoutes);
 app.use('/bigmarket-api/clarity-bitcoin', clarityBitcoinRoutes);
 app.use('/bigmarket-api/auth', authRoutes);
+app.use('/bigmarket-api/images', imageRoutes);
 
 const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 	// Optionally narrow:
