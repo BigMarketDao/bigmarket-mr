@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import { Readable } from 'stream';
 
 const router = express.Router();
 
@@ -20,10 +21,12 @@ router.get('/proxy', async (req: Request, res: Response) => {
 		res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
 		res.setHeader('Content-Type', upstream.headers.get('content-type') || 'image/*');
 
-		if (!upstream.body) {
+		if (upstream.body) {
+			const nodeStream = Readable.fromWeb(upstream.body as any);
+			nodeStream.pipe(res);
+		} else {
 			res.status(500).send('no body from upstream');
 		}
-		(upstream.body as any).pipe(res);
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('proxy error');
