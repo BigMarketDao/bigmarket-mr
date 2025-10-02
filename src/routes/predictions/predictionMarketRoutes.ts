@@ -1,6 +1,18 @@
 import express from 'express';
 import { isCreatePollPostValid, savePoll } from '../polling/polling_helper.js';
-import { countCreateMarketEvents, fetchActiveMarketCategories, fetchAllowedTokens, fetchMarket, fetchMarketClaims, fetchMarkets, fetchMarketStakes, fetchMarketVotes, findOpinionPollByTitle, readMinTokenLiquidity } from './markets_helper.js';
+import {
+	countCreateMarketEvents,
+	fetchActiveMarketCategories,
+	fetchAllowedTokens,
+	fetchMarket,
+	fetchMarketClaims,
+	fetchMarkets,
+	fetchMarketStakes,
+	fetchMarketVotes,
+	findOpinionPollByTitle,
+	readMinTokenLiquidity,
+	readMinTokenLiquidityToken
+} from './markets_helper.js';
 import { DaoOverview, fetchContractBalances, fetchTokenSaleStages, GateKeeper, readPredictionContractData, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
 import { getConfig } from '../../lib/config.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
@@ -81,6 +93,12 @@ router.post('/markets', async (req, res) => {
 			}
 		}
 	}
+});
+
+router.get('/tokens/liquidity/:token', async (req, res) => {
+	const scalarMin = await readMinTokenLiquidityToken(getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_SCALAR, req.params.token);
+	const categoricalMin = await readMinTokenLiquidityToken(getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING, req.params.token);
+	res.json({ scalarMin, categoricalMin });
 });
 
 router.get('/markets/leader-board', async (req, res) => {

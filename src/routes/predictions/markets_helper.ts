@@ -31,7 +31,7 @@ export async function readMinTokenLiquidity(deployer: string, contractName: stri
 	}
 }
 
-async function readMinTokenLiquidityToken(deployer: string, contractName: string, token: string): Promise<any> {
+export async function readMinTokenLiquidityToken(deployer: string, contractName: string, token: string): Promise<any> {
 	try {
 		const functionArgs = [`0x${serializeCV(principalCV(token))}`];
 		const data = {
