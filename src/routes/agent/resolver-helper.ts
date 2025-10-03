@@ -36,7 +36,7 @@ export async function sweepAndResolveCategoricalMarkets(): Promise<Array<Predict
 	console.log('sweepAndResolveCategoricalMarkets: starting task');
 	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market' }).toArray()) as unknown as Array<PredictionMarketCreateEvent>;
 	const resolved = [];
-	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi, getConfig().stacksHiroKey)) || ({} as StacksInfo);
 	const blockHeight = stacksInfo.burn_block_height;
 	for (const market of markets) {
 		if (market.marketType !== 2) {

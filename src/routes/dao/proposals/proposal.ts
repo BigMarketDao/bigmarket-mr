@@ -41,7 +41,7 @@ export async function getProposalData(votingContract: string, principle: string)
 			functionName: 'get-proposal-data',
 			functionArgs
 		};
-		const result = await callContractReadOnly(getConfig().stacksApi, data);
+		const result = await callContractReadOnly(getConfig().stacksApi, data, getConfig().stacksHiroKey);
 		let start = 0;
 		let end = 0;
 		let startBlockHeight = 0;
@@ -56,9 +56,8 @@ export async function getProposalData(votingContract: string, principle: string)
 			// pre nakamoto
 			start = Number(result.value.value['start-block-height'].value);
 			end = Number(result.value.value['end-block-height'].value);
-			startBlockHeight = start; //await getStacksHeightFromBurnBlockHeight(getConfig().stacksApi, start)
+			startBlockHeight = start;
 		}
-		//console.log('result.value.value[custom-majority].value: ' + result.value.value['custom-majority'].value.value)
 		const pd = {
 			concluded: Boolean(result.value.value.concluded.value),
 			passed: Boolean(result.value.value.passed.value),

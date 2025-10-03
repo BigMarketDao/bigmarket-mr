@@ -17,7 +17,7 @@ router.get('/leader-board', async (req, res) => {
 });
 
 router.get('/meta-data', async (req, res) => {
-	const data = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN);
+	const data = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
 	console.log('/meta-data', data);
 	const ts = await getTotalSupplies();
 	console.log('/meta-data ts', ts);
@@ -33,7 +33,7 @@ router.get('/:address', async (req, res) => {
 });
 
 router.get('/:tier/:address', async (req, res) => {
-	const data = await fetchBalanceAtTier(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, req.params.address, Number(req.params.tier));
+	const data = await fetchBalanceAtTier(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, req.params.address, Number(req.params.tier), getConfig().stacksHiroKey);
 	res.json(data);
 });
 

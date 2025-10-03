@@ -12,6 +12,7 @@ export type ConfigI = {
 	publicAppName: string;
 	publicAppVersion: string;
 	stacksApi: string;
+	stacksHiroKey: string;
 	walletKey: string;
 	llmServer: string;
 	rpcUser: string;

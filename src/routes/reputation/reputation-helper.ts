@@ -248,8 +248,8 @@ const WEIGHTS: Record<number, number> = {
 export async function runBatchClaimSweep() {
 	let currentEpoch = -1;
 	try {
-		currentEpoch = (await getPoxInfo(getConfig().stacksApi))?.current_burnchain_block_height || -1;
-		if (currentEpoch < 0) currentEpoch = await fetchCurrentEpoch(getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN);
+		currentEpoch = (await getPoxInfo(getConfig().stacksApi, getConfig().stacksHiroKey))?.current_burnchain_block_height || -1;
+		if (currentEpoch < 0) currentEpoch = await fetchCurrentEpoch(getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
 		else currentEpoch = currentEpoch / 4000;
 		console.log('runBatchClaimSweep: currentEpoch=' + currentEpoch);
 	} catch (err: any) {

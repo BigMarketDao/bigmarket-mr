@@ -10,6 +10,7 @@ export function printConfig() {
 	console.log('mongoUser = ' + CONFIG.mongoUser);
 	console.log('host = ' + CONFIG.host + ':' + CONFIG.port);
 	console.log('stacksApi = ' + CONFIG.stacksApi);
+	console.log('stacksHiroKey = ' + CONFIG.stacksHiroKey.substring(0, 3));
 	console.log('network = ' + CONFIG.network);
 	console.log('publicAppName = ' + CONFIG.publicAppName);
 	console.log('publicAppVersion = ' + CONFIG.publicAppVersion);
@@ -41,6 +42,7 @@ export function setConfigOnStart() {
 
 	CONFIG.network = process.env[network + '_sui_network'] || '';
 	CONFIG.stacksApi = process.env[network + '_sui_stacksApi'] || '';
+	CONFIG.stacksHiroKey = process.env[network + '_sui_stacksHiroKey'] || '';
 	CONFIG.publicAppBaseUrl = network === 'devnet' ? 'http://localhost:8081' : 'http://localhost:3000';
 	CONFIG.publicAppName = process.env[network + '_sui_publicAppName'] || '';
 	CONFIG.publicAppVersion = process.env[network + '_sui_publicAppVersion'] || '';

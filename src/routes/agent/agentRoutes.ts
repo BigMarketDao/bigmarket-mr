@@ -42,7 +42,7 @@ router.get('/resolve/:marketId/:marketType', async (req, res) => {
 		res.json(markets);
 	} else {
 		const market = await fetchMarket(marketId, marketType);
-		const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+		const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi, getConfig().stacksHiroKey)) || ({} as StacksInfo);
 		const blockHeight = stacksInfo.burn_block_height;
 		const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
 		if (blockHeight >= endCool) {

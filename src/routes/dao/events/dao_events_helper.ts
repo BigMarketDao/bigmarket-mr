@@ -43,7 +43,7 @@ export async function readDaoEvents(genesis: boolean, daoContractId: string) {
 	let moreEvents = true;
 	try {
 		do {
-			moreEvents = await resolveExtensionEvents(url, currentOffset, count, daoContractId);
+			moreEvents = await resolveExtensionEvents(url, currentOffset, count, daoContractId, getConfig().stacksHiroKey);
 			//console.log('Running: moreEvents: ', moreEvents);
 			count++;
 		} while (moreEvents);
@@ -53,9 +53,11 @@ export async function readDaoEvents(genesis: boolean, daoContractId: string) {
 	return extensions;
 }
 
-async function resolveExtensionEvents(url: string, currentOffset: number, total: number, daoContractId: string): Promise<any> {
+async function resolveExtensionEvents(url: string, currentOffset: number, total: number, daoContractId: string, stacksHiroKey: string): Promise<any> {
 	let urlOffset = url + '&offset=' + (currentOffset + total * 20);
-	const response = await fetch(urlOffset);
+	const response = await fetch(urlOffset, {
+		headers: { 'x-api-key': stacksHiroKey }
+	});
 	const val = await response.json();
 	//console.log('resolveExtensionEvents: for url ' + urlOffset, val);
 	if (!val || !val.results || typeof val.results !== 'object' || val.results.length === 0) {

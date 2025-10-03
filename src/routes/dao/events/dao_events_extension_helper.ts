@@ -58,7 +58,7 @@ async function readExtensionEvents(genesis: boolean, daoContract: string, extens
 	try {
 		while (keepGoing) {
 			const url = `${urlBase}&offset=${offset}`;
-			const numEvents = await resolveExtensionEvents(url, daoContract, extensionContract);
+			const numEvents = await resolveExtensionEvents(url, daoContract, extensionContract, getConfig().stacksHiroKey);
 
 			if (numEvents === 0) break;
 
@@ -82,8 +82,10 @@ export async function findVotingContractEventByContractAndIndex(event_index: num
 	return result;
 }
 
-async function resolveExtensionEvents(url: string, daoContract: string, extensionContract: string): Promise<any> {
-	const response = await fetch(url);
+async function resolveExtensionEvents(url: string, daoContract: string, extensionContract: string, stacksHiroKey?: string): Promise<any> {
+	const response = await fetch(url, {
+		headers: { ...(stacksHiroKey ? { 'x-api-key': stacksHiroKey } : {}) }
+	});
 	const val = await response.json();
 
 	if (!val || !val.results || typeof val.results !== 'object' || val.results.length === 0) {

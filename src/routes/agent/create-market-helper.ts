@@ -54,7 +54,7 @@ export async function createMarketBySuggestion(proposer: string, userIdea: strin
 }
 
 async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateMarketLLMResponse): Promise<StoredOpinionPoll> {
-	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi, getConfig().stacksHiroKey)) || ({} as StacksInfo);
 	const current = stacksInfo.burn_block_height;
 	const tokens = await fetchAllowedTokens(1);
 	const stxToken = tokens.find((t) => t.token.indexOf('wrapped-stx') > -1);

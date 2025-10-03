@@ -33,9 +33,9 @@ router.get('/market-dao-data', async (req, res) => {
 	} else {
 		try {
 			// Fetch contract data
-			const contractData = await readPredictionContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING);
+			const contractData = await readPredictionContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING, getConfig().stacksHiroKey);
 			contractData.marketInitialLiquidity = 100000000;
-			// const reputationData = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN);
+			// const reputationData = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
 			//console.log('/market-dao-data: ', reputationData);
 			// Fetch contract balances
 			try {
@@ -44,12 +44,12 @@ router.get('/market-dao-data', async (req, res) => {
 			} catch (err: any) {
 				console.log('/market-dao-data: ', '==================================================================');
 			}
-			const scalarBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`);
-			const contractBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`);
-			const treasuryBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`);
+			const scalarBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`, getConfig().stacksHiroKey);
+			const contractBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`, getConfig().stacksHiroKey);
+			const treasuryBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`, getConfig().stacksHiroKey);
 			let tokenSale;
 			try {
-				tokenSale = await fetchTokenSaleStages(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_TOKEN_SALE);
+				tokenSale = await fetchTokenSaleStages(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_TOKEN_SALE, getConfig().stacksHiroKey);
 			} catch (err) {}
 
 			// Update cache

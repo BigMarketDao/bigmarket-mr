@@ -13,7 +13,7 @@ export async function isExtension(daoContractAddress: string, daoContractName: s
 	};
 	let res: { value: boolean; type: string };
 	try {
-		res = await callContractReadOnly(getConfig().stacksApi, data);
+		res = await callContractReadOnly(getConfig().stacksApi, data, getConfig().stacksHiroKey);
 		return { result: res.value };
 	} catch (e) {
 		return { result: false };
@@ -30,7 +30,7 @@ export async function isExecutiveTeamMember(emergencyExecuteContractId: string, 
 		functionArgs
 	};
 	try {
-		const result = (await callContractReadOnly(getConfig().stacksApi, data)).value;
+		const result = (await callContractReadOnly(getConfig().stacksApi, data, getConfig().stacksHiroKey)).value;
 		return {
 			executiveTeamMember: Boolean(result)
 		};
@@ -66,7 +66,7 @@ export async function getEdgTotalSupply(daoContractAddress: string): Promise<{ t
 		functionName: 'get-total-supply',
 		functionArgs
 	};
-	const result = (await callContractReadOnly(getConfig().stacksApi, data)).value;
+	const result = (await callContractReadOnly(getConfig().stacksApi, data, getConfig().stacksHiroKey)).value;
 	return {
 		totalSupply: Boolean(result)
 	};
@@ -80,7 +80,7 @@ export async function getEdgBalance(daoContractAddress: string, stxAddress: stri
 		functionName: 'edg-get-balance',
 		functionArgs
 	};
-	const result = (await callContractReadOnly(getConfig().stacksApi, data)).value;
+	const result = (await callContractReadOnly(getConfig().stacksApi, data, getConfig().stacksHiroKey)).value;
 	return {
 		balance: Boolean(result)
 	};
@@ -94,7 +94,7 @@ export async function getEdgLocked(daoContractAddress: string, stxAddress: strin
 		functionName: 'edg-get-locked',
 		functionArgs
 	};
-	const result = (await callContractReadOnly(getConfig().stacksApi, data)).value;
+	const result = (await callContractReadOnly(getConfig().stacksApi, data, getConfig().stacksHiroKey)).value;
 	return {
 		locked: Boolean(result)
 	};

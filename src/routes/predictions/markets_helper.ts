@@ -40,7 +40,7 @@ export async function readMinTokenLiquidityToken(deployer: string, contractName:
 			functionName: 'get-token-minimum-seed',
 			functionArgs
 		};
-		const result = await callContractReadOnly(getConfig().stacksApi, data);
+		const result = await callContractReadOnly(getConfig().stacksApi, data, getConfig().stacksHiroKey);
 		console.log('readMinTokenLiquidityToken: ', result);
 		if (result.success) return Number(result.value.value.value);
 		else return -1;
@@ -64,7 +64,7 @@ export async function readMinTokenLiquidityToken(deployer: string, contractName:
 
 async function updateMarketData(marketId: number, marketType: number, marketContract: string) {
 	// marketData is kept up to date on the create-market event when new events are detected!
-	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1]);
+	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1], getConfig().stacksHiroKey);
 	if (!marketData) {
 		console.error('Problem calling api - maybe rate limits?');
 		return 'Problem calling api - maybe rate limits?';
@@ -89,7 +89,7 @@ export async function updatePredictionMarketCreateEvent(marketType: number, resu
 	const marketId = Number(result.value['market-id'].value);
 	const seedAmount = result.value['seed-amount']?.value || 0;
 	console.log(marketId, ' marketContract: ' + basicEvent.extension);
-	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, basicEvent.extension.split('.')[0], basicEvent.extension.split('.')[1]);
+	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, basicEvent.extension.split('.')[0], basicEvent.extension.split('.')[1], getConfig().stacksHiroKey);
 	if (!marketData) {
 		console.error('Problem calling api - maybe rate limits?');
 		return 'Problem calling api - maybe rate limits?';
@@ -108,7 +108,7 @@ export async function updatePredictionMarketCreateEvent(marketType: number, resu
 export async function updateResolveMarketEvent(marketType: number, result: any, basicEvent: BasicEvent) {
 	console.log('resolve-market: result.value.event: ', result);
 	const marketId = Number(result.value['market-id'].value);
-	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, basicEvent.extension.split('.')[0], basicEvent.extension.split('.')[1]);
+	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, basicEvent.extension.split('.')[0], basicEvent.extension.split('.')[1], getConfig().stacksHiroKey);
 	const createEvent = await fetchMarket(marketId, marketType);
 	const priceOutcome = Number(result.value['price']?.value || 0);
 	const stacksHeight = Number(result.value['stacks-height']?.value || 0);
@@ -142,7 +142,7 @@ export async function updateResolveMarketEvent(marketType: number, result: any, 
 export async function updateResolveMarketUndisputedEvent(marketType: number, result: any, basicEvent: BasicEvent) {
 	const marketId = Number(result.value['market-id'].value);
 	const createEvent = await fetchMarket(marketId, marketType);
-	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, basicEvent.extension.split('.')[0], basicEvent.extension.split('.')[1]);
+	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, basicEvent.extension.split('.')[0], basicEvent.extension.split('.')[1], getConfig().stacksHiroKey);
 	if (!createEvent) return;
 	const changes = {
 		concluded: true,
@@ -168,7 +168,7 @@ export async function updateResolveMarketVoteEvent(marketType: number, result: a
 	const marketId = Number(result.value['market-id'].value);
 	const createEvent = await fetchMarket(marketId, marketType);
 	if (!createEvent) return;
-	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, basicEvent.extension.split('.')[0], basicEvent.extension.split('.')[1]);
+	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, basicEvent.extension.split('.')[0], basicEvent.extension.split('.')[1], getConfig().stacksHiroKey);
 	const changes = {
 		marketData,
 		resolver: result.value.resolver.value
@@ -192,7 +192,7 @@ export async function updateDisputeResolutionEvent(marketType: number, result: a
 	const marketId = Number(result.value['market-id'].value);
 	const createEvent = await fetchMarket(marketId, marketType);
 	if (!createEvent) return;
-	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, basicEvent.extension.split('.')[0], basicEvent.extension.split('.')[1]);
+	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, basicEvent.extension.split('.')[0], basicEvent.extension.split('.')[1], getConfig().stacksHiroKey);
 	const changes = {
 		marketData,
 		disputer: result.value.disputer.value

@@ -76,7 +76,7 @@ export async function countVotes(proposal: string): Promise<number> {
 }
 
 async function getSubmissionContract(txId: string): Promise<string> {
-	const fundingTx = await getTransaction(getConfig().stacksApi, txId);
+	const fundingTx = await getTransaction(getConfig().stacksApi, txId, getConfig().stacksHiroKey);
 	return fundingTx.contract_call.contract_id;
 }
 

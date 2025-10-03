@@ -40,7 +40,7 @@ export async function sweepAndResolveScalarMarkets(): Promise<Array<PredictionMa
 	console.log('sweepAndResolveScalarMarkets: starting task');
 	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market', marketType: 2 }).toArray()) as unknown as Array<PredictionMarketCreateEvent>;
 	const resolvedMarkets: PredictionMarketCreateEvent[] = [];
-	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi, getConfig().stacksHiroKey)) || ({} as StacksInfo);
 	const blockHeight = stacksInfo.burn_block_height;
 	for (const market of markets) {
 		console.log('sweepAndResolveScalarMarkets: scanning: ' + market.unhashedData.name);
@@ -63,7 +63,7 @@ export async function resolveUndisputedScalarMarketsOnChain(): Promise<Array<Pre
 	console.log('resolveUndisputedScalarMarketsOnChain: starting task');
 	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 1, event: 'create-market' }).toArray()) as unknown as Array<PredictionMarketCreateEvent>;
 	const resolvedMarkets: PredictionMarketCreateEvent[] = [];
-	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi, getConfig().stacksHiroKey)) || ({} as StacksInfo);
 	const blockHeight = stacksInfo.burn_block_height;
 
 	for (const market of markets) {
@@ -150,7 +150,7 @@ async function getMetaData(chain: number, endBlockHeight: number, ends: string) 
 	};
 }
 export async function fetchScalarMarketData(chain: number): Promise<StoredOpinionPoll> {
-	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi, getConfig().stacksHiroKey)) || ({} as StacksInfo);
 	const current = stacksInfo.burn_block_height;
 	const endCooling = current + DURATION + COOL_DOWN;
 	const ends = estimateBitcoinBlockTime(endCooling, current);
@@ -162,7 +162,7 @@ export async function fetchScalarMarketData(chain: number): Promise<StoredOpinio
 }
 
 async function createMarketOnChain(chain: number): Promise<any> {
-	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi)) || ({} as StacksInfo);
+	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi, getConfig().stacksHiroKey)) || ({} as StacksInfo);
 	const current = stacksInfo.burn_block_height;
 	const endCooling = current + DURATION + COOL_DOWN;
 	const ends = estimateBitcoinBlockTime(endCooling, current);
