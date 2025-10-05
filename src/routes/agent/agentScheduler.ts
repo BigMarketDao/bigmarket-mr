@@ -3,7 +3,7 @@ import { createScalarMarketsOnChain, sweepAndResolveScalarMarkets, resolveUndisp
 import { sweepAndResolveCategoricalMarkets } from './resolver-helper.js';
 
 // every 10 minutes: */10 * * * *'
-export const initResolveMarketsJob = cron.schedule('*/10 * * * *', async (fireDate) => {
+export const initResolveMarketsJob = cron.schedule('*/20 * * * *', async (fireDate) => {
 	console.log('Running: initResolveMarketsJob at: ' + fireDate);
 	try {
 		await sweepAndResolveCategoricalMarkets();

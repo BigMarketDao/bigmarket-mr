@@ -23,7 +23,7 @@ import { pythRoutes } from './routes/oracle/pyth/pythRoutes.js';
 import { agentRoutes } from './routes/agent/agentRoutes.js';
 import { reputationRoutes } from './routes/reputation/reputationRoutes.js';
 import { authRoutes } from './routes/auth/authRoutes.js';
-import { initScanDaoEventsJob } from './routes/dao/events/eventScheduler.js';
+import { initScanDaoEventsJob, initScanDaoEventsTestnetJob } from './routes/dao/events/eventScheduler.js';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
 import { initExchangeRatesJob } from './routes/rates/ratesScheduler.js';
 import { initCreateMarketsJobBitcoin, initCreateMarketsJobEthereum, initCreateMarketsJobStacks, initCreateMarketsJobSui, initCreateMarketsJobTon, initResolveMarketsJob, initResolveUndisputedMarketsJob } from './routes/agent/agentScheduler.js';
@@ -143,7 +143,11 @@ async function connectToMongoCloud() {
 	printDaoConfig();
 	await connect();
 	console.log('Connected to MongoDB!');
-	initScanDaoEventsJob.start();
+	if (getConfig().network === 'testnet') {
+		initScanDaoEventsTestnetJob.start();
+	} else {
+		initScanDaoEventsJob.start();
+	}
 	initExchangeRatesJob.start();
 	initResolveMarketsJob.start();
 	initResolveUndisputedMarketsJob.start();

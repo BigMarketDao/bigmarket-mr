@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import { updateExchangeRates } from './rates_utils.js';
 
 // 30 mins past every second hour: 30 */2 * * *'
-export const initExchangeRatesJob = cron.schedule('*/2 * * * *', (fireDate) => {
+export const initExchangeRatesJob = cron.schedule('*/4 * * * *', (fireDate) => {
 	console.log('Running: exchangeRates at: ' + fireDate);
 	try {
 		updateExchangeRates();
