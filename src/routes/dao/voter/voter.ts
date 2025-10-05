@@ -1,8 +1,9 @@
 import { fetchResolutionVote, MarketVotingVoteEvent, PredictionMarketCreateEvent, ResolutionVote } from '@mijoco/stx_helpers/dist/index.js';
 import { daoEventCollection } from '../../../lib/data/db_models.js';
 import { getConfig } from '../../../lib/config.js';
-import { fetchMarket } from '../../predictions/markets_helper.js';
+import { fetchMarket, getContract } from '../../predictions/markets_helper.js';
 import { getDaoConfig } from '../../../lib/config_dao.js';
+import { principalCV, serializeCV, uintCV } from '@stacks/transactions';
 
 export async function getVotesByProposalAndVoter(proposal: string, voter: string): Promise<any> {
 	const result = await daoEventCollection.find({ proposal, voter, event: 'vote' }).toArray();
@@ -17,7 +18,8 @@ export async function getVotesByVoter(voter: string): Promise<any> {
 
 export async function getMarketVoteComplete(marketId: number, marketType: number): Promise<any> {
 	const market = (await fetchMarket(marketId, marketType)) as PredictionMarketCreateEvent;
-	const resolutionVote = (await fetchResolutionVote(getConfig().stacksApi, market.extension, market.marketId, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_VOTING, getConfig().stacksHiroKey)) as ResolutionVote;
+	const contract = getContract(marketType);
+	const resolutionVote = (await fetchResolutionVote(getConfig().stacksApi, contract, market.marketId, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_VOTING, getConfig().stacksHiroKey)) as ResolutionVote;
 	const marketVotes = (await getMarketVotesByMarket(market.extension, market.marketId)) as Array<MarketVotingVoteEvent>;
 	return { market, resolutionVote, marketVotes };
 }
@@ -163,3 +165,32 @@ export async function getMarketVotesUser(voter: string): Promise<any> {
 	const result = await daoEventCollection.find({ voter, event: 'market-vote' }).toArray();
 	return result;
 }
+
+//(some (tuple (concluded false)
+// (end-burn-height u98564)
+// (num-categories u2)
+// (proposer ST3Y12HJYP2NMNAFHWBPM2CMYDHYXME1F46VC5SPJ)
+// (votes (list u134000000 u55000000))
+// (winning-category none)))
+// async function fetchResolutionVote(stacksApi: string, marketContract: string, marketId: number, contractAddress: string, contractName: string, stacksHiroKey?: string): Promise<ResolutionVote> {
+// 	const data = {
+// 		contractAddress,
+// 		contractName,
+// 		functionName: 'get-poll-data',
+// 		functionArgs: [`0x${serializeCV(principalCV(marketContract))}`, `0x${serializeCV(uintCV(marketId))}`]
+// 	};
+// 	const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+// 	const votes = result.value.value['votes'].value.map((item: any) => Number(item.value));
+
+// 	return {
+// 		marketContract,
+// 		marketId,
+// 		proposer: result.value.value.proposer.value,
+// 		endBurnHeight: Number(result.value.value['end-burn-height'].value),
+// 		isGated: false,
+// 		concluded: Boolean(result.value.value.concluded.value),
+// 		votes,
+// 		numCategories: Number(result.value.value['num-categories'].value),
+// 		winningCategory: result.value.value['winning-category']?.value
+// 	};
+// }

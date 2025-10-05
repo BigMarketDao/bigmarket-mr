@@ -355,7 +355,7 @@ export async function fetchMarketVotes(marketId: number): Promise<Array<MarketVo
 	return result as unknown as Array<MarketVotingVoteEvent>;
 }
 
-function getContract(marketType: number): string {
+export function getContract(marketType: number): string {
 	let contract = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_BITCOIN}`;
 	if (marketType === 1) contract = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`;
 	if (marketType === 2) contract = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`;
