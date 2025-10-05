@@ -1,5 +1,5 @@
 import express from 'express';
-import { getMarketVotes, getMarketVotesByMarket, getMarketVotesUser, getVotesByProposalAndVoter, getVotesByVoter } from './voter.js';
+import { getMarketVotes, getMarketVotesByMarket, getMarketVotesUser } from './voter.js';
 
 const router = express.Router();
 
@@ -33,4 +33,4 @@ router.get('/:market/:marketId', async (req, res, next) => {
 	}
 });
 
-export { router as marketVoteRoutes };
+export { router as disputeRoutes };
