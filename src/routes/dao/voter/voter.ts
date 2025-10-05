@@ -1,4 +1,8 @@
+import { fetchResolutionVote, MarketVotingVoteEvent, PredictionMarketCreateEvent, ResolutionVote } from '@mijoco/stx_helpers';
 import { daoEventCollection } from '../../../lib/data/db_models.js';
+import { getConfig } from '../../../lib/config.js';
+import { fetchMarket } from '../../predictions/markets_helper.js';
+import { getDaoConfig } from '../../../lib/config_dao.js';
 
 export async function getVotesByProposalAndVoter(proposal: string, voter: string): Promise<any> {
 	const result = await daoEventCollection.find({ proposal, voter, event: 'vote' }).toArray();
@@ -9,6 +13,13 @@ export async function getVotesByVoter(voter: string): Promise<any> {
 	console.log('getVotesByVoter: ' + voter);
 	const result = await daoEventCollection.find({ voter, event: 'vote' }).toArray();
 	return result;
+}
+
+export async function getMarketVoteComplete(marketId: number, marketType: number): Promise<any> {
+	const market = (await fetchMarket(marketId, marketType)) as PredictionMarketCreateEvent;
+	const resolutionVote = (await fetchResolutionVote(getConfig().stacksApi, market.extension, market.marketId, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_VOTING, getConfig().stacksHiroKey)) as ResolutionVote;
+	const marketVotes = (await getMarketVotesByMarket(market.extension, market.marketId)) as Array<MarketVotingVoteEvent>;
+	return { market, resolutionVote, marketVotes };
 }
 
 export async function getMarketVotesComplete(): Promise<any> {
@@ -143,9 +154,9 @@ export async function getMarketVotes(): Promise<any> {
 	return result;
 }
 
-export async function getMarketVotesByMarket(extension: string, marketId: number): Promise<any> {
+export async function getMarketVotesByMarket(extension: string, marketId: number): Promise<Array<MarketVotingVoteEvent>> {
 	const result = await daoEventCollection.find({ event: 'market-vote', extension, marketId }).toArray();
-	return result;
+	return result as unknown as Array<MarketVotingVoteEvent>;
 }
 
 export async function getMarketVotesUser(voter: string): Promise<any> {

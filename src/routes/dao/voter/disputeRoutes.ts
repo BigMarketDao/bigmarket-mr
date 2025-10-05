@@ -1,5 +1,5 @@
 import express from 'express';
-import { getMarketVotesByMarket, getMarketVotesComplete, getMarketVotesUser } from './voter.js';
+import { getMarketVoteComplete, getMarketVotesByMarket, getMarketVotesComplete, getMarketVotesUser } from './voter.js';
 
 const router = express.Router();
 
@@ -23,9 +23,9 @@ router.get('/:voter', async (req, res, next) => {
 	}
 });
 
-router.get('/:market/:marketId', async (req, res, next) => {
+router.get('/:marketId/:marketType', async (req, res, next) => {
 	try {
-		const response = await getMarketVotesByMarket(req.params.market, Number(req.params.marketId));
+		const response = await getMarketVoteComplete(Number(req.params.marketId), Number(req.params.marketType));
 		res.send(response);
 	} catch (error) {
 		console.log('Error in routes: ', error);
