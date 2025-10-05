@@ -20,6 +20,7 @@ export async function getMarketVoteComplete(marketId: number, marketType: number
 	const market = (await fetchMarket(marketId, marketType)) as PredictionMarketCreateEvent;
 	const contract = getContract(marketType);
 	const resolutionVote = (await fetchResolutionVote(getConfig().stacksApi, contract, market.marketId, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_VOTING, getConfig().stacksHiroKey)) as ResolutionVote;
+	//const resolutionVote = (await fetchResolutionVote(getConfig().VITE_STACKS_API, contract, marketId, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_VOTING)) as ResolutionVote;
 	const marketVotes = (await getMarketVotesByMarket(market.extension, market.marketId)) as Array<MarketVotingVoteEvent>;
 	return { market, resolutionVote, marketVotes };
 }
@@ -179,6 +180,8 @@ async function fetchResolutionVote(stacksApi: string, marketContract: string, ma
 		functionName: 'get-poll-data',
 		functionArgs: [`0x${serializeCV(principalCV(marketContract))}`, `0x${serializeCV(uintCV(marketId))}`]
 	};
+	console.log('fetchResolutionVote: marketContract: ', marketContract);
+	console.log('fetchResolutionVote: marketId: ', marketId);
 	console.log('fetchResolutionVote: data: ', data);
 	const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
 	console.log('fetchResolutionVote: result: ', result);
