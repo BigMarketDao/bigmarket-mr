@@ -1,11 +1,11 @@
 import express from 'express';
-import { getMarketVotes, getMarketVotesByMarket, getMarketVotesUser } from './voter.js';
+import { getMarketVotesByMarket, getMarketVotesComplete, getMarketVotesUser } from './voter.js';
 
 const router = express.Router();
 
 router.get('/', async (req, res, next) => {
 	try {
-		const response = await getMarketVotes();
+		const response = await getMarketVotesComplete();
 		res.send(response);
 	} catch (error) {
 		console.log('Error in routes: ', error);
