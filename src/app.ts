@@ -13,6 +13,7 @@ import { predictionMarketRoutes } from './routes/predictions/predictionMarketRou
 import { myMarketRoutes } from './routes/predictions/my_markets/myMarketRoutes.js';
 import { daoProposalRoutes } from './routes/dao/proposals/daoProposalRoutes.js';
 import { voterRoutes } from './routes/dao/voter/voterRoutes.js';
+import { marketVoteRoutes } from './routes/dao/voter/marketVotes.js';
 import { gatingRoutes } from './routes/gating/gatingRoutes.js';
 import { daoSip18VotingRoutes } from './routes/dao/sip18-voting/daoSip18VotingRoutes.js';
 import { clarityBitcoinRoutes } from './routes/clarity-bitcoin/clarityBitcoinRoutes.js';
@@ -116,6 +117,7 @@ app.use('/bigmarket-api/reputation', reputationRoutes);
 app.use('/bigmarket-api/clarity-bitcoin', clarityBitcoinRoutes);
 app.use('/bigmarket-api/auth', authRoutes);
 app.use('/bigmarket-api/images', imageRoutes);
+app.use('/bigmarket-api/market-votes', marketVoteRoutes);
 
 const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 	// Optionally narrow:
