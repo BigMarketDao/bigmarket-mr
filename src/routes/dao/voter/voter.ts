@@ -1,4 +1,4 @@
-import { fetchResolutionVote, MarketVotingVoteEvent, PredictionMarketCreateEvent, ResolutionVote } from '@mijoco/stx_helpers/dist/index.js';
+import { callContractReadOnly, MarketVotingVoteEvent, PredictionMarketCreateEvent, ResolutionVote } from '@mijoco/stx_helpers/dist/index.js';
 import { daoEventCollection } from '../../../lib/data/db_models.js';
 import { getConfig } from '../../../lib/config.js';
 import { fetchMarket, getContract } from '../../predictions/markets_helper.js';
@@ -172,25 +172,27 @@ export async function getMarketVotesUser(voter: string): Promise<any> {
 // (proposer ST3Y12HJYP2NMNAFHWBPM2CMYDHYXME1F46VC5SPJ)
 // (votes (list u134000000 u55000000))
 // (winning-category none)))
-// async function fetchResolutionVote(stacksApi: string, marketContract: string, marketId: number, contractAddress: string, contractName: string, stacksHiroKey?: string): Promise<ResolutionVote> {
-// 	const data = {
-// 		contractAddress,
-// 		contractName,
-// 		functionName: 'get-poll-data',
-// 		functionArgs: [`0x${serializeCV(principalCV(marketContract))}`, `0x${serializeCV(uintCV(marketId))}`]
-// 	};
-// 	const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-// 	const votes = result.value.value['votes'].value.map((item: any) => Number(item.value));
+async function fetchResolutionVote(stacksApi: string, marketContract: string, marketId: number, contractAddress: string, contractName: string, stacksHiroKey?: string): Promise<ResolutionVote> {
+	const data = {
+		contractAddress,
+		contractName,
+		functionName: 'get-poll-data',
+		functionArgs: [`0x${serializeCV(principalCV(marketContract))}`, `0x${serializeCV(uintCV(marketId))}`]
+	};
+	console.log('fetchResolutionVote: data: ', data);
+	const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+	console.log('fetchResolutionVote: result: ', result);
+	const votes = result.value?.value['votes'].value?.map((item: any) => Number(item.value)) || [];
 
-// 	return {
-// 		marketContract,
-// 		marketId,
-// 		proposer: result.value.value.proposer.value,
-// 		endBurnHeight: Number(result.value.value['end-burn-height'].value),
-// 		isGated: false,
-// 		concluded: Boolean(result.value.value.concluded.value),
-// 		votes,
-// 		numCategories: Number(result.value.value['num-categories'].value),
-// 		winningCategory: result.value.value['winning-category']?.value
-// 	};
-// }
+	return {
+		marketContract,
+		marketId,
+		proposer: result.value?.value?.proposer.value || undefined,
+		endBurnHeight: Number(result.value?.value['end-burn-height'].value || 0),
+		isGated: false,
+		concluded: Boolean(result.value?.value?.concluded.value || false),
+		votes,
+		numCategories: Number(result.value?.value['num-categories']?.value || 0),
+		winningCategory: result.value?.value['winning-category']?.value || ''
+	};
+}
