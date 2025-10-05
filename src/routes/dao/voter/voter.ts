@@ -1,4 +1,4 @@
-import { fetchResolutionVote, MarketVotingVoteEvent, PredictionMarketCreateEvent, ResolutionVote } from '@mijoco/stx_helpers';
+import { fetchResolutionVote, MarketVotingVoteEvent, PredictionMarketCreateEvent, ResolutionVote } from '@mijoco/stx_helpers/dist/index.js';
 import { daoEventCollection } from '../../../lib/data/db_models.js';
 import { getConfig } from '../../../lib/config.js';
 import { fetchMarket } from '../../predictions/markets_helper.js';
