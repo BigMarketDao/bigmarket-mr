@@ -17,7 +17,7 @@ export async function getMarketVotesComplete(): Promise<any> {
 			// 1️⃣ Start from dispute-resolution events
 			{ $match: { event: 'dispute-resolution' } },
 
-			// 2️⃣ Lookup market-vote events
+			// 2️⃣ Lookup related market-vote events
 			{
 				$lookup: {
 					from: 'daoEventCollection',
@@ -51,7 +51,7 @@ export async function getMarketVotesComplete(): Promise<any> {
 				}
 			},
 
-			// 3️⃣ Lookup resolve-market-vote event
+			// 3️⃣ Lookup related resolve-market-vote event
 			{
 				$lookup: {
 					from: 'daoEventCollection',
@@ -83,14 +83,39 @@ export async function getMarketVotesComplete(): Promise<any> {
 				}
 			},
 
-			// 4️⃣ Flatten resolveVote (optional single)
+			// 4️⃣ Lookup related create-market event (to get name, marketId, marketType)
 			{
-				$addFields: {
-					resolveVote: { $arrayElemAt: ['$resolveVote', 0] }
+				$lookup: {
+					from: 'daoEventCollection',
+					let: { mktId: '$marketId', mktType: '$marketType' },
+					pipeline: [
+						{
+							$match: {
+								$expr: {
+									$and: [{ $eq: ['$event', 'create-market'] }, { $eq: ['$marketId', '$$mktId'] }, { $eq: ['$marketType', '$$mktType'] }]
+								}
+							}
+						},
+						{
+							$project: {
+								_id: 0,
+								'unhashedData.name': 1
+							}
+						}
+					],
+					as: 'marketMeta'
 				}
 			},
 
-			// 5️⃣ Final output (include base event fields)
+			// 5️⃣ Flatten the joined fields
+			{
+				$addFields: {
+					resolveVote: { $arrayElemAt: ['$resolveVote', 0] },
+					marketName: { $arrayElemAt: ['$marketMeta.unhashedData.name', 0] }
+				}
+			},
+
+			// 6️⃣ Final output projection
 			{
 				$project: {
 					_id: 1,
@@ -101,6 +126,7 @@ export async function getMarketVotesComplete(): Promise<any> {
 					extension: 1,
 					marketId: 1,
 					marketType: 1,
+					marketName: 1, // <- new field
 					disputer: 1,
 					resolutionState: 1,
 					marketVotes: 1,
