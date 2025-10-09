@@ -211,8 +211,7 @@ async function createMarketOnChain(chain: number): Promise<any> {
 
 async function convertMarketToLocalFormat(meta: any, current: number): Promise<StoredOpinionPoll> {
 	const tokens = await fetchAllowedTokens(1);
-	const stxToken = tokens.find((t) => t.token.indexOf('wrapped-stx') > -1);
-	if (!stxToken) throw new Error('warapped stx token not found');
+	const token = tokens[0]; //tokens.find((t) => t.token.indexOf('wrapped-stx') > -1);
 
 	const marketMeta = {
 		name: meta.title,
@@ -225,7 +224,7 @@ async function convertMarketToLocalFormat(meta: any, current: number): Promise<S
 		createdAt: new Date().getTime(),
 		proposer: getDaoConfig().VITE_DOA_DEPLOYER,
 		treasury: `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`,
-		token: stxToken.token,
+		token: token.token,
 		merkelRoot: '',
 		contractIds: [],
 		social: {
@@ -239,7 +238,7 @@ async function convertMarketToLocalFormat(meta: any, current: number): Promise<S
 		publicKey: '',
 		featured: true,
 		processed: false,
-		liquidity: stxToken.minLiquidity || 0,
+		liquidity: token.minLiquidity || 500000000,
 		criterionDays: { duration: DURATION, coolDown: COOL_DOWN, startHeight: current },
 		criterionSources: meta.criterionSources
 	} as StoredOpinionPoll;
