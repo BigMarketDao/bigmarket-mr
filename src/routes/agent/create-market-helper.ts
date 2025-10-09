@@ -57,8 +57,9 @@ async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateM
 	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi, getConfig().stacksHiroKey)) || ({} as StacksInfo);
 	const current = stacksInfo.burn_block_height;
 	const tokens = await fetchAllowedTokens(1);
-	const stxToken = tokens.find((t) => t.token.indexOf('wrapped-stx') > -1);
-	if (!stxToken) throw new Error('warapped stx token not found');
+	const firstToken = tokens[0]; //tokens.find((t) => t.token.indexOf('wrapped-stx') > -1);
+	// proper fix require user input
+	if (!firstToken) throw new Error('warapped stx token not found');
 
 	const ms = new Date(llmResponse.earliest_resolution_date).getTime();
 	const days = (ms - Date.now()) / (1000 * 60 * 60 * 24);
@@ -72,7 +73,7 @@ async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateM
 		createdAt: new Date().getTime(),
 		proposer,
 		treasury: `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`,
-		token: stxToken.token,
+		token: firstToken.token,
 		merkelRoot: '',
 		contractIds: [],
 		logo: generateMarketLogo(llmResponse.title, llmResponse.market_sector),
@@ -88,7 +89,7 @@ async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateM
 		publicKey: '',
 		featured: true,
 		processed: false,
-		liquidity: stxToken.minLiquidity || 0,
+		liquidity: firstToken.minLiquidity || 0,
 		criterionDays: { duration: blocks, coolDown: 144, startHeight: current, earliest_resolution_date: llmResponse.earliest_resolution_date },
 		criterionSources: { criteria: llmResponse.resolution_criteria, sources: llmResponse.sources }
 	} as StoredOpinionPoll;
