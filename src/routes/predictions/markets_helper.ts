@@ -372,7 +372,7 @@ export async function fetchMarketClaims(marketId: number, marketType: number): P
 }
 
 export async function fetchMarkets(): Promise<Array<PredictionMarketCreateEvent>> {
-	const result = await daoEventCollection.find({ 'unhashedData.processed': false, event: 'create-market', unhashedData: { $ne: null, $exists: true } }).toArray();
+	const result = await daoEventCollection.find({ 'unhashedData.processed': false, 'unhashedData.featured': true, event: 'create-market', unhashedData: { $ne: null, $exists: true } }).toArray();
 	return result as unknown as Array<PredictionMarketCreateEvent>;
 }
 

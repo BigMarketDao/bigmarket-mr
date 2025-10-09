@@ -86,14 +86,14 @@ db.marketCategoriesCollection.insertMany([
 ```
 db.marketCategoriesCollection.insertMany([
 { name : 'crypto', information: '', displayName: 'Crypto', active: true},
-{ name : 'Financial', information: '', displayName: 'Financial', active: false},
+{ name : 'Financial', information: '', displayName: 'Financial', active: true},
 { name : 'sports', information: '', displayName: 'Sports', active: false},
-{ name : 'politics', information: '', displayName: 'Politics', active: false},
+{ name : 'politics', information: '', displayName: 'Politics', active: true},
 { name : 'economy', information: '', displayName: 'Economy', active: false},
-{ name : 'culture', information: '', displayName: 'Culture', active: false},
+{ name : 'culture', information: '', displayName: 'Culture', active: true},
 { name : 'music', information: '', displayName: 'Music', active: false},
 { name : 'nsfw', information: '', displayName: 'NSFW', active: false},
-{ name : 'banter', information: '', displayName: 'Banter', active: false}])
+{ name : 'banter', information: '', displayName: 'Banter', active: true}])
 
 
 

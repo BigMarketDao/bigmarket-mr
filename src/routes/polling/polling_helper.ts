@@ -28,7 +28,7 @@ export async function isCreatePollPostValid(message: StoredOpinionPoll): Promise
 	const stxAddressFromKey = getC32AddressFromPublicKey(message.publicKey, getConfig().network);
 	console.log('isCreatePollPostValid: stxAddressFromKey: ' + stxAddressFromKey);
 	if (message.proposer !== stxAddressFromKey) {
-		console.log('/polls: wrong voter: ' + message.proposer + ' signer: ' + stxAddressFromKey);
+		console.log('/polls-ui: wrong voter: ' + message.proposer + ' signer: ' + stxAddressFromKey);
 		return false;
 	}
 	const bnsName = (await getBnsNameFromAddress(getConfig().stacksApi, stxAddressFromKey)) || '';
