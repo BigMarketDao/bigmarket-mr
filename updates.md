@@ -11,6 +11,8 @@ db.gatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': [
 
 # testnet
 
+db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345904d2936')}, update: {$set: {featured: turue }}, upsert: false, new: true, fields: {}})
+
 db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345904d2936')}, update: {$set: {resolutionState: 237 }}, upsert: false, new: true, fields: {}})
 
 db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345904d2936')}, update: {$set: {marketType: 233 }}, upsert: false, new: true, fields: {}})
@@ -24,6 +26,8 @@ db.daoEventCollection.findAndModify({query: {event : 'create-market', marketId:2
 db.daoEventCollection.updateMany({event: 'create-market',extension: 'ST3Y12HJYP2NMNAFHWBPM2CMYDHYXME1F46VC5SPJ.bme023-0-market-scalar'},{$set: {'unhashedData.processed': true}})
 
 db.daoEventCollection.updateMany({event: 'create-market','unhashedData.name':'Will Paul Biya officially announce his candidacy for the October 2025 Cameroon presidential election by August 20, 2025?'},{$set: {'unhashedData.forumMessageId': '66b40856-470c-4ed6-8925-8047b08c782b'}})
+
+db.daoEventCollection.updateMany({event: 'create-market','unhashedData.name':'Will BigMarket complete a successful full market cycle on mainnet by November 9, 2025?'},{$set: {'unhashedData.featured': true}})
 
 db.daoEventCollection.updateMany({event: 'create-market','unhashedData.name':'Will South Africa announce a new solar power subsidy program by August 21, 2025?'},{$set: {'unhashedData.processed': true}})
 
