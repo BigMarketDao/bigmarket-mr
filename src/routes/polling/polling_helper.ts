@@ -1,7 +1,7 @@
 import type { SignatureData } from '@stacks/connect';
 import { ObjectId } from 'mongodb';
 import { daoEventCollection, marketCollection } from '../../lib/data/db_models.js';
-import { getConfig } from '../../lib/config.js';
+import { coordinators, getConfig } from '../../lib/config.js';
 import { getC32AddressFromPublicKey } from '../dao/events/dao_events_helper.js';
 import { StoredOpinionPoll, PollVoteMessage, verifyDaoSignature, pollVoteMessageToTupleCV, marketDataToTupleCV, MarketVotingCreateEvent } from '@mijoco/stx_helpers/dist/index.js';
 import type { BaseForumContent, LinkedAccount } from 'sip18-forum-types';
@@ -42,8 +42,9 @@ export async function isCreatePollPostValid(message: StoredOpinionPoll): Promise
 	const pollMessage = forumMessageToTupleCV(message1);
 	//const pollMessage = marketDataToTupleCV(message.name, message.category, message.createdAt, message.proposer, message.token);
 
-	let res = verifyDaoSignature(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, pollMessage, message.publicKey, message.signature);
-	return typeof res === 'string';
+	let address = verifyDaoSignature(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, pollMessage, message.publicKey, message.signature);
+	// return typeof address === 'string' && coordinators.findIndex((a) => a.stxAddress === address) > -1;
+	return typeof address === 'string';
 }
 
 function forumMessageToTupleCV(message: BaseForumContent): TupleCV<TupleData<ClarityValue>> {
@@ -76,10 +77,9 @@ export function isPostPollMessageValid(signature: SignatureData, message: PollVo
 		console.log('/events: wrong voter: ' + message.voter + ' signer: ' + stxAddressFromKey);
 		return false;
 	}
-	const stacksAddress = verifyDaoSignature(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, pollVoteMessageToTupleCV(message), signature.publicKey, signature.signature);
-	//console.log('/votes: correct voter: ' + stacksAddress);
-	if (!stacksAddress) return false;
-	return true;
+	const address = verifyDaoSignature(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, pollVoteMessageToTupleCV(message), signature.publicKey, signature.signature);
+	// return typeof address === 'string' && coordinators.findIndex((a) => a.stxAddress === address) > -1;
+	return typeof address === 'string';
 }
 
 export async function savePoll(poll: StoredOpinionPoll) {

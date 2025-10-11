@@ -20,17 +20,27 @@ export function getC32AddressFromPublicKey(publicKeyHex: string, network: string
 	return 'unknown';
 }
 
-export function isPostValid(signature: SignatureData, message: BaseAdminMessage): boolean {
+export function getStacksAddressFromPost(signature: SignatureData, message: BaseAdminMessage): string | undefined {
 	const stxAddressFromKey = getC32AddressFromPublicKey(signature.publicKey, getConfig().network);
 	if (message.admin !== stxAddressFromKey) {
 		console.log('/events: wrong voter: ' + message.admin + ' signer: ' + stxAddressFromKey);
-		return false;
+		return;
 	}
 	const stacksAddress = verifyBaseAdminSignature(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, message, signature.publicKey, signature.signature);
-	//console.log('/votes: correct voter: ' + stacksAddress);
-	if (!stacksAddress) return false;
-	return true;
+	return stacksAddress;
 }
+
+// export function isPostValid(signature: SignatureData, message: BaseAdminMessage): boolean {
+// 	const stxAddressFromKey = getC32AddressFromPublicKey(signature.publicKey, getConfig().network);
+// 	if (message.admin !== stxAddressFromKey) {
+// 		console.log('/events: wrong voter: ' + message.admin + ' signer: ' + stxAddressFromKey);
+// 		return false;
+// 	}
+// 	const stacksAddress = verifyBaseAdminSignature(getConfig().network, getConfig().publicAppName, getConfig().publicAppVersion, message, signature.publicKey, signature.signature);
+// 	//console.log('/votes: correct voter: ' + stacksAddress);
+// 	if (!stacksAddress) return false;
+// 	return true;
+// }
 
 export async function readDaoEvents(genesis: boolean, daoContractId: string) {
 	const url = getConfig().stacksApi + '/extended/v1/contract/' + daoContractId + '/events?limit=20';

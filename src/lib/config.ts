@@ -94,3 +94,24 @@ export function isDev() {
 	const environ = process.env.NODE_ENV;
 	return !environ || environ === 'test' || environ === 'development' || environ === 'dev';
 }
+
+export const coordinators = [
+	{ stxAddress: 'ST2SACH111M97FZWN2Z8XMJ1FCKSJM3NGE35S6ZKN', btcAddress: 'xverse testnet' },
+	{ stxAddress: 'ST3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNZN9J752', btcAddress: '' },
+	{ stxAddress: 'ST1R1061ZT6KPJXQ7PAXPFB6ZAZ6ZWW28G8HXK9G5', btcAddress: 'bc1qkj5yxgm3uf78qp2fdmgx2k76ccdvj7rx0qwhv0' },
+	{ stxAddress: 'ST1NXBK3K5YYMD6FD41MVNP3JS1GABZ8TRVX023PT', btcAddress: 'bc1qkj5yxgm3uf78qp2fdmgx2k76ccdvj7rx0qwhv0' },
+	{ stxAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM', btcAddress: 'tb1q6ue638m4t5knwxl4kwhwyuffttlp0ffee3zn3e' },
+	{ stxAddress: 'SP3N4AJFZZYC4BK99H53XP8KDGXFGQ2PRSQP2HGT6', btcAddress: 'tb1q6ue638m4t5knwxl4kwhwyuffttlp0ffee3zn3e' },
+	{ stxAddress: 'ST3N4AJFZZYC4BK99H53XP8KDGXFGQ2PRSPNET8TN', btcAddress: 'tb1q6ue638m4t5knwxl4kwhwyuffttlp0ffee3zn3e' },
+	{ stxAddress: 'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY', btcAddress: '' },
+	{ stxAddress: 'SP1R1061ZT6KPJXQ7PAXPFB6ZAZ6ZWW28GBQA1W0F', btcAddress: '' },
+	{ stxAddress: 'ST3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX77J7SV0', btcAddress: '' },
+	{ stxAddress: 'ST22NW0RYCW4GFZRPE8VGJRCKGQMRMMX492QET2ZC', btcAddress: '' },
+	{ stxAddress: 'ST22NW0RYCW4GFZRPE8VGJRCKGQMRMMX492QET2ZC', btcAddress: '' },
+	{ stxAddress: 'STEZD95XQ194X67C1QJW4PHKDG8F5D66ZCYFX27A', btcAddress: '' },
+	{ stxAddress: 'ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ', btcAddress: '' },
+	{ stxAddress: 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29', btcAddress: '' },
+	{ stxAddress: 'SP246C0KRV7HKXMRB0H7Y6HCYGRCTZMVB9KP3391R', btcAddress: '' },
+	{ stxAddress: 'SP22SW60674C0V6B5E234C7ZD2YR8WXKXXVC48GZR', btcAddress: '' },
+	{ stxAddress: 'ST3Y12HJYP2NMNAFHWBPM2CMYDHYXME1F46VC5SPJ', btcAddress: '' }
+];

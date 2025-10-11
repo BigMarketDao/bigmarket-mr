@@ -1,15 +1,17 @@
 import express from 'express';
-import { fetchBaseDaoEvents, fetchExtensionEvent, fetchExtensions, isPostValid, readDaoEvents } from './dao_events_helper.js';
+import { fetchBaseDaoEvents, fetchExtensionEvent, fetchExtensions, getStacksAddressFromPost, readDaoEvents } from './dao_events_helper.js';
 import { readDaoExtensionEvents } from './dao_events_extension_helper.js';
 import { getGovernanceData, isExecutiveTeamMember, isExtension } from './extension.js';
 import { getDaoConfig } from '../../../lib/config_dao.js';
+import { coordinators } from '../../../lib/config.js';
 
 const router = express.Router();
 
 router.post('/extensions/:daoContractId', async (req, res, next) => {
 	try {
 		const { message, signature } = req.body;
-		if (!isPostValid(signature, message)) {
+		const address = getStacksAddressFromPost(signature, message);
+		if (!address || coordinators.findIndex((a) => a.stxAddress === address) === -1) {
 			res.status(401).json({ error: 'Invalid request' });
 		} else {
 			await readDaoEvents(true, req.params.daoContractId);
