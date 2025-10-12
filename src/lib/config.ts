@@ -96,7 +96,6 @@ export function isDev() {
 }
 
 export const coordinators = [
-	{ stxAddress: 'ST2SACH111M97FZWN2Z8XMJ1FCKSJM3NGE35S6ZKN', btcAddress: 'xverse testnet' },
 	{ stxAddress: 'ST3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNZN9J752', btcAddress: '' },
 	{ stxAddress: 'ST1R1061ZT6KPJXQ7PAXPFB6ZAZ6ZWW28G8HXK9G5', btcAddress: 'bc1qkj5yxgm3uf78qp2fdmgx2k76ccdvj7rx0qwhv0' },
 	{ stxAddress: 'ST1NXBK3K5YYMD6FD41MVNP3JS1GABZ8TRVX023PT', btcAddress: 'bc1qkj5yxgm3uf78qp2fdmgx2k76ccdvj7rx0qwhv0' },
@@ -107,13 +106,13 @@ export const coordinators = [
 	{ stxAddress: 'SP1R1061ZT6KPJXQ7PAXPFB6ZAZ6ZWW28GBQA1W0F', btcAddress: '' },
 	{ stxAddress: 'ST3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX77J7SV0', btcAddress: '' },
 	{ stxAddress: 'ST22NW0RYCW4GFZRPE8VGJRCKGQMRMMX492QET2ZC', btcAddress: '' },
-	{ stxAddress: 'ST22NW0RYCW4GFZRPE8VGJRCKGQMRMMX492QET2ZC', btcAddress: '' },
 	{ stxAddress: 'STEZD95XQ194X67C1QJW4PHKDG8F5D66ZCYFX27A', btcAddress: '' },
-	{ stxAddress: 'ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ', btcAddress: '' },
+	{ stxAddress: 'ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ', btcAddress: '' }, //am
 	{ stxAddress: 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29', btcAddress: '' },
-	{ stxAddress: 'SP246C0KRV7HKXMRB0H7Y6HCYGRCTZMVB9KP3391R', btcAddress: '' },
-	{ stxAddress: 'SP22SW60674C0V6B5E234C7ZD2YR8WXKXXVC48GZR', btcAddress: '' },
+	{ stxAddress: 'SP2XFH8D1MM2G11C0S6AZRSNP031RAY92XCARPRSQ', btcAddress: '' },
+	{ stxAddress: 'SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ', btcAddress: '' },
 	{ stxAddress: 'ST3Y12HJYP2NMNAFHWBPM2CMYDHYXME1F46VC5SPJ', btcAddress: '' },
 	{ stxAddress: 'ST3NS9010CQ9AK3M6XN3XD9EHNTDZVGYSMCBG3K6Z', btcAddress: '' },
-	{ stxAddress: 'SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ', btcAddress: '' }
+	{ stxAddress: 'SP2Z2CBMGWB9MQZAF5Z8X56KS69XRV3SJF4WKJ7J9', btcAddress: '' }, // deorg
+	{ stxAddress: 'SPQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRMDV734D', btcAddress: '' } // jb
 ];

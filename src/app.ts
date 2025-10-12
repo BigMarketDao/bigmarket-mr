@@ -44,7 +44,17 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.json({ limit: '1mb' })); // for /reclaim/start & most routes
 app.use(
 	cors({
-		origin: ['https://api.testnet.bigmarket.ai', 'http://localhost:5173', 'http://localhost:8060', 'http://localhost:8080', 'http://localhost:8081', 'https://bigmarket.ai', 'https://dao.bigmarket.ai']
+		origin: [
+			'https://api.testnet.bigmarket.ai',
+			'http://localhost:5173',
+			'http://localhost:8060',
+			'http://localhost:8080',
+			'http://localhost:8081',
+			'https://testnet.bigmarket.ai',
+			'https://mainnet.bigmarket.ai',
+			'https://bigmarket.ai',
+			'https://dao.bigmarket.ai'
+		]
 	})
 );
 // const ALLOWED_ORIGINS = [

@@ -9,19 +9,17 @@ if [ -z "$NETWORK" ]; then
   exit 1
 fi
 
-SERVER=spinoza.brightblock.org
 DOCKER_NAME="bigmarket_api_${NETWORK}"
 
 printf "\n\n"
 printf "====================================================\n"
-printf "Building on: $SERVER as docker container: $DOCKER_NAME \n"
+printf "Building on: as docker container: $DOCKER_NAME \n"
 
 source ~/.profile
 
 docker login
 docker build --build-arg NODE_ENV=$NETWORK -t mijoco/bigmarket_api:$NETWORK .
 docker push mijoco/bigmarket_api:$NETWORK
-
 docker rm -f $DOCKER_NAME || true
 
 # Use different ports if needed (e.g. 6090 for testnet, 6091 for mainnet)
@@ -43,4 +41,4 @@ docker logs -f $DOCKER_NAME
 printf "Finished....\n"
 printf "====================================================\n\n"
 
-exit 0
+exit 0;
