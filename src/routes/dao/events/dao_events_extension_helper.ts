@@ -1,6 +1,3 @@
-/**
- * sbtc - interact with Stacks Blockchain to read sbtc contract info
- */
 import { BasicEvent, createBasicEvent, ExtensionType } from '@mijoco/stx_helpers/dist/index.js';
 import { fetchExtensions } from './dao_events_helper.js';
 import { getConfig } from '../../../lib/config.js';
@@ -23,12 +20,9 @@ import { processHedgeStrategyEvents } from './processors/process_hedge_strategy_
 
 export async function readDaoExtensionEvents(genesis: boolean, daoContractId: string) {
 	const extensions = await fetchExtensions(daoContractId);
-	let predictions = false;
 	for (const extensionObj of extensions) {
-		// skip prediction market event as they have their own handlers
-		//if (extensionObj.extension.indexOf('bme023') === -1) {
+		console.debug('readDaoExtensionEvents: dao' + extensionObj.extension);
 		await readExtensionEvents(genesis, daoContractId, extensionObj.extension);
-		//}
 	}
 }
 async function countEventsByVotingContract(daoContract: string, extension: string): Promise<number> {
@@ -44,18 +38,18 @@ async function countEventsByVotingContract(daoContract: string, extension: strin
 }
 
 async function readExtensionEvents(genesis: boolean, daoContract: string, extensionContract: string) {
-	const urlBase = getConfig().stacksApi + '/extended/v1/contract/' + extensionContract + '/events?limit=20';
 	const extensions: Array<ExtensionType> = [];
-	console.log('readExtensionEvents: genesis: ' + genesis);
-	console.log('readExtensionEvents: extensionContract: ' + extensionContract);
-	let dbEventCount = 0;
-	if (!genesis) {
-		dbEventCount = await countEventsByVotingContract(daoContract, extensionContract);
-	}
-	let fetchedCount = 0;
-	let offset = 0;
-	let keepGoing = true;
 	try {
+		const urlBase = getConfig().stacksApi + '/extended/v1/contract/' + extensionContract + '/events?limit=20';
+		console.log('readExtensionEvents: genesis: ' + genesis);
+		console.log('readExtensionEvents: extensionContract: ' + extensionContract);
+		let dbEventCount = 0;
+		if (!genesis) {
+			dbEventCount = await countEventsByVotingContract(daoContract, extensionContract);
+		}
+		let fetchedCount = 0;
+		let offset = 0;
+		let keepGoing = true;
 		while (keepGoing) {
 			const url = `${urlBase}&offset=${offset}`;
 			const numEvents = await resolveExtensionEvents(url, daoContract, extensionContract, getConfig().stacksHiroKey);

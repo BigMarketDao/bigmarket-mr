@@ -12,9 +12,12 @@ router.post('/extensions/:daoContractId', async (req, res, next) => {
 		const { message, signature } = req.body;
 		const address = getStacksAddressFromPost(signature, message);
 		if (!address || coordinators.findIndex((a) => a.stxAddress === address) === -1) {
+			console.error('post(/extensions/:daoContractId: :address' + address);
 			res.status(401).json({ error: 'Invalid request' });
 		} else {
+			console.debug('post(/extensions/:daoContractId: dao' + req.params.daoContractId);
 			await readDaoEvents(true, req.params.daoContractId);
+			console.debug('post(/extensions/:daoContractId: dao' + req.params.daoContractId);
 			await readDaoExtensionEvents(true, req.params.daoContractId);
 			const events = await fetchBaseDaoEvents();
 			// await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
