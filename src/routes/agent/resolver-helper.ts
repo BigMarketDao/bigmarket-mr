@@ -3,9 +3,14 @@ import { getConfig } from '../../lib/config.js';
 import { daoEventCollection, marketLlmLogsCollection } from '../../lib/data/db_models.js';
 import { fetchMarket } from '../predictions/markets_helper.js';
 import axios from 'axios';
-import { broadcastTransaction, Cl, makeContractCall } from '@stacks/transactions';
+import { broadcastTransaction, bufferCV, Cl, makeContractCall } from '@stacks/transactions';
+import { getDaoConfig } from '../../lib/config_dao.js';
+import { hexToBytes } from '@stacks/common';
+import { hashSha256Sync } from '@stacks/encryption';
 
+const DEEPSEEK_ID = 'DeepSeek V3';
 export type MarketLLMRequest = {
+	llmId?: string;
 	market_id: number;
 	market_type: number;
 	title: string;
@@ -86,17 +91,26 @@ async function llmResolveMarket(data: MarketLLMRequest) {
 		await resolveCategoricalMarket(data, response.data.resolution);
 	}
 }
+function hashJsonObject(obj: any): Uint8Array {
+	// Ensure deterministic serialization (sorted keys)
+	const jsonString = JSON.stringify(obj, Object.keys(obj).sort());
+	const encoder = new TextEncoder();
+	const bytes = encoder.encode(jsonString);
+	return hashSha256Sync(bytes);
+}
 
 async function resolveCategoricalMarket(data: MarketLLMRequest, outcomeIndex: number) {
 	const market = await fetchMarket(data.market_id, data.market_type);
 	console.log('resolveCategoricalMarket: market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name + ' outcome=' + outcomeIndex);
 	const network = getStacksNetwork(getConfig().network);
+	data.llmId = DEEPSEEK_ID;
+	const metadataHash = bufferCV(hashJsonObject(data));
 	const dataTx = {
 		network,
 		contractAddress: market.extension.split('.')[0],
-		contractName: market.extension.split('.')[1],
-		functionName: 'resolve-market',
-		functionArgs: [Cl.uint(market.marketId), Cl.stringAscii(market.marketData.categories[outcomeIndex] as string)],
+		contractName: getDaoConfig().VITE_DAO_RESOLUTION_COORDINATOR,
+		functionName: 'signal-resolution',
+		functionArgs: [Cl.uint(market.marketId), Cl.stringAscii(market.marketData.categories[outcomeIndex] as string), metadataHash],
 		senderKey: getConfig().walletKey
 	};
 	console.log('resolveCategoricalMarket: dataTx: ', dataTx);

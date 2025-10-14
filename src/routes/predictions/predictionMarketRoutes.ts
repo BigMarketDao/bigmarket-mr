@@ -48,9 +48,9 @@ router.get('/market-dao-data', async (req, res) => {
 			const contractBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`, getConfig().stacksHiroKey);
 			const treasuryBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`, getConfig().stacksHiroKey);
 			let tokenSale;
-			try {
-				tokenSale = await fetchTokenSaleStages(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_TOKEN_SALE, getConfig().stacksHiroKey);
-			} catch (err) {}
+			// try {
+			// 	tokenSale = await fetchTokenSaleStages(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_TOKEN_SALE, getConfig().stacksHiroKey);
+			// } catch (err) {}
 
 			// Update cache
 			cachedData = {
