@@ -93,6 +93,7 @@ db.marketCategoriesCollection.insertMany([
 { name : 'nsfw', information: '', displayName: 'NSFW', active: false},
 { name : 'banter', information: '', displayName: 'Banter', active: true}])
 
+db.marketCategoriesCollection.updateOne({name: 'banter'},{$set: {'displayName': 'Start Ups'}})
 
 
 db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ['SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ',
