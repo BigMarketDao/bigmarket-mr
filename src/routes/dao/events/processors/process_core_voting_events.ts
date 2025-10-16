@@ -49,7 +49,7 @@ export async function processCoreVotingEvent(basicEvent: BasicEvent, result: any
 		} as VotingEventConcludeProposal;
 		await saveOrUpdateEvent(votingContractEvent);
 	} else {
-		console.log('processEvent: new event: ', event);
+		console.log('processEvent: new event: ', result);
 	}
 }
 
