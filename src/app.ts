@@ -23,6 +23,8 @@ import { pythRoutes } from './routes/oracle/pyth/pythRoutes.js';
 import { agentRoutes } from './routes/agent/agentRoutes.js';
 import { reputationRoutes } from './routes/reputation/reputationRoutes.js';
 import { authRoutes } from './routes/auth/authRoutes.js';
+import { transactionRoutes } from './routes/transactions/transactionRoutes.js';
+
 import { initScanDaoEventsJob, initScanDaoEventsTestnetJob } from './routes/dao/events/eventScheduler.js';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
 import { initExchangeRatesJob } from './routes/rates/ratesScheduler.js';
@@ -32,6 +34,7 @@ import { startUICacheWarming } from './routes/cache/cache_utils.js';
 import { runBatchClaimSweepJob } from './routes/reputation/reputation-helper.js';
 import type { ErrorRequestHandler } from 'express';
 import cookieParser from 'cookie-parser';
+import { initWebsocket } from './lib/websockets/init.js';
 
 if (process.env.NODE_ENV === 'development') {
 	dotenv.config();
@@ -57,33 +60,6 @@ app.use(
 		]
 	})
 );
-// const ALLOWED_ORIGINS = [
-// 	'http://localhost:5173',
-// 	'http://localhost:8060',
-// 	'http://localhost:8080',
-// 	'http://localhost:8081',
-// 	'https://brightblock.org',
-// 	'https://bigmarket.ai',
-// 	'https://dao.bigmarket.ai',
-// 	'https://api.testnet.bigmarket.ai' // if you ever embed from here too
-// ];
-
-// const corsOptions: cors.CorsOptions = {
-// 	origin(origin, cb) {
-// 		if (!origin) return cb(null, true);
-// 		cb(null, ALLOWED_ORIGINS.includes(origin));
-// 	},
-// 	credentials: true,
-// 	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-// 	allowedHeaders: ['Content-Type', 'Authorization'],
-// 	maxAge: 86400,
-// 	preflightContinue: false,
-// 	optionsSuccessStatus: 204
-// };
-// // order matters: put CORS before routes
-// app.use(cors(corsOptions));
-// // make sure preflight OPTIONS is handled
-// app.options(/.*/, cors(corsOptions)); // ✅ regex works on Express 5
 
 app.use(morgan('tiny'));
 app.use(express.static('public'));
@@ -128,6 +104,7 @@ app.use('/bigmarket-api/clarity-bitcoin', clarityBitcoinRoutes);
 app.use('/bigmarket-api/auth', authRoutes);
 app.use('/bigmarket-api/images', imageRoutes);
 app.use('/bigmarket-api/disputes', disputeRoutes);
+app.use('/bigmarket-api/transactions', transactionRoutes);
 
 const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 	// Optionally narrow:
@@ -174,15 +151,7 @@ async function connectToMongoCloud() {
 		console.log('Server listening!');
 		return;
 	});
-
-	const wss = new WebSocketServer({ server });
-	// initScanVotingEventsJob.start();
-
-	wss.on('connection', function connection(ws: any) {
-		ws.on('message', function incoming(message: any) {
-			ws.send('Got your new rates : ' + message);
-		});
-	});
+	initWebsocket(server);
 }
 
 connectToMongoCloud();
