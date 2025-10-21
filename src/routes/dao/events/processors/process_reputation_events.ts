@@ -36,6 +36,7 @@ export async function processReputationEvents(basicEvent: BasicEvent, result: an
 			rewardPerEpoch: Number(result.value['reward-per-epoch'].value)
 		} as ReputationBigClaimEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'set-tier-weight') {
 		//    (print { event: "set-tier-weight", token-id: token-id, weight: weight })
 		const contractEvent: ReputationSetTierEvent = {
@@ -44,6 +45,7 @@ export async function processReputationEvents(basicEvent: BasicEvent, result: an
 			tokenId: Number(result.value['token-id'].value)
 		} as ReputationSetTierEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'big-claim') {
 		const contractEvent: ReputationBigClaimEvent = {
 			...basicEvent,
@@ -54,6 +56,7 @@ export async function processReputationEvents(basicEvent: BasicEvent, result: an
 			rewardPerEpoch: Number(result.value['reward-per-epoch'].value)
 		} as ReputationBigClaimEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'sft_mint') {
 		const contractEvent: ReputationSftMintEvent = {
 			...basicEvent,
@@ -62,6 +65,7 @@ export async function processReputationEvents(basicEvent: BasicEvent, result: an
 			tokenId: Number(result.value['token-id'].value)
 		} as ReputationSftMintEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'sft_burn') {
 		const contractEvent: ReputationSftBurnEvent = {
 			...basicEvent,
@@ -70,6 +74,7 @@ export async function processReputationEvents(basicEvent: BasicEvent, result: an
 			tokenId: Number(result.value['token-id'].value)
 		} as ReputationSftBurnEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'sft_transfer') {
 		const contractEvent: ReputationSftTransferEvent = {
 			...basicEvent,
@@ -79,6 +84,7 @@ export async function processReputationEvents(basicEvent: BasicEvent, result: an
 			tokenId: Number(result.value['token-id'].value)
 		} as ReputationSftTransferEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}

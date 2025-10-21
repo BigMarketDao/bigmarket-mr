@@ -103,6 +103,7 @@ export async function updatePredictionMarketCreateEvent(marketType: number, resu
 		seedAmount
 	} as PredictionMarketCreateEvent;
 	await saveOrUpdateEvent(createEvent);
+	return createEvent;
 }
 
 export async function updateResolveMarketEvent(marketType: number, result: any, basicEvent: BasicEvent) {
@@ -137,6 +138,7 @@ export async function updateResolveMarketEvent(marketType: number, result: any, 
 		resolutionBurnHeight
 	};
 	await saveOrUpdateEvent(resolveEvent);
+	return resolveEvent;
 }
 
 export async function updateResolveMarketUndisputedEvent(marketType: number, result: any, basicEvent: BasicEvent) {
@@ -162,6 +164,7 @@ export async function updateResolveMarketUndisputedEvent(marketType: number, res
 		marketType
 	};
 	await saveOrUpdateEvent(resolveEvent);
+	return resolveEvent;
 }
 
 export async function updateResolveMarketVoteEvent(marketType: number, result: any, basicEvent: BasicEvent) {
@@ -186,6 +189,7 @@ export async function updateResolveMarketVoteEvent(marketType: number, result: a
 		resolver: result.value.resolver.value
 	};
 	await saveOrUpdateEvent(resolveEvent);
+	return resolveEvent;
 }
 
 export async function updateDisputeResolutionEvent(marketType: number, result: any, basicEvent: BasicEvent) {
@@ -210,6 +214,7 @@ export async function updateDisputeResolutionEvent(marketType: number, result: a
 		disputer: result.value.disputer.value
 	};
 	await saveOrUpdateEvent(resolveEvent);
+	return resolveEvent;
 }
 
 export async function updateTransferStakeEvent(marketType: number, result: any, basicEvent: BasicEvent) {
@@ -232,6 +237,7 @@ export async function updateTransferStakeEvent(marketType: number, result: any, 
 		transferLosingStakes: Number(result.value.balance.value)
 	};
 	await saveOrUpdateEvent(resolveEvent);
+	return resolveEvent;
 }
 
 export async function updatePriceBandWidth(marketType: number, result: any, basicEvent: BasicEvent) {
@@ -242,6 +248,7 @@ export async function updatePriceBandWidth(marketType: number, result: any, basi
 		bandBips: Number(result.value.precent?.value || 0)
 	};
 	await saveOrUpdateEvent(resolveEvent);
+	return resolveEvent;
 }
 
 export async function updateAllowedTokensEvent(marketType: number, result: any, basicEvent: BasicEvent) {
@@ -258,6 +265,7 @@ export async function updateAllowedTokensEvent(marketType: number, result: any, 
 	const sip10Data = await getSip10Properties(getConfig().stacksApi, contractEvent);
 	contractEvent.sip10Data = sip10Data;
 	await saveOrUpdateEvent(contractEvent);
+	return contractEvent;
 }
 
 export async function updateAllowedTokensEventForSeed(marketType: number, result: any, basicEvent: BasicEvent) {
@@ -274,6 +282,7 @@ export async function updateAllowedTokensEventForSeed(marketType: number, result
 	const sip10Data = await getSip10Properties(getConfig().stacksApi, contractEvent);
 	contractEvent.sip10Data = sip10Data;
 	await saveOrUpdateEvent(contractEvent);
+	return contractEvent;
 }
 
 export async function updateClaimWinningsEvent(marketType: number, result: any, basicEvent: BasicEvent) {
@@ -305,6 +314,7 @@ export async function updateClaimWinningsEvent(marketType: number, result: any, 
 	} as PredictionMarketClaimEvent;
 	await saveOrUpdateEvent(contractEvent);
 	await updateMarketData(marketId, marketType, basicEvent.extension);
+	return contractEvent;
 }
 
 export async function updateMarketStakeEvent(marketType: number, result: any, basicEvent: BasicEvent) {
@@ -330,6 +340,7 @@ export async function updateMarketStakeEvent(marketType: number, result: any, ba
 	await saveOrUpdateEvent(contractEvent);
 	console.log('updateMarketStakeEvent: updateMarketData: ');
 	await updateMarketData(marketId, marketType, basicEvent.extension);
+	return contractEvent;
 }
 // (print {event: "market-stake", market-id: market-id, index: index, category: category, amount: amount-less-fee, voter: tx-sender})
 // (print {event: "market-stake", market-id: market-id, index: index, amount: amount-shares, cost: cost, fee: fee, voter: tx-sender})

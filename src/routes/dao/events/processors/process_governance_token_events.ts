@@ -20,6 +20,7 @@ export async function processGovernanceTokenEvent(basicEvent: BasicEvent, result
 			duration: Number(result.value.duration.value)
 		} as GovernanceTokenCoreVestingEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'core-claim') {
 		const contractEvent: GovernanceTokenCoreClaimEvent = {
 			...basicEvent,
@@ -30,6 +31,7 @@ export async function processGovernanceTokenEvent(basicEvent: BasicEvent, result
 			vested: Number(result.value.vested.value)
 		} as GovernanceTokenCoreClaimEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}

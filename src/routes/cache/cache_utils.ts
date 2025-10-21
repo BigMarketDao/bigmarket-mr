@@ -1,7 +1,7 @@
 import { getConfig } from '../../lib/config.js';
 import { fetchMarkets } from '../predictions/markets_helper.js';
 
-export function startUICacheWarming(intervalMs = 65_000) {
+export function startUICacheWarming(intervalMs = 25_000) {
 	console.log(`[cache] Warming loop starting every ${intervalMs / 1000}s`);
 	updateUICache(); // warm immediately
 	setInterval(updateUICache, intervalMs);

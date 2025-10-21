@@ -24,6 +24,7 @@ export async function processMarketGatingEvent(basicEvent: BasicEvent, result: a
 			proofValid: Boolean(result.value['proof-valid'].value)
 		} as MarketGatingAccessByAccountEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'merkle-root') {
 		const contractEvent: MarketGatingUpdateRootEvent = {
 			...basicEvent,
@@ -31,6 +32,7 @@ export async function processMarketGatingEvent(basicEvent: BasicEvent, result: a
 			merkleRoot: result.value['merkle-root'].value
 		} as MarketGatingUpdateRootEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'set-merkle-root-by-principal') {
 		const contractEvent: MarketGatingUpdateRootByPrincipalEvent = {
 			...basicEvent,
@@ -40,6 +42,7 @@ export async function processMarketGatingEvent(basicEvent: BasicEvent, result: a
 			merkleRoot: result.value['merkle-root'].value
 		} as MarketGatingUpdateRootByPrincipalEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}

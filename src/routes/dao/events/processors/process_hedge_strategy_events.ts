@@ -33,6 +33,7 @@ export async function processHedgeStrategyEvents(basicEvent: BasicEvent, result:
 			predictedIndex: Number(result.value['predicted-index'].value)
 		} as PerformCustomHedgeEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'perform-swap-hedge') {
 		const contractEvent: PerformSwapHedgeEvent = {
 			...basicEvent,
@@ -41,6 +42,7 @@ export async function processHedgeStrategyEvents(basicEvent: BasicEvent, result:
 			feedId: result.value['feed-id'].value
 		} as PerformSwapHedgeEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'swap-token-pair') {
 		const contractEvent: SwapTokenPairHedgeEvent = {
 			...basicEvent,
@@ -53,24 +55,28 @@ export async function processHedgeStrategyEvents(basicEvent: BasicEvent, result:
 			token1: result.value['token1'].value
 		} as SwapTokenPairHedgeEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'hedge-scalar-contract') {
 		const contractEvent: ScalarContractHedgeEvent = {
 			...basicEvent,
 			marketContract: result.value['market-contract'].value
 		} as ScalarContractHedgeEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'hedge-market-contract') {
 		const contractEvent: MarketContractHedgeEvent = {
 			...basicEvent,
 			marketContract: result.value['market-contract'].value
 		} as MarketContractHedgeEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'hedge-multipliers') {
 		const contractEvent: MultipliersHedgeEvent = {
 			...basicEvent,
 			multipliers: result.value['multipliers'].value
 		} as MultipliersHedgeEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}

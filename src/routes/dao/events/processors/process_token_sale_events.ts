@@ -22,6 +22,7 @@ export async function processTokenSaleEvent(basicEvent: BasicEvent, result: any)
 			stage: Number(result.value.stage.value)
 		} as TokenSaleRefundEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'cancel-ido-stage') {
 		const contractEvent: TokenSaleCancelStageEvent = {
 			...basicEvent,
@@ -30,6 +31,7 @@ export async function processTokenSaleEvent(basicEvent: BasicEvent, result: any)
 			stage: Number(result.value.stage.value)
 		} as TokenSaleCancelStageEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'ido-stage-advanced') {
 		const contractEvent: TokenSaleAdvanceStageEvent = {
 			...basicEvent,
@@ -37,6 +39,7 @@ export async function processTokenSaleEvent(basicEvent: BasicEvent, result: any)
 			burnStart: Number(result.value['burn-start'].value)
 		} as TokenSaleAdvanceStageEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'ido-purchase') {
 		const contractEvent: TokenSalePurchaseEvent = {
 			...basicEvent,
@@ -46,11 +49,13 @@ export async function processTokenSaleEvent(basicEvent: BasicEvent, result: any)
 			stxAmount: Number(result.value['stx-amount']?.value || '0')
 		} as TokenSalePurchaseEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'ido-initialized') {
 		const contractEvent: TokenSaleInitialisationEvent = {
 			...basicEvent
 		} as TokenSaleInitialisationEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}

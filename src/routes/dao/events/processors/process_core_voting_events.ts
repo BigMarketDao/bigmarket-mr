@@ -15,7 +15,7 @@ export async function processCoreVotingEvent(basicEvent: BasicEvent, result: any
 		const proposal = result.value.proposal.value;
 
 		let contract: ProposalContract = await getProposalContractSource(proposal);
-		const votingContractEvent = {
+		const contractEvent = {
 			...basicEvent,
 			submissionContract: await getSubmissionContract(basicEvent.txId),
 			proposal,
@@ -24,9 +24,10 @@ export async function processCoreVotingEvent(basicEvent: BasicEvent, result: any
 			proposalData: await getProposalData(basicEvent.extension, proposal),
 			proposer: result.value.proposer.value
 		} as VotingEventProposeProposal;
-		await saveOrUpdateEvent(votingContractEvent);
+		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'vote') {
-		const votingContractEvent = {
+		const contractEvent = {
 			...basicEvent,
 			proposal: result.value.proposal.value,
 			sip18: result.value.sip18?.value,
@@ -34,11 +35,12 @@ export async function processCoreVotingEvent(basicEvent: BasicEvent, result: any
 			for: result.value.for.value,
 			amount: Number(result.value.amount.value)
 		} as VotingEventVoteOnProposal;
-		await saveOrUpdateEvent(votingContractEvent);
+		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'conclude') {
 		const proposal = result.value.proposal.value;
 		let contract: ProposalContract = await getProposalContractSource(proposal);
-		const votingContractEvent = {
+		const contractEvent = {
 			...basicEvent,
 			proposal,
 			passed: Boolean(result.value.passed.value),
@@ -46,7 +48,8 @@ export async function processCoreVotingEvent(basicEvent: BasicEvent, result: any
 			contract,
 			proposalData: await getProposalData(basicEvent.extension, proposal)
 		} as VotingEventConcludeProposal;
-		await saveOrUpdateEvent(votingContractEvent);
+		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else {
 		console.log('processEvent: new event: ', result);
 	}

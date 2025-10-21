@@ -17,6 +17,7 @@ export async function processCoreProposalsEvent(basicEvent: BasicEvent, result: 
 			member: Boolean(result.value.member.value)
 		} as CorePorposalsSetTeamMemberEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}

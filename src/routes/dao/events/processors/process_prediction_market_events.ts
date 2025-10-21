@@ -70,25 +70,27 @@ import { saveDaoEvent } from '../dao_events_extension_helper.js';
 // }
 
 export async function processMarketPredicitonCategoricalEvent(basicEvent: BasicEvent, result: any) {
+	let event;
 	if (result.value.event.value === 'create-market') {
-		await updatePredictionMarketCreateEvent(1, result, basicEvent);
+		event = await updatePredictionMarketCreateEvent(1, result, basicEvent);
 	} else if (result.value.event.value === 'allowed-token') {
-		await updateAllowedTokensEvent(1, result, basicEvent);
+		event = await updateAllowedTokensEvent(1, result, basicEvent);
 	} else if (result.value.event.value === 'market-stake') {
-		await updateMarketStakeEvent(1, result, basicEvent);
+		event = await updateMarketStakeEvent(1, result, basicEvent);
 	} else if (result.value.event.value === 'resolve-market') {
-		await updateResolveMarketEvent(1, result, basicEvent);
+		event = await updateResolveMarketEvent(1, result, basicEvent);
 	} else if (result.value.event.value === 'resolve-market-undisputed') {
-		await updateResolveMarketUndisputedEvent(1, result, basicEvent);
+		event = await updateResolveMarketUndisputedEvent(1, result, basicEvent);
 	} else if (result.value.event.value === 'resolve-market-vote') {
-		await updateResolveMarketVoteEvent(1, result, basicEvent);
+		event = await updateResolveMarketVoteEvent(1, result, basicEvent);
 	} else if (result.value.event.value === 'dispute-resolution') {
-		await updateDisputeResolutionEvent(1, result, basicEvent);
+		event = await updateDisputeResolutionEvent(1, result, basicEvent);
 	} else if (result.value.event.value === 'transfer-losing-stakes') {
-		await updateTransferStakeEvent(1, result, basicEvent);
+		event = await updateTransferStakeEvent(1, result, basicEvent);
 	} else if (result.value.event.value === 'claim-winnings') {
-		await updateClaimWinningsEvent(1, result, basicEvent);
+		event = await updateClaimWinningsEvent(1, result, basicEvent);
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}
+	return event;
 }

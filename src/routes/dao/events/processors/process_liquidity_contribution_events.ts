@@ -30,6 +30,7 @@ export async function processLiquidityContributionEvents(basicEvent: BasicEvent,
 			bigr: Number(result.value['bigr'].value)
 		} as LiquidityContributionEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}

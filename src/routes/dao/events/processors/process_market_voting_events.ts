@@ -22,6 +22,7 @@ export async function processMarketVotingEvent(basicEvent: BasicEvent, result: a
 			proposer: result.value.proposer.value
 		} as MarketVotingCreateEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'market-vote') {
 		const contractEvent: MarketVotingVoteEvent = {
 			...basicEvent,
@@ -33,6 +34,7 @@ export async function processMarketVotingEvent(basicEvent: BasicEvent, result: a
 			prevMarketId: Number(result.value['prev-market-id'].value)
 		} as MarketVotingVoteEvent;
 		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'conclude-market-vote') {
 		const marketId = Number(result.value['market-id'].value);
 
@@ -51,6 +53,7 @@ export async function processMarketVotingEvent(basicEvent: BasicEvent, result: a
 		marketPoll.winningCategory = Number(result.value['winning-category'].value);
 		marketPoll.concludeTxId = basicEvent.txId;
 		await updateDaoEvent(new ObjectId(marketPoll._id), marketPoll);
+		return contractEvent;
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}
