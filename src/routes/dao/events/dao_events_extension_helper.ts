@@ -100,6 +100,7 @@ async function resolveExtensionEvents(url: string, daoContract: string, extensio
 }
 
 export async function handleContractOrTransactionEvent(daoContract: string, extensionContract: string, event: any) {
+	if (!event.contract_log) return;
 	const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
 	const basicEvent = createBasicEvent(new ObjectId().toString(), event, daoContract, extensionContract, result.value.event.value);
 	console.log('processEvent: new event: ', result);

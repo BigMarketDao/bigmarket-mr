@@ -39,9 +39,10 @@ export function trackTransaction(txid: string) {
 				});
 				if (status === 'success') {
 					const daoContract = getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DOA;
-					for (const event of txData.events) {
+					const extensionEvents = txData.events.filter((e: any) => e.contract_log && e.contract_log.contract_id === txData.contract_call.contract_id);
+					for (const event of extensionEvents) {
 						console.log('trackTransaction: event: ', event);
-						//await handleContractOrTransactionEvent(daoContract, event.contract_log.contract_id, event);
+						await handleContractOrTransactionEvent(daoContract, txData.contract_call.contract_id, event);
 					}
 				}
 				wssBroadcast(data);
