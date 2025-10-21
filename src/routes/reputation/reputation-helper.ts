@@ -250,7 +250,7 @@ export async function runBatchClaimSweep() {
 	try {
 		currentEpoch = (await getPoxInfo(getConfig().stacksApi, getConfig().stacksHiroKey))?.current_burnchain_block_height || -1;
 		if (currentEpoch < 0) currentEpoch = await fetchCurrentEpoch(getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
-		else currentEpoch = currentEpoch / 4000;
+		else currentEpoch = currentEpoch / 1000;
 		console.log('runBatchClaimSweep: currentEpoch=' + currentEpoch);
 	} catch (err: any) {
 		console.log('runBatchClaimSweep: ', err);
