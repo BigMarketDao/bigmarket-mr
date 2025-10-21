@@ -7,9 +7,7 @@ import { daoEventCollection } from '../../lib/data/db_models.js';
 import { estimateBitcoinBlockTime, formatFiat } from '../../lib/utils.js';
 import { getExchangeRates } from '../rates/rates_utils.js';
 import { savePoll } from '../polling/polling_helper.js';
-import { fetchAllowedTokens } from '../predictions/markets_helper.js';
-import { cachedData } from '../predictions/predictionMarketRoutes.js';
-import { hexToBytes } from '@stacks/common';
+import { cachedData, fetchAllowedTokens } from '../predictions/markets_helper.js';
 import { fetchCreateMarketMerkleInput } from '../gating/gating_helper.js';
 
 const bitcoinLogo = 'https://media.istockphoto.com/id/1139020309/vector/bitcoin-internet-money-icon-vector.jpg?s=612x612&w=0&k=20&c=vcRUEDzhndMOctdM7PN1qmipo5rY_aOByWFW0IkW8bs=';

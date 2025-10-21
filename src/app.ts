@@ -27,7 +27,7 @@ import { transactionRoutes } from './routes/transactions/transactionRoutes.js';
 
 import { initScanDaoEventsJob, initScanDaoEventsTestnetJob } from './routes/dao/events/eventScheduler.js';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
-import { initExchangeRatesJob } from './routes/rates/ratesScheduler.js';
+import { initExchangeRatesJob, initRefreshDaoOverviewJob } from './routes/rates/ratesScheduler.js';
 import { initCreateMarketsJobBitcoin, initCreateMarketsJobEthereum, initCreateMarketsJobStacks, initCreateMarketsJobSui, initCreateMarketsJobTon, initResolveMarketsJob, initResolveUndisputedMarketsJob } from './routes/agent/agentScheduler.js';
 import { imageRoutes } from './routes/image-proxy/imageRoutes.js';
 import { startUICacheWarming } from './routes/cache/cache_utils.js';
@@ -136,6 +136,7 @@ async function connectToMongoCloud() {
 		initScanDaoEventsJob.start();
 	}
 	initExchangeRatesJob.start();
+	initRefreshDaoOverviewJob.start();
 	initResolveMarketsJob.start();
 	initResolveUndisputedMarketsJob.start();
 	// initCreateMarketsJobBitcoin.start();

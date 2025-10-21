@@ -1,6 +1,7 @@
 import express from 'express';
 import { isCreatePollPostValid, savePoll } from '../polling/polling_helper.js';
 import {
+	cachedData,
 	countCreateMarketEvents,
 	fetchActiveMarketCategories,
 	fetchAllowedTokens,
@@ -10,65 +11,26 @@ import {
 	fetchMarketStakes,
 	fetchMarketVotes,
 	findOpinionPollByTitle,
-	readMinTokenLiquidity,
-	readMinTokenLiquidityToken
+	readMinTokenLiquidityToken,
+	updateDaoOverview
 } from './markets_helper.js';
-import { DaoOverview, fetchContractBalances, fetchTokenSaleStages, GateKeeper, readPredictionContractData, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
-import { getConfig } from '../../lib/config.js';
+import { GateKeeper, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { fetchCreateMarketMerkleInput } from '../gating/gating_helper.js';
 import { getLeaderBoard } from './leader_board_helper.js';
 
 const router = express.Router();
-export let cachedData: DaoOverview | null = null; // simpple cache
 let lastFetchTime = 0; // To track the last fetch timestamp
-const CACHE_DURATION = 5 * 60 * 1000; // Cache duration in milliseconds (5 minutes)
+const CACHE_DURATION = 2 * 60 * 1000; // Cache duration in milliseconds (5 minutes)
 //const CACHE_DURATION = 30 * 1000; // Cache duration in milliseconds (5 minutes)
 
 router.get('/market-dao-data', async (req, res) => {
 	const now = Date.now();
-	if (cachedData && now - lastFetchTime < CACHE_DURATION) {
-		console.log('Serving from cache');
-		res.json(cachedData);
-	} else {
-		try {
-			// Fetch contract data
-			const contractData = await readPredictionContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING, getConfig().stacksHiroKey);
-			contractData.marketInitialLiquidity = 100000000;
-			// const reputationData = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
-			//console.log('/market-dao-data: ', reputationData);
-			// Fetch contract balances
-			try {
-				await readMinTokenLiquidity(getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING);
-				await readMinTokenLiquidity(getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_SCALAR);
-			} catch (err: any) {
-				console.log('/market-dao-data: ', '==================================================================');
-			}
-			const scalarBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`, getConfig().stacksHiroKey);
-			const contractBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`, getConfig().stacksHiroKey);
-			const treasuryBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`, getConfig().stacksHiroKey);
-			let tokenSale;
-			// try {
-			// 	tokenSale = await fetchTokenSaleStages(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_TOKEN_SALE, getConfig().stacksHiroKey);
-			// } catch (err) {}
-
-			// Update cache
-			cachedData = {
-				contractData,
-				contractBalances,
-				scalarBalances,
-				treasuryBalances,
-				tokenSale
-			};
-			lastFetchTime = now;
-
-			// Send response
-			res.json(cachedData);
-		} catch (error) {
-			console.error('Error fetching contract data:', error);
-			res.status(500).json({ error: 'Failed to fetch contract data' });
-		}
+	if (!cachedData) {
+		await updateDaoOverview();
 	}
+	lastFetchTime = now;
+	res.json(cachedData);
 });
 
 router.post('/markets', async (req, res) => {

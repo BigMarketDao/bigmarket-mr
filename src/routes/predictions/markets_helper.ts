@@ -1,6 +1,8 @@
 import {
 	BasicEvent,
 	callContractReadOnly,
+	DaoOverview,
+	fetchContractBalances,
 	fetchMarketData,
 	getSip10Properties,
 	MarketData,
@@ -8,6 +10,7 @@ import {
 	PredictionMarketClaimEvent,
 	PredictionMarketCreateEvent,
 	PredictionMarketStakeEvent,
+	readPredictionContractData,
 	StoredOpinionPoll,
 	TokenPermissionEvent,
 	type MarketCategory
@@ -20,6 +23,43 @@ import { getDaoConfig } from '../../lib/config_dao.js';
 import { saveDaoEvent } from '../dao/events/dao_events_extension_helper.js';
 import { principalCV, serializeCV } from '@stacks/transactions';
 
+export let cachedData: DaoOverview | null = null; // simpple cache refreshed via cron
+
+export async function updateDaoOverview() {
+	try {
+		// Fetch contract data
+		const contractData = await readPredictionContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING, getConfig().stacksHiroKey);
+		contractData.marketInitialLiquidity = 100000000;
+		// const reputationData = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
+		//console.log('/market-dao-data: ', reputationData);
+		// Fetch contract balances
+		try {
+			await readMinTokenLiquidity(getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING);
+			await readMinTokenLiquidity(getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_SCALAR);
+		} catch (err: any) {
+			console.log('/market-dao-data: ', '==================================================================');
+		}
+		const scalarBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`, getConfig().stacksHiroKey);
+		const contractBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`, getConfig().stacksHiroKey);
+		const treasuryBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`, getConfig().stacksHiroKey);
+		let tokenSale;
+		// try {
+		// 	tokenSale = await fetchTokenSaleStages(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_TOKEN_SALE, getConfig().stacksHiroKey);
+		// } catch (err) {}
+
+		// Update cache
+		cachedData = {
+			contractData,
+			contractBalances,
+			scalarBalances,
+			treasuryBalances,
+			tokenSale
+		};
+	} catch (error) {
+		console.error('Error fetching contract data:', error);
+	}
+}
+
 export async function readMinTokenLiquidity(deployer: string, contractName: string): Promise<any> {
 	const tokens1 = await fetchAllowedTokens(1);
 	for (let t of tokens1) {
@@ -27,7 +67,7 @@ export async function readMinTokenLiquidity(deployer: string, contractName: stri
 		const atok = (await daoEventCollection.findOne({ event: 'allowed-token', token: t.token, extension: `${deployer}.${contractName}` })) as unknown as TokenPermissionEvent;
 		atok.minLiquidity = l;
 		await saveOrUpdateEvent(atok);
-		console.log('readMinTokenLiquidity: saved: ' + atok);
+		//console.log('readMinTokenLiquidity: saved: ' + atok);
 	}
 }
 
@@ -41,7 +81,7 @@ export async function readMinTokenLiquidityToken(deployer: string, contractName:
 			functionArgs
 		};
 		const result = await callContractReadOnly(getConfig().stacksApi, data, getConfig().stacksHiroKey);
-		console.log('readMinTokenLiquidityToken: ', result);
+		//console.log('readMinTokenLiquidityToken: ', result);
 		if (result.success) return Number(result.value.value.value);
 		else return -1;
 	} catch (e: any) {

@@ -26,6 +26,16 @@ export async function processCoreVotingEvent(basicEvent: BasicEvent, result: any
 		} as VotingEventProposeProposal;
 		await saveOrUpdateEvent(contractEvent);
 		return contractEvent;
+	} else if (result.value.event.value === 'reclaim-votes') {
+		//		(print {event: "reclaim-votes", proposal: reclaim-proposal, votes: votes, voter: tx-sender})
+		const contractEvent = {
+			...basicEvent,
+			proposal: result.value.proposal.value,
+			voter: result.value.voter.value,
+			votes: Number(result.value.votes.value)
+		};
+		await saveOrUpdateEvent(contractEvent);
+		return contractEvent;
 	} else if (result.value.event.value === 'vote') {
 		const contractEvent = {
 			...basicEvent,
