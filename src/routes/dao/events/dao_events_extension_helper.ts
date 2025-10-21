@@ -91,51 +91,55 @@ async function resolveExtensionEvents(url: string, daoContract: string, extensio
 		const pdb = await findVotingContractEventByContractAndIndex(Number(event.event_index), event.tx_id);
 		//const pdb = await findPredictionContractEventByContractAndIndex(extensionContract, Number(event.event_index), event.tx_id);
 		if (!pdb) {
-			const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
-			const basicEvent = createBasicEvent(new ObjectId().toString(), event, daoContract, extensionContract, result.value.event.value);
-			console.log('processEvent: new event: ', result);
-			try {
-				if (extensionContract.indexOf(getDaoConfig().VITE_DAO_TOKEN_SALE) > -1) {
-					processTokenSaleEvent(basicEvent, result);
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_GOVERNANCE_TOKEN) > -1) {
-					processGovernanceTokenEvent(basicEvent, result);
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_CORE_PROPOSALS) > -1) {
-					processCoreProposalsEvent(basicEvent, result);
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_CORE_VOTING) > -1) {
-					processCoreVotingEvent(basicEvent, result);
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_TREASURY) > -1) {
-					// no events
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_VOTING) > -1) {
-					processMarketVotingEvent(basicEvent, result);
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_GATING) > -1) {
-					processMarketGatingEvent(basicEvent, result);
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_BITCOIN) > -1) {
-					processMarketPredicitonBitcoinEvent(basicEvent, result);
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_PREDICTING) > -1) {
-					processMarketPredicitonCategoricalEvent(basicEvent, result);
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_SCALAR) > -1) {
-					processMarketPredicitonScalarEvent(basicEvent, result);
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_LIQUIDITY_CONTRIBUTION) > -1) {
-					processLiquidityContributionEvents(basicEvent, result);
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_REPUTATION_TOKEN) > -1) {
-					processReputationEvents(basicEvent, result);
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_SCALAR_HEDGE_STRATEGY) > -1) {
-					processHedgeStrategyEvents(basicEvent, result);
-				} else if (extensionContract.indexOf(getDaoConfig().VITE_DOA_EMERGENCY_EXECUTE_EXTENSION) > -1) {
-					// no events
-				} else {
-					if (extensionContract.indexOf('bme023') === -1) {
-						console.log('processEvent: unexpected event: ', event);
-					}
-				}
-			} catch (err: any) {
-				console.log('resolveExtensionEvents: ', err);
-			}
+			await handleContractOrTransactionEvent(daoContract, extensionContract, event);
 		} else {
 			//console.log('resolveExtensionEvents: skipping event: ' + pdb.event);
 		}
 	}
 	return val.results?.length || 0;
+}
+
+export async function handleContractOrTransactionEvent(daoContract: string, extensionContract: string, event: any) {
+	const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
+	const basicEvent = createBasicEvent(new ObjectId().toString(), event, daoContract, extensionContract, result.value.event.value);
+	console.log('processEvent: new event: ', result);
+	try {
+		if (extensionContract.indexOf(getDaoConfig().VITE_DAO_TOKEN_SALE) > -1) {
+			processTokenSaleEvent(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_GOVERNANCE_TOKEN) > -1) {
+			processGovernanceTokenEvent(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_CORE_PROPOSALS) > -1) {
+			processCoreProposalsEvent(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_CORE_VOTING) > -1) {
+			processCoreVotingEvent(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_TREASURY) > -1) {
+			// no events
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_VOTING) > -1) {
+			processMarketVotingEvent(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_GATING) > -1) {
+			processMarketGatingEvent(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_BITCOIN) > -1) {
+			processMarketPredicitonBitcoinEvent(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_PREDICTING) > -1) {
+			processMarketPredicitonCategoricalEvent(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_MARKET_SCALAR) > -1) {
+			processMarketPredicitonScalarEvent(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_LIQUIDITY_CONTRIBUTION) > -1) {
+			processLiquidityContributionEvents(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_REPUTATION_TOKEN) > -1) {
+			processReputationEvents(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_SCALAR_HEDGE_STRATEGY) > -1) {
+			processHedgeStrategyEvents(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DOA_EMERGENCY_EXECUTE_EXTENSION) > -1) {
+			// no events
+		} else {
+			if (extensionContract.indexOf('bme023') === -1) {
+				console.log('processEvent: unexpected event: ', event);
+			}
+		}
+	} catch (err: any) {
+		console.log('resolveExtensionEvents: ', err);
+	}
 }
 
 export async function saveDaoEvent(contractEvent: BasicEvent) {

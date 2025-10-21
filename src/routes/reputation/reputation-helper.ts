@@ -245,19 +245,19 @@ const WEIGHTS: Record<number, number> = {
 // 	return { balances, overallBalance, weightedReputation };
 // }
 
-export async function runBatchClaimSweep() {
+export async function runBatchClaimSweep(): Promise<{ message: string; txid?: string }> {
 	let currentEpoch = -1;
 	try {
 		const pox = await getPoxInfo(getConfig().stacksApi, getConfig().stacksHiroKey);
 		const currentHeight = pox.current_burnchain_block_height;
-		currentEpoch = Math.round(currentHeight / 1000);
+		currentEpoch = Math.floor(currentHeight / 1000);
 		// if (currentEpoch < 0) currentEpoch = await fetchCurrentEpoch(getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
 		// else currentEpoch = currentEpoch / 1000;
 		console.log('runBatchClaimSweep: currentEpoch=' + currentHeight);
 		console.log('runBatchClaimSweep: currentEpoch=' + currentEpoch);
 	} catch (err: any) {
 		console.log('runBatchClaimSweep: ', err);
-		return;
+		return { message: err };
 	}
 
 	const { VITE_DOA_DEPLOYER, VITE_DAO_REPUTATION_TOKEN } = getDaoConfig();
@@ -294,16 +294,17 @@ export async function runBatchClaimSweep() {
 
 	if (eligibleUsers.length === 0) {
 		console.log('No eligible users this epoch.');
-		return;
+		return { message: `No eligible users in epoch ${currentEpoch}.` };
 	}
 
 	// Step 4: Call batch claim contract method
 	if (eligibleUsers.length) {
-		return await makeBatchClaimTx(eligibleUsers);
+		return await makeBatchClaimTx(eligibleUsers, currentEpoch);
 	}
+	return { message: `No eligible users found in epoch ${currentEpoch}.` };
 }
 
-async function makeBatchClaimTx(eligibleUsers: Array<string>) {
+async function makeBatchClaimTx(eligibleUsers: Array<string>, currentEpoch: number): Promise<{ message: string; txid?: string }> {
 	//getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN;
 	const network = getStacksNetwork(getConfig().network);
 	const principalList = listCV(eligibleUsers.map((user) => principalCV(user)));
@@ -321,5 +322,5 @@ async function makeBatchClaimTx(eligibleUsers: Array<string>) {
 	});
 	const txResult = await broadcastTransaction({ transaction });
 	console.log('makeBatchClaimTx: txResult: ', txResult);
-	return txResult;
+	return { message: `Running claims for ${eligibleUsers.length} eligible users in epoch ${currentEpoch}.`, txid: txResult.txid };
 }

@@ -3,7 +3,7 @@ import { IncomingMessage } from 'http';
 import { Duplex } from 'stream';
 
 let wss: WebSocketServer | null = null; // exported reference
-export function getWss(): WebSocketServer | null {
+function getWss(): WebSocketServer | null {
 	return wss;
 }
 
