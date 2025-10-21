@@ -253,7 +253,6 @@ export async function runBatchClaimSweep() {
 		currentEpoch = Math.round(currentHeight / 1000);
 		// if (currentEpoch < 0) currentEpoch = await fetchCurrentEpoch(getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
 		// else currentEpoch = currentEpoch / 1000;
-		console.log('runBatchClaimSweep: currentEpoch=', pox);
 		console.log('runBatchClaimSweep: currentEpoch=' + currentHeight);
 		console.log('runBatchClaimSweep: currentEpoch=' + currentEpoch);
 	} catch (err: any) {
