@@ -4,7 +4,6 @@ import bodyParser from 'body-parser';
 import morgan from 'morgan';
 import cors from 'cors';
 import { getConfig, printConfig, setConfigOnStart } from './lib/config.js';
-import { WebSocketServer } from 'ws';
 import { jwtRoutes } from './routes/jwt/jwtRoutes.js';
 import { pollingRoutes } from './routes/polling/pollingRoutes.js';
 import { connect } from './lib/data/db_models.js';
@@ -131,7 +130,7 @@ async function connectToMongoCloud() {
 	await connect();
 	console.log('Connected to MongoDB!');
 	if (getConfig().network === 'testnet') {
-		initScanDaoEventsTestnetJob.start();
+		//initScanDaoEventsTestnetJob.start();
 	} else {
 		initScanDaoEventsJob.start();
 	}
