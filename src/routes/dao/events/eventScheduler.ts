@@ -4,6 +4,25 @@ import { daoEventCollection } from '../../../lib/data/db_models.js';
 import { readDaoExtensionEvents } from './dao_events_extension_helper.js';
 import { getDaoConfig } from '../../../lib/config_dao.js';
 
+export const initScanDaoEventsDevnetJob = cron.schedule('*/1 * * * *', async (fireDate) => {
+	console.log('Running: initScanDaoEventsDevnetJob at: ' + fireDate);
+	try {
+		const daoContract = getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DOA;
+		console.log('initScanDaoEventsDevnetJob: Running: dao: ' + daoContract);
+		try {
+			await readDaoEvents(true, daoContract);
+		} catch (err) {
+			console.log('Error running: ecosystem-dao: ', err);
+		}
+		await readDaoExtensionEvents(false, daoContract);
+		// }
+		// await readPredictionEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
+		// await readScalarEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
+		// await readBitcoinEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_BITCOIN);
+	} catch (err: any) {
+		console.log('initScanDaoEventsDevnetJob: ', err);
+	}
+});
 export const initScanDaoEventsTestnetJob = cron.schedule('0 0 * * *', async (fireDate) => {
 	console.log('Running: initScanDaoEventsJob at: ' + fireDate);
 	try {

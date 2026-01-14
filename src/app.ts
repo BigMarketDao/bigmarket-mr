@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import morgan from 'morgan';
 import cors from 'cors';
-import { getConfig, printConfig, setConfigOnStart } from './lib/config.js';
+import { CONFIG, getConfig, printConfig, setConfigOnStart } from './lib/config.js';
 import { jwtRoutes } from './routes/jwt/jwtRoutes.js';
 import { pollingRoutes } from './routes/polling/pollingRoutes.js';
 import { connect } from './lib/data/db_models.js';
@@ -23,8 +23,9 @@ import { agentRoutes } from './routes/agent/agentRoutes.js';
 import { reputationRoutes } from './routes/reputation/reputationRoutes.js';
 import { authRoutes } from './routes/auth/authRoutes.js';
 import { transactionRoutes } from './routes/transactions/transactionRoutes.js';
+import { healthRoutes } from './routes/health/healthRoutes.js';
 
-import { initScanDaoEventsJob, initScanDaoEventsTestnetJob } from './routes/dao/events/eventScheduler.js';
+import { initScanDaoEventsDevnetJob, initScanDaoEventsJob, initScanDaoEventsTestnetJob } from './routes/dao/events/eventScheduler.js';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
 import { initExchangeRatesJob, initRefreshDaoOverviewJob } from './routes/rates/ratesScheduler.js';
 import { initCreateMarketsJobBitcoin, initCreateMarketsJobEthereum, initCreateMarketsJobStacks, initCreateMarketsJobSui, initCreateMarketsJobTon, initResolveMarketsJob, initResolveUndisputedMarketsJob } from './routes/agent/agentScheduler.js';
@@ -104,6 +105,7 @@ app.use('/bigmarket-api/auth', authRoutes);
 app.use('/bigmarket-api/images', imageRoutes);
 app.use('/bigmarket-api/disputes', disputeRoutes);
 app.use('/bigmarket-api/transactions', transactionRoutes);
+app.use('/health', healthRoutes);
 
 const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 	// Optionally narrow:
@@ -129,8 +131,10 @@ async function connectToMongoCloud() {
 	printDaoConfig();
 	await connect();
 	console.log('Connected to MongoDB!');
-	if (getConfig().network === 'testnet') {
-		//initScanDaoEventsTestnetJob.start();
+	if (CONFIG.network === 'testnet') {
+		initScanDaoEventsTestnetJob.start();
+	} else if (CONFIG.network === 'devnet') {
+		initScanDaoEventsDevnetJob.start();
 	} else {
 		initScanDaoEventsJob.start();
 	}

@@ -23,8 +23,6 @@ export let authRefreshTokenCollection: Collection;
 export let authProofCollection: Collection;
 export let authOauthSessionCollection: Collection;
 
-export let walletLinksCollection: Collection;
-
 export async function connect() {
 	let uriPrefix: string = 'mongodb+srv';
 	if (isDev()) {
@@ -123,16 +121,6 @@ export async function connect() {
 	await authProofCollection.createIndex({ storedAt: -1 });
 	// (optional TTL to keep storage in check, e.g., 30 days)
 	// await authProofCollection.createIndex({ storedAt: 1 }, { expireAfterSeconds: 30 * 24 * 3600 });
-
-	// WALLET LINKS (bind Stacks addresses)
-	// Decide your policy:
-	// - One address can belong to only one user (common): unique on stxAddress, plus index on userId.
-	// - If you’ll support multiple chains in same collection, use a composite unique on (chain, stxAddress).
-	walletLinksCollection = database.collection('walletLinksCollection');
-	await walletLinksCollection.createIndex({ userId: 1 });
-	await walletLinksCollection.createIndex({ stxAddress: 1 }, { unique: true });
-	// If multi-chain:
-	// await walletLinksCollection.createIndex({ chain: 1, stxAddress: 1 }, { unique: true });
 
 	authOauthSessionCollection = database.collection('authOauthSessionCollection');
 	await authOauthSessionCollection.createIndex({ state: 1 }, { unique: true });

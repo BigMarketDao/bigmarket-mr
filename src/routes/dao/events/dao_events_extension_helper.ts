@@ -20,6 +20,7 @@ import { processHedgeStrategyEvents } from './processors/process_hedge_strategy_
 
 export async function readDaoExtensionEvents(genesis: boolean, daoContractId: string) {
 	const extensions = await fetchExtensions(daoContractId);
+	console.debug('readDaoExtensionEvents: dao' + daoContractId + ' : ' + genesis, extensions);
 	for (const extensionObj of extensions) {
 		console.debug('readDaoExtensionEvents: dao' + extensionObj.extension);
 		await readExtensionEvents(genesis, daoContractId, extensionObj.extension);

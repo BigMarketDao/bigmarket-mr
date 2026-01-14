@@ -44,6 +44,7 @@ export function getStacksAddressFromPost(signature: SignatureData, message: Base
 
 export async function readDaoEvents(genesis: boolean, daoContractId: string) {
 	const url = getConfig().stacksApi + '/extended/v1/contract/' + daoContractId + '/events?limit=20';
+	//  /extended/v1/contract/SP6P4EJF0VG8V0RB3TQQKJBHDQKEF6NVRD1KZE3C.satoshibles/events
 	const extensions: Array<ExtensionType> = [];
 	let currentOffset = 0;
 	if (!genesis) {
@@ -68,8 +69,9 @@ async function resolveExtensionEvents(url: string, currentOffset: number, total:
 	const response = await fetch(urlOffset, {
 		headers: { 'x-api-key': stacksHiroKey }
 	});
+	//console.log('resolveExtensionEvents: Running: url: ' + urlOffset);
 	const val = await response.json();
-	//console.log('resolveExtensionEvents: for url ' + urlOffset, val);
+	console.log('resolveExtensionEvents: for url ' + urlOffset, val);
 	if (!val || !val.results || typeof val.results !== 'object' || val.results.length === 0) {
 		//console.log('resolveExtensionEvents: for url ' + urlOffset, val.results);
 		return false;

@@ -1,7 +1,7 @@
 import { ConfigI } from '../types/local_types.js';
 import process from 'process';
 
-let CONFIG = {} as ConfigI;
+export let CONFIG = {} as ConfigI;
 export let BASE_URL: string;
 
 export function printConfig() {
