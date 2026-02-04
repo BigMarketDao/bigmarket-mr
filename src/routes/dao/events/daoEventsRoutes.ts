@@ -31,6 +31,22 @@ router.post('/extensions/:daoContractId', async (req, res, next) => {
 	}
 });
 
+router.post('/latest-events/:daoContractId', async (req, res, next) => {
+	try {
+		await readDaoEvents(true, req.params.daoContractId);
+		console.debug('post(/latest-events/:daoContractId: dao' + req.params.daoContractId);
+		await readDaoExtensionEvents(true, req.params.daoContractId);
+		//const events = await fetchBaseDaoEvents();
+		// await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
+		// await readScalarEvents(false, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
+		// await readBitcoinEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_BITCOIN);
+		res.send({ success: true });
+	} catch (error) {
+		console.log('Error in routes: ', error);
+		next('An error occurred fetching pox-info.');
+	}
+});
+
 router.get('/extensions/:daoContractId', async (req, res, next) => {
 	try {
 		res.send(await fetchExtensions(req.params.daoContractId));

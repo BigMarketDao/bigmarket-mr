@@ -17,7 +17,7 @@ db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345
 
 db.daoEventCollection.findAndModify({query: {event : 'create-market' }, update: {$set: {"unhashedData.featured": true }}, upsert: false, new: true, fields: {}})
 
-db.daoEventCollection.updateMany({event: 'create-market',extension: 'ST3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX77J7SV0.bme023-0-market-scalar'},{$set: {'unhashedData.processed': true}})
+db.daoEventCollection.updateMany({event: 'create-market',extension: 'ST1CV2YGRJA5X8BWS0GP31J9HF56M06CQK8998TSX.bme023-0-market-scalar'},{$set: {'unhashedData.processed': true}})
 
 db.daoEventCollection.updateMany({event: 'create-market','unhashedData.name':'Will Paul Biya officially announce his candidacy for the October 2025 Cameroon presidential election by August 20, 2025?'},{$set: {'unhashedData.forumMessageId': '66b40856-470c-4ed6-8925-8047b08c782b'}})
 
@@ -62,7 +62,7 @@ db.marketGatingCollection.deleteMany({})
 
 # Testnet
 
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX77J7SV0", "ST2XFH8D1MM2G11C0S6AZRSNP031RAY92XFABDE58", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ","ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM", "STEZD95XQ194X67C1QJW4PHKDG8F5D66ZCYFX27A"]})
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ["ST1CV2YGRJA5X8BWS0GP31J9HF56M06CQK8998TSX", "ST33YD6D9E9XSERRKVKY06D7XW5TRZGSRVZ920ECB", "ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY", "ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ","ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM", "STEZD95XQ194X67C1QJW4PHKDG8F5D66ZCYFX27A"]})
 
 db.marketCategoriesCollection.insertMany([
 { name : 'crypto', information: '', displayName: 'Crypto', active: true},

@@ -104,7 +104,7 @@ export const coordinators = [
 	{ stxAddress: 'ST3N4AJFZZYC4BK99H53XP8KDGXFGQ2PRSPNET8TN', btcAddress: 'tb1q6ue638m4t5knwxl4kwhwyuffttlp0ffee3zn3e' },
 	{ stxAddress: 'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY', btcAddress: '' },
 	{ stxAddress: 'SP1R1061ZT6KPJXQ7PAXPFB6ZAZ6ZWW28GBQA1W0F', btcAddress: '' },
-	{ stxAddress: 'ST3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX77J7SV0', btcAddress: '' },
+	{ stxAddress: 'ST1CV2YGRJA5X8BWS0GP31J9HF56M06CQK8998TSX', btcAddress: '' },
 	{ stxAddress: 'ST22NW0RYCW4GFZRPE8VGJRCKGQMRMMX492QET2ZC', btcAddress: '' },
 	{ stxAddress: 'STEZD95XQ194X67C1QJW4PHKDG8F5D66ZCYFX27A', btcAddress: '' },
 	{ stxAddress: 'ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ', btcAddress: '' }, //am

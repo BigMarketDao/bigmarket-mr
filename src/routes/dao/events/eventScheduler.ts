@@ -4,7 +4,7 @@ import { daoEventCollection } from '../../../lib/data/db_models.js';
 import { readDaoExtensionEvents } from './dao_events_extension_helper.js';
 import { getDaoConfig } from '../../../lib/config_dao.js';
 
-export const initScanDaoEventsDevnetJob = cron.schedule('*/1 * * * *', async (fireDate) => {
+export const initScanDaoEventsDevnetJob = cron.schedule('0 12 * * *', async (fireDate) => {
 	console.log('Running: initScanDaoEventsDevnetJob at: ' + fireDate);
 	try {
 		const daoContract = getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DOA;
@@ -23,7 +23,7 @@ export const initScanDaoEventsDevnetJob = cron.schedule('*/1 * * * *', async (fi
 		console.log('initScanDaoEventsDevnetJob: ', err);
 	}
 });
-export const initScanDaoEventsTestnetJob = cron.schedule('0 0 * * *', async (fireDate) => {
+export const initScanDaoEventsTestnetJob = cron.schedule('0 12 * * *', async (fireDate) => {
 	console.log('Running: initScanDaoEventsJob at: ' + fireDate);
 	try {
 		const daoContract = getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DOA;
@@ -43,7 +43,7 @@ export const initScanDaoEventsTestnetJob = cron.schedule('0 0 * * *', async (fir
 	}
 });
 //export const initScanDaoEventsJob = cron.schedule('*/2 * * * *', async (fireDate) => {
-export const initScanDaoEventsJob = cron.schedule('*/30 * * * *', async (fireDate) => {
+export const initScanDaoEventsJob = cron.schedule('0 12 * * *', async (fireDate) => {
 	console.log('Running: initScanDaoEventsJob at: ' + fireDate);
 	try {
 		const daoContract = getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DOA;
