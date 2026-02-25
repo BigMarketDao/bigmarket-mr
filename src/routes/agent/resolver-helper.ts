@@ -37,8 +37,6 @@ export async function sweepAndResolveMarket(marketId: number, marketType: number
 }
 
 export async function sweepAndResolveCategoricalMarkets(): Promise<Array<PredictionMarketCreateEvent>> {
-	console.log('================================================');
-	console.log('sweepAndResolveCategoricalMarkets: starting task');
 	const markets = (await daoEventCollection.find({ 'marketData.resolutionState': 0, event: 'create-market' }).toArray()) as unknown as Array<PredictionMarketCreateEvent>;
 	const resolved = [];
 	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi, getConfig().stacksHiroKey)) || ({} as StacksInfo);
@@ -46,6 +44,7 @@ export async function sweepAndResolveCategoricalMarkets(): Promise<Array<Predict
 	for (const market of markets) {
 		if (market.marketType !== 2) {
 			const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
+			console.log('sweepAndResolveCategoricalMarkets: endCool/blockHeight: ' + endCool + ' : ' + blockHeight);
 			if (blockHeight >= endCool) {
 				console.log('sweepAndResolveCategoricalMarkets: found candidate market: ' + market.unhashedData.name);
 				await llmResolveMarket(flattenMarket(market));
