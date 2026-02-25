@@ -15,7 +15,10 @@ router.get('/resolve-markets/scalar', async (req, res) => {
 });
 
 router.get('/resolve-markets/categorical', async (req, res) => {
+	console.log('sweepAndResolveCategoricalMarkets: starting task');
 	const markets = await sweepAndResolveCategoricalMarkets();
+	console.log('sweepAndResolveCategoricalMarkets: finished task returning ' + markets.length + ' markets');
+	console.log('================================================');
 	res.json(markets);
 });
 
