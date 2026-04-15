@@ -1,0 +1,14 @@
+{
+  "name": "@bigmarket/bigmarket-ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Add dev script'",
+    "build": "echo 'Add build script'",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo 'Add linter'",
+    "test": "echo 'Add tests'",
+    "clean": "rm -rf dist"
+  }
+}

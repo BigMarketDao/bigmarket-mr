@@ -1,0 +1,37 @@
+settings/Mainnet.toml
+settings/Testnet.toml
+history.txt
+scraps.txt
+cvm/vmstate.db
+.DS_Store
+nohup.out
+# Ignore Clarinet toml - user must actively choose devnet or testnet/mainnet toml config.
+Clarinet.toml
+# Ignore Node and NPM files. Added by the clarinet-sdk migration.
+.cache
+logs
+*.log
+npm-debug.log*
+coverage
+*.info
+costs-reports.json
+node_modules
+# Ignore Node and NPM files. Added by the clarinet-sdk migration.
+logs
+*.log
+npm-debug.log*
+coverage
+*.info
+costs-reports.json
+node_modules
+# Ignore Node and NPM files. Added by the clarinet-sdk migration.
+logs
+*.log
+npm-debug.log*
+coverage
+*.info
+costs-reports.json
+node_modules
+docs/**
+reports
+deployments/default.devnet-plan.yaml
