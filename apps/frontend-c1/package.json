@@ -16,7 +16,14 @@
 		"test": "npm run test:unit -- --run"
 	},
 	"dependencies": {
-		"@bigmarket/sdk": "workspace:*"
+		"@bigmarket/bm-common": "workspace:*",
+		"@bigmarket/bm-config": "workspace:*",
+		"@bigmarket/bm-design": "workspace:*",
+		"@bigmarket/bm-types": "workspace:*",
+		"@bigmarket/bm-ui": "workspace:*",
+		"@bigmarket/bm-utilities": "workspace:*",
+		"@bigmarket/sdk": "workspace:*",
+		"lucide-svelte": "^1.0.1"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.4",

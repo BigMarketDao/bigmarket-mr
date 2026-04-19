@@ -1,3 +1,2 @@
-export { deposit } from './deposit';
-export { deposit as default } from './deposit';
-
+export * as wallet from "./wallet";
+export * as stacks from "./chains/stacks";

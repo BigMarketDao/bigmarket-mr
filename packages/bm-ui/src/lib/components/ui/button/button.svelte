@@ -1,0 +1,53 @@
+<script lang="ts" module>
+	export {
+		buttonVariants,
+		type ButtonProps,
+		type ButtonSize,
+		type ButtonVariant
+	} from './button-variants.js';
+</script>
+
+<script lang="ts">
+	import { cn } from '../../../utils.js';
+	import { buttonVariants, type ButtonProps } from './button-variants.js';
+
+	let {
+		class: className,
+		variant = 'default',
+		size = 'default',
+		ref = $bindable(null),
+		href = undefined,
+		type = 'button',
+		disabled,
+		children,
+		...restProps
+	}: ButtonProps = $props();
+</script>
+
+{#if href}
+	<a
+		bind:this={ref}
+		data-slot="button"
+		class={cn(buttonVariants({ variant, size }), className)}
+		href={disabled ? undefined : href}
+		aria-disabled={disabled}
+		role={disabled ? 'link' : undefined}
+		tabindex={disabled ? -1 : undefined}
+		{...restProps}
+		aria-label={variant}
+	>
+		{@render children?.()}
+	</a>
+{:else}
+	<button
+		bind:this={ref}
+		data-slot="button"
+		class={cn(buttonVariants({ variant, size }), className)}
+		{type}
+		{disabled}
+		{...restProps}
+		aria-label={variant}
+	>
+		{@render children?.()}
+	</button>
+{/if}

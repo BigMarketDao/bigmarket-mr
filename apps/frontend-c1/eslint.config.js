@@ -40,5 +40,12 @@ export default defineConfig(
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
 		rules: {}
+	},
+	{
+		files: ['**/lib/components/template/Footer.svelte'],
+		rules: {
+			// Footer mixes SvelteKit `resolve()` for in-app routes and plain https `href` for external links.
+			'svelte/no-navigation-without-resolve': 'off'
+		}
 	}
 );

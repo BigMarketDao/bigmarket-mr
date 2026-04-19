@@ -1,13 +1,9 @@
 {
   "name": "@bigmarket/sdk",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.1",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts"
-  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -16,6 +12,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@bigmarket/bm-config": "workspace:*",
+    "@bigmarket/bm-types": "workspace:*",
     "@stacks/connect": "^8.2.6",
     "@stacks/transactions": "^7.4.0"
   }

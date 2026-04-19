@@ -4,7 +4,16 @@ import adapter from '@sveltejs/adapter-node';
 const config = {
 	compilerOptions: {
 		// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
-		runes: ({ filename }) => (filename.split(/[/\\]/).includes('node_modules') ? undefined : true)
+		runes: ({ filename }) => {
+			// enable for your app + packages
+			if (filename.includes('apps/frontend-c1')) return true;
+			if (filename.includes('bm-ui')) return true;
+			if (filename.includes('bm-common')) return true;
+
+			// disable for everything else (node_modules etc)
+			return false;
+		}
+		//runes: ({ filename }) => (filename.split(/[/\\]/).includes('node_modules') ? undefined : true)
 	},
 	kit: { adapter: adapter() }
 };
