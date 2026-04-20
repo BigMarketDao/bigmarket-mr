@@ -1,8 +1,36 @@
-export type StacksInfo = {
-  burn_block_height: number;
-  stacks_tip_height?: number;
-  server_version?: string;
-  network_id?: number;
+import type { StacksInfo } from "./chainTypes";
+import type { TokenPermissionEvent } from "./eventTypes";
+
+export type WalletBalances = {
+  stacks: {
+    address: string;
+    amount: number;
+  };
+  cardinal: {
+    address: string;
+    amount: number;
+  };
+  ordinal: {
+    address: string;
+    amount: number;
+  };
+};
+export type AddressMempoolObject = {
+  address: string;
+  chain_stats: {
+    funded_txo_count: number;
+    funded_txo_sum: number;
+    spent_txo_count: number;
+    spent_txo_sum: number;
+    tx_count: number;
+  };
+  mempool_stats: {
+    funded_txo_count: number;
+    funded_txo_sum: number;
+    spent_txo_count: number;
+    spent_txo_sum: number;
+    tx_count: number;
+  };
 };
 
 export type UserWalletType = {
@@ -49,34 +77,14 @@ export type AddressObject = {
   cardinal: string;
   ordinal: string;
   sBTCBalance: number;
+  tokenBalances?: TokenBalances;
+  walletBalances?: WalletBalances;
   stxBalance?: number;
   bnsNameInfo?: any;
+  cardinalInfo?: AddressMempoolObject;
+  ordinalInfo?: AddressMempoolObject;
   btcPubkeySegwit0?: string;
   btcPubkeySegwit1?: string;
-};
-export interface BasicEvent {
-  _id?: string;
-  event: string;
-  event_index: number;
-  txId: string;
-  daoContract: string;
-  extension: string;
-}
-
-export interface TokenPermissionEvent extends BasicEvent {
-  marketType: number;
-  allowed: boolean;
-  token: string;
-  sip10Data?: Sip10Data;
-  minLiquidity?: number;
-}
-export type Sip10Data = {
-  symbol: string;
-  name: string;
-  decimals: number;
-  balance: number;
-  totalSupply: number;
-  tokenUri: string;
 };
 export type TokenBalances = {
   stx: {

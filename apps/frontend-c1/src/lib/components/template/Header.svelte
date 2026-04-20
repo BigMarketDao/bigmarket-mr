@@ -20,9 +20,9 @@
 	import { getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
 	import { disconnectWallet } from '@bigmarket/bm-common';
 	import { resolve } from '$app/paths';
-	import { mainNavLinks } from '$lib/tools/site';
+	import { mainNavLinks } from '$lib/core/tools/site';
 	import { HeaderButton, HeaderButtonReputation } from '@bigmarket/bm-ui';
-	import { isCoordinator } from '$lib/tools/security';
+	import { isCoordinator } from '$lib/core/tools/security';
 	import { page } from '$app/state';
 	import { afterNavigate } from '$app/navigation';
 

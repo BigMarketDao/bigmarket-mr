@@ -2,7 +2,7 @@
 	import { Button, TypoHeader } from '@bigmarket/bm-ui';
 	import { onMount } from 'svelte';
 	import { getStxAddress, isLoggedIn, connectWallet, userWalletStore } from '@bigmarket/bm-common';
-	import { DEV_WALLET_STORAGE_KEY, getAddresses } from '$lib/tools/security';
+	import { DEV_WALLET_STORAGE_KEY, getAddresses } from '$lib/core/tools/security';
 
 	/**
 	 * DEVNET wallets (Clarinet test accounts)

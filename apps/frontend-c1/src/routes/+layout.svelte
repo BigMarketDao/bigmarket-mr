@@ -9,14 +9,35 @@
 	import Footer from '$lib/components/template/Footer.svelte';
 	import { browser } from '$app/environment';
 	import AlphaBanner from '$lib/components/template/AlphaBanner.svelte';
-	import { closeTxModal, fetchWalletData, initWallet, isLoggedIn, txModal } from '@bigmarket/bm-common';
+	import {
+		closeTxModal,
+		getStxAddress,
+		initWallet,
+		isLoggedIn,
+		txModal
+	} from '@bigmarket/bm-common';
 	import TxModal from '$lib/components/template/TxModal.svelte';
+	import { initAppShell } from '$lib/core/app/initAppShell';
+	import { loadSystemData } from '$lib/core/app/loadSystemData';
+	import { loadWalletData } from '$lib/core/app/loadWalletData';
+	import type {
+		DaoOverview,
+		ExchangeRate,
+		StacksInfo,
+		TokenPermissionEvent,
+		MarketCategory
+	} from '@bigmarket/bm-types';
 
 	let networkWarning = $state(false);
 	let ready = $state(false);
 	let modal: { open: boolean; txId?: string } = $state({ open: false });
 	const { data, children } = $props<{
 		data: {
+			exchangeRates: ExchangeRate[];
+			stacksInfo: StacksInfo;
+			daoOverview: DaoOverview;
+			tokens: TokenPermissionEvent[];
+			marketCategories: MarketCategory[];
 			network: string;
 			appConfig: AppConfig;
 			daoConfig: DaoConfig;
@@ -29,12 +50,36 @@
 		networkWarning = false;
 		modal = $txModal;
 	});
-	onMount(async () => {
-		await initWallet();
+	const checkNetwork = () => {
+		if (!browser) return false;
 		if (isLoggedIn()) {
-			await fetchWalletData(data.appConfig.VITE_STACKS_API);
+			const stxAddress = getStxAddress();
+			if (data.appConfig.VITE_NETWORK === 'mainnet') {
+				if (!stxAddress.startsWith('SP') && !stxAddress.startsWith('SM')) {
+					networkWarning = true;
+				}
+			} else {
+				if (stxAddress.startsWith('SP') || stxAddress.startsWith('SM')) {
+					networkWarning = true;
+				}
+			}
 		}
+	};
+
+	// onMount(async () => {
+	// 	await initWallet();
+	// 	if (isLoggedIn()) {
+	// 		await fetchWalletData(data.appConfig.VITE_STACKS_API);
+	// 	}
+	// 	ready = true;
+	// });
+	onMount(async () => {
+		if (!browser) return;
+		console.log('data', data);
+		initAppShell(data?.appConfig?.VITE_STACKS_API);
+		await Promise.all([loadSystemData(data), initWallet().then(loadWalletData)]);
 		ready = true;
+		checkNetwork();
 	});
 </script>
 
@@ -50,9 +95,7 @@
 	</div>
 {:else}
 	<!-- App: column fills viewport; main grows between chrome and footer -->
-	<div
-		class="flex min-h-dvh flex-col bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100"
-	>
+	<div class="flex min-h-dvh flex-col bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
 		{#if browser}
 			<div class="shrink-0">
 				<AlphaBanner />
@@ -68,7 +111,7 @@
 						<span class="text-orange-800 dark:text-orange-300">
 							{requireAppConfig($appConfigStore).VITE_NETWORK}
 						</span>
-						. Please switch wallet to this network.
+						Please switch wallet to this network.
 					</div>
 				</div>
 			{:else}

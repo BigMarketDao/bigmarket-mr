@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import CurrencyDropdown from '$lib/components/template/CurrencyDropdown.svelte';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoLink, footerNavSections } from '$lib/tools/site';
+	import { daoLink, footerNavSections } from '$lib/core/tools/site';
 
 	const currentYear = new Date().getFullYear();
 	const appConfig = $derived(requireAppConfig($appConfigStore));

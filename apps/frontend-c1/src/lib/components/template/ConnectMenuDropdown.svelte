@@ -8,10 +8,11 @@
 		showOnRampModal,
 		userWalletStore,
 		getBtcAddress,
-		getStxAddress
+		getStxAddress,
+		allowedTokenStore
 	} from '@bigmarket/bm-common';
 	import { resolve } from '$app/paths';
-	import { daoLink } from '$lib/tools/site';
+	import { daoLink } from '$lib/core/tools/site';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
 	import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
 	import { ConnectButton } from '@bigmarket/bm-ui';
@@ -36,13 +37,12 @@
 	}
 
 	function getStxBalanceMicro(): number {
-		return $userWalletStore.balances?.stx?.balance ?? 0;
+		return $userWalletStore.walletBalances?.stacks?.amount ?? 0;
 	}
 
 	function getBtcBalanceMicro(): number {
-		const net = appConfig.VITE_NETWORK;
-		const ks = $userWalletStore.keySets?.[net];
-		return ks?.sBTCBalance ?? 0;
+		const ks = $userWalletStore.sBTCBalance ?? 0;
+		return ks;
 	}
 
 	let isOpen = $state(false);
@@ -53,7 +53,7 @@
 	let btcAddress = $state('');
 	let bigAllowed = $state(false);
 
-	const allowedTokens = $derived($userWalletStore.tokens ?? []);
+	const allowedTokens = $derived($allowedTokenStore ?? []);
 	const bigToken = $derived(
 		`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_GOVERNANCE_TOKEN}`
 	);

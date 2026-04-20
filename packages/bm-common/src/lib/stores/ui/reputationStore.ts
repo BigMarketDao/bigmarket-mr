@@ -1,7 +1,7 @@
+import { UserReputationContractData } from "@bigmarket/bm-types";
 import { persisted } from "svelte-local-storage-store";
-import { UserReputation } from "./reputationTypes";
 
 export const userReputationStore = persisted(
   "userReputationStore",
-  {} as UserReputation,
+  {} as UserReputationContractData,
 );
