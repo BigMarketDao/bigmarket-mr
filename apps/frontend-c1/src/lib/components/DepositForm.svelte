@@ -17,11 +17,11 @@
 
 	const tokenOptions = [
 		{
-			label: 'Wrapped STX',
+			label: 'STX',
 			value: `${requireDaoConfig($daoConfigStore).VITE_WRAPPED_STX_FULL_CONTRACT}`
 		},
 		{
-			label: 'tUSDH',
+			label: 'USDH',
 			value: `${requireDaoConfig($daoConfigStore).VITE_USDH_FULL_CONTRACT}`
 		}
 	];

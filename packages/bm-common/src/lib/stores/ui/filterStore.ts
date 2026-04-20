@@ -9,10 +9,6 @@ export const selectedCurrency = persisted("selectedCurrency", {
   symbol: "$",
 } as Currency);
 
-export type UserSettings = {
-  executiveTeamMember: boolean;
-};
-
 // Track user input amount
 export const searchType = writable("all");
 export const constructed = writable(false);

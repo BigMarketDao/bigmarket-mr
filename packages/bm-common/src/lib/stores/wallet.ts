@@ -1,6 +1,7 @@
 import { get, writable } from "svelte/store";
 import type { WalletAccount, WalletState } from "@bigmarket/bm-types";
 import { wallet } from "@bigmarket/sdk";
+import { userWalletStore } from "./ui/userWalletStore";
 
 const browser = typeof (globalThis as any).window !== "undefined";
 
@@ -65,6 +66,45 @@ export async function disconnectWallet() {
   if (!browser) return;
   await wallet.disconnect();
   walletState.set({ status: "disconnected" });
+}
+
+// ---- ON-CHAIN DATA ----
+// Fetches live balances and chain info from the Stacks API and writes them
+// into userWalletStore so UI components have real data to display.
+export async function fetchWalletData(stacksApi: string): Promise<void> {
+  if (!browser) return;
+  const stxAddr = getStxAddress();
+  if (!stxAddr || stxAddr === "??" || stxAddr === "?") return;
+
+  try {
+    const [balRes, infoRes] = await Promise.all([
+      fetch(`${stacksApi}/extended/v1/address/${stxAddr}/balances`),
+      fetch(`${stacksApi}/v2/info`),
+    ]);
+
+    if (balRes.ok) {
+      const data = await balRes.json();
+      // The Stacks API returns STX balance as a string; parse to number for
+      // compatibility with the existing StacksBalance / TokenBalances types.
+      const stxBalance = {
+        ...data.stx,
+        balance: parseInt(data.stx?.balance ?? "0", 10),
+      };
+      const normalized = { ...data, stx: stxBalance };
+      userWalletStore.update((s) => ({
+        ...s,
+        balances: normalized,
+        tokenBalances: normalized,
+      }));
+    }
+
+    if (infoRes.ok) {
+      const stacksInfo = await infoRes.json();
+      userWalletStore.update((s) => ({ ...s, stacksInfo }));
+    }
+  } catch {
+    // Non-fatal — balances remain at persisted/default values.
+  }
 }
 
 // ---- SELECTORS (unchanged idea) ----

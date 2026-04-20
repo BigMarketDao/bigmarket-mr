@@ -2,7 +2,7 @@ export type UserSettings = {
   executiveTeamMember: boolean;
 };
 
-export type UserReputationStore = {
+export type UserReputation = {
   name: string;
   userSettings: UserSettings;
   userReputationData?: UserReputationContractData;

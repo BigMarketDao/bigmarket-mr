@@ -4,4 +4,7 @@ export * from "./lib/stores/watchTxResult";
 export * from "./lib/stores/ui/exchangeRatesStore";
 export * from "./lib/stores/ui/exchangeRatesTypes";
 export * from "./lib/stores/ui/filterStore";
-export { userWalletStore } from "./lib/stores/ui/userWalletStore";
+export * from "./lib/stores/ui/reputationStore";
+export * from "./lib/stores/ui/reputationTypes";
+export * from "./lib/stores/ui/userWalletStore";
+export * from "./lib/stores/ui/userWalletTypes";

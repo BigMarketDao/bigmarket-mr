@@ -1,4 +1,7 @@
 import { persisted } from "svelte-local-storage-store";
-import { UserReputationStore } from "./reputationTypes";
+import { UserReputation } from "./reputationTypes";
 
-export const sessionStore = persisted("userStore", {} as UserReputationStore);
+export const userReputationStore = persisted(
+  "userReputationStore",
+  {} as UserReputation,
+);

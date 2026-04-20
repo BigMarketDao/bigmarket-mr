@@ -17,9 +17,9 @@
   }`}
   aria-current={active ? 'page' : undefined}
 >
-  <span class="relative text-orange-500 dark:text-orange-200"
-    ><Trophy class="inline h-4 w-4 text-orange-900 dark:text-orange-300" />
-    {weightedReputation} Big Karma</span
+  <span class="text-orange-500 dark:text-orange-200"
+    >
+    <Trophy class="inline-block  pr-5 h-4 w-4 text-orange-900 dark:text-orange-300" /> {weightedReputation} Big Karma</span
   >
 
   {#if active}

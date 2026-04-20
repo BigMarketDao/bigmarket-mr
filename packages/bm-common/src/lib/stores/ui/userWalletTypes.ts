@@ -1,3 +1,10 @@
+export type StacksInfo = {
+  burn_block_height: number;
+  stacks_tip_height?: number;
+  server_version?: string;
+  network_id?: number;
+};
+
 export type UserWalletType = {
   loggedIn: boolean;
   balances?: StacksBalance;
@@ -5,6 +12,7 @@ export type UserWalletType = {
   tokens: Array<TokenPermissionEvent>;
   tokenBalances: TokenBalances;
   walletSigningMode: boolean;
+  stacksInfo?: StacksInfo;
 };
 export type StacksBalance = {
   stx: {

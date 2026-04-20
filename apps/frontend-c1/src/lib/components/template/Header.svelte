@@ -2,18 +2,38 @@
 	import ConnectMenuDropdown from './ConnectMenuDropdown.svelte';
 	import { onDestroy, onMount } from 'svelte';
 	import SlotModal from './SlotModal.svelte';
-	import { showOnRampModal } from '@bigmarket/bm-common';
-	import { Menu, X, Sun, Moon, Trophy, Crown, Settings, Power } from 'lucide-svelte';
+	import { showOnRampModal, userReputationStore } from '@bigmarket/bm-common';
+	import {
+		Menu,
+		X,
+		Sun,
+		Moon,
+		Trophy,
+		Crown,
+		Settings,
+		Power,
+		BarChart3,
+		DollarSign
+	} from 'lucide-svelte';
 	import { truncate } from '@bigmarket/bm-utilities';
 	import ConnectLanes from './ConnectLanes.svelte';
 	import { getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
 	import { disconnectWallet } from '@bigmarket/bm-common';
 	import { resolve } from '$app/paths';
+	import { mainNavLinks } from '$lib/tools/site';
+	import { HeaderButton, HeaderButtonReputation } from '@bigmarket/bm-ui';
+	import { isCoordinator } from '$lib/tools/security';
+	import { page } from '$app/state';
+	import { afterNavigate } from '$app/navigation';
 
 	let dropdownRef: HTMLElement | null = null;
 
 	let isOpen = $state(false);
 	let isDarkMode = $state(false);
+	let currentPath = $state(page.url.pathname);
+	afterNavigate(() => {
+		currentPath = page.url.pathname;
+	});
 
 	const disWallet = async () => {
 		await disconnectWallet();
@@ -106,6 +126,30 @@
 				</div>
 				<span class="text-xl font-bold text-gray-900 dark:text-white">BigMarket</span>
 			</a>
+			{#if typeof window !== 'undefined'}
+				<div class="hidden items-center gap-4 md:flex">
+					<!-- Centralized main nav links -->
+					{#each mainNavLinks as nav (nav.href)}
+						<HeaderButton href={nav.href} label={nav.label} active={currentPath === nav.href} />
+					{/each}
+					{#if isLoggedIn()}
+						{#if isCoordinator(getStxAddress())}<HeaderButton
+								href="/market-mgt"
+								label="Create"
+								active={currentPath.startsWith('/market-mgt')}
+							/>{/if}
+						<HeaderButton
+							href={`/my-markets/${getStxAddress()}`}
+							label="My Markets"
+							active={currentPath.startsWith('/my-markets')}
+						/>
+						<HeaderButtonReputation
+							weightedReputation={$userReputationStore.userReputationData?.weightedReputation || 0}
+							active={currentPath.startsWith('/reputation')}
+						/>
+					{/if}
+				</div>
+			{/if}
 		</div>
 
 		<!-- Right Section: Dark Toggle + Connect Menu + Mobile Menu Button -->
@@ -158,6 +202,49 @@
 			<div class="mx-auto max-w-7xl p-4">
 				<!-- Main Actions (Top) -->
 				<div class="mb-4 space-y-1 border-b border-gray-200 pb-4 dark:border-gray-700">
+					{#if typeof window !== 'undefined'}
+						<a
+							href={resolve('/dao')}
+							class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+							onclick={closeMenu}
+						>
+							<div
+								class="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+							>
+								<DollarSign class="h-4 w-4" />
+							</div>
+							<div class="flex-1">
+								<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+									BigMarket IDO
+								</div>
+								<div class="text-xs text-gray-500 dark:text-gray-400">Join our token sale</div>
+							</div>
+						</a>
+						{#if isLoggedIn()}
+							<a
+								href={resolve(`/my-markets/${getStxAddress()}`)}
+								class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+								onclick={closeMenu}
+							>
+								<div
+									class="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+								>
+									<BarChart3 class="h-4 w-4" />
+								</div>
+								<div class="flex-1">
+									<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+										My Markets
+									</div>
+									<div class="text-xs text-gray-500 dark:text-gray-400">View your positions</div>
+								</div>
+							</a>
+							<!-- <a
+								href={resolve('/market-mgt')}
+								class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+								onclick={closeMenu}
+							/> -->
+						{/if}
+					{/if}
 					<a
 						href={resolve('/reputation')}
 						class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -248,9 +335,9 @@
 								</div>
 								<div class="flex-1">
 									<div class="text-sm font-medium text-gray-600 dark:text-gray-400">Settings</div>
-								<div class="text-xs text-gray-500 dark:text-gray-400">
-									Customize your experience
-								</div>
+									<div class="text-xs text-gray-500 dark:text-gray-400">
+										Customize your experience
+									</div>
 								</div>
 							</a>
 

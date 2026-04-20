@@ -9,7 +9,7 @@
 	import Footer from '$lib/components/template/Footer.svelte';
 	import { browser } from '$app/environment';
 	import AlphaBanner from '$lib/components/template/AlphaBanner.svelte';
-	import { closeTxModal, initWallet, txModal } from '@bigmarket/bm-common';
+	import { closeTxModal, fetchWalletData, initWallet, isLoggedIn, txModal } from '@bigmarket/bm-common';
 	import TxModal from '$lib/components/template/TxModal.svelte';
 
 	let networkWarning = $state(false);
@@ -31,6 +31,9 @@
 	});
 	onMount(async () => {
 		await initWallet();
+		if (isLoggedIn()) {
+			await fetchWalletData(data.appConfig.VITE_STACKS_API);
+		}
 		ready = true;
 	});
 </script>

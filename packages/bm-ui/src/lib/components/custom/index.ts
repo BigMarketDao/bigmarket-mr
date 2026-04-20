@@ -1,4 +1,5 @@
 export * from "./forms";
+export { default as HeaderButton } from "./HeaderButton.svelte";
 export { default as HeaderButtonReputation } from "./HeaderButtonReputation.svelte";
 export { default as SectionContainer } from "./SectionContainer.svelte";
 export { default as TypoHeader } from "./TypoHeader.svelte";
