@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { fullBalanceInSip10Token, type Sip10Data } from '@bigmarket/bm-helpers';
-	import { getGovernanceToken } from '@bigmarket/bm-common';
-	import { sessionStore } from '@bigmarket/bm-common';
-	import { getStxAddress } from '@bigmarket/bm-common';
+	import { allowedTokenStore, getStxAddress } from '@bigmarket/bm-common';
+	import { getGovernanceToken } from '$lib/core/app/loaders/governance/tokens';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
 	import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
 
@@ -18,7 +17,7 @@
 	function mintToken() {}
 
 	onMount(async () => {
-		sip10Data = getGovernanceToken($sessionStore.tokens);
+		sip10Data = getGovernanceToken($allowedTokenStore);
 		totalBalanceUstx = await fullBalanceInSip10Token(
 			appConfig.VITE_STACKS_API,
 			getStxAddress(),

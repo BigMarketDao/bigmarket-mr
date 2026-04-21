@@ -11,7 +11,7 @@
 	import { reclaimMarketVotes } from '../../../core/app/loaders/governance/dao_api';
 	import { principalCV, serializeCV, uintCV } from '@stacks/transactions';
 	import type { MarketDisputeRecord } from '@bigmarket/bm-common';
-	import { sessionStore } from '@bigmarket/bm-common';
+
 
 	let { dispute }: { dispute: MarketDisputeRecord } = $props();
 	let inited = false;

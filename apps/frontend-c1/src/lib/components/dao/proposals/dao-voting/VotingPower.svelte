@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Banner } from '@bigmarket/bm-ui';
 	import { fmtMicroToStxNumber, fmtNumber } from '@bigmarket/bm-utilities';
-	import { sessionStore } from '@bigmarket/bm-common';
+
 	import { getBalanceAtHeight } from '@bigmarket/bm-helpers';
 	import type { VotingEventProposeProposal } from '@bigmarket/bm-helpers';
 	import { onMount } from 'svelte';
@@ -23,7 +23,7 @@
 	onMount(async () => {
 		const response = await getBalanceAtHeight(
 			appConfig.VITE_STACKS_API,
-			$sessionStore.keySets[appConfig.VITE_NETWORK].stxAddress,
+			getStxAddress(),
 			proposal.proposalData.startBlockHeight
 		);
 		//balanceAtHeight = ChainUtils.fromMicroAmount(Number(response.stx.balance) - Number(response.stx.locked))

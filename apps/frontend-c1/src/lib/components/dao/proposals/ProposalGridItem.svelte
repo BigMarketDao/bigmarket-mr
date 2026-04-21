@@ -1,24 +1,17 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
-	import ClaritySytaxHighlighter from '$lib/components/ui/ClaritySytaxHighlighter.svelte';
+	import ClaritySytaxHighlighter from '$lib/components/common/ClaritySytaxHighlighter.svelte';
 	import { TypoHeader } from '@bigmarket/bm-ui';
-	import { explorerAddressUrl, getStxAddress } from '@bigmarket/bm-common';
-	import {
-		callContractReadOnly,
-		lookupContract,
-		type VotingEventProposeProposal
-	} from '@bigmarket/bm-helpers';
+	import { stacks } from '@bigmarket/sdk';
+	import { type VotingEventProposeProposal } from '@bigmarket/bm-types';
 	import { BadgeCheck, CheckCircle, CodeXml, ExternalLink, Recycle } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { isConcluded, isPostVoting } from '../../../core/app/loaders/governance/proposals';
-	import { reclaimVotes } from '../../../core/app/loaders/governance/dao_api';
-	import { contractPrincipalCV, principalCV, serializeCV } from '@stacks/transactions';
+	import { lookupContract, reclaimVotes } from '../../../core/app/loaders/governance/dao_api';
 	import { Bulletin } from '@bigmarket/bm-ui';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
-	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 
 	let {
 		proposal,
@@ -30,21 +23,10 @@
 	let contract: any;
 	let showSource = false;
 	let inited = false;
-	let rowClasses = 'py-3 grid w-full grid-cols-6 justify-stretch';
 	let errorMessage: string | undefined;
 
 	const reclaimVotingTokens = async () => {
-		const functionArgs = [
-			`0x${serializeCV(contractPrincipalCV(proposal.proposal.split('.')[0], proposal.proposal.split('.')[1]))}`,
-			`0x${serializeCV(principalCV(getStxAddress()))}`
-		];
-		const data = {
-			contractAddress: daoConfig.VITE_DAO_DEPLOYER,
-			contractName: proposal.extension.split('.')[1],
-			functionName: 'get-current-total-votes',
-			functionArgs: functionArgs
-		};
-		const lockedVotes = await callContractReadOnly(appConfig.VITE_STACKS_API, data);
+		const lockedVotes = await stacks.callContractReadOnly(appConfig.VITE_STACKS_API, data);
 		const numbLocked = Number(lockedVotes.value);
 		// warning - this is naive as the event is always present so leads to repeat claims
 		// const lockedVotes = await getVotesByVoterAndProposal(getStxAddress(), proposal.proposal);
@@ -70,10 +52,6 @@
 	};
 
 	onMount(async () => {
-		if (proposal.submissionContract && isPostVoting(proposal)) {
-			rowClasses += 'bg-primary-900 text-white';
-		}
-
 		inited = true;
 	});
 </script>
@@ -111,7 +89,9 @@
 
 			<a
 				class="flex items-center gap-1 rounded-md px-3 py-1 text-purple-600 hover:bg-purple-50 dark:hover:bg-gray-800"
-				href={explorerAddressUrl(
+				href={stacks.explorerAddressUrl(
+					appConfig.VITE_NETWORK,
+					appConfig.VITE_STACKS_EXPLORER,
 					`${proposal.proposal.split('.')[0]}.${proposal.proposal.split('.')[1]}`
 				)}
 				target="_blank"
@@ -121,7 +101,10 @@
 
 			<button
 				class="flex items-center gap-1 rounded-md px-3 py-1 text-green-600 hover:bg-green-50 dark:hover:bg-gray-800"
-				on:click|preventDefault={() => openResults()}
+				onclick={(e) => {
+					openResults();
+					e.preventDefault();
+				}}
 			>
 				{isPostVoting(proposal) ? 'Results' : 'Cast vote'}
 				<CheckCircle class="h-4 w-4" />

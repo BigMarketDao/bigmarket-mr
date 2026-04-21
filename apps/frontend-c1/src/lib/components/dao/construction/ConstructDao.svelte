@@ -99,7 +99,7 @@
 						</p>
 						<div class="mt-5">
 							<ul class="ps-5">
-								{#if $sessionStore.userSettings.executiveTeamMember}
+								{#if false}
 									<li class="list-disc">
 										<a href="/" on:click|preventDefault={() => (showCoreExecute = !showCoreExecute)}
 											>run core actions</a

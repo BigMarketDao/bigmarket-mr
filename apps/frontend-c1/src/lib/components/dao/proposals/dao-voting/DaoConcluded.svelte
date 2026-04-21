@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { sessionStore } from '@bigmarket/bm-common';
 	import type { VotingEventProposeProposal } from '@bigmarket/bm-helpers';
-	import { fmtNumber } from '@bigmarket/bm-common';
+	import { chainStore, fmtNumber } from '@bigmarket/bm-common';
 	import { base } from '$app/paths';
 
 	let { proposal }: { proposal: VotingEventProposeProposal } = $props();
 
-	let burnHeight = $sessionStore.stacksInfo.burn_block_height;
+	let burnHeight = $chainStore.stacks.burn_block_height;
 
 	onMount(async () => {});
 </script>

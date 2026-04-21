@@ -4,7 +4,7 @@
 	import { Banner } from '@bigmarket/bm-ui';
 	import Holding from '$lib/components/ui/Holding.svelte';
 	import { explorerTxUrl, fmtMicroToStx, fmtNumber } from '@bigmarket/bm-common';
-	import { sessionStore } from '@bigmarket/bm-common';
+
 	import { getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
 	import type { FundingData } from '@bigmarket/bm-helpers';
 	import { fetchStacksInfo } from '@bigmarket/bm-helpers';
@@ -29,8 +29,6 @@
 
 	let errorMessage = $state<string | undefined>(undefined);
 	let inited = $state(false);
-	const account = $sessionStore.keySets[appConfig.VITE_NETWORK];
-
 	let amount = $state(500000);
 	let txId = $state<string | undefined>(undefined);
 	let fundingMet = $state(false);

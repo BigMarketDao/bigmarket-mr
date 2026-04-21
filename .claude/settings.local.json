@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm list *)",
+      "Bash(npm run *)",
+      "Bash(grep -r '$sessionStore\\\\|sessionStore' /Users/mijoco/hubgit/bigm_workspace/bigmarket-fpmm/apps '--include=*.svelte' '--include=*.ts' '--include=*.tsx' -n)"
+    ]
+  }
+}

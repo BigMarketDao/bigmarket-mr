@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { getProposalStatus, isVoting } from '$lib/components/dao/proposals/proposals';
 	import { fmtNumber } from '@bigmarket/bm-common';
-	import { sessionStore } from '@bigmarket/bm-common';
+	import { chainStore } from '@bigmarket/bm-common';
 	import { showTxModal } from '@bigmarket/bm-common';
 	import { explorerTxUrl, getAddressId, getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
 	import { watchTransaction } from '@bigmarket/bm-common';
@@ -123,11 +123,11 @@
 				if (
 					tx &&
 					tx.tx_status === 'pending' &&
-					tx.sender_address === $sessionStore.keySets[appConfig.VITE_NETWORK].stxAddress
+					tx.sender_address === getStxAddress()
 				) {
 					txId = potentialTxId;
 				} else if (
-					tx?.sender_address === $sessionStore.keySets[appConfig.VITE_NETWORK].stxAddress
+					tx?.sender_address === getStxAddress()
 				) {
 					localStorage.removeItem('VOTED_TXID_3' + getAddressId());
 				}
@@ -183,7 +183,7 @@
 		<div class="space-y-1 rounded-lg py-6">
 			<p>
 				Current block: <span class="font-bold"
-					>{fmtNumber($sessionStore.stacksInfo.burn_block_height)}</span
+					>{fmtNumber($chainStore.stacks.burn_block_height)}</span
 				>
 			</p>
 			<p>

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Banner } from '@bigmarket/bm-ui';
 	import { fmtMicroToStxFormatted, fmtMicroToStxNumber, fmtStxMicro } from '@bigmarket/bm-common';
-	import { sessionStore } from '@bigmarket/bm-common';
+
 	import { showTxModal } from '@bigmarket/bm-common';
 	import { explorerTxUrl, getAddressId, getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
 	import { fetchUserBalances, type VotingEventProposeProposal } from '@bigmarket/bm-helpers';
@@ -71,11 +71,11 @@
 				if (
 					tx &&
 					tx.tx_status === 'pending' &&
-					tx.sender_address === $sessionStore.keySets[appConfig.VITE_NETWORK].stxAddress
+					tx.sender_address === getStxAddress()
 				) {
 					txId = potentialTxId;
 				} else {
-					if (tx.sender_address === $sessionStore.keySets[appConfig.VITE_NETWORK].stxAddress) {
+					if (tx.sender_address === getStxAddress()) {
 						localStorage.removeItem('VOTED_TXID_3' + getAddressId());
 					}
 				}

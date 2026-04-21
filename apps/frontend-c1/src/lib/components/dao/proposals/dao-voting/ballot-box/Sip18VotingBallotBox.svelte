@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { sessionStore } from '@bigmarket/bm-common';
+
 	import { getTransaction, type SignatureData } from '@bigmarket/bm-helpers';
 	import { Banner } from '@bigmarket/bm-ui';
 	import { fmtMicroToStxFormatted } from '@bigmarket/bm-common';
@@ -97,11 +97,11 @@
 				if (
 					tx &&
 					tx.tx_status === 'pending' &&
-					tx.sender_address === $sessionStore.keySets[appConfig.VITE_NETWORK].stxAddress
+					tx.sender_address === getStxAddress()
 				) {
 					txId = potentialTxId;
 				} else {
-					if (tx.sender_address === $sessionStore.keySets[appConfig.VITE_NETWORK].stxAddress) {
+					if (tx.sender_address === getStxAddress()) {
 						localStorage.removeItem('VOTED_TXID_3' + getAddressId());
 					}
 				}

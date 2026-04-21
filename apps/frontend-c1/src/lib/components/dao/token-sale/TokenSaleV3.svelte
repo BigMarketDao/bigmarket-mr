@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { Banner } from '@bigmarket/bm-ui';
-	import { daoOverviewStore, getGovernanceToken, getMarketToken } from '@bigmarket/bm-common';
+	import { allowedTokenStore, daoOverviewStore, getMarketToken } from '@bigmarket/bm-common';
+	import { getGovernanceToken } from '$lib/core/app/loaders/governance/tokens';
 	import { connectWallet } from '@bigmarket/bm-common';
 	import { fmtMicroToStx, truncate } from '@bigmarket/bm-utilities';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
@@ -40,7 +41,7 @@
 			symbol: getMarketToken(token.split('::')[0]).symbol
 		}))
 	);
-	const govToken = $derived(getGovernanceToken($sessionStore.tokens));
+	const govToken = $derived(getGovernanceToken($allowedTokenStore));
 	const stageProgress = $derived(
 		stage ? Math.min((stage.tokensSold / stage.maxSupply) * 100, 100) : 0
 	);

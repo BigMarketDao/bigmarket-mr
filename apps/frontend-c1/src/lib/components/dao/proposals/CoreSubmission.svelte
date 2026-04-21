@@ -4,7 +4,7 @@
 	import { Banner } from '@bigmarket/bm-ui';
 	import Holding from '$lib/components/ui/Holding.svelte';
 	import { fmtNumber } from '@bigmarket/bm-common';
-	import { sessionStore } from '@bigmarket/bm-common';
+	import { chainStore } from '@bigmarket/bm-common';
 	import { showTxModal } from '@bigmarket/bm-common';
 	import { explorerTxUrl, isLoggedIn } from '@bigmarket/bm-common';
 	import { watchTransaction } from '@bigmarket/bm-common';
@@ -71,7 +71,7 @@
 		const stacksInfo = await fetchStacksInfo(appConfig.VITE_STACKS_API);
 		burnHeightNow = stacksInfo.burn_block_height;
 		fundingMet = false;
-		proposalStart = $sessionStore.stacksInfo.burn_block_height + proposalDelay;
+		proposalStart = $chainStore.stacks.burn_block_height + proposalDelay;
 		inited = true;
 	});
 
