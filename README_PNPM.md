@@ -21,7 +21,7 @@ npm add -w @scure/btc-signer @scure/base
 
 ```bash
 pnpm --filter @bigmarket/bm-common build
-pnpm --filter @bigmarket/bm-helpers build
+pnpm --filter @bigmarket/bm-types build
 pnpm --filter @bigmarket/sip18-forum build
 pnpm --filter @bigmarket/sip18-forum-types build
 ```

@@ -38,7 +38,7 @@ export const load: LayoutServerLoad = async ({ url }) => {
 			appConfig,
 			daoConfig
 		};
-		console.log('CACHE HIT: using result= ', JSON.stringify(result, null, 2));
+		//console.log('CACHE HIT: using result= ', JSON.stringify(result, null, 2));
 
 		setCached(key, result, 1000 * 60 * 1); // 30 secs
 		return result;

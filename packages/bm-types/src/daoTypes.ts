@@ -1,5 +1,5 @@
-import type { ReputationContractData } from "./reputationTypes";
-import type { TokenSale, TokenSalePurchase } from "./tokenSaleTypes";
+import type { ReputationContractData } from "./reputationTypes.js";
+import type { TokenSale, TokenSalePurchase } from "./tokenSaleTypes.js";
 
 export type DaoOverview = {
   contractData: PredictionContractData;

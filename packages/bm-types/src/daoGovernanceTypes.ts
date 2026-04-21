@@ -1,5 +1,5 @@
-import type { ProposalData } from "./daoTypes";
-import type { BasicEvent } from "./eventTypes";
+import type { ProposalData } from "./daoTypes.js";
+import type { BasicEvent } from "./eventTypes.js";
 
 export interface VotingEventVoteOnProposal extends BasicEvent {
   proposal: string;

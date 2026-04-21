@@ -1,28 +1,23 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fullBalanceInSip10Token, type Sip10Data } from '@bigmarket/bm-helpers';
-	import { allowedTokenStore, getStxAddress } from '@bigmarket/bm-common';
+	import { allowedTokenStore } from '@bigmarket/bm-common';
 	import { getGovernanceToken } from '$lib/core/app/loaders/governance/tokens';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
+	import type { Sip10Data } from '@bigmarket/bm-types';
 
-	const appConfig = $derived(requireAppConfig($appConfigStore));
-	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
-	let sip10Data: Sip10Data;
-	let totalBalanceUstx: number = 0;
+	let sip10Data = $state<Sip10Data>();
 
-	let amountStx: number;
+	let amountStx = $state<number>(0);
 
 	// Handle input change
 	function mintToken() {}
 
 	onMount(async () => {
 		sip10Data = getGovernanceToken($allowedTokenStore);
-		totalBalanceUstx = await fullBalanceInSip10Token(
-			appConfig.VITE_STACKS_API,
-			getStxAddress(),
-			`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_GOVERNANCE_TOKEN}`
-		);
+		// totalBalanceUstx = await fullBalanceInSip10Token(
+		// 	appConfig.VITE_STACKS_API,
+		// 	getStxAddress(),
+		// 	`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_GOVERNANCE_TOKEN}`
+		// );
 	});
 </script>
 

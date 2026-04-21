@@ -1,5 +1,5 @@
-import type { StacksInfo } from "./chainTypes";
-import type { TokenPermissionEvent } from "./eventTypes";
+import type { StacksInfo } from "./chainTypes.js";
+import type { TokenPermissionEvent } from "./eventTypes.js";
 
 export type WalletBalances = {
   stacks: {

@@ -1,5 +1,9 @@
 import type { TxResult } from "@bigmarket/bm-types";
-import { type ClarityValue, type PostCondition } from "@stacks/transactions";
+import {
+  deserializeCV,
+  type ClarityValue,
+  type PostCondition,
+} from "@stacks/transactions";
 
 export async function callContract(
   contractAddress: string,
@@ -36,5 +40,52 @@ export async function callContract(
       success: false,
       error: e instanceof Error ? e.message : "Wallet request failed",
     };
+  }
+}
+export async function isDaoConstructed(
+  stacksApi: string,
+  contractAddress: string,
+): Promise<boolean> {
+  let constructed = false;
+  try {
+    const result = await fetchDataVar(
+      stacksApi,
+      contractAddress.split(".")[0],
+      contractAddress.split(".")[1],
+      "executive",
+    );
+    if (result && result.data) {
+      const clarityValue = deserializeCV(result.data);
+      // executive is only given a value by the construct call
+      if (clarityValue && clarityValue.type === "contract") constructed = true;
+    }
+  } catch (err: any) {}
+  return constructed;
+}
+
+export async function fetchDataVar(
+  stacksApi: string,
+  contractAddress: string,
+  contractName: string,
+  dataVarName: string,
+  stacksHiroKey?: string,
+) {
+  try {
+    //checkAddressForNetwork(getConfig().network, contractAddress)
+    const url = `${stacksApi}/v2/data_var/${contractAddress}/${contractName}/${dataVarName}`;
+    const response = await fetch(url, {
+      headers: { ...(stacksHiroKey ? { "x-api-key": stacksHiroKey } : {}) },
+    });
+    const result = await response.json();
+    return result;
+  } catch (err) {
+    console.log(
+      "fetchDataVar: dataVarName: " +
+        dataVarName +
+        " : " +
+        (err as { message: string }).message +
+        " contractName: " +
+        contractName,
+    );
   }
 }

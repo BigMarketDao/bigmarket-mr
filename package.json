@@ -5,6 +5,11 @@
   "engines": {
     "node": ">=20.0.0"
   },
+  "pnpm": {
+    "overrides": {
+      "@noble/hashes": "^1.8.0"
+    }
+  },
   "scripts": {
     "dev": "pnpm --filter @bigmarket/frontend-c1 dev",
     "dev-api": "pnpm --filter @bigmarket/api-v1 dev",

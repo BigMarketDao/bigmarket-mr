@@ -1,4 +1,4 @@
-import type { SignatureData } from "./signatureTypes";
+import type { SignatureData } from "./signatureTypes.js";
 
 export const ADMIN_MESSAGE =
   "please sign this message to authorise DAO management task.";

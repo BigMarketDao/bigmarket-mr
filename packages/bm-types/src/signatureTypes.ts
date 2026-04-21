@@ -18,7 +18,7 @@ export interface VoteMessage {
   voter: string;
   voting_power: number;
 }
-export const enum ChainID {
+export enum ChainID {
   Testnet = 2147483648,
   Mainnet = 1,
 }
