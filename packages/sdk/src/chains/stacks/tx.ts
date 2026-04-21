@@ -7,7 +7,7 @@ export async function callContract(
   network: string,
   functionName: string,
   functionArgs: Array<ClarityValue>,
-  postConditions?: Array<PostCondition>,
+  postConditions: Array<PostCondition> = [],
   postConditionMode: "allow" | "deny" = "deny",
 ): Promise<TxResult> {
   const { request } = await import("@stacks/connect");

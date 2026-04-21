@@ -1,6 +1,5 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import bodyParser from 'body-parser';
 import morgan from 'morgan';
 import cors from 'cors';
 import { CONFIG, getConfig, printConfig, setConfigOnStart } from './lib/config.js';
@@ -15,7 +14,7 @@ import { voterRoutes } from './routes/dao/voter/voterRoutes.js';
 import { disputeRoutes } from './routes/dao/voter/disputeRoutes.js';
 import { gatingRoutes } from './routes/gating/gatingRoutes.js';
 import { daoSip18VotingRoutes } from './routes/dao/sip18-voting/daoSip18VotingRoutes.js';
-import { clarityBitcoinRoutes } from './routes/clarity-bitcoin/clarityBitcoinRoutes.js';
+// import { clarityBitcoinRoutes } from './routes/clarity-bitcoin/clarityBitcoinRoutes.js';
 import { tokenSaleRoutes } from './routes/dao/token-sale/tokenSaleRoutes.js';
 import { exchangeRoutes } from './routes/rates/exchangeRoutes.js';
 import { pythRoutes } from './routes/oracle/pyth/pythRoutes.js';
@@ -42,8 +41,8 @@ if (process.env.NODE_ENV === 'development') {
 
 const app = express();
 const port = process.env.PORT || 3020;
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.json({ limit: '1mb' })); // for /reclaim/start & most routes
 app.use(
 	cors({
@@ -67,12 +66,6 @@ app.use(cors());
 setConfigOnStart();
 setDaoConfigOnStart();
 
-app.use(
-	bodyParser.urlencoded({
-		extended: true
-	})
-);
-app.use(bodyParser.json());
 app.use((req, res, next) => {
 	if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
 		next();
@@ -100,7 +93,7 @@ app.use('/bigmarket-api/exchange', exchangeRoutes);
 app.use('/bigmarket-api/oracle', pythRoutes);
 app.use('/bigmarket-api/agent', agentRoutes);
 app.use('/bigmarket-api/reputation', reputationRoutes);
-app.use('/bigmarket-api/clarity-bitcoin', clarityBitcoinRoutes);
+// app.use('/bigmarket-api/clarity-bitcoin', clarityBitcoinRoutes);
 app.use('/bigmarket-api/auth', authRoutes);
 app.use('/bigmarket-api/images', imageRoutes);
 app.use('/bigmarket-api/disputes', disputeRoutes);

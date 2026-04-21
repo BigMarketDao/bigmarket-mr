@@ -42,9 +42,20 @@ export default defineConfig(
 		rules: {}
 	},
 	{
-		files: ['**/lib/components/template/Footer.svelte'],
+		// These components link to routes not yet registered in the SvelteKit router
+		// (e.g. /dao/proposals/..., /dispute/...) so resolve() cannot be used.
+		// They use base-prefixed strings instead.
+		files: [
+			'**/lib/components/template/Footer.svelte',
+			'**/lib/components/dao/disputes/Dispute.svelte',
+			'**/lib/components/dao/disputes/DisputeGridItem.svelte',
+			'**/lib/components/dao/proposals/dao-voting/VotingResults.svelte',
+			'**/lib/components/dao/proposals/dao-voting/DaoConcluded.svelte',
+			'**/lib/components/dao/proposals/dao-voting/ballot-box/DaoVotingActiveNew.svelte',
+			'**/lib/components/dao/proposals/ProposalGridItem.svelte',
+			'**/lib/components/dao/construction/ConstructDao.svelte'
+		],
 		rules: {
-			// Footer mixes SvelteKit `resolve()` for in-app routes and plain https `href` for external links.
 			'svelte/no-navigation-without-resolve': 'off'
 		}
 	}

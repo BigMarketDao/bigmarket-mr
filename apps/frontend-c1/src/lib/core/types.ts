@@ -17,3 +17,12 @@ export type LayoutData = {
 	appConfig: AppConfig;
 	daoConfig: DaoConfig;
 };
+export type VoteSummary = {
+	stxFor: number;
+	stxAgainst: number;
+	accountsFor: number;
+	accountsAgainst: number;
+	inFavour: string;
+	passed: boolean;
+	customMajority: number;
+};

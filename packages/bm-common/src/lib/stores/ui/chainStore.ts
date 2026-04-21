@@ -1,4 +1,4 @@
-import { ChainInfo } from "@bigmarket/bm-types";
+import type { ChainInfo } from "@bigmarket/bm-types";
 import { writable } from "svelte/store";
 
 const initial: ChainInfo = {

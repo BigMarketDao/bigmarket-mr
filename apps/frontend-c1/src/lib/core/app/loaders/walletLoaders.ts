@@ -122,7 +122,7 @@ function extractBtcBalance(addressMempoolObject: AddressMempoolObject | undefine
 	if (!addressMempoolObject) return 0;
 	return (
 		addressMempoolObject?.chain_stats?.funded_txo_sum -
-			addressMempoolObject.chain_stats.spent_txo_sum || 0
+			addressMempoolObject.chain_stats?.spent_txo_sum || 0
 	);
 }
 export async function fetchAddress(
@@ -131,9 +131,14 @@ export async function fetchAddress(
 	stacksHiroKey?: string
 ): Promise<AddressMempoolObject> {
 	const url = `${mempoolUrl}/address/${address}`;
-	const response = await fetch(url, {
-		headers: { ...(stacksHiroKey ? { 'x-api-key': stacksHiroKey } : {}) }
-	});
-	const result = await response.json();
-	return result;
+	try {
+		const response = await fetch(url, {
+			headers: { ...(stacksHiroKey ? { 'x-api-key': stacksHiroKey } : {}) }
+		});
+		const result = await response.json();
+		return result;
+	} catch {
+		//console.log('fetchAddress: error: ', err);
+		return {} as AddressMempoolObject;
+	}
 }

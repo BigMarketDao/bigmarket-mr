@@ -1,3 +1,5 @@
+import type { ExchangeRate } from '@bigmarket/bm-types';
+
 export async function fetchExchangeRates(bigmarketApiUrl: string): Promise<Array<ExchangeRate>> {
 	const path = `${bigmarketApiUrl}/exchange/rates`;
 	try {

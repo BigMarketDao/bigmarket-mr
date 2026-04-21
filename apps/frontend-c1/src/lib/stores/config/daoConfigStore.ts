@@ -11,3 +11,6 @@ export function requireDaoConfig(config: DaoConfig | null): DaoConfig {
 export function requireDaoClient(config: DaoConfig | null) {
 	return stacks.createDaoClient(requireDaoConfig(config));
 }
+export function requireDaoGoveranceClient(config: DaoConfig | null) {
+	return stacks.createDaoGovernanceClient(requireDaoConfig(config));
+}

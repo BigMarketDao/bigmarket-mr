@@ -14,7 +14,9 @@
   "dependencies": {
     "@bigmarket/bm-config": "workspace:*",
     "@bigmarket/bm-types": "workspace:*",
+    "@stacks/common": "^7.3.1",
     "@stacks/connect": "^8.2.6",
+    "@stacks/encryption": "^7.4.0",
     "@stacks/transactions": "^7.4.0"
   }
 }
