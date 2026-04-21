@@ -30,7 +30,7 @@
 {/if}
 
 <div class="flex justify-between">
-	<a href="/" class={'text-lg text-gray-400'} on:click|preventDefault={() => fetchTransactions()}
+	<a href="/" class={'text-lg text-gray-400'} onclick={(e) => { e.preventDefault(); fetchTransactions(); }}
 		>{#if !showVotes}Show{:else}Hide{/if} transaction details</a
 	>
 </div>

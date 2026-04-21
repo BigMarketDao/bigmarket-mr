@@ -82,7 +82,7 @@
 		<div class="mt-4 flex flex-wrap gap-4 text-sm">
 			<button
 				class="flex items-center gap-1 rounded-md px-3 py-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800"
-				on:click|preventDefault={() => openSesame()}
+				onclick={(e) => { e.preventDefault(); openSesame(); }}
 			>
 				<CodeXml class="h-4 w-4" /> Code
 			</button>
@@ -116,7 +116,7 @@
 						<!-- <Icon src={AlertCircle} mini class="ml-2 inline-flex " /> -->
 						<button
 							class="flex cursor-pointer items-center gap-1 rounded-md px-3 py-1 text-orange-600 hover:bg-orange-50 dark:hover:bg-gray-800"
-							on:click|preventDefault={() => reclaimVotingTokens()}
+							onclick={(e) => { e.preventDefault(); reclaimVotingTokens(); }}
 						>
 							<Recycle class="h-4 w-4" /> Check Reclaim ?
 						</button>

@@ -101,18 +101,18 @@
 							<ul class="ps-5">
 								{#if false}
 									<li class="list-disc">
-										<a href="/" on:click|preventDefault={() => (showCoreExecute = !showCoreExecute)}
+										<a href="/" onclick={(e) => { e.preventDefault(); showCoreExecute = !showCoreExecute; }}
 											>run core actions</a
 										>
 									</li>
 								{/if}
 								<li class="list-disc">
-									<a href="/" on:click|preventDefault={() => (showExtensions = !showExtensions)}
+									<a href="/" onclick={(e) => { e.preventDefault(); showExtensions = !showExtensions; }}
 										>view current extensions</a
 									>
 								</li>
 								<li class="list-disc">
-									<a href="/" on:click|preventDefault={() => (showProposals = !showProposals)}
+									<a href="/" onclick={(e) => { e.preventDefault(); showProposals = !showProposals; }}
 										>view finished proposals</a
 									>
 								</li>
@@ -165,7 +165,7 @@
 							<p class="">Keep the DAO up to date.</p>
 							<ul class="mt-4 ps-5">
 								<li class="list-disc">
-									<a href="/" on:click|preventDefault={() => baseDaoEvents()}>read dao events</a>
+									<a href="/" onclick={(e) => { e.preventDefault(); baseDaoEvents(); }}>read dao events</a>
 								</li>
 							</ul>
 						</div>
@@ -173,7 +173,7 @@
 							<p class="">Manage IDO.</p>
 							<ul class="mt-4 ps-5">
 								<li class="list-disc">
-									<a href="/" on:click|preventDefault={() => initIdo()}>initialise ido</a>
+									<a href="/" onclick={(e) => { e.preventDefault(); initIdo(); }}>initialise ido</a>
 								</li>
 							</ul>
 						</div>

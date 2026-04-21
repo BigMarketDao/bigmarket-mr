@@ -38,7 +38,7 @@
         <a
           class="font-medium text-black underline"
           href="/"
-          on:click|preventDefault={() => updateTxVoting()}
+          onclick={(e) => { e.preventDefault(); updateTxVoting(); }}
           ><Icon src={PencilSquare} class="mb-1 inline h-5 w-5" aria-hidden="true" />
           {#if txVoting}
             Vote by sending a Stacks transaction - you will need enough STX to pay the gas fee
@@ -56,7 +56,7 @@
     <div class="text-white">
       <div>
         <div class="start">
-          <a href="/" on:click|preventDefault={() => (editing = !editing)}
+          <a href="/" onclick={(e) => { e.preventDefault(); editing = !editing; }}
             ><Icon src={PencilSquare} class="mb-1 inline h-5 w-5" aria-hidden="true" />
             <span class="underline">Voting power is {fmtMicroToStxFormatted(votingPower)} STX</span>
           </a>

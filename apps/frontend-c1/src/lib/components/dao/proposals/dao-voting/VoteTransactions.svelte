@@ -45,16 +45,16 @@
 </script>
 
 <div>
-	<a href="/" class={'text-lg text-gray-400'} on:click|preventDefault={() => download()}>to csv</a>
+	<a href="/" class={'text-lg text-gray-400'} onclick={(e) => { e.preventDefault(); download(); }}>to csv</a>
 </div>
 
 <div class="mt-5 mb-3 grid w-full grid-cols-4 justify-evenly border-b border-gray-300 pb-3">
 	<div class="col-span-2">
-		<a href="/" class="pointer w-1/2" on:click|preventDefault={() => reorder('voter')}>Voter</a>
+		<a href="/" class="pointer w-1/2" onclick={(e) => { e.preventDefault(); reorder('voter'); }}>Voter</a>
 	</div>
-	<div><a href="/" class="pointer" on:click|preventDefault={() => reorder('amount')}>Power</a></div>
+	<div><a href="/" class="pointer" onclick={(e) => { e.preventDefault(); reorder('amount'); }}>Power</a></div>
 	<div>
-		<a href="/" class="pointer" on:click|preventDefault={() => reorder('for')}>For/Against</a>
+		<a href="/" class="pointer" onclick={(e) => { e.preventDefault(); reorder('for'); }}>For/Against</a>
 	</div>
 </div>
 {#each sortedEvents as item}
