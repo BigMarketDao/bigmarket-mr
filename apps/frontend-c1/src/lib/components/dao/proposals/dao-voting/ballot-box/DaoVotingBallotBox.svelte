@@ -1,17 +1,29 @@
 <script lang="ts">
 	import { Banner } from '@bigmarket/bm-ui';
-	import { fmtMicroToStxFormatted, fmtMicroToStxNumber, fmtStxMicro } from '@bigmarket/bm-common';
 
-	import { showTxModal } from '@bigmarket/bm-common';
-	import { explorerTxUrl, getAddressId, getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
-	import { fetchUserBalances, type VotingEventProposeProposal } from '@bigmarket/bm-helpers';
-	import { getTransaction } from '@bigmarket/bm-helpers';
+	import { getStxAddress, isLoggedIn, showTxModal, watchTransaction } from '@bigmarket/bm-common';
 	import { onMount } from 'svelte';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoConfigStore, requireDaoConfig, requireDaoGoveranceClient } from '$lib/stores/config/daoConfigStore';
+	import {
+		daoConfigStore,
+		requireDaoConfig,
+		requireDaoGovernanceClient
+	} from '$lib/stores/config/daoConfigStore';
+	import type { VotingEventProposeProposal } from '@bigmarket/bm-types';
+	import {
+		fmtMicroToStxFormatted,
+		fmtMicroToStxNumber,
+		fmtStxMicro
+	} from '@bigmarket/bm-utilities';
+	import { stacks } from '@bigmarket/sdk';
+	import { fetchUserBalances, getTransaction } from '$lib/core/app/loaders/walletLoaders';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
-	const client = $derived(requireDaoGoveranceClient($daoConfigStore));
+	const client = $derived(requireDaoGovernanceClient($daoConfigStore));
+
+	function getAddressId() {
+		return getStxAddress().substring(5);
+	}
 
 	let {
 		onTxVote,
@@ -28,8 +40,10 @@
 	let bigBalance = $state(0);
 	let errorMessage = $state<string | undefined>(undefined);
 	let txId = $state<string | undefined>(undefined);
-	let canVote = $state(true);
-	const explorerUrl = $derived(txId ? explorerTxUrl(txId) : '');
+	// let canVote = $state(true);
+	const explorerUrl = $derived(
+		txId ? stacks.explorerTxUrl(appConfig.VITE_NETWORK, appConfig.VITE_STACKS_EXPLORER, txId) : ''
+	);
 	const castVote = async (vfor: boolean) => {
 		if (!isLoggedIn()) {
 			errorMessage = 'Please connect your wallet';
@@ -49,15 +63,24 @@
 			vfor,
 			getStxAddress()
 		);
-		showTxModal(response.txid || 'Unable to process right now');
-		localStorage.setItem('VOTED_FLAG' + getAddressId(), JSON.stringify(proposal.proposal));
-		localStorage.setItem('VOTED_TXID_3' + getAddressId(), JSON.stringify({ txId }));
-		onTxVote(txId);
+		if (response.success && response.txid) {
+			showTxModal(response.txid);
+			watchTransaction(
+				appConfig.VITE_BIGMARKET_API,
+				appConfig.VITE_STACKS_API,
+				`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`,
+				response.txid
+			);
+		} else {
+			localStorage.setItem('VOTED_FLAG' + getAddressId(), JSON.stringify(proposal.proposal));
+			localStorage.setItem('VOTED_TXID_3' + getAddressId(), JSON.stringify({ txId }));
+			onTxVote(txId);
+		}
 	};
 
-	if (votingPower === 0 || votingPower < 1) {
-		canVote = false;
-	}
+	// if (votingPower === 0 || votingPower < 1) {
+	// 	canVote = false;
+	// }
 	const lookupTransaction = async (txId: string) => {
 		return await getTransaction(appConfig.VITE_STACKS_API, txId);
 	};
@@ -68,11 +91,7 @@
 			if (txIdObj) {
 				const potentialTxId = JSON.parse(txIdObj).txId;
 				const tx = await lookupTransaction(potentialTxId);
-				if (
-					tx &&
-					tx.tx_status === 'pending' &&
-					tx.sender_address === getStxAddress()
-				) {
+				if (tx && tx.tx_status === 'pending' && tx.sender_address === getStxAddress()) {
 					txId = potentialTxId;
 				} else {
 					if (tx.sender_address === getStxAddress()) {
@@ -108,7 +127,7 @@
 		{:else if bigBalance > 0}
 			<div class="flex w-full justify-start gap-x-4">
 				<button
-					on:click={() => {
+					onclick={() => {
 						errorMessage = undefined;
 						castVote(true);
 					}}
@@ -117,7 +136,7 @@
 					VOTE YES
 				</button>
 				<button
-					on:click={() => {
+					onclick={() => {
 						errorMessage = undefined;
 						castVote(false);
 					}}

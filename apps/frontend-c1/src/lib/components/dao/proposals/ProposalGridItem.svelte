@@ -4,15 +4,15 @@
 	import ClaritySytaxHighlighter from '$lib/components/common/ClaritySytaxHighlighter.svelte';
 	import { TypoHeader } from '@bigmarket/bm-ui';
 	import { stacks } from '@bigmarket/sdk';
-	import { type VotingEventProposeProposal } from '@bigmarket/bm-types';
+	import { type Contract, type VotingEventProposeProposal } from '@bigmarket/bm-types';
 	import { BadgeCheck, CheckCircle, CodeXml, ExternalLink, Recycle } from 'lucide-svelte';
-	import { onMount } from 'svelte';
 	import { isConcluded, isPostVoting } from '../../../core/app/loaders/governance/proposals';
 	import { lookupContract, reclaimVotes } from '../../../core/app/loaders/governance/dao_api';
 	import { Bulletin } from '@bigmarket/bm-ui';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
-
+	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 	let {
 		proposal,
 		admin
@@ -20,12 +20,22 @@
 		proposal: VotingEventProposeProposal;
 		admin: boolean;
 	} = $props();
-	let contract: any;
-	let showSource = false;
-	let inited = false;
-	let errorMessage: string | undefined;
+	let contract: Contract | undefined = $state();
+	let showSource = $state(false);
+	let errorMessage: string | undefined = $state();
 
 	const reclaimVotingTokens = async () => {
+		const functionArgs = [
+			`0x${serializeCV(contractPrincipalCV(proposal.proposal.split('.')[0], proposal.proposal.split('.')[1]))}`,
+			`0x${serializeCV(principalCV(getStxAddress()))}`
+		];
+		const data = {
+			contractAddress: daoConfig.VITE_DAO_DEPLOYER,
+			contractName: proposal.extension.split('.')[1],
+			functionName: 'get-current-total-votes',
+			functionArgs: functionArgs
+		};
+
 		const lockedVotes = await stacks.callContractReadOnly(appConfig.VITE_STACKS_API, data);
 		const numbLocked = Number(lockedVotes.value);
 		// warning - this is naive as the event is always present so leads to repeat claims
@@ -50,10 +60,6 @@
 		if (admin) goto('/dao/proposals/sip18/' + proposal.proposal);
 		goto('/dao/proposals/' + proposal.proposal);
 	};
-
-	onMount(async () => {
-		inited = true;
-	});
 </script>
 
 <div class="my-1 w-full">
@@ -82,7 +88,10 @@
 		<div class="mt-4 flex flex-wrap gap-4 text-sm">
 			<button
 				class="flex items-center gap-1 rounded-md px-3 py-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800"
-				onclick={(e) => { e.preventDefault(); openSesame(); }}
+				onclick={(e) => {
+					e.preventDefault();
+					openSesame();
+				}}
 			>
 				<CodeXml class="h-4 w-4" /> Code
 			</button>
@@ -116,7 +125,10 @@
 						<!-- <Icon src={AlertCircle} mini class="ml-2 inline-flex " /> -->
 						<button
 							class="flex cursor-pointer items-center gap-1 rounded-md px-3 py-1 text-orange-600 hover:bg-orange-50 dark:hover:bg-gray-800"
-							onclick={(e) => { e.preventDefault(); reclaimVotingTokens(); }}
+							onclick={(e) => {
+								e.preventDefault();
+								reclaimVotingTokens();
+							}}
 						>
 							<Recycle class="h-4 w-4" /> Check Reclaim ?
 						</button>
@@ -135,7 +147,7 @@
 			<div
 				class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
 			>
-				<ClaritySytaxHighlighter sourceCode={contract.source_code} />
+				<ClaritySytaxHighlighter sourceCode={contract?.source_code || ''} />
 			</div>
 		{/if}
 	</div>

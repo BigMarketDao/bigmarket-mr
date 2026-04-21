@@ -1,7 +1,7 @@
 <script lang="ts">
 	import tick from '$lib/assets/tick.png';
 	import cross from '$lib/assets/cross.svg';
-	import { fmtMicroToStx, fmtNumber } from '@bigmarket/bm-common';
+	import { fmtMicroToStx, fmtNumber } from '@bigmarket/bm-utilities';
 
 	let {
 		accountsFor = 0,
@@ -27,7 +27,9 @@
 		<div class="mb-5 flex justify-between">
 			<div><img alt="correct" src={tick} /></div>
 			<div>
-				<span class="text-3xl font-extrabold">{fmtNumber(Math.floor(Number(fmtMicroToStx(stxFor))))}</span> <span class="text-2xl font-bold">stacks</span>
+				<span class="text-3xl font-extrabold"
+					>{fmtNumber(Math.floor(Number(fmtMicroToStx(stxFor))))}</span
+				> <span class="text-2xl font-bold">stacks</span>
 			</div>
 		</div>
 		<div class="flex justify-between">
@@ -39,7 +41,9 @@
 		<div class="mb-5 flex justify-between">
 			<div><img alt="correct" src={cross} class="bg-transparent" /></div>
 			<div>
-				<span class="text-3xl font-extrabold">{fmtNumber(Math.floor(Number(fmtMicroToStx(stxAgainst))))}</span> <span class="text-2xl font-bold">stacks</span>
+				<span class="text-3xl font-extrabold"
+					>{fmtNumber(Math.floor(Number(fmtMicroToStx(stxAgainst))))}</span
+				> <span class="text-2xl font-bold">stacks</span>
 			</div>
 		</div>
 		<div class="flex justify-between">

@@ -3,6 +3,7 @@ import type {
 	AddressMempoolObject,
 	AddressObject,
 	TokenBalances,
+	TransactionObject,
 	WalletBalances
 } from '@bigmarket/bm-types';
 
@@ -63,6 +64,25 @@ export async function getWalletBalances(
 		}
 	};
 }
+
+export async function getTransaction(
+	stacksApi: string,
+	tx: string,
+	stacksHiroKey?: string
+): Promise<TransactionObject> {
+	const url = `${stacksApi}/extended/v1/tx/${tx}`;
+	let val;
+	try {
+		const response = await fetch(url, {
+			headers: { ...(stacksHiroKey ? { 'x-api-key': stacksHiroKey } : {}) }
+		});
+		val = await response.json();
+	} catch (err) {
+		console.log('getTransaction: ', err);
+	}
+	return val;
+}
+
 export async function fetchUserBalances(
 	stacksApi: string,
 	mempoolApi: string,
@@ -141,4 +161,30 @@ export async function fetchAddress(
 		//console.log('fetchAddress: error: ', err);
 		return {} as AddressMempoolObject;
 	}
+}
+export async function getBalanceAtHeight(
+	stacksApi: string,
+	stxAddress: string,
+	height?: number,
+	stacksHiroKey?: string
+): Promise<{ stx: { balance: number; locked: number } }> {
+	if (!stxAddress)
+		return {
+			stx: {
+				balance: 0,
+				locked: 0
+			}
+		};
+	let url = `${stacksApi}/extended/v1/address/${stxAddress}/balances`;
+	if (height) url += `?until_block=${height}`;
+	let val;
+	try {
+		const response = await fetch(url, {
+			headers: { ...(stacksHiroKey ? { 'x-api-key': stacksHiroKey } : {}) }
+		});
+		val = await response.json();
+	} catch (err) {
+		console.log('getBalanceAtHeight: ', err);
+	}
+	return val;
 }

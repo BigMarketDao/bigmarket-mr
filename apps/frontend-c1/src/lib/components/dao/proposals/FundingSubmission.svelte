@@ -1,21 +1,20 @@
 <script lang="ts">
 	import { Countdown } from '@bigmarket/bm-ui';
-	import Placeholder from '$lib/components/common/Placeholder.svelte';
-	import { Banner } from '@bigmarket/bm-ui';
-	import Holding from '$lib/components/ui/Holding.svelte';
-	import { explorerTxUrl, fmtMicroToStx, fmtNumber } from '@bigmarket/bm-common';
-
-	import { getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
-	import type { FundingData } from '@bigmarket/bm-helpers';
-	import { fetchStacksInfo } from '@bigmarket/bm-helpers';
 	import { onMount } from 'svelte';
 	import { getCurrentProposalLink } from '../../../core/app/loaders/governance/proposals';
-	import { showTxModal } from '@bigmarket/bm-common';
+	import { getStxAddress, isLoggedIn, showTxModal } from '@bigmarket/bm-common';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoConfigStore, requireDaoGoveranceClient } from '$lib/stores/config/daoConfigStore';
+	import { daoConfigStore, requireDaoGovernanceClient } from '$lib/stores/config/daoConfigStore';
+	import type { FundingData, TxResult } from '@bigmarket/bm-types';
+	import { fetchStacksInfo } from '$lib/core/server/loaders/blockchainLoaders';
+	import { fmtMicroToStx, fmtNumber } from '@bigmarket/bm-utilities';
+	import { stacks } from '@bigmarket/sdk';
+	import Banner from '../../../../../../../packages/bm-ui/src/lib/components/custom/Banner.svelte';
+	import Holding from '$lib/components/common/Holding.svelte';
+	import Placeholder from '$lib/components/common/Placeholder.svelte';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
-	const client = $derived(requireDaoGoveranceClient($daoConfigStore));
+	const client = $derived(requireDaoGovernanceClient($daoConfigStore));
 
 	let {
 		fundingData,
@@ -36,19 +35,6 @@
 	let proposalStartDelay = $state(0);
 	let startHeightMessage = $state('');
 	let durationMessage = $state('');
-
-	const submitOriginal = async () => {
-		if (amount < 500000) return;
-		const simpleContract = `${submissionContractId.split('.')[0]}.ede008-funded-proposal-submission-v5`;
-		const response = await client.fundProposalSimple(
-			simpleContract,
-			contractId,
-			amount,
-			6600,
-			getStxAddress()
-		);
-		showTxModal(response.txid || 'Unable to process right now');
-	};
 
 	const submitFlexible = async () => {
 		if (!isLoggedIn()) {
@@ -75,7 +61,7 @@
 			errorMessage = 'Half a STX required to fund';
 			return;
 		}
-		const response = await client.fundProposal(
+		const response: TxResult = await client.fundProposal(
 			submissionContractId,
 			contractId,
 			amount,
@@ -84,7 +70,7 @@
 			6600,
 			getStxAddress()
 		);
-		showTxModal(response.txid || 'Unable to process right now');
+		if (response.success && response.txid) showTxModal(response.txid);
 	};
 
 	onMount(async () => {
@@ -107,10 +93,6 @@
 			' days, after voting starts.';
 		inited = true;
 	});
-
-	const explorerUrl = $derived(
-		appConfig.VITE_STACKS_EXPLORER + '/txid/' + txId + '?chain=' + appConfig.VITE_NETWORK
-	);
 </script>
 
 {#if inited}
@@ -134,12 +116,12 @@
 						<div>
 							<Banner
 								bannerType="info"
-								message={`Transaction pending. <a href="${explorerTxUrl(txId)}" target="_blank">Track transaction</a>`}
+								message={`Transaction pending. <a href="${stacks.explorerTxUrl(appConfig.VITE_NETWORK, appConfig.VITE_STACKS_EXPLORER, txId)}" target="_blank">Track transaction</a>`}
 							/>
 						</div>
 					{/if}
 				</div>
-				<form on:submit|preventDefault class="form-inline">
+				<form onsubmit={(e) => e.preventDefault()} class="form-inline">
 					<div class="flex w-full flex-col gap-y-4">
 						<div class="w-full">
 							<label class="block" for="start-block">voting will begin after</label>
@@ -174,7 +156,7 @@
 						</div>
 						<div>
 							<button
-								on:click={() => {
+								onclick={() => {
 									submitFlexible();
 								}}
 								class="bg-success-01 border-success-600 focus-visible:outline-primary-500/50 w-52 shrink-0 items-center justify-center gap-x-1.5 rounded-xl border px-4 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"

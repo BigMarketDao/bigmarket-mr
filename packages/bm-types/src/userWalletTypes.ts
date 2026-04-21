@@ -85,6 +85,7 @@ export type AddressObject = {
   ordinalInfo?: AddressMempoolObject;
   btcPubkeySegwit0?: string;
   btcPubkeySegwit1?: string;
+  walletSigningMode?: boolean;
 };
 export type TokenBalances = {
   stx: {

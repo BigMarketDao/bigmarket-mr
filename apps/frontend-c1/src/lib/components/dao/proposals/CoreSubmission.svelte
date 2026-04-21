@@ -1,19 +1,20 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { Countdown } from '@bigmarket/bm-ui';
 	import { Banner } from '@bigmarket/bm-ui';
-	import Holding from '$lib/components/ui/Holding.svelte';
-	import { fmtNumber } from '@bigmarket/bm-common';
 	import { chainStore } from '@bigmarket/bm-common';
 	import { showTxModal } from '@bigmarket/bm-common';
-	import { explorerTxUrl, isLoggedIn } from '@bigmarket/bm-common';
+	import { stacks } from '@bigmarket/sdk';
+	import { isLoggedIn } from '@bigmarket/bm-common';
 	import { watchTransaction } from '@bigmarket/bm-common';
-	import { fetchStacksInfo, getStacksNetwork } from '@bigmarket/bm-helpers';
+	import { Countdown } from '@bigmarket/bm-ui';
 	import { onMount } from 'svelte';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoConfigStore, requireDaoGoveranceClient } from '$lib/stores/config/daoConfigStore';
+	import { daoConfigStore, requireDaoGovernanceClient } from '$lib/stores/config/daoConfigStore';
+	import { fetchStacksInfo } from '$lib/core/server/loaders/blockchainLoaders';
+	import { fmtNumber } from '@bigmarket/bm-utilities';
+	import Holding from '$lib/components/common/Holding.svelte';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
-	const client = $derived(requireDaoGoveranceClient($daoConfigStore));
+	const client = $derived(requireDaoGovernanceClient($daoConfigStore));
 
 	let {
 		contractId,
@@ -54,9 +55,14 @@
 			proposalDuration,
 			5100
 		);
-		if (response.txid) {
+		if (response.success && response.txid) {
 			showTxModal(response.txid);
-			watchTransaction(response.txid);
+			watchTransaction(
+				appConfig.VITE_BIGMARKET_API,
+				appConfig.VITE_STACKS_API,
+				submissionContractId,
+				response.txid
+			);
 		} else {
 			showTxModal('Unable to process right now');
 		}
@@ -75,9 +81,6 @@
 		inited = true;
 	});
 
-	const explorerUrl = $derived(
-		appConfig.VITE_STACKS_EXPLORER + '/txid/' + txId + '?chain=' + appConfig.VITE_NETWORK
-	);
 	const startHeightMessage = $derived(
 		'Voting starts at ' +
 			proposalStart +
@@ -108,18 +111,18 @@
 						<div>
 							<Banner
 								bannerType="info"
-								message={`Transaction pending. <a href="${explorerTxUrl(txId)}" target="_blank">Track transaction</a>`}
+								message={`Transaction pending. <a href="${stacks.explorerTxUrl(appConfig.VITE_NETWORK, appConfig.VITE_STACKS_EXPLORER, txId)}" target="_blank">Track transaction</a>`}
 							/>
 						</div>
 					{/if}
 				</div>
-				<form on:submit|preventDefault class="form-inline">
+				<form onsubmit={(e) => e.preventDefault()} class="form-inline">
 					<div class="flex w-full flex-col gap-y-4">
 						{#key componentKey}
 							<div class="w-full">
 								<label class="block" for="start-block">voting will begin at block</label>
 								<input
-									on:change={() => refreshClocks()}
+									onchange={() => refreshClocks()}
 									bind:value={proposalStart}
 									type="number"
 									id="start-block"
@@ -138,7 +141,7 @@
 									>voting open for minimum {proposalDuration} blocks</label
 								>
 								<input
-									on:change={() => refreshClocks()}
+									onchange={() => refreshClocks()}
 									bind:value={proposalDuration}
 									type="number"
 									id="duration-block"
@@ -154,7 +157,7 @@
 							</div>
 							<div>
 								<button
-									on:click={() => {
+									onclick={() => {
 										submitFlexible();
 									}}
 									class="bg-success-01 border-success-600 focus-visible:outline-primary-500/50 w-52 shrink-0 items-center justify-center gap-x-1.5 rounded-xl border px-4 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"

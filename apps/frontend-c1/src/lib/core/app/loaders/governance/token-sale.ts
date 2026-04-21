@@ -1,4 +1,4 @@
-import { type TokenSalePurchase } from '@bigmarket/bm-helpers';
+import { type TokenSalePurchase } from '@bigmarket/bm-types';
 import { get } from 'svelte/store';
 import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
 

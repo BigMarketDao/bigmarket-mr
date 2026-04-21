@@ -1,6 +1,7 @@
 import type { Sip10Data, TokenPermissionEvent } from '@bigmarket/bm-types';
 import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
 import { get } from 'svelte/store';
+import { allowedTokenStore } from '@bigmarket/bm-common';
 
 const defToken: Sip10Data = {
 	symbol: 'BIG',
@@ -21,4 +22,9 @@ export function getGovernanceToken(tokens: Array<TokenPermissionEvent>): Sip10Da
 export function getSbtcTokenContract(tokens: Array<TokenPermissionEvent>): string {
 	const token = tokens.find((t) => t.token.toLowerCase().indexOf('sbtc') > -1);
 	return token?.token || '';
+}
+export function getMarketToken(tokenContract: string): Sip10Data {
+	const tokens = get(allowedTokenStore);
+	const token = tokens.find((t) => t.token === tokenContract);
+	return token?.sip10Data || defToken;
 }

@@ -10,6 +10,7 @@ export const selectedCurrency = persisted("selectedCurrency", {
 } as Currency);
 
 // Track user input amount
+
 export const searchType = writable("all");
 export const constructed = writable(false);
 export const sortState = writable("ending-soon");

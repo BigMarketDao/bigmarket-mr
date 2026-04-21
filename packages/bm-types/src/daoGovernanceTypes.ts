@@ -1,3 +1,4 @@
+import type { ProposalData } from "./daoTypes";
 import type { BasicEvent } from "./eventTypes";
 
 export interface VotingEventVoteOnProposal extends BasicEvent {
@@ -51,18 +52,6 @@ export type ProposalMeta = {
   author: string;
   synopsis: string;
   description: string;
-};
-export type ProposalData = {
-  concluded: boolean;
-  passed: boolean;
-  proposer: string;
-  customMajority: number;
-  endBlockHeight: number;
-  startBlockHeight: number;
-  votesAgainst: number;
-  votesFor: number;
-  burnStartHeight: number;
-  burnEndHeight: number;
 };
 export type StackerProposalData = {
   stacksAddressYes: string;

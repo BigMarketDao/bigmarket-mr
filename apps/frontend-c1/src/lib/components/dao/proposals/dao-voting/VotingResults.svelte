@@ -18,16 +18,16 @@
 		votes?: Array<VotingEventVoteOnProposal>;
 	} = $props();
 
-	let proposalTitle = proposal.proposalMeta.title;
-	let proposalLink = `/dao/proposals/${proposal.proposal}`;
-	let votingStatus = getProposalStatus(proposal);
-	let closingBlock = proposal.proposalData.burnEndHeight;
-	let totalVotes = proposal.proposalData.votesFor + proposal.proposalData.votesAgainst;
-	let voteResult = proposal.proposalData.passed;
-	let yesVotes = summary.accountsFor;
-	let noVotes = summary.accountsAgainst;
+	let proposalTitle = $derived(proposal.proposalMeta.title);
+	let proposalLink = $derived(`/dao/proposals/${proposal.proposal}`);
+	let votingStatus = $derived(getProposalStatus(proposal));
+	let closingBlock = $derived(proposal.proposalData.burnEndHeight);
+	let totalVotes = $derived(proposal.proposalData.votesFor + proposal.proposalData.votesAgainst);
+	let voteResult = $derived(proposal.proposalData.passed);
+	let yesVotes = $derived(summary.accountsFor);
+	let noVotes = $derived(summary.accountsAgainst);
 
-	let showVotes = false;
+	let showVotes = $state(false);
 	let componentKey = 0;
 </script>
 
@@ -88,9 +88,8 @@
 	</div>
 	<div class="relative rounded-lg bg-gray-900 p-6">
 		<div class="">
-			<button
-				class="z-50 text-gray-400 hover:underline"
-				onclick={() => (showVotes = !showVotes)}>Show transaction details</button
+			<button class="z-50 text-gray-400 hover:underline" onclick={() => (showVotes = !showVotes)}
+				>Show transaction details</button
 			>
 		</div>
 		{#if showVotes}

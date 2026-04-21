@@ -1,12 +1,16 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { Banner } from '@bigmarket/bm-ui';
-	import { allowedTokenStore, daoOverviewStore, getMarketToken } from '@bigmarket/bm-common';
-	import { getGovernanceToken } from '$lib/core/app/loaders/governance/tokens';
+	import { allowedTokenStore, daoOverviewStore, stakeAmount } from '@bigmarket/bm-common';
+	import { getGovernanceToken, getMarketToken } from '$lib/core/app/loaders/governance/tokens';
 	import { connectWallet } from '@bigmarket/bm-common';
 	import { fmtMicroToStx, truncate } from '@bigmarket/bm-utilities';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoConfigStore, requireDaoConfig, requireDaoGoveranceClient } from '$lib/stores/config/daoConfigStore';
+	import {
+		daoConfigStore,
+		requireDaoConfig,
+		requireDaoGovernanceClient
+	} from '$lib/stores/config/daoConfigStore';
 	import { getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
 	import { type TokenSalePurchase, type TokenSaleStage } from '@bigmarket/bm-types';
 	import { Wallet } from 'lucide-svelte';
@@ -20,14 +24,14 @@
 	let { fiatPerStx = 0 }: { fiatPerStx?: number } = $props();
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
-	const client = $derived(requireDaoGoveranceClient($daoConfigStore));
+	const client = $derived(requireDaoGovernanceClient($daoConfigStore));
 	const daoOverview = $derived($daoOverviewStore);
 	let tokenSalePurchase = $state<TokenSalePurchase | undefined>(undefined);
 	let amount = $state(0);
 	let txId = $state<string | undefined>(undefined);
 	let errorMessage = $state<string | undefined>(undefined);
 	let stacksLeading = $state(true);
-	let currentStage = $state((daoOverview?.tokenSale?.currentStage || 1) - 1);
+	let currentStage = $state(($daoOverviewStore?.tokenSale?.currentStage || 1) - 1);
 	let walletConnected = $state(isLoggedIn());
 	let stxBalance = $state(0);
 
@@ -80,7 +84,7 @@
 		const actual = stacksLeading ? amount * fiatPerStx : tokenAmount;
 		const microStxAmount = Math.round(parseFloat(String(actual)) * mult);
 		const response = await client.buyIdoTokens(getStxAddress(), microStxAmount);
-		if (response.txid) {
+		if (response.success && response.txid) {
 			showTxModal(response.txid);
 			watchTransaction(
 				appConfig.VITE_BIGMARKET_API,
@@ -145,7 +149,7 @@
 						<h3 class="mb-2 font-semibold text-gray-900 dark:text-white">Connect Your Wallet</h3>
 						<p class="mb-3 text-xs text-gray-600 dark:text-gray-400">Connect to participate</p>
 						<button
-							on:click={() => connect()}
+							onclick={() => connect()}
 							class="w-full rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
 						>
 							Connect Wallet
@@ -189,7 +193,7 @@
 										type="number"
 										placeholder="Enter amount"
 										bind:value={amount}
-										on:change={handleChange}
+										onchange={handleChange}
 										class="flex-1 rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
 									/>
 									<div
@@ -244,7 +248,7 @@
 						{/if}
 
 						<button
-							on:click={buyTokens}
+							onclick={buyTokens}
 							class="w-full rounded-lg bg-orange-500 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 focus:ring-2 focus:ring-orange-500/50 focus:outline-none"
 						>
 							Buy BIG Tokens

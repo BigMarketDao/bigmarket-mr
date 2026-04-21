@@ -2,10 +2,10 @@
 	import { ParaContainer } from '@bigmarket/bm-ui';
 	import DaoHeading from '$lib/components/dao/DaoHeading.svelte';
 	import ProposalGridItem from '$lib/components/dao/proposals/ProposalGridItem.svelte';
-	import type { VotingEventProposeProposal } from '@bigmarket/bm-helpers';
 	import { onMount } from 'svelte';
 	import { fetchProposals } from '../../../core/app/loaders/governance/proposals';
-	let proposals: Array<VotingEventProposeProposal> = [];
+	import type { VotingEventProposeProposal } from '@bigmarket/bm-types';
+	let proposals = $state<Array<VotingEventProposeProposal>>([]);
 
 	const sortByMostRecentlyEnded = (
 		proposals: Array<VotingEventProposeProposal>
@@ -29,7 +29,7 @@
 	<!-- Modern Sale Timeline -->
 	<div class="my-10">
 		{#if proposals && proposals.length > 0}
-			{#each proposals as proposal}
+			{#each proposals as proposal (proposal.proposal)}
 				<div class="w-full justify-stretch">
 					<ProposalGridItem {proposal} admin={false} />
 				</div>

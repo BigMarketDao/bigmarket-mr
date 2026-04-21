@@ -1,6 +1,60 @@
 import { type DaoConfig } from "@bigmarket/bm-config";
 import { callContract } from "./tx";
-import { Cl, type ClarityValue, Pc, type PostCondition } from "@stacks/transactions";
+import {
+  boolCV,
+  bufferCV,
+  Cl,
+  type ClarityValue,
+  contractPrincipalCV,
+  listCV,
+  noneCV,
+  Pc,
+  type PostCondition,
+  principalCV,
+  someCV,
+  stringAsciiCV,
+  tupleCV,
+  uintCV,
+} from "@stacks/transactions";
+import { hexToBytes } from "@stacks/common";
+import { StoredVoteMessage } from "@bigmarket/bm-types";
+
+function votesToClarityValue(
+  proposal: string,
+  votes: StoredVoteMessage[],
+  reclaimProposal?: string,
+) {
+  const proposalCV = contractPrincipalCV(
+    proposal.split(".")[0],
+    proposal.split(".")[1],
+  );
+
+  const votesCV = listCV(
+    votes.map((vote) =>
+      tupleCV({
+        message: tupleCV({
+          attestation: stringAsciiCV(vote.attestation),
+          proposal: principalCV(proposal),
+          timestamp: uintCV(vote.timestamp),
+          vote: boolCV(vote.vote),
+          voter: principalCV(vote.voter),
+          amount: uintCV(vote.voting_power),
+          "reclaim-proposal": reclaimProposal
+            ? someCV(
+                contractPrincipalCV(
+                  reclaimProposal.split(".")[0],
+                  reclaimProposal.split(".")[1],
+                ),
+              )
+            : noneCV(),
+        }),
+        signature: bufferCV(hexToBytes(vote.signature)),
+      }),
+    ),
+  );
+
+  return votesCV;
+}
 
 export function createDaoGovernanceClient(daoConfig: DaoConfig) {
   const deployer = daoConfig.VITE_DAO_DEPLOYER;
@@ -72,8 +126,14 @@ export function createDaoGovernanceClient(daoConfig: DaoConfig) {
       ]);
     },
 
-    batchVote(extensionContract: string, votesCV: ClarityValue) {
+    batchVote(
+      extensionContract: string,
+      proposal: string,
+      votes: StoredVoteMessage[],
+      reclaimProposal?: string,
+    ) {
       const [addr, name] = extensionContract.split(".");
+      const votesCV = votesToClarityValue(proposal, votes, reclaimProposal);
       return callContract(
         addr,
         name,
@@ -210,7 +270,8 @@ export function createDaoGovernanceClient(daoConfig: DaoConfig) {
       const proposalCV = Cl.contractPrincipal(propAddr, propName);
       const amountCV = Cl.uint(microAmount);
       const forCV = Cl.bool(vfor);
-      const isStandardVoting = votingContractName === "bme001-0-proposal-voting";
+      const isStandardVoting =
+        votingContractName === "bme001-0-proposal-voting";
       const functionArgs = isStandardVoting
         ? [amountCV, forCV, proposalCV, Cl.none()]
         : [amountCV, forCV, proposalCV];

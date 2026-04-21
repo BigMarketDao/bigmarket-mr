@@ -1,25 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-
-	import { getTransaction, type SignatureData } from '@bigmarket/bm-helpers';
 	import { Banner } from '@bigmarket/bm-ui';
-	import { fmtMicroToStxFormatted } from '@bigmarket/bm-common';
-	import { verifySignature } from '$lib/components/dao/dao_api';
+	import { getStxAddress } from '@bigmarket/bm-common';
 	import {
-		dataHashSip18,
-		verifySip18VoteSignature,
-		voteMessageToTupleCV,
-		type VoteMessage,
-		type VotingEventProposeProposal
-	} from '@bigmarket/bm-helpers';
-	import { explorerTxUrl, getAddressId, getStxAddress } from '@bigmarket/bm-common';
-	import { domain } from '@bigmarket/sip18-forum';
-	import {
+		getDomain,
 		newVoteMessage,
-		postVoteMessage,
-		signProposal
+		postVoteMessage
 	} from '../../../../../core/app/loaders/governance/voting_sip18';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { stacks } from '@bigmarket/sdk';
+	import type { SignatureData, VoteMessage, VotingEventProposeProposal } from '@bigmarket/bm-types';
+	import { getTransaction } from '$lib/core/app/loaders/walletLoaders';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
 	let {
@@ -31,13 +22,13 @@
 		votingPower?: number;
 		onSip18Vote: (data: unknown) => void;
 	} = $props();
-	let progress = $state(0);
 	let errorMessage = $state<string | undefined>(undefined);
 	let txId = $state('');
-	let canVote = $state(true);
-	const explorerUrl = $derived(explorerTxUrl(txId));
+	// let canVote = $state(true);
+	const explorerUrl = $derived(
+		stacks.explorerTxUrl(appConfig.VITE_NETWORK, appConfig.VITE_STACKS_EXPLORER, txId)
+	);
 	const amountStx = $derived(votingPower);
-	const balanceAtHeightF = fmtMicroToStxFormatted(votingPower);
 
 	const castVote = async (forVote: boolean) => {
 		const voteMessage: VoteMessage = await newVoteMessage(
@@ -46,63 +37,40 @@
 			amountStx,
 			getStxAddress()
 		);
-		await signProposal(voteMessage, async function (signature: SignatureData) {
-			console.log('Signature of the message', signature.signature);
-			const hash = dataHashSip18(
-				appConfig.VITE_NETWORK,
-				appConfig.VITE_PUBLIC_APP_NAME,
-				appConfig.VITE_PUBLIC_APP_VERSION,
-				voteMessageToTupleCV(voteMessage)
-			);
-			console.log('domain:', domain);
-			console.log('hash:' + hash);
-			const sigres = verifySip18VoteSignature(
-				appConfig.VITE_NETWORK,
-				appConfig.VITE_PUBLIC_APP_NAME,
-				appConfig.VITE_PUBLIC_APP_VERSION,
-				voteMessage,
-				signature.publicKey,
-				signature.signature
-			);
-			if (!sigres) {
-				//throw new Error('Signature is not valid');
-			}
-			const valid = await verifySignature(
-				voteMessage,
-				hash,
-				signature.signature,
-				proposal.extension
-			);
-			//voteMessage.timestamp = new Date().getTime(); - proove false is returned!
-			const result = await postVoteMessage(hash, { message: voteMessage, signature });
-
+		const domain = getDomain(appConfig);
+		const signature: SignatureData | null = await stacks.requestVoteMessageSignature(
+			voteMessage,
+			domain
+		);
+		if (signature) {
+			const hash = stacks.dataHashSip18(domain, voteMessage);
+			const result = await postVoteMessage(hash, {
+				message: voteMessage,
+				signature: signature
+			});
 			console.log('Post result:', result);
 			onSip18Vote({ result, voteMessage });
-		});
+		}
 	};
 
-	if (votingPower === 0 || votingPower < 1) {
-		canVote = false;
-	}
+	// if (votingPower === 0 || votingPower < 1) {
+	// 	canVote = false;
+	// }
 	const lookupTransaction = async (txId: string) => {
 		return await getTransaction(appConfig.VITE_STACKS_API, txId);
 	};
 
 	onMount(async () => {
-		if (localStorage.getItem('VOTED_TXID_3' + getAddressId())) {
-			const txIdObj = localStorage.getItem('VOTED_TXID_3' + getAddressId());
+		if (localStorage.getItem('VOTED_TXID_3' + getStxAddress())) {
+			const txIdObj = localStorage.getItem('VOTED_TXID_3' + getStxAddress());
 			if (txIdObj) {
 				const potentialTxId = JSON.parse(txIdObj).txId;
 				const tx = await lookupTransaction(potentialTxId);
-				if (
-					tx &&
-					tx.tx_status === 'pending' &&
-					tx.sender_address === getStxAddress()
-				) {
+				if (tx && tx.tx_status === 'pending' && tx.sender_address === getStxAddress()) {
 					txId = potentialTxId;
 				} else {
 					if (tx.sender_address === getStxAddress()) {
-						localStorage.removeItem('VOTED_TXID_3' + getAddressId());
+						localStorage.removeItem('VOTED_TXID_3' + getStxAddress());
 					}
 				}
 			}
@@ -124,7 +92,7 @@
 		{:else}
 			<div class="flex w-full justify-start gap-x-4">
 				<button
-					on:click={() => {
+					onclick={() => {
 						errorMessage = undefined;
 						castVote(true);
 					}}
@@ -133,7 +101,7 @@
 					VOTE YES
 				</button>
 				<button
-					on:click={() => {
+					onclick={() => {
 						errorMessage = undefined;
 						castVote(false);
 					}}

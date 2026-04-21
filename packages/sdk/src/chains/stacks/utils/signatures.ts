@@ -1,11 +1,13 @@
 import {
   BaseAdminMessage,
   ChainID,
+  Domain,
   SignMessageResult,
   VoteMessage,
 } from "@bigmarket/bm-types";
 import { bytesToHex, hexToBytes } from "@stacks/common";
 import {
+  boolCV,
   bufferCV,
   ClarityValue,
   encodeStructuredDataBytes,
@@ -25,27 +27,22 @@ import {
   verifySignature as verifySignatureStacks,
 } from "@stacks/encryption";
 
-export function getDomain(
-  network: string,
-  appName: string,
-  appVersion: string,
-) {
-  const chainId = network === "mainnet" ? ChainID.Mainnet : ChainID.Testnet;
-  console.log("chainId: " + chainId);
-  console.log("appName: " + appName);
-  console.log("appVersion: " + appVersion);
+function getDomainInternal(domain: Domain) {
+  const chainId =
+    domain.network === "mainnet" ? ChainID.Mainnet : ChainID.Testnet;
   return {
-    name: appName,
-    version: appVersion,
+    name: domain.appName,
+    version: domain.appVersion,
     "chain-id": chainId,
   };
 }
 
-export function domainCV(domain: any) {
+export function domainCV(domain: Domain) {
+  const domainInternal = getDomainInternal(domain);
   return tupleCV({
-    name: stringAsciiCV(domain.name),
-    version: stringAsciiCV(domain.version),
-    "chain-id": uintCV(domain["chain-id"]),
+    name: stringAsciiCV(domainInternal.name),
+    version: stringAsciiCV(domainInternal.version),
+    "chain-id": uintCV(domainInternal["chain-id"]),
   });
 }
 
@@ -78,37 +75,80 @@ export async function verifySignature(
   }
 }
 
-export async function requestSignature(
-  network: string,
-  appName: string,
-  appVersion: string,
+export function dataHashSip18(domain: Domain, voteMessage: VoteMessage) {
+  const domainCVValue = domainCV(domain);
+  const structuredDataHash = bytesToHex(
+    hashSha256Sync(
+      encodeStructuredDataBytes({
+        message: voteMessageToTupleCV(voteMessage),
+        domain: domainCVValue,
+      }),
+    ),
+  );
+  return structuredDataHash;
+}
+
+export function verifySip18VoteSignature(
+  domain: Domain,
+  voteMessage: VoteMessage,
+  publicKey: string,
+  signature: string,
+) {
+  const message = voteMessageToTupleCV(voteMessage);
+  return verifyDaoSignature(domain, message, publicKey, signature);
+}
+function voteMessageToTupleCV(message: VoteMessage) {
+  return tupleCV({
+    attestation: stringAsciiCV(message.attestation),
+    proposal: principalCV(message.proposal),
+    timestamp: uintCV(message.timestamp),
+    vote: boolCV(message.vote),
+    voter: principalCV(message.voter),
+    voting_power: uintCV(message.voting_power),
+  });
+}
+
+export async function requestAdminSignature(
+  adminMessage: BaseAdminMessage,
+  domain: Domain,
+): Promise<SignMessageResult | null> {
+  const message = tupleCV({
+    message: stringAsciiCV(adminMessage.message),
+    timestamp: uintCV(adminMessage.timestamp),
+    admin: stringAsciiCV(adminMessage.admin),
+  });
+  const domainCVValue = domainCV(domain);
+  return await requestSignature(message, domainCVValue);
+}
+
+export async function requestVoteMessageSignature(
+  voteMessage: VoteMessage,
+  domain: Domain,
+): Promise<SignMessageResult | null> {
+  const message = voteMessageToTupleCV(voteMessage);
+  const domainCVValue = domainCV(domain);
+  return await requestSignature(message, domainCVValue);
+}
+
+async function requestSignature(
   message: TupleCV<TupleData<ClarityValue>>,
-  domain?: TupleCV<TupleData<ClarityValue>>,
+  domain: TupleCV<TupleData<ClarityValue>>,
 ): Promise<SignMessageResult | null> {
   const { request } = await import("@stacks/connect");
   return await request("stx_signStructuredMessage", {
     message,
-    domain: domain || domainCV(getDomain(network, appName, appVersion)),
+    domain,
   });
 }
 
 export function verifyBaseAdminSignature(
-  network: string,
-  appName: string,
-  appVersion: string,
+  domain: Domain,
   adminMessage: BaseAdminMessage,
   publicKey: string,
   signature: string,
 ) {
   const message = adminMessageToTupleCV(adminMessage);
-  return verifyDaoSignature(
-    network,
-    appName,
-    appVersion,
-    message,
-    publicKey,
-    signature,
-  );
+  return verifyDaoSignature(domain, message, publicKey, signature);
 }
 
 export function adminMessageToTupleCV(message: BaseAdminMessage) {
@@ -119,17 +159,16 @@ export function adminMessageToTupleCV(message: BaseAdminMessage) {
   });
 }
 export function verifyDaoSignature(
-  network: string,
-  appName: string,
-  appVersion: string,
+  domainIn: Domain,
   message: TupleCV<TupleData<ClarityValue>>,
   publicKey: string,
   signature: string,
 ): string | undefined {
-  const chainId = network === "mainnet" ? ChainID.Mainnet : ChainID.Testnet;
+  const chainId =
+    domainIn.network === "mainnet" ? ChainID.Mainnet : ChainID.Testnet;
   const domain = tupleCV({
-    name: stringAsciiCV(appName),
-    version: stringAsciiCV(appVersion),
+    name: stringAsciiCV(domainIn.appName),
+    version: stringAsciiCV(domainIn.appVersion),
     "chain-id": uintCV(chainId),
   });
   const structuredDataHash = bytesToHex(
@@ -148,11 +187,11 @@ export function verifyDaoSignature(
     pubkey = publicKeyFromSignatureRsv(structuredDataHash, signature);
 
     if (
-      network === "mainnet" ||
-      network === "testnet" ||
-      network === "devnet"
+      domainIn.network === "mainnet" ||
+      domainIn.network === "testnet" ||
+      domainIn.network === "devnet"
     ) {
-      stacksAddress = publicKeyToAddressSingleSig(pubkey, network);
+      stacksAddress = publicKeyToAddressSingleSig(pubkey, domainIn.network);
     }
 
     //console.log("sa: " + pubkey);

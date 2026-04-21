@@ -1,26 +1,26 @@
-import { stringAsciiCV, tupleCV, uintCV } from '@stacks/transactions';
-import { requestSignature } from '@bigmarket/bm-common';
 import { get } from 'svelte/store';
 import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-import { ChainId } from '@stacks/network';
+import { getStxAddress } from '@bigmarket/bm-common';
+import { stacks } from '@bigmarket/sdk';
 import {
-	ADMIN_MESSAGE,
-	adminMessageToTupleCV,
-	verifyBaseAdminSignature,
-	voteMessageToTupleCV,
-	votesToClarityValue,
+	type Auth,
 	type BaseAdminMessage,
+	type Domain,
 	type SignatureData,
-	type StoredVoteMessage,
 	type VoteMessage,
 	type VotingEventProposeProposal
-} from '@bigmarket/bm-helpers';
-import { domainCV, getStxAddress } from '@bigmarket/bm-common';
-import { domain } from '@bigmarket/sip18-forum';
-import { daoConfigStore, requireDaoGoveranceClient } from '$lib/stores/config/daoConfigStore';
-import { stacks } from '@bigmarket/sdk';
+} from '@bigmarket/bm-types';
+import type { AppConfig } from '@bigmarket/bm-config';
 
-export async function fetchTimestamp() {
+export const ADMIN_MESSAGE = 'please sign this message to authorise DAO management task.';
+export function getDomain(appConfig: AppConfig): Domain {
+	return {
+		network: appConfig.VITE_NETWORK,
+		appName: appConfig.VITE_PUBLIC_APP_NAME,
+		appVersion: appConfig.VITE_PUBLIC_APP_VERSION
+	};
+}
+async function fetchTimestamp() {
 	const appConfig = requireAppConfig(get(appConfigStore));
 	const path = `${appConfig.VITE_BIGMARKET_API}/dao/sip18-voting/timestamp`;
 	const response = await fetch(path);
@@ -37,15 +37,14 @@ export async function fetchSip18Votes(proposal: string) {
 	return res;
 }
 
-export async function submitSip18Votes(
-	proposal: VotingEventProposeProposal,
-	votes: Array<StoredVoteMessage>
-) {
-	const client = requireDaoGoveranceClient(get(daoConfigStore));
-	const args = votesToClarityValue(proposal.proposal, votes);
-	const response = await client.batchVote(proposal.extension, args.votesCV);
-	return response.txid;
-}
+// export async function submitSip18Votes(
+// 	proposal: VotingEventProposeProposal,
+// 	votes: Array<StoredVoteMessage>
+// ) {
+// 	const client = requireDaoGovernanceClient(get(daoConfigStore));
+// 	const response = await client.batchVote(proposal.extension, proposal.proposal, votes);
+// 	return response.success ? response.txid : undefined;
+// }
 
 export async function postVoteMessage(
 	hash: string,
@@ -64,114 +63,25 @@ export async function postVoteMessage(
 	return res;
 }
 
-export async function signAdminMessage() {
+export async function signAdminMessage(): Promise<Auth | undefined> {
 	const appConfig = requireAppConfig(get(appConfigStore));
 	const adminMessage: BaseAdminMessage = {
 		message: ADMIN_MESSAGE,
 		timestamp: new Date().getTime(),
 		admin: getStxAddress()
 	};
-	const chainId = appConfig.VITE_NETWORK === 'mainnet' ? ChainId.Mainnet : ChainId.Testnet;
-
-	console.log('domainCV: ', domainCV);
-	console.log('chainId: ', chainId);
-	//const message = messageCV(adminMessage);
-
-	// openStructuredDataSignatureRequestPopup({
-	// 	message: tupleCV({
-	// 		message: stringAsciiCV(adminMessage.message),
-	// 		timestamp: uintCV(adminMessage.timestamp),
-	// 		admin: stringAsciiCV(adminMessage.admin)
-	// 	}),
-	// 	domain: tupleCV({
-	// 		name: stringAsciiCV(appConfig.VITE_PUBLIC_APP_NAME),
-	// 		version: stringAsciiCV(appConfig.VITE_PUBLIC_APP_VERSION),
-	// 		'chain-id': uintCV(chainId)
-	// 	}),
-	// 	network: getStxNetwork(),
-	// 	appDetails: {
-	// 		name: appDetails.name,
-	// 		icon: (window?.location?.origin || '') + appDetails.icon
-	// 	},
-	// 	onFinish(signature) {
-	// 		const network = appConfig.VITE_NETWORK;
-	// 		const appName = appConfig.VITE_PUBLIC_APP_NAME;
-	// 		const appVersion = appConfig.VITE_PUBLIC_APP_VERSION;
-	// 		console.log('/votes: network: ' + appConfig.VITE_NETWORK);
-	// 		console.log('/votes: publicAppName: ' + appConfig.VITE_PUBLIC_APP_NAME);
-	// 		console.log('/votes: publicAppVersion: ' + appConfig.VITE_PUBLIC_APP_VERSION);
-	// 		console.log('/votes: signature: ' + signature.signature);
-	// 		console.log('/votes: publicKey: ' + signature.publicKey);
-	// 		console.log('/votes: message: ', adminMessage);
-	// 		let res = verifyBaseAdminSignature(network, appName, appVersion, adminMessage, signature.signature, signature.publicKey);
-	// 		callback({ message: adminMessage, signature });
-	// 	}
-	// });
-	const message = tupleCV({
-		message: stringAsciiCV(adminMessage.message),
-		timestamp: uintCV(adminMessage.timestamp),
-		admin: stringAsciiCV(adminMessage.admin)
-	});
-
-	const signature = await stacks.requestSignature(appConfig, message);
-	// const signature = await request('stx_signStructuredMessage', {
-	//   message: tupleCV({
-	//     message: stringAsciiCV(adminMessage.message),
-	//     timestamp: uintCV(adminMessage.timestamp),
-	//     admin: stringAsciiCV(adminMessage.admin),
-	//   }),
-	//   domain: tupleCV({
-	//     name: stringAsciiCV(appConfig.VITE_PUBLIC_APP_NAME),
-	//     version: stringAsciiCV(appConfig.VITE_PUBLIC_APP_VERSION),
-	//     'chain-id': uintCV(chainId),
-	//   }),
-	// });
-	const network = appConfig.VITE_NETWORK;
-	const appName = appConfig.VITE_PUBLIC_APP_NAME;
-	const appVersion = appConfig.VITE_PUBLIC_APP_VERSION;
-	console.log('/votes: network: ' + appConfig.VITE_NETWORK);
-	console.log('/votes: publicAppName: ' + appConfig.VITE_PUBLIC_APP_NAME);
-	console.log('/votes: publicAppVersion: ' + appConfig.VITE_PUBLIC_APP_VERSION);
-	console.log('/votes: signature: ' + signature.signature);
-	console.log('/votes: publicKey: ' + signature.publicKey);
-	console.log('/votes: message: ', adminMessage);
-	const res = verifyBaseAdminSignature(
-		network,
-		appName,
-		appVersion,
-		adminMessage,
-		signature.signature,
-		signature.publicKey
-	);
-	return { message: adminMessage, signature, res };
+	const domain = getDomain(appConfig);
+	const signature = await stacks.requestAdminSignature(adminMessage, domain);
+	if (signature?.signature && signature?.publicKey) {
+		stacks.verifyBaseAdminSignature(
+			domain,
+			adminMessage,
+			signature?.signature,
+			signature?.publicKey
+		);
+		return { message: adminMessage, signature };
+	}
 }
-export async function signAdminMessageXverse() {
-	const appConfig = requireAppConfig(get(appConfigStore));
-	const adminMessage: BaseAdminMessage = {
-		message: ADMIN_MESSAGE,
-		timestamp: 1736281142366, //new Date().getTime(),
-		admin: getStxAddress()
-	};
-	// const response = await request('stx_signStructuredMessage', {
-	//   message: adminMessageToTupleCV(adminMessage),
-	//   domain: tupleCV({
-	//     name: stringAsciiCV('sats-connect-example'),
-	//     version: stringAsciiCV('1.2.3'),
-	//     'chain-id': uintCV(
-	//       appConfig.VITE_NETWORK === 'mainnet' ? ChainId.Mainnet : ChainId.Testnet,
-	//     ),
-	//   }),
-	// });
-	const domain = tupleCV({
-		name: stringAsciiCV('sats-connect-example'),
-		version: stringAsciiCV('1.2.3'),
-		'chain-id': uintCV(appConfig.VITE_NETWORK === 'mainnet' ? ChainId.Mainnet : ChainId.Testnet)
-	});
-
-	const signature = await requestSignature(appConfig, adminMessageToTupleCV(adminMessage), domain);
-	return signature;
-}
-
 export async function newVoteMessage(
 	proposal: VotingEventProposeProposal,
 	vote: boolean,
@@ -187,14 +97,4 @@ export async function newVoteMessage(
 		voter,
 		voting_power: amount
 	};
-}
-
-export async function signProposal(voteMessage: VoteMessage, callback: any) {
-	const appConfig = requireAppConfig(get(appConfigStore));
-	const signature = await requestSignature(appConfig, voteMessageToTupleCV(voteMessage));
-	// const signature = await request('stx_signStructuredMessage', {
-	//   message: voteMessageToTupleCV(voteMessage), // remove 0x,
-	//   domain: domainCV(domain),
-	// });
-	callback(signature);
 }

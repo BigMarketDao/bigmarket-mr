@@ -9,6 +9,6 @@ export * from "./tokenSaleTypes";
 export * from "./userWalletTypes";
 export * from "./marketTypes";
 export * from "./chainTypes";
-export * from "./daoGovernanceTypes";
 export * from "./authTypes";
 export * from "./signatureTypes";
+export * from "./daoGovernanceTypes";

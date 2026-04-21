@@ -11,3 +11,8 @@ export type Auth = {
   message: BaseAdminMessage;
   signature: SignatureData;
 };
+export type Domain = {
+  network: string;
+  appName: string;
+  appVersion: string;
+};

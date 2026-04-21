@@ -6,14 +6,14 @@
 	import {
 		daoConfigStore,
 		requireDaoConfig,
-		requireDaoGoveranceClient
+		requireDaoGovernanceClient
 	} from '$lib/stores/config/daoConfigStore';
 	import { readBaseDaoEvents } from '../../../core/app/loaders/governance/dao_api';
 	import DaoBanner from '$lib/components/dao/DaoBanner.svelte';
 	import BootstrapDao from './BootstrapDao.svelte';
-	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { requireAppConfig, appConfigStore } from '$lib/stores/config/appConfigStore';
+	import { signAdminMessage } from '$lib/core/app/loaders/governance/voting_sip18';
 
 	//const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
@@ -23,7 +23,7 @@
 	let showProposals = false;
 	let showOpenProposals = false;
 	let showCoreExecute = false;
-	let txId: string | undefined;
+	let txId: string | undefined = $state();
 	let inited = $state(false);
 
 	// function closeModal() {
@@ -35,16 +35,12 @@
 	// }
 
 	const baseDaoEvents = async () => {
-		//const response = await signXverse();
-
-		await signAdminMessage(async function (auth: Auth) {
-			const result = await readBaseDaoEvents(daoContractId, auth);
-			console.log(result);
-		});
+		const auth = await signAdminMessage();
+		if (auth) await readBaseDaoEvents(daoContractId, auth);
 	};
 
 	const initIdo = async () => {
-		const client = requireDaoGoveranceClient($daoConfigStore);
+		const client = requireDaoGovernanceClient($daoConfigStore);
 		const response = await client.initializeIdo();
 		txId = response.success ? response.txid : undefined;
 	};
@@ -101,35 +97,44 @@
 							<ul class="ps-5">
 								{#if false}
 									<li class="list-disc">
-										<a href="/" onclick={(e) => { e.preventDefault(); showCoreExecute = !showCoreExecute; }}
-											>run core actions</a
+										<a
+											href="/"
+											onclick={(e) => {
+												e.preventDefault();
+												showCoreExecute = !showCoreExecute;
+											}}>run core actions</a
 										>
 									</li>
 								{/if}
 								<li class="list-disc">
-									<a href="/" onclick={(e) => { e.preventDefault(); showExtensions = !showExtensions; }}
-										>view current extensions</a
+									<a
+										href="/"
+										onclick={(e) => {
+											e.preventDefault();
+											showExtensions = !showExtensions;
+										}}>view current extensions</a
 									>
 								</li>
 								<li class="list-disc">
-									<a href="/" onclick={(e) => { e.preventDefault(); showProposals = !showProposals; }}
-										>view finished proposals</a
+									<a
+										href="/"
+										onclick={(e) => {
+											e.preventDefault();
+											showProposals = !showProposals;
+										}}>view finished proposals</a
 									>
 								</li>
 								<li class="list-disc">
-								<button
-									onclick={() => (showOpenProposals = !showOpenProposals)}
-									class="hover:underline"
-									>view open proposals</button
-								>
+									<button
+										onclick={() => (showOpenProposals = !showOpenProposals)}
+										class="hover:underline">view open proposals</button
+									>
 								</li>
 								<li class="list-disc">
 									<a href={`${base}/dao/manager/propose/${daoContractId}`}>make a new proposal</a>
 								</li>
 								<li class="list-disc">
-								<a href={`${base}/dao/transfers`}
-									>transfer tokens</a
-								>
+									<a href={`${base}/dao/transfers`}>transfer tokens</a>
 								</li>
 							</ul>
 						</div>
@@ -165,7 +170,13 @@
 							<p class="">Keep the DAO up to date.</p>
 							<ul class="mt-4 ps-5">
 								<li class="list-disc">
-									<a href="/" onclick={(e) => { e.preventDefault(); baseDaoEvents(); }}>read dao events</a>
+									<a
+										href="/"
+										onclick={(e) => {
+											e.preventDefault();
+											baseDaoEvents();
+										}}>read dao events</a
+									>
 								</li>
 							</ul>
 						</div>
@@ -173,7 +184,13 @@
 							<p class="">Manage IDO.</p>
 							<ul class="mt-4 ps-5">
 								<li class="list-disc">
-									<a href="/" onclick={(e) => { e.preventDefault(); initIdo(); }}>initialise ido</a>
+									<a
+										href="/"
+										onclick={(e) => {
+											e.preventDefault();
+											initIdo();
+										}}>initialise ido</a
+									>
 								</li>
 							</ul>
 						</div>

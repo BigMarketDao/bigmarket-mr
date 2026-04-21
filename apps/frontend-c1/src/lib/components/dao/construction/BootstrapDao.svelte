@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { daoConfigStore, requireDaoGoveranceClient } from '$lib/stores/config/daoConfigStore';
+	import { daoConfigStore, requireDaoGovernanceClient } from '$lib/stores/config/daoConfigStore';
 	import { get } from 'svelte/store';
 	import { onMount } from 'svelte';
 
 	let { daoContractId }: { daoContractId: string } = $props();
 
 	const constructDao = async () => {
-		const client = requireDaoGoveranceClient(get(daoConfigStore));
+		const client = requireDaoGovernanceClient(get(daoConfigStore));
 		await client.construct();
 	};
 

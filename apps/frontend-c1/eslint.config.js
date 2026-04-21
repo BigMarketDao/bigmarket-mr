@@ -39,7 +39,9 @@ export default defineConfig(
 	{
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
-		rules: {}
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off'
+		}
 	},
 	{
 		// These components link to routes not yet registered in the SvelteKit router
@@ -47,7 +49,9 @@ export default defineConfig(
 		// They use base-prefixed strings instead.
 		files: [
 			'**/lib/components/template/Footer.svelte',
+			'**/lib/components/common/Placeholder.svelte',
 			'**/lib/components/dao/disputes/Dispute.svelte',
+			'**/lib/components/dao/proposals/dao-voting/VoteTransactions.svelte',
 			'**/lib/components/dao/disputes/DisputeGridItem.svelte',
 			'**/lib/components/dao/proposals/dao-voting/VotingResults.svelte',
 			'**/lib/components/dao/proposals/dao-voting/DaoConcluded.svelte',

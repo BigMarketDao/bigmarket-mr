@@ -1,37 +1,22 @@
 <script lang="ts">
-	import { page } from '$app/state';
 	import { PageContainer } from '@bigmarket/bm-ui';
 	import DaoIntro from '$lib/components/dao/DaoIntro.svelte';
 	import DaoTabs from '$lib/components/dao/DaoTabs.svelte';
 	import Disputes from '$lib/components/dao/disputes/Disputes.svelte';
 	import MakeProposal from '$lib/components/dao/proposals/MakeProposal.svelte';
 	import Proposals from '$lib/components/dao/proposals/Proposals.svelte';
-	import { daoOverviewStore, exchangeRatesStore, selectedCurrency } from '@bigmarket/bm-common';
+	import { exchangeRatesStore, selectedCurrency } from '@bigmarket/bm-common';
 	import { onMount } from 'svelte';
 	import ConstructDao from '$lib/components/dao/construction/ConstructDao.svelte';
-	import {
-		getContractDeploymentTxId,
-		isDaoConstructed
-	} from '$lib/components/dao/construction/dao_manager_helper';
-	import { constructed } from '@bigmarket/bm-common';
-	import type { DaoOverview } from '@bigmarket/bm-types';
-	import { getDaoOverview } from '$lib/core/server/loaders/daoLoaders';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
 	import { convertFiatToNative } from '$lib/core/app/conversion';
+	import ProvideLiquidity from '$lib/components/dao/liquidity/ProvideLiquidity.svelte';
 
 	let fiatPerStx = $state(0);
 	let isLoading = $state(true);
 	let error: string | null = $state(null);
 	let inited = $state(false);
-	let componentKey = 0;
-	let construction = $state(false);
-	const appConfig = $derived(requireAppConfig($appConfigStore));
-	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
-
-	// Current stage should be determined by smart contract state, not user clicks
-	// Smart contract returns 1-based stage, convert to 0-based for array indexing
-	let currentPage = $state(page.url.searchParams.get('page') || 'dao-with-liquidity');
+	let componentKey = $state(0);
+	let currentPage = $state('dao-with-liquidity');
 
 	const handleChange = (tab: string) => {
 		currentPage = tab;
@@ -40,22 +25,6 @@
 
 	onMount(async () => {
 		try {
-			const cId = `${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`;
-			const txId = await getContractDeploymentTxId(cId);
-			if (txId) construction = await isDaoConstructed(cId);
-			constructed.set(construction);
-
-			currentPage = page.url.searchParams.get('page') || 'dao-with-liquidity';
-			isLoading = false;
-			error = null;
-			if (!$daoOverviewStore) {
-				const daoOverview = await getDaoOverview(appConfig.VITE_BIGMARKET_API);
-				daoOverviewStore.update((conf: DaoOverview) => {
-					conf = daoOverview;
-					return conf;
-				});
-			}
-
 			// 0.05 USD per BIG -> 1 USD = 1/0.05 BIG = 20 BIG
 			// 1 USD = x STX
 			// x SXT = 1 USD = 1/0.05 BIG

@@ -1,20 +1,17 @@
 <script lang="ts">
-	import { lookupContract } from '@bigmarket/bm-helpers';
-	import type { FundingData } from '@bigmarket/bm-helpers';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { Banner } from '@bigmarket/bm-ui';
 	import { getProposalLatest } from '../../../core/app/loaders/governance/proposals';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { lookupContract } from '$lib/core/app/loaders/governance/dao_api';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
 	let { onDetectProposal }: { onDetectProposal: (contractId: string) => void } = $props();
-	let contractId: string;
-	let fundingData: FundingData | undefined;
-	let contract: any | undefined;
-	let submission: string = '';
+	let contractId = $state('');
+	let contract = $state<Record<string, unknown> | undefined>(undefined);
 
-	let message: string | undefined;
+	let message = $state<string | undefined>(undefined);
 
 	const lookup = async () => {
 		message = undefined;
@@ -26,32 +23,30 @@
 		}
 		message = 'Processing this proposal and adding to DAO';
 		contract = await lookupContract(appConfig.VITE_STACKS_API, contractId);
-		message = 'contract found: ' + contract.tx_id;
-		if (contract.error) {
-			message = contract.error;
+		message = 'contract found: ' + contract?.tx_id;
+		if (contract?.error) {
+			message = contract.error as string;
 		} else {
 			onDetectProposal(contractId);
 		}
 	};
 
-	const processProposal = async (fundedSubmission: boolean) => {
+	const processProposal = async () => {
 		if (!contract) {
 			message = 'Contract not found - please deploy your proposal';
 			return;
 		}
-		if (fundedSubmission) submission = 'public';
-		else submission = 'core';
 		message = 'Processing this proposal and adding to DAO';
 		if (contract) {
 			if (contract && !contract.error) {
-				fundingData = {
-					funding: 0,
-					parameters: {
-						fundingCost: 500000,
-						proposalDuration: 72,
-						proposalStartDelay: 6
-					}
-				};
+				// fundingData = {
+				// 	funding: 0,
+				// 	parameters: {
+				// 		fundingCost: 500000,
+				// 		proposalDuration: 72,
+				// 		proposalStartDelay: 6
+				// 	}
+				// };
 				message = undefined;
 			} else {
 				message = 'Contract not found';
@@ -64,7 +59,7 @@
 		if (tempId) {
 			contractId = tempId;
 			await lookup();
-			processProposal(true);
+			processProposal();
 		}
 	});
 </script>

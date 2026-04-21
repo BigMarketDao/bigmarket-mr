@@ -2,27 +2,24 @@
 	import { Banner } from '@bigmarket/bm-ui';
 	import { TypoHeader } from '@bigmarket/bm-ui';
 	import { base } from '$app/paths';
-	import { getProposalStatus, isVoting } from '$lib/components/dao/proposals/proposals';
-	import { fmtNumber } from '@bigmarket/bm-common';
-	import { chainStore } from '@bigmarket/bm-common';
+	import { chainStore, getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
 	import { showTxModal } from '@bigmarket/bm-common';
-	import { explorerTxUrl, getAddressId, getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
 	import { watchTransaction } from '@bigmarket/bm-common';
-	import {
-		fetchUserBalances,
-		getTransaction,
-		type VotingEventProposeProposal
-	} from '@bigmarket/bm-helpers';
 	import { onMount } from 'svelte';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
 	import {
 		daoConfigStore,
 		requireDaoConfig,
-		requireDaoGoveranceClient
+		requireDaoGovernanceClient
 	} from '$lib/stores/config/daoConfigStore';
+	import type { VotingEventProposeProposal } from '@bigmarket/bm-types';
+	import { getProposalStatus, isVoting } from '$lib/core/app/loaders/governance/proposals';
+	import { fetchUserBalances, getTransaction } from '$lib/core/app/loaders/walletLoaders';
+	import { fmtNumber } from '@bigmarket/bm-utilities';
+	import { stacks } from '@bigmarket/sdk';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
-	const client = $derived(requireDaoGoveranceClient($daoConfigStore));
+	const client = $derived(requireDaoGovernanceClient($daoConfigStore));
 
 	// ---------- Helpers for $BIG (assume 6 decimals like micro-units) ----------
 	const DECIMALS = 1_000_000;
@@ -33,9 +30,7 @@
 
 	// ---------- Props ----------
 	let {
-		proposal,
-		votingPower = 0,
-		onTxVote
+		proposal
 	}: {
 		proposal: VotingEventProposeProposal;
 		votingPower?: number;
@@ -47,14 +42,12 @@
 	let errorMessage = $state<string | undefined>(undefined);
 	let txId = $state<string | undefined>(undefined);
 
-	let proposalTitle = $state(proposal.proposalMeta.title);
-	let proposalLink = $state(`/dao/proposals/${proposal.proposal}`);
-	let votingStatus = $state(getProposalStatus(proposal));
-	let closingBlock = $state(proposal.proposalData.burnEndHeight);
-	let totalVotesHuman = $state(
+	let proposalTitle = $derived(proposal.proposalMeta.title);
+	let proposalLink = $derived(`/dao/proposals/${proposal.proposal}`);
+	let votingStatus = $derived(getProposalStatus(proposal));
+	let totalVotesHuman = $derived(
 		toHuman(proposal.proposalData.votesFor + proposal.proposalData.votesAgainst).toFixed(6)
 	);
-	let voteResult = $state(proposal.proposalData.passed);
 
 	let canVote = $state(true);
 
@@ -93,9 +86,14 @@
 			getStxAddress()
 		);
 
-		if (response.txid) {
+		if (response.success && response.txid) {
 			showTxModal(response.txid);
-			watchTransaction(response.txid);
+			watchTransaction(
+				appConfig.VITE_BIGMARKET_API,
+				appConfig.VITE_STACKS_API,
+				`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`,
+				response.txid
+			);
 		} else {
 			showTxModal('Unable to process right now');
 		}
@@ -109,27 +107,20 @@
 		proposalTitle = proposal.proposalMeta.title;
 		proposalLink = `/dao/proposals/${proposal.proposal}`;
 		votingStatus = getProposalStatus(proposal);
-		closingBlock = proposal.proposalData.burnEndHeight;
+		// closingBlock = proposal.proposalData.burnEndHeight;
 		totalVotesHuman = toHuman(
 			proposal.proposalData.votesFor + proposal.proposalData.votesAgainst
 		).toFixed(6);
-		voteResult = proposal.proposalData.passed;
 
-		if (localStorage.getItem('VOTED_TXID_3' + getAddressId())) {
-			const txIdObj = localStorage.getItem('VOTED_TXID_3' + getAddressId());
+		if (localStorage.getItem('VOTED_TXID_3' + getStxAddress())) {
+			const txIdObj = localStorage.getItem('VOTED_TXID_3' + getStxAddress());
 			if (txIdObj) {
 				const potentialTxId = JSON.parse(txIdObj).txId;
 				const tx = await lookupTransaction(potentialTxId);
-				if (
-					tx &&
-					tx.tx_status === 'pending' &&
-					tx.sender_address === getStxAddress()
-				) {
+				if (tx && tx.tx_status === 'pending' && tx.sender_address === getStxAddress()) {
 					txId = potentialTxId;
-				} else if (
-					tx?.sender_address === getStxAddress()
-				) {
-					localStorage.removeItem('VOTED_TXID_3' + getAddressId());
+				} else if (tx?.sender_address === getStxAddress()) {
+					localStorage.removeItem('VOTED_TXID_3' + getStxAddress());
 				}
 			}
 		}
@@ -244,13 +235,13 @@
 			{#if showButtons}
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<button
-						on:click={() => castVote(true)}
+						onclick={() => castVote(true)}
 						class="rounded-lg bg-green-600 p-4 text-2xl font-bold transition hover:bg-green-500"
 					>
 						✅ Vote Yes ({selectedHuman.toLocaleString(undefined, { maximumFractionDigits: 6 })} $BIG)
 					</button>
 					<button
-						on:click={() => castVote(false)}
+						onclick={() => castVote(false)}
 						class="rounded-lg bg-red-600 p-4 text-2xl font-bold transition hover:bg-red-500"
 					>
 						❌ Vote No ({selectedHuman.toLocaleString(undefined, { maximumFractionDigits: 6 })} $BIG)
@@ -276,7 +267,7 @@
 				<Banner
 					bannerType="info"
 					message={'your vote is being processed. See <a href="' +
-						explorerTxUrl(txId) +
+						stacks.explorerTxUrl(appConfig.VITE_NETWORK, appConfig.VITE_STACKS_EXPLORER, txId) +
 						'" target="_blank">' +
 						txId +
 						'</a>'}

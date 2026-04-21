@@ -48,3 +48,32 @@ export type ContractStxBalance = {
   total_received: string;
   total_sent: string;
 };
+export type ResultsSummary = {
+  uniqueDaoVoters: number;
+  uniquePoolVoters: number;
+  uniqueSoloVoters: number;
+  summary: Array<ResultAggregate>;
+  summaryWithZeros: Array<ResultAggregate>;
+  proposalData: ProposalData;
+};
+export type ResultAggregate = {
+  _id: {
+    event: string;
+    for: boolean;
+  };
+  total: number;
+  totalNested: number;
+  count: number;
+};
+export type ProposalData = {
+  concluded: boolean;
+  passed: boolean;
+  proposer: string;
+  customMajority: number;
+  endBlockHeight: number;
+  startBlockHeight: number;
+  votesAgainst: number;
+  votesFor: number;
+  burnStartHeight: number;
+  burnEndHeight: number;
+};

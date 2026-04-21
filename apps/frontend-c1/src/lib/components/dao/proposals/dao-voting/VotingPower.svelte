@@ -2,24 +2,25 @@
 	import { Banner } from '@bigmarket/bm-ui';
 	import { fmtMicroToStxNumber, fmtNumber } from '@bigmarket/bm-utilities';
 
-	import { getBalanceAtHeight } from '@bigmarket/bm-helpers';
-	import type { VotingEventProposeProposal } from '@bigmarket/bm-helpers';
 	import { onMount } from 'svelte';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import type { VotingEventProposeProposal } from '@bigmarket/bm-types';
+	import { getStxAddress } from '@bigmarket/bm-common';
+	import { getBalanceAtHeight } from '$lib/core/app/loaders/walletLoaders';
 	//import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	//const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 
 	let { proposal }: { proposal: VotingEventProposeProposal } = $props();
-	let balanceAtHeight = 0;
+	let balanceAtHeight = $state(0);
 
-	let errorMessage: string | undefined;
-	let txId: string;
-	let canVote = true;
+	let errorMessage = $state<string | undefined>(undefined);
+	// let txId = $state<string | undefined>(undefined);
+	// let canVote = $state(true);
 
-	if (balanceAtHeight === 0 || balanceAtHeight < 1) {
-		canVote = false;
-	}
+	// if (balanceAtHeight === 0 || balanceAtHeight < 1) {
+	// 	canVote = false;
+	// }
 	onMount(async () => {
 		const response = await getBalanceAtHeight(
 			appConfig.VITE_STACKS_API,

@@ -1,8 +1,12 @@
 <script lang="ts">
-	import { findDaoVotes } from '$lib/components/dao/dao_api';
-	import type { ResultsSummary, VotingEventProposeProposal } from '@bigmarket/bm-helpers';
 	import { onMount } from 'svelte';
 	import VoteResultsRow from './VoteResultsRow.svelte';
+	import type {
+		ResultsSummary,
+		VotingEventProposeProposal,
+		VotingEventVoteOnProposal
+	} from '@bigmarket/bm-types';
+	import { findDaoVotes } from '$lib/core/app/loaders/governance/dao_api';
 
 	let {
 		daoSummary,
@@ -12,15 +16,12 @@
 		proposal: VotingEventProposeProposal;
 	} = $props();
 
-	let showVotes = false;
-	let componentKey = 0;
-	let sortDir = '';
-	let sortField = 'voter';
-	let votes: Array<any> = [];
-	let accountsFor = 0;
-	let accountsAgainst = 0;
-	let stxFor = 0;
-	let stxAgainst = 0;
+	let showVotes = $state(false);
+	let votes: Array<VotingEventVoteOnProposal> = $state([]);
+	let accountsFor = $state(0);
+	let accountsAgainst = $state(0);
+	let stxFor = $state(0);
+	let stxAgainst = $state(0);
 
 	const fetchTransactions = async () => {
 		if (showVotes) {
@@ -28,14 +29,13 @@
 			return;
 		}
 		if (votes.length === 0) {
-			votes = await findDaoVotes(proposal.proposal);
+			votes = await findDaoVotes(appConfig.VITE_BIGMARKET_API, proposal.proposal);
 			//if (newV) votes = newV.daoVotes || []
 		}
 		showVotes = true;
 	};
 
 	let inFavour = 0;
-	let winning = 'danger';
 	onMount(async () => {
 		const votesFor = daoSummary.summary.find((o) => o._id.event === 'vote' && o._id.for);
 		const votesAgn = daoSummary.summary.find((o) => o._id.event === 'vote' && !o._id.for);
@@ -58,16 +58,22 @@
 						).toFixed(2)
 					)
 				: 0;
-		if (inFavour > (proposal?.proposalData?.customMajority || 0) / 100) {
-			winning = 'success';
-		}
+		// if (inFavour > (proposal?.proposalData?.customMajority || 0) / 100) {
+		// 	winning = 'success';
+		// }
 	});
 </script>
 
 <VoteResultsRow {stxFor} {stxAgainst} {accountsFor} {accountsAgainst} />
 
 <div class="flex justify-between">
-	<a href="/" class={'text-lg text-gray-400'} onclick={(e) => { e.preventDefault(); fetchTransactions(); }}
+	<a
+		href="/"
+		class="text-lg text-gray-400"
+		onclick={(e) => {
+			e.preventDefault();
+			fetchTransactions();
+		}}
 		>{#if !showVotes}Show{:else}Hide{/if} transaction details</a
 	>
 </div>

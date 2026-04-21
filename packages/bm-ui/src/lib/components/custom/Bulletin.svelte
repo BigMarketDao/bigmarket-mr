@@ -39,7 +39,7 @@
           : 'right-full top-1/2 -translate-y-1/2';
 </script>
 
-<svelte:window on:click={onOutsideClick} on:keydown={onKeydown} />
+<svelte:window onclick={onOutsideClick} on:keydown={onKeydown} />
 
 <div bind:this={rootEl} class="relative inline-block">
   <!-- Trigger -->
@@ -49,10 +49,10 @@
     aria-haspopup="dialog"
     aria-expanded={openState}
     class="inline-flex items-center rounded focus:outline-none focus-visible:ring focus-visible:ring-offset-2"
-    on:click={toggle}
-    on:mouseover={open}
-    on:mouseleave={close}
-    on:focus={open}
+    onclick={toggle}
+    onmouseover={open}
+    onmouseleave={close}
+    onfocus={open}
   >
     <slot name="title" />
   </button>

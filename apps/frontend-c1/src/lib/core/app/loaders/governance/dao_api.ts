@@ -7,7 +7,7 @@ import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigSt
 import {
 	daoConfigStore,
 	requireDaoConfig,
-	requireDaoGoveranceClient
+	requireDaoGovernanceClient
 } from '$lib/stores/config/daoConfigStore';
 import {
 	type Auth,
@@ -41,7 +41,7 @@ export function dynamicSort<T>(property: keyof T | `-${string & keyof T}`) {
 }
 export async function reclaimVotes(proposal: VotingEventProposeProposal, numbLocked: number) {
 	const daoConfig = requireDaoConfig(get(daoConfigStore));
-	const client = requireDaoGoveranceClient(get(daoConfigStore));
+	const client = requireDaoGovernanceClient(get(daoConfigStore));
 	const isDeployer = daoConfig.VITE_DAO_DEPLOYER === getStxAddress();
 	const response = await client.reclaimVotes(
 		proposal.extension,
@@ -66,7 +66,7 @@ export async function reclaimVotes(proposal: VotingEventProposeProposal, numbLoc
 }
 
 export async function reclaimMarketVotes(marketContract: string, marketId: number) {
-	const client = requireDaoGoveranceClient(get(daoConfigStore));
+	const client = requireDaoGovernanceClient(get(daoConfigStore));
 	const response = await client.reclaimMarketVotes(marketContract, marketId);
 	if (response.success && response.txid) {
 		showTxModal(response.txid);
@@ -84,7 +84,7 @@ export async function reclaimMarketVotes(marketContract: string, marketId: numbe
 }
 
 export async function concludeVote(votingContract: string, proposalContract: string) {
-	const client = requireDaoGoveranceClient(get(daoConfigStore));
+	const client = requireDaoGovernanceClient(get(daoConfigStore));
 	const response = await client.conclude(votingContract.split('.')[1], proposalContract);
 
 	if (response.success && response.txid) {

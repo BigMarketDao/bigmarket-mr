@@ -9,7 +9,7 @@
 	import {
 		daoConfigStore,
 		requireDaoConfig,
-		requireDaoGoveranceClient
+		requireDaoGovernanceClient
 	} from '$lib/stores/config/daoConfigStore';
 	import { stacks } from '@bigmarket/sdk';
 	import { getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
@@ -21,7 +21,7 @@
 	let { fiatPerStx = 0 }: { fiatPerStx?: number } = $props();
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
-	const client = $derived(requireDaoGoveranceClient($daoConfigStore));
+	const client = $derived(requireDaoGovernanceClient($daoConfigStore));
 	let suggestedAmount = $state(20);
 	let stxBalance = $state(0);
 	let errorMessage = $state<string | undefined>(undefined);

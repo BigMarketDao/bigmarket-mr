@@ -1,31 +1,27 @@
 <script lang="ts">
-  // import CircleStop from '@lucide/svelte/icons/circle-stop';
-  // import Check from '@lucide/svelte/icons/check.svelte';
-
+  import type { Snippet } from 'svelte';
   import { Check } from "lucide-svelte";
 
-  export let message: string = '';
-  export let bannerType:
-    | 'info'
-    | 'success'
-    | 'warning'
-    | 'danger'
-    | 'error'
-    | 'waiting'
-    | 'checking' = 'info';
+  // ✅ props
+  const {
+    message = '',
+    bannerType = 'info',
+    forceTheme = 'auto',
+    clazz = '',
+    dismissible = false,
+    children
+  } = $props<{
+    message?: string;
+    bannerType?: 'info' | 'success' | 'warning' | 'danger' | 'error' | 'waiting' | 'checking';
+    forceTheme?: 'auto' | 'light' | 'dark';
+    clazz?: string;
+    dismissible?: boolean;
+    children?: Snippet;
+  }>();
 
-  /** Force a theme for just this component (useful for previews) */
-  export let forceTheme: 'auto' | 'light' | 'dark' = 'auto';
+  // ✅ local state
+  let open = $state(true);
 
-  /** Optional extra classes from parent */
-  export let clazz: string = '';
-
-  /** Dismissible? */
-  export let dismissible: boolean = false;
-
-  let open = true;
-
-  // Variant palettes (light + dark with strong contrast)
   const variants: Record<string, string> = {
     info: `
       from-blue-50 to-blue-100/80 text-gray-900 border-blue-200
@@ -57,7 +53,6 @@
     `,
   };
 
-  // Icon accent bubble
   const accents: Record<string, string> = {
     info: 'bg-blue-600 dark:bg-blue-500',
     success: 'bg-emerald-600 dark:bg-emerald-500',
@@ -68,24 +63,27 @@
     checking: 'bg-violet-600 dark:bg-violet-500',
   };
 
-  // Pick the right icon
-  $: isBad = bannerType === 'warning' || bannerType === 'danger' || bannerType === 'error';
-  // $: Icon = isBad ? CircleStop : Check;
+  // ✅ derived (was $:)
+  const isBad = $derived(
+    () => bannerType === 'warning' || bannerType === 'danger' || bannerType === 'error'
+  );
 
-  // Computed container classes
-  $: container = `
-    ${clazz}
-    relative w-full overflow-hidden rounded-xl border
-    shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10
-    bg-gradient-to-br ${variants[bannerType] ?? variants.info}
-    backdrop-blur supports-[backdrop-filter]:bg-opacity-80
-    p-3 sm:p-4
-  `
-    .replace(/\s+/g, ' ')
-    .trim();
+  const container = $derived(() =>
+    `
+      ${clazz}
+      relative w-full overflow-hidden rounded-xl border
+      shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10
+      bg-gradient-to-br ${variants[bannerType] ?? variants.info}
+      backdrop-blur supports-[backdrop-filter]:bg-opacity-80
+      p-3 sm:p-4
+    `
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
 
-  // Optional dark-forced wrapper class
-  $: wrapperClass = forceTheme === 'dark' ? 'dark' : '';
+  const wrapperClass = $derived(() =>
+    forceTheme === 'dark' ? 'dark' : ''
+  );
 </script>
 
 {#if open}
@@ -103,7 +101,7 @@
         <!-- Content -->
         <div class="min-w-0 flex-1">
           <span class="block text-sm leading-6 sm:text-base">
-            <slot name="message">{@html message}</slot>
+            {#if children}{@render children()}{:else}{@html message}{/if}
           </span>
         </div>
 
@@ -115,7 +113,7 @@
                    text-current/70 hover:text-current focus:outline-none focus-visible:ring-2
                    focus-visible:ring-current/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-transparent"
             aria-label="Dismiss"
-            on:click={() => (open = false)}
+            onclick={() => (open = false)}
           >
             ✕
           </button>

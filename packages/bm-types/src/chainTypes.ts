@@ -8,3 +8,8 @@ export type StacksInfo = {
   server_version?: string;
   network_id?: number;
 };
+
+export type Contract = {
+  tx_id: string;
+  source_code?: string;
+};
