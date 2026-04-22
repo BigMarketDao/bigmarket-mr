@@ -431,7 +431,6 @@
         (max-by-floor (if (> other-pool MIN_POOL) (- other-pool MIN_POOL) u0))
         (amount-shares (unwrap! (cpmm-shares selected-pool other-pool cost-of-shares) err-insufficient-balance))
         (max-cost-of-shares (unwrap! (cpmm-cost selected-pool other-pool max-by-floor) err-overbuy))
-        (max-purchase (if (> other-pool u0) (- other-pool u1) u0))
         (market-end (+ (get market-start md) (get market-duration md)))
   )
     ;; Validate token and market state
@@ -445,10 +444,8 @@
     (asserts! (< burn-block-height market-end) err-market-not-open)
     ;; ensure the user cannot overpay for shares - this can skew liquidity in other pools
     (asserts! (<= cost-of-shares max-cost-of-shares) err-overbuy)
-    (asserts! (< amount-shares other-pool) err-overbuy)
     (asserts! (>= amount-shares min-shares) err-slippage-too-high)
-  (asserts! (> other-pool u0) err-insufficient-liquidity)
-  (asserts! (<= amount-shares max-by-floor) err-overbuy)
+    (asserts! (<= amount-shares max-by-floor) err-overbuy)
 
     ;; --- Token Transfers ---
     (try! (contract-call? token transfer cost-of-shares tx-sender (as-contract tx-sender) none))
