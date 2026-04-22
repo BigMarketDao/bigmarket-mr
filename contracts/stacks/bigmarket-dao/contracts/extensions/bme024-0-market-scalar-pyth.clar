@@ -603,7 +603,7 @@
                 (some u0)
                 (some (- (len categories) u1)))))
     )
-    (asserts! (or (is-eq tx-sender (var-get resolution-agent)) (is-eq tx-sender (get creator md))) err-unauthorised)
+    (asserts! (is-eq tx-sender (var-get resolution-agent)) err-unauthorised)
     (asserts! (>= burn-block-height market-close) err-market-wrong-state)
     (asserts! (is-eq (get resolution-state md) RESOLUTION_OPEN) err-market-wrong-state)
     (asserts! (is-some final-index) err-category-not-found)
