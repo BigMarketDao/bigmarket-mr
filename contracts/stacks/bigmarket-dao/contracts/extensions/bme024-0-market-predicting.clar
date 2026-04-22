@@ -500,7 +500,76 @@
     )
       (map-set stake-balances {market-id: market-id, user: tx-sender} user-stake-updated)
       (map-set token-balances {market-id: market-id, user: tx-sender} user-token-updated)
-      (print {event: "market-stake", market-id: market-id, index: index, amount: amount-shares, cost: cost-of-shares, fee: fee, voter: tx-sender, max-cost: max-cost}) 
+      (print {event: "market-stake", market-id: market-id, index: index, amount: amount-shares, cost: cost-of-shares, fee: fee, voter: tx-sender, max-cost: max-cost})
+      (ok index)
+    )
+  )
+)
+
+;; Sell shares of a category back to the CPMM, receive tokens minus fee.
+;; Mirror of predict-category: inverse curve via cpmm-refund.
+(define-public (sell-category (market-id uint) (min-refund uint) (category (string-ascii 64)) (token <ft-token>) (shares-in uint))
+  (let (
+        (md (unwrap! (map-get? markets market-id) err-market-not-found))
+        (categories (get categories md))
+        (index (unwrap! (index-of? categories category) err-category-not-found))
+        (stake-tokens-list (get stake-tokens md))
+        (selected-token-pool (unwrap! (element-at? stake-tokens-list index) err-category-not-found))
+        (stake-list (get stakes md))
+        (selected-pool (unwrap! (element-at? stake-list index) err-category-not-found))
+        (total-pool (fold + stake-list u0))
+        (other-pool (- total-pool selected-pool))
+        (user-stake-list (unwrap! (map-get? stake-balances {market-id: market-id, user: tx-sender}) err-user-not-staked))
+        (user-shares (unwrap! (element-at? user-stake-list index) err-category-not-found))
+        (user-token-list (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? token-balances {market-id: market-id, user: tx-sender})))
+        (user-tokens (unwrap! (element-at? user-token-list index) err-category-not-found))
+        (gross-refund (unwrap! (cpmm-refund selected-pool other-pool shares-in) err-arithmetic))
+        (fee (/ (* gross-refund (var-get dev-fee-bips)) u10000))
+        (net-refund (if (> gross-refund fee) (- gross-refund fee) u0))
+        (market-end (+ (get market-start md) (get market-duration md)))
+        (original-sender tx-sender)
+  )
+    (asserts! (< index (len categories)) err-category-not-found)
+    (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
+    (asserts! (not (get concluded md)) err-market-not-concluded)
+    (asserts! (is-eq (get resolution-state md) RESOLUTION_OPEN) err-market-not-open)
+    (asserts! (< burn-block-height market-end) err-market-not-open)
+    (asserts! (> shares-in u0) err-amount-too-low)
+    (asserts! (>= user-shares shares-in) err-insufficient-balance)
+    (asserts! (> net-refund u0) err-amount-too-low)
+    (asserts! (>= net-refund min-refund) err-slippage-too-high)
+    (asserts! (>= selected-token-pool gross-refund) err-insufficient-contract-balance)
+
+    ;; --- Token Transfers (contract -> dev-fund, contract -> seller) ---
+    (as-contract
+      (begin
+        (if (> fee u0)
+          (try! (contract-call? token transfer fee tx-sender (var-get dev-fund) none))
+          true
+        )
+        (try! (contract-call? token transfer net-refund tx-sender original-sender none))
+      )
+    )
+
+    ;; --- Update Market State ---
+    (let (
+      (updated-stakes (unwrap! (replace-at? stake-list index (- selected-pool shares-in)) err-category-not-found))
+      (updated-token-stakes (unwrap! (replace-at? stake-tokens-list index (- selected-token-pool gross-refund)) err-category-not-found))
+    )
+      (map-set markets market-id (merge md {stakes: updated-stakes, stake-tokens: updated-token-stakes}))
+    )
+
+    ;; --- Update User Balances ---
+    ;; Cost-basis reduction is pro-rata: burn the same fraction of user-tokens as of user-shares.
+    (let (
+      (token-reduction (/ (* user-tokens shares-in) user-shares))
+      (user-token-new (if (> user-tokens token-reduction) (- user-tokens token-reduction) u0))
+      (user-token-updated (unwrap! (replace-at? user-token-list index user-token-new) err-category-not-found))
+      (user-stake-updated (unwrap! (replace-at? user-stake-list index (- user-shares shares-in)) err-category-not-found))
+    )
+      (map-set stake-balances {market-id: market-id, user: tx-sender} user-stake-updated)
+      (map-set token-balances {market-id: market-id, user: tx-sender} user-token-updated)
+      (print {event: "market-unstake", market-id: market-id, index: index, shares-in: shares-in, refund: net-refund, fee: fee, seller: tx-sender, min-refund: min-refund})
       (ok index)
     )
   )
