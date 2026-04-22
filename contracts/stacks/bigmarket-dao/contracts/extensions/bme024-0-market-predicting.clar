@@ -619,6 +619,62 @@
   )
 )
 
+;; Remove liquidity from an open market, proportional to current `stakes`
+;; distribution. Exact inverse of add-liquidity: burning the balanced
+;; position acquired via add returns the same token amount.
+;; Caller specifies token `amount` to withdraw; shares burnt in each
+;; category are stakes[i] * amount / sum(stakes). Requires a balanced
+;; LP-style position across all active categories.
+(define-public (remove-liquidity (market-id uint) (amount uint) (min-refund uint) (token <ft-token>))
+  (let (
+        (md (unwrap! (map-get? markets market-id) err-market-not-found))
+        (stake-list (get stakes md))
+        (stake-tokens-list (get stake-tokens md))
+        (total-stakes (fold + stake-list u0))
+        (scale (if (> total-stakes u0) (/ (* amount SCALE) total-stakes) u0))
+        (scale-list (list scale scale scale scale scale scale scale scale scale scale))
+        (delta (map scale-by stake-list scale-list))
+        (actual-refund (fold + delta u0))
+        (user-stake-list (unwrap! (map-get? stake-balances {market-id: market-id, user: tx-sender}) err-user-not-staked))
+        (user-token-list (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? token-balances {market-id: market-id, user: tx-sender})))
+        (enough-balance (fold and-fold (map has-sufficient user-stake-list delta) true))
+        (market-end (+ (get market-start md) (get market-duration md)))
+        (original-sender tx-sender)
+  )
+    (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
+    (asserts! (not (get concluded md)) err-market-not-concluded)
+    (asserts! (is-eq (get resolution-state md) RESOLUTION_OPEN) err-market-not-open)
+    (asserts! (< burn-block-height market-end) err-market-not-open)
+    (asserts! (> total-stakes u0) err-insufficient-liquidity)
+    (asserts! (< amount total-stakes) err-amount-too-high)
+    (asserts! (<= amount u50000000000000) err-amount-too-high)
+    (asserts! (> actual-refund u0) err-amount-too-low)
+    (asserts! enough-balance err-insufficient-balance)
+    (asserts! (>= actual-refund min-refund) err-slippage-too-high)
+
+    ;; Safe to subtract: balance and pool floors verified above
+    (let (
+          (updated-stakes (unwrap! (as-max-len? (map - stake-list delta) u10) err-arithmetic))
+          (updated-token-stakes (unwrap! (as-max-len? (map - stake-tokens-list delta) u10) err-arithmetic))
+          (updated-user-stakes (unwrap! (as-max-len? (map - user-stake-list delta) u10) err-arithmetic))
+          (updated-user-tokens (unwrap! (as-max-len? (map min-sub user-token-list delta) u10) err-arithmetic))
+    )
+      (asserts! (fold and-fold (map is-above-min updated-stakes) true) err-insufficient-liquidity)
+
+      (as-contract
+        (try! (contract-call? token transfer actual-refund tx-sender original-sender none)))
+
+      (map-set markets market-id
+        (merge md { stakes: updated-stakes, stake-tokens: updated-token-stakes }))
+      (map-set stake-balances {market-id: market-id, user: tx-sender} updated-user-stakes)
+      (map-set token-balances {market-id: market-id, user: tx-sender} updated-user-tokens)
+
+      (print {event: "remove-liquidity", market-id: market-id, lp: tx-sender, requested: amount, amount: actual-refund})
+      (ok actual-refund)
+    )
+  )
+)
+
 ;; Resolve a market invoked by ai-agent.
 (define-public (resolve-market (market-id uint) (category (string-ascii 64)))
   (let (
@@ -936,6 +992,26 @@
 ;; Used with `map` to compute proportional per-category deltas.
 (define-private (scale-by (a uint) (b uint))
   (/ (* a b) SCALE)
+)
+
+;; Pairwise check: does a have enough to cover b?
+(define-private (has-sufficient (a uint) (b uint))
+  (>= a b)
+)
+
+;; Saturating subtraction: returns max(0, a - b).
+(define-private (min-sub (a uint) (b uint))
+  (if (> a b) (- a b) u0)
+)
+
+;; Floor guard: a category is valid if empty or at least MIN_POOL.
+(define-private (is-above-min (s uint))
+  (or (is-eq s u0) (>= s MIN_POOL))
+)
+
+;; Boolean AND accumulator for use with `fold`.
+(define-private (and-fold (b bool) (acc bool))
+  (and b acc)
 )
 
 ;; Helper function to create a list with zeros after index N
