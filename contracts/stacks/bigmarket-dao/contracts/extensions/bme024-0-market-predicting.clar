@@ -579,12 +579,18 @@
 ;; distribution so that marginal prices are unchanged.
 ;; Caller deposits up to `amount` tokens; receives shares in each category
 ;; equal to stakes[i] * amount / sum(stakes). Rounding dust stays with caller.
-(define-public (add-liquidity (market-id uint) (amount uint) (token <ft-token>))
+;; Sandwich protection: caller passes the `expected-total-stakes` they saw
+;; at signing time and an acceptable deviation in bips; the tx reverts if
+;; the pool has shifted beyond that band (i.e., been skewed by a front-runner).
+(define-public (add-liquidity (market-id uint) (amount uint) (expected-total-stakes uint) (max-deviation-bips uint) (token <ft-token>))
   (let (
         (md (unwrap! (map-get? markets market-id) err-market-not-found))
         (stake-list (get stakes md))
         (stake-tokens-list (get stake-tokens md))
         (total-stakes (fold + stake-list u0))
+        (max-delta (/ (* expected-total-stakes max-deviation-bips) u10000))
+        (upper-bound (+ expected-total-stakes max-delta))
+        (lower-bound (if (> expected-total-stakes max-delta) (- expected-total-stakes max-delta) u0))
         (scale (if (> total-stakes u0) (/ (* amount SCALE) total-stakes) u0))
         (scale-list (list scale scale scale scale scale scale scale scale scale scale))
         (delta (map scale-by stake-list scale-list))
@@ -604,6 +610,8 @@
     (asserts! (> total-stakes u0) err-insufficient-liquidity)
     (asserts! (<= amount u50000000000000) err-amount-too-high)
     (asserts! (> actual-amount u0) err-amount-too-low)
+    (asserts! (<= total-stakes upper-bound) err-slippage-too-high)
+    (asserts! (>= total-stakes lower-bound) err-slippage-too-high)
 
     ;; Transfer the actual computed amount; any rounding dust stays with caller
     (try! (contract-call? token transfer actual-amount tx-sender (as-contract tx-sender) none))
