@@ -43,7 +43,7 @@ export function setConfigOnStart() {
 	CONFIG.network = process.env[network + '_sui_network'] || '';
 	CONFIG.stacksApi = process.env[network + '_sui_stacksApi'] || '';
 	CONFIG.stacksHiroKey = process.env[network + '_sui_stacksHiroKey'] || '';
-	CONFIG.publicAppBaseUrl = network === 'devnet' ? 'http://localhost:5173' : 'http://localhost:3000';
+	CONFIG.publicAppBaseUrl = network === 'devnet' ? 'http://localhost:8081' : 'http://localhost:3000';
 	CONFIG.publicAppName = process.env[network + '_sui_publicAppName'] || '';
 	CONFIG.publicAppVersion = process.env[network + '_sui_publicAppVersion'] || '';
 	CONFIG.walletKey = process.env[network + '_sui_walletKey'] || '';

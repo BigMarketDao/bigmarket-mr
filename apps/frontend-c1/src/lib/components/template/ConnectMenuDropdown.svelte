@@ -9,7 +9,8 @@
 		userWalletStore,
 		getBtcAddress,
 		getStxAddress,
-		allowedTokenStore
+		allowedTokenStore,
+		vaultBalanceStore
 	} from '@bigmarket/bm-common';
 	import { resolve } from '$app/paths';
 	import { daoLink } from '$lib/core/tools/site';
@@ -193,7 +194,7 @@
 							</div>
 						{/if}
 						{#each allowedTokens as token (token.token)}
-							<div class="space-y-2">
+							<div class="space-y-1">
 								<div class="flex items-center justify-between">
 									<span class="text-xs text-gray-500 dark:text-gray-400"
 										>{token.sip10Data?.symbol}</span
@@ -204,6 +205,15 @@
 											{fmtMicroToStx(getBalance(token.token) || 0, token.sip10Data?.decimals)}
 										</span>
 									</div>
+								</div>
+								<div class="flex items-center justify-between pl-2">
+									<span class="text-[10px] text-gray-400 dark:text-gray-500">in vault</span>
+									<span class="text-[11px] text-gray-600 dark:text-gray-400">
+										{fmtMicroToStx(
+											$vaultBalanceStore[token.token] ?? 0,
+											token.sip10Data?.decimals
+										)}
+									</span>
 								</div>
 							</div>
 						{/each}

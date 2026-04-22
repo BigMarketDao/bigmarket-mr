@@ -1,4 +1,4 @@
-import type { AppConfig, DaoConfig } from "./types";
+import type { AppConfig, DaoConfig } from "@bigmarket/bm-types";
 
 export const appConfigByNetwork: Record<string, AppConfig> = {
   devnet: {

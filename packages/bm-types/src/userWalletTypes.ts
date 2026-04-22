@@ -1,6 +1,10 @@
 import type { StacksInfo } from "./chainTypes.js";
 import type { TokenPermissionEvent } from "./eventTypes.js";
 
+export type VaultBalance = {
+  tokenContract: string;
+  amount: number;
+};
 export type WalletBalances = {
   stacks: {
     address: string;

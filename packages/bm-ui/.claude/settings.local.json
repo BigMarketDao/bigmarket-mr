@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --filter @bigmarket/bm-common typecheck)",
+      "Bash(pnpm --filter @bigmarket/sdk typecheck)",
+      "Bash(pnpm --filter frontend-c1 check)",
+      "Bash(pnpm --filter @bigmarket/bm-common build)",
+      "Bash(pnpm --filter @bigmarket/sdk build)"
+    ]
+  }
+}

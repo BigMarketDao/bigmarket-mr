@@ -1,32 +1,31 @@
 <script lang="ts">
+	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
 	import {
 		daoConfigStore,
 		requireDaoClient,
 		requireDaoConfig
 	} from '$lib/stores/config/daoConfigStore';
+	import { allowedTokenStore, getStxAddress, showTxModal, watchTransaction } from '@bigmarket/bm-common';
 	import {
 		Button,
 		Card,
 		CardContent,
 		CardDescription,
-		CardFooter,
+		CardFooter, 
 		CardHeader,
 		CardTitle,
 		Input
 	} from '@bigmarket/bm-ui';
 
-	const tokenOptions = [
-		{
-			label: 'STX',
-			value: `${requireDaoConfig($daoConfigStore).VITE_WRAPPED_STX_FULL_CONTRACT}`
-		},
-		{
-			label: 'USDH',
-			value: `${requireDaoConfig($daoConfigStore).VITE_USDH_FULL_CONTRACT}`
-		}
-	];
+	const appConfig = $derived(requireAppConfig($appConfigStore));
+	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
+	const tokenOptions = $derived(
+  Array.from(
+    new Map($allowedTokenStore.map(item => [item.token, item])).values()
+  )
+);	console.log(tokenOptions);
+	let token = $derived(tokenOptions?.[0]?.token || '');
 
-	let token = $state(tokenOptions[0].value);
 	let amount = $state(0);
 	let status = $state('');
 	let isError = $state(false);
@@ -44,7 +43,16 @@
 
 		isSubmitting = true;
 		try {
-			await requireDaoClient($daoConfigStore).deposit(token, amount);
+			const response = await requireDaoClient($daoConfigStore).deposit(token, amount, getStxAddress());
+			if (response.success && response.txid) {
+				showTxModal(response.txid);
+				watchTransaction(
+					appConfig.VITE_BIGMARKET_API,
+					appConfig.VITE_STACKS_API,
+					`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`,
+					response.txid
+				);
+			}
 			status = 'Deposit submitted.';
 		} catch (e: unknown) {
 			isError = true;
@@ -65,6 +73,9 @@
 		<CardDescription class="text-gray-600 dark:text-gray-400"
 			>Choose a token and amount to deposit into the DAO vault.</CardDescription
 		>
+		<CardDescription class="text-gray-600 dark:text-gray-400"
+			>Once your deposit is confirmed you'll be able to participate in markets</CardDescription
+		>
 	</CardHeader>
 
 	<CardContent class="px-6">
@@ -75,8 +86,8 @@
 					bind:value={token}
 					class="border-input ring-offset-background focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full min-w-0 rounded-md border bg-gray-50 px-3 py-1 text-sm text-gray-900 shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-900 dark:text-gray-100"
 				>
-					{#each tokenOptions as opt (opt.value)}
-						<option class="" value={opt.value}>{opt.label}</option>
+					{#each tokenOptions as opt (opt.token)}
+						<option class="" value={opt.token}>{opt.sip10Data?.symbol}</option>
 					{/each}
 				</select>
 			</label>

@@ -254,7 +254,7 @@
 ;; ---------------- public functions ----------------
 
 (define-public (create-market 
-    (categories (list 10 (string-ascii 64))) 
+    (categories (list 10 (string-ascii 64)))
     (fee-bips (optional uint)) 
     (token <ft-token>) 
     (market-data-hash (buff 32)) 

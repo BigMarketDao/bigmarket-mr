@@ -12,3 +12,4 @@ export * from "./chainTypes.js";
 export * from "./authTypes.js";
 export * from "./signatureTypes.js";
 export * from "./daoGovernanceTypes.js";
+export * from "./config.js";

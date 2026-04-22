@@ -9,3 +9,4 @@ export * from "./lib/stores/ui/allowedTokenStore";
 export * from "./lib/stores/ui/chainStore";
 export * from "./lib/stores/ui/marketSystemCategoriesStore";
 export * from "./lib/stores/ui/daoOverviewStore";
+export * from "./lib/stores/ui/vaultBalanceStore";

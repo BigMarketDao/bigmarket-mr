@@ -385,12 +385,12 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@bigmarket/bm-config':
-        specifier: workspace:*
-        version: link:../bm-config
       '@bigmarket/bm-types':
         specifier: workspace:*
         version: link:../bm-types
+      '@bigmarket/bm-utilities':
+        specifier: workspace:*
+        version: link:../bm-utilities
       '@stacks/common':
         specifier: ^7.3.1
         version: 7.3.1

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from '@bigmarket/bm-ui';
-	import { isLoggedIn, connectWallet, showTxModal, watchTransaction } from '@bigmarket/bm-common';
+	import { isLoggedIn, connectWallet, showTxModal, watchTransaction, getStxAddress } from '@bigmarket/bm-common';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
 	import {
 		daoConfigStore,
@@ -19,7 +19,7 @@
 	};
 
 	const claimTokens = async () => {
-		const response: TxResult = await requireDaoClient($daoConfigStore).claimFaucet(MAX_MINT);
+		const response: TxResult = await requireDaoClient($daoConfigStore).claimFaucet(`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_BIG_PLAY}`, MAX_MINT, getStxAddress());
 		if (response.success) {
 			showTxModal(response.txid);
 			watchTransaction(

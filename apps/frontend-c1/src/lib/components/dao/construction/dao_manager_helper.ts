@@ -1,7 +1,7 @@
-import { fetchDataVar, lookupContract } from '@bigmarket/bm-helpers';
 import { get } from 'svelte/store';
 import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
 import { stacks } from '@bigmarket/sdk';
+import { lookupContract } from '$lib/core/app/loaders/governance/dao_api';
 
 export async function getContractDeploymentTxId(
 	contractAddress: string

@@ -1,4 +1,4 @@
-import { type DaoConfig } from "@bigmarket/bm-config";
+import { type DaoConfig } from "@bigmarket/bm-types";
 import { callContract } from "./tx";
 import {
   boolCV,
@@ -65,7 +65,7 @@ export function createDaoGovernanceClient(daoConfig: DaoConfig) {
     construct() {
       const bootstrap = Cl.contractPrincipal(
         daoConfig.VITE_DAO_DEPLOYER,
-        "bdp002-bootstrap",
+        "bdp000-2-bootstrap",
       );
 
       return call(daoConfig.VITE_DAO, "construct", [bootstrap]);

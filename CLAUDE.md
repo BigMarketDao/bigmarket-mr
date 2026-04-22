@@ -9,6 +9,7 @@ BigMarket is a DAO-governed prediction market on Stacks (Clarity). It uses a hyb
 ## Commands
 
 ### Root (runs across all packages)
+
 ```bash
 pnpm dev          # Start frontend-c1 dev server
 pnpm dev-api      # Start API dev server
@@ -20,8 +21,9 @@ pnpm clean        # Remove all build artifacts
 ```
 
 ### Frontend (`apps/frontend-c1`)
+
 ```bash
-pnpm dev          # Vite dev server (port 5173)
+pnpm dev          # Vite dev server (port 8081)
 pnpm build        # Production build
 pnpm check        # SvelteKit type check
 pnpm test         # Vitest (runs once)
@@ -31,11 +33,13 @@ pnpm format       # Prettier format
 ```
 
 Run a single test file:
+
 ```bash
 pnpm test src/lib/path/to/file.test.ts
 ```
 
 ### API (`apps/api-v1`)
+
 ```bash
 pnpm dev          # tsx + nodemon, watches src/**/*.ts
 pnpm build        # tsc → dist/
@@ -43,6 +47,7 @@ pnpm start        # Run compiled dist/app.js
 ```
 
 ### Smart Contracts (`contracts/stacks/bigmarket-dao`)
+
 ```bash
 npm test          # Vitest + Clarinet SDK
 npm run watch     # Watch mode
@@ -53,12 +58,14 @@ clarinet devnet start
 ```
 
 Property-based fuzzing:
+
 ```bash
 npx rv . bme024-0-market-predicting test
 npx rv . bme030-0-reputation-token invariant --runs 6000
 ```
 
 ### Scoped package commands
+
 ```bash
 pnpm --filter @bigmarket/sdk build
 pnpm --filter @bigmarket/bm-ui typecheck
@@ -81,6 +88,7 @@ Order book (CLOB), matching engine, indexing, price discovery. MongoDB-backed. R
 Svelte 5 runes mode. Routes in `src/routes/`, business logic in `src/lib/core/`, global state in `src/lib/stores/` (local-storage backed).
 
 **Shared packages**
+
 - `bm-ui` — presentation-only Svelte components; no logic, no API calls, no stores
 - `bm-types` — shared TypeScript types
 - `bm-common` — shared utilities and stores

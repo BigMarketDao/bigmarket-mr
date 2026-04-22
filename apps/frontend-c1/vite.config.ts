@@ -6,6 +6,12 @@ import { sveltekit } from '@sveltejs/kit/vite';
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 	// Workspace TS packages: bundle for SSR so Node does not resolve bare/extensionless paths in source.
+	server: {
+		watch: {
+			usePolling: true,
+			interval: 100
+		}
+	},
 	ssr: {
 		noExternal: ['bits-ui', '@bigmarket/bm-config', '@bigmarket/bm-design', '@bigmarket/sdk']
 	},

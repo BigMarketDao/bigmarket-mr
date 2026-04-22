@@ -9,6 +9,24 @@ import {
 export function isSTX(token: string) {
   return token.toLowerCase().indexOf("stx") > -1;
 }
+export const getFungibleTokenName = (tokenContract: string) => {
+  if (tokenContract.indexOf("governance-token") > -1) {
+    return "bmg-token";
+  } else if (tokenContract.indexOf("pepe") > -1) {
+    return "pepe-token";
+  } else if (tokenContract.indexOf("usdh") > -1) {
+    return "usdh-token";
+  } else if (tokenContract.indexOf("sbtc") > -1) {
+    return "sbtc-token";
+  } else if (tokenContract.indexOf("wrapped-stx") > -1) {
+    return "stx";
+    // } else if (sip10Data.symbol.toLowerCase().indexOf('bigr') > -1) {
+    // 	return 'bigr-token';
+  } else if (tokenContract.indexOf("play") > -1) {
+    return "bmg-play";
+  }
+  return "bigr-token";
+};
 
 export async function getSip10PostConditions(
   deployer: string,
@@ -68,4 +86,28 @@ export async function getBigRPostConditionNft(
     );
 
   return postConditionForNFT;
+}
+
+export function pcForDeposit(
+  token: string,
+  senderAddress: string,
+  microAmount: number,
+): Array<PostCondition> {
+  const postConditions: Array<PostCondition> = [];
+  // the market token post condition
+  if (!isSTX(token)) {
+    const formattedToken = (token.split(".")[0] +
+      "." +
+      token.split(".")[1]) as `${string}.${string}`;
+    const tokenName = getFungibleTokenName(token);
+    const postConditionFt = Pc.principal(senderAddress)
+      .willSendLte(microAmount)
+      .ft(formattedToken, tokenName);
+    postConditions.push(postConditionFt);
+  } else {
+    postConditions.push(
+      Pc.principal(senderAddress).willSendEq(microAmount).ustx(),
+    );
+  }
+  return postConditions;
 }

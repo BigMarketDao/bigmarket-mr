@@ -1,14 +1,43 @@
 import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+import { daoConfigStore, requireDaoClient } from '$lib/stores/config/daoConfigStore';
 import { get } from 'svelte/store';
 import {
+	allowedTokenStore,
 	getStxAddress,
 	isLoggedIn,
 	userReputationStore,
-	userWalletStore
+	userWalletStore,
+	vaultBalanceStore
 } from '@bigmarket/bm-common';
 import type { AddressObject, UserReputationContractData } from '@bigmarket/bm-types';
 import { addresses, getTokenBalances, getWalletBalances } from '../app/loaders/walletLoaders';
 import { getUserReputation } from '../server/loaders/reputationLoaders';
+
+async function loadVaultBalances(stacksApi: string): Promise<void> {
+	const tokens = get(allowedTokenStore);
+	if (!tokens.length) return;
+
+	const daoConfig = get(daoConfigStore);
+	if (!daoConfig) return;
+
+	const stxAddress = getStxAddress();
+	if (!stxAddress || stxAddress === '??' || stxAddress === '?') return;
+
+	const client = requireDaoClient(daoConfig);
+
+	const results = await Promise.all(
+		tokens.map(async (t) => {
+			try {
+				const res = await client.getBalance(stacksApi, stxAddress, t.token);
+				return [t.token, Number(res?.value ?? 0)] as const;
+			} catch {
+				return [t.token, 0] as const;
+			}
+		})
+	);
+
+	vaultBalanceStore.set(Object.fromEntries(results));
+}
 
 export async function loadWalletData() {
 	if (!isLoggedIn()) return;
@@ -31,4 +60,6 @@ export async function loadWalletData() {
 		getStxAddress()
 	);
 	userReputationStore.set(userReputationData);
+
+	await loadVaultBalances(appConfig.VITE_STACKS_API);
 }

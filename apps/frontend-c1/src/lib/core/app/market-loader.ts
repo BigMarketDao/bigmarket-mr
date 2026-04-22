@@ -1,5 +1,6 @@
 // src/lib/server/loadMarketsAndLeaderboard.ts
-import { getNetworkFromUrl, type AppConfig } from '@bigmarket/bm-config';
+import { getNetworkFromUrl } from '@bigmarket/bm-config';
+import { type AppConfig } from '@bigmarket/bm-types';
 import { get } from 'svelte/store';
 import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
 import type { LeaderBoard, PredictionMarketCreateEvent } from '@bigmarket/bm-types';

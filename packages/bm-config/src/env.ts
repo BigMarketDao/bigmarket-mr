@@ -1,5 +1,5 @@
 import { appConfigByNetwork, daoConfigByNetwork } from "./networks";
-import type { AppConfig, DaoConfig, Network } from "./types";
+import type { AppConfig, DaoConfig, Network } from "@bigmarket/bm-types";
 
 export function getNetworkFromUrl(url: URL): Network {
   const chain = url.searchParams.get("chain");

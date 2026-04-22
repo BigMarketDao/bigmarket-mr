@@ -1,4 +1,4 @@
-import type { AppConfig, DaoConfig } from '@bigmarket/bm-config';
+import type { AppConfig, DaoConfig } from '@bigmarket/bm-types';
 import type {
 	DaoOverview,
 	ExchangeRate,

@@ -74,6 +74,10 @@
   (ok true)
 )
 
+(define-read-only (get-balance (user principal) (token principal))
+  (default-to u0 (map-get? balances {user: user, token: token}))
+)
+
 ;; Use Case 1: Deposit Funds into Vault
 (define-public (deposit (token <sip010>) (amount uint))
   (begin
