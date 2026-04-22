@@ -273,7 +273,6 @@
         (cool-down-final (default-to DEFAULT_COOL_DOWN_PERIOD cool-down-period))
         (current-block burn-block-height)
         (num-categories (len categories))
-        ;; NOTE: seed is evenly divided with rounding error discarded
         (seed (/ (* seed-amount SCALE) (* num-categories SCALE)))
         (user-stake-list (list seed seed seed seed seed seed seed seed seed seed))
         (share-list (zero-after-n user-stake-list num-categories))
@@ -292,8 +291,8 @@
       (asserts! (>= seed MIN_POOL) err-insufficient-liquidity)
       (asserts! (>= seed-amount (* num-categories MIN_POOL)) err-insufficient-liquidity) ;; avoid rounding below floor
 
-      ;; Transfer single winning portion of seed to market contract to fund claims
-      (try! (contract-call? token transfer seed-amount tx-sender (as-contract tx-sender) none))
+      ;; Transfer exactly the pool-seeding amount; any rounding dust stays with the caller
+      (try! (contract-call? token transfer (* seed num-categories) tx-sender (as-contract tx-sender) none))
 
       ;; ensure the user is allowed to create if gating by merkle proof is required
       (if (var-get creation-gated) (try! (as-contract (contract-call? .bme022-0-market-gating can-access-by-account creator proof))) true)
@@ -326,7 +325,7 @@
       )   
       (var-set market-counter (+ new-id u1))
       (try! (contract-call? .bme030-0-reputation-token mint tx-sender u2 u8))
-      (print {event: "create-market", market-id: new-id, categories: categories, market-fee-bips: market-fee-bips, token: token, market-data-hash: market-data-hash, creator: tx-sender, seed-amount: seed-amount})
+      (print {event: "create-market", market-id: new-id, categories: categories, market-fee-bips: market-fee-bips, token: token, market-data-hash: market-data-hash, creator: tx-sender, seed-amount: (* seed num-categories)})
       (ok new-id)
   )
 )
