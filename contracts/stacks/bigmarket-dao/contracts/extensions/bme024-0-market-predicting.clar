@@ -575,6 +575,50 @@
   )
 )
 
+;; Add liquidity to an open market, proportional to the current `stakes`
+;; distribution so that marginal prices are unchanged.
+;; Caller deposits up to `amount` tokens; receives shares in each category
+;; equal to stakes[i] * amount / sum(stakes). Rounding dust stays with caller.
+(define-public (add-liquidity (market-id uint) (amount uint) (token <ft-token>))
+  (let (
+        (md (unwrap! (map-get? markets market-id) err-market-not-found))
+        (stake-list (get stakes md))
+        (stake-tokens-list (get stake-tokens md))
+        (total-stakes (fold + stake-list u0))
+        (scale (if (> total-stakes u0) (/ (* amount SCALE) total-stakes) u0))
+        (scale-list (list scale scale scale scale scale scale scale scale scale scale))
+        (delta (map scale-by stake-list scale-list))
+        (actual-amount (fold + delta u0))
+        (user-stake-list (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? stake-balances {market-id: market-id, user: tx-sender})))
+        (user-token-list (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? token-balances {market-id: market-id, user: tx-sender})))
+        (market-end (+ (get market-start md) (get market-duration md)))
+        (updated-stakes (unwrap! (as-max-len? (map + stake-list delta) u10) err-arithmetic))
+        (updated-token-stakes (unwrap! (as-max-len? (map + stake-tokens-list delta) u10) err-arithmetic))
+        (updated-user-stakes (unwrap! (as-max-len? (map + user-stake-list delta) u10) err-arithmetic))
+        (updated-user-tokens (unwrap! (as-max-len? (map + user-token-list delta) u10) err-arithmetic))
+  )
+    (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
+    (asserts! (not (get concluded md)) err-market-not-concluded)
+    (asserts! (is-eq (get resolution-state md) RESOLUTION_OPEN) err-market-not-open)
+    (asserts! (< burn-block-height market-end) err-market-not-open)
+    (asserts! (> total-stakes u0) err-insufficient-liquidity)
+    (asserts! (<= amount u50000000000000) err-amount-too-high)
+    (asserts! (> actual-amount u0) err-amount-too-low)
+
+    ;; Transfer the actual computed amount; any rounding dust stays with caller
+    (try! (contract-call? token transfer actual-amount tx-sender (as-contract tx-sender) none))
+
+    (map-set markets market-id
+      (merge md { stakes: updated-stakes, stake-tokens: updated-token-stakes })
+    )
+    (map-set stake-balances {market-id: market-id, user: tx-sender} updated-user-stakes)
+    (map-set token-balances {market-id: market-id, user: tx-sender} updated-user-tokens)
+
+    (print {event: "add-liquidity", market-id: market-id, lp: tx-sender, requested: amount, amount: actual-amount})
+    (ok actual-amount)
+  )
+)
+
 ;; Resolve a market invoked by ai-agent.
 (define-public (resolve-market (market-id uint) (category (string-ascii 64)))
   (let (
@@ -886,6 +930,12 @@
       (ok price)
     )
   )
+)
+
+;; Multiply a by SCALE-scaled factor b, dividing SCALE back out.
+;; Used with `map` to compute proportional per-category deltas.
+(define-private (scale-by (a uint) (b uint))
+  (/ (* a b) SCALE)
 )
 
 ;; Helper function to create a list with zeros after index N
