@@ -492,7 +492,7 @@
       (market-end (+ (get market-start md) (get market-duration md)))
       (market-close (+ market-end (get cool-down-period md)))
     )
-    (asserts! (or (is-eq tx-sender (var-get resolution-agent)) (is-eq tx-sender (get creator md))) err-unauthorised)
+    (asserts! (is-eq tx-sender (var-get resolution-agent)) err-unauthorised)
     (asserts! (>= burn-block-height market-close) err-market-wrong-state)
     (asserts! (is-eq (get resolution-state md) RESOLUTION_OPEN) err-market-wrong-state)
 
