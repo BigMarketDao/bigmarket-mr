@@ -333,9 +333,9 @@
 ;; Read-only: get current price to buy `amount` shares in a category
 (define-read-only (get-share-cost (market-id uint) (index uint) (amount-shares uint))
   (let (
-        (market-data (unwrap-panic (map-get? markets market-id)))
+        (market-data (unwrap! (map-get? markets market-id) err-market-not-found))
         (stake-list (get stakes market-data))
-        (selected-pool (unwrap-panic (element-at? stake-list index)))
+        (selected-pool (unwrap! (element-at? stake-list index) err-category-not-found))
         (total-pool (fold + stake-list u0))
         (other-pool (- total-pool selected-pool))
         (max-purchase (if (> other-pool MIN_POOL) (- other-pool MIN_POOL) u0))
@@ -377,9 +377,9 @@
         (fee-scaled (/ (* (* total-cost (var-get dev-fee-bips)) SCALE) u10000))
         (fee (/ fee-scaled SCALE))
         (cost-of-shares (if (> total-cost fee) (- total-cost fee) u0))
-        (market-data (unwrap-panic (map-get? markets market-id)))
+        (market-data (unwrap! (map-get? markets market-id) err-market-not-found))
         (stake-list (get stakes market-data))
-        (selected-pool (unwrap-panic (element-at? stake-list index)))
+        (selected-pool (unwrap! (element-at? stake-list index) err-category-not-found))
         (total-pool (fold + stake-list u0))
         (other-pool (- total-pool selected-pool))
         (max-by-floor (if (> other-pool MIN_POOL) (- other-pool MIN_POOL) u0))
@@ -709,14 +709,14 @@
 
 (define-read-only (get-expected-payout (market-id uint) (index uint) (user principal))
   (let (
-    (md (unwrap-panic (map-get? markets market-id)))
+    (md (unwrap! (map-get? markets market-id) err-market-not-found))
 
     (token-pool (fold + (get stake-tokens md) u0))
 
-    (user-shares-list (unwrap-panic (map-get? stake-balances {market-id: market-id, user: user})))
-    (user-shares (unwrap-panic (element-at? user-shares-list index)))
+    (user-shares-list (unwrap! (map-get? stake-balances {market-id: market-id, user: user}) err-user-not-staked))
+    (user-shares (unwrap! (element-at? user-shares-list index) err-category-not-found))
 
-    (winning-shares-pool (unwrap-panic (element-at? (get stakes md) index)))
+    (winning-shares-pool (unwrap! (element-at? (get stakes md) index) err-category-not-found))
     
     (marketfee-bips (get market-fee-bips md))
     (gross-refund (if (> winning-shares-pool u0) (/ (* user-shares token-pool) winning-shares-pool) u0))
