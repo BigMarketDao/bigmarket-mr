@@ -447,6 +447,32 @@
   )
 )
 
+;; Mirror of cpmm-cost: compute the token refund when selling `shares-in`
+;; from `selected-pool`. The shares come out of selected (which shrinks);
+;; the hypothetical other side grows by the same amount to preserve k.
+(define-private (cpmm-refund (selected-pool uint) (other-pool uint) (shares-in uint))
+  (begin
+    (asserts! (> selected-pool u0) err-insufficient-liquidity)
+    (asserts! (> other-pool u0) err-insufficient-liquidity)
+
+    ;; You cannot sell so much that selected drops to 0 or below MIN_POOL
+    (let (
+          (max-sellable (if (> selected-pool MIN_POOL) (- selected-pool MIN_POOL) u0))
+         )
+      (asserts! (<= shares-in max-sellable) err-overbuy)
+
+      (let (
+            (new-y (+ other-pool shares-in))
+            (numerator (* selected-pool other-pool))
+            (new-x (/ (* numerator SCALE) new-y))
+            (refund (/ (- (* selected-pool SCALE) new-x) SCALE))
+           )
+        (ok refund)
+      )
+    )
+  )
+)
+
 ;; Read-only: get current price to buy `amount` shares in a category
 (define-read-only (get-max-shares (market-id uint) (index uint) (total-cost uint))
   (let (
@@ -551,6 +577,171 @@
       (map-set token-balances {market-id: market-id, user: tx-sender} user-token-updated)
       (print {event: "market-stake", market-id: market-id, index: index, amount: amount-shares, cost: cost-of-shares, fee: fee, voter: tx-sender, max-cost: max-cost})
       (ok index)
+    )
+  )
+)
+
+;; Sell shares of a category back to the CPMM, receive tokens minus fee.
+;; Mirror of predict-category: inverse curve via cpmm-refund.
+(define-public (sell-category (market-id uint) (min-refund uint) (index uint) (token <ft-token>) (shares-in uint))
+  (let (
+        (md (unwrap! (map-get? markets market-id) err-market-not-found))
+        (categories (get categories md))
+        (stake-tokens-list (get stake-tokens md))
+        (selected-token-pool (unwrap! (element-at? stake-tokens-list index) err-category-not-found))
+        (stake-list (get stakes md))
+        (selected-pool (unwrap! (element-at? stake-list index) err-category-not-found))
+        (total-pool (fold + stake-list u0))
+        (other-pool (- total-pool selected-pool))
+        (user-stake-list (unwrap! (map-get? stake-balances {market-id: market-id, user: tx-sender}) err-user-not-staked))
+        (user-shares (unwrap! (element-at? user-stake-list index) err-category-not-found))
+        (user-token-list (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? token-balances {market-id: market-id, user: tx-sender})))
+        (user-tokens (unwrap! (element-at? user-token-list index) err-category-not-found))
+        (gross-refund (unwrap! (cpmm-refund selected-pool other-pool shares-in) err-arithmetic))
+        (fee (/ (* gross-refund (var-get dev-fee-bips)) u10000))
+        (net-refund (if (> gross-refund fee) (- gross-refund fee) u0))
+        (market-end (+ (get market-start md) (get market-duration md)))
+        (original-sender tx-sender)
+  )
+    (asserts! (< index (len categories)) err-category-not-found)
+    (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
+    (asserts! (not (get concluded md)) err-market-not-concluded)
+    (asserts! (is-eq (get resolution-state md) RESOLUTION_OPEN) err-market-not-open)
+    (asserts! (< burn-block-height market-end) err-market-ended)
+    (asserts! (> shares-in u0) err-amount-too-low)
+    (asserts! (>= user-shares shares-in) err-insufficient-balance)
+    (asserts! (> net-refund u0) err-amount-too-low)
+    (asserts! (>= net-refund min-refund) err-slippage-too-high)
+    (asserts! (>= selected-token-pool gross-refund) err-insufficient-contract-balance)
+
+    ;; --- Token Transfers (contract -> dev-fund, contract -> seller) ---
+    (as-contract
+      (begin
+        (if (> fee u0)
+          (try! (contract-call? token transfer fee tx-sender (var-get dev-fund) none))
+          true
+        )
+        (try! (contract-call? token transfer net-refund tx-sender original-sender none))
+      )
+    )
+
+    ;; --- Update Market State ---
+    (let (
+      (updated-stakes (unwrap! (replace-at? stake-list index (- selected-pool shares-in)) err-category-not-found))
+      (updated-token-stakes (unwrap! (replace-at? stake-tokens-list index (- selected-token-pool gross-refund)) err-category-not-found))
+    )
+      (map-set markets market-id (merge md {stakes: updated-stakes, stake-tokens: updated-token-stakes}))
+    )
+
+    ;; --- Update User Balances ---
+    ;; Cost-basis reduction is pro-rata: burn the same fraction of user-tokens as of user-shares.
+    (let (
+      (token-reduction (/ (* user-tokens shares-in) user-shares))
+      (user-token-new (if (> user-tokens token-reduction) (- user-tokens token-reduction) u0))
+      (user-token-updated (unwrap! (replace-at? user-token-list index user-token-new) err-category-not-found))
+      (user-stake-updated (unwrap! (replace-at? user-stake-list index (- user-shares shares-in)) err-category-not-found))
+    )
+      (map-set stake-balances {market-id: market-id, user: tx-sender} user-stake-updated)
+      (map-set token-balances {market-id: market-id, user: tx-sender} user-token-updated)
+      (print {event: "market-unstake", market-id: market-id, index: index, shares-in: shares-in, refund: net-refund, fee: fee, seller: tx-sender, min-refund: min-refund})
+      (ok index)
+    )
+  )
+)
+
+;; Add liquidity to an open market, proportional to the current `stakes`
+;; distribution so that marginal prices are unchanged.
+;; Caller deposits up to `amount` tokens; receives shares in each category
+;; equal to stakes[i] * amount / sum(stakes). Rounding dust stays with caller.
+(define-public (add-liquidity (market-id uint) (amount uint) (token <ft-token>))
+  (let (
+        (md (unwrap! (map-get? markets market-id) err-market-not-found))
+        (stake-list (get stakes md))
+        (stake-tokens-list (get stake-tokens md))
+        (total-stakes (fold + stake-list u0))
+        (scale (if (> total-stakes u0) (/ (* amount SCALE) total-stakes) u0))
+        (scale-list (list scale scale scale scale scale scale scale scale scale scale))
+        (delta (map scale-by stake-list scale-list))
+        (actual-amount (fold + delta u0))
+        (user-stake-list (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? stake-balances {market-id: market-id, user: tx-sender})))
+        (user-token-list (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? token-balances {market-id: market-id, user: tx-sender})))
+        (market-end (+ (get market-start md) (get market-duration md)))
+        (updated-stakes (unwrap! (as-max-len? (map + stake-list delta) u10) err-arithmetic))
+        (updated-token-stakes (unwrap! (as-max-len? (map + stake-tokens-list delta) u10) err-arithmetic))
+        (updated-user-stakes (unwrap! (as-max-len? (map + user-stake-list delta) u10) err-arithmetic))
+        (updated-user-tokens (unwrap! (as-max-len? (map + user-token-list delta) u10) err-arithmetic))
+  )
+    (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
+    (asserts! (not (get concluded md)) err-market-not-concluded)
+    (asserts! (is-eq (get resolution-state md) RESOLUTION_OPEN) err-market-not-open)
+    (asserts! (< burn-block-height market-end) err-market-ended)
+    (asserts! (> total-stakes u0) err-insufficient-liquidity)
+    (asserts! (<= amount u50000000000000) err-amount-too-high)
+    (asserts! (> actual-amount u0) err-amount-too-low)
+
+    ;; Transfer the actual computed amount; any rounding dust stays with caller
+    (try! (contract-call? token transfer actual-amount tx-sender (as-contract tx-sender) none))
+
+    (map-set markets market-id
+      (merge md { stakes: updated-stakes, stake-tokens: updated-token-stakes })
+    )
+    (map-set stake-balances {market-id: market-id, user: tx-sender} updated-user-stakes)
+    (map-set token-balances {market-id: market-id, user: tx-sender} updated-user-tokens)
+
+    (print {event: "add-liquidity", market-id: market-id, lp: tx-sender, requested: amount, amount: actual-amount})
+    (ok actual-amount)
+  )
+)
+
+;; Remove liquidity from an open market, proportional to current `stakes`
+;; distribution. Exact inverse of add-liquidity: burning the balanced
+;; position acquired via add returns the same token amount.
+(define-public (remove-liquidity (market-id uint) (amount uint) (min-refund uint) (token <ft-token>))
+  (let (
+        (md (unwrap! (map-get? markets market-id) err-market-not-found))
+        (stake-list (get stakes md))
+        (stake-tokens-list (get stake-tokens md))
+        (total-stakes (fold + stake-list u0))
+        (scale (if (> total-stakes u0) (/ (* amount SCALE) total-stakes) u0))
+        (scale-list (list scale scale scale scale scale scale scale scale scale scale))
+        (delta (map scale-by stake-list scale-list))
+        (actual-refund (fold + delta u0))
+        (user-stake-list (unwrap! (map-get? stake-balances {market-id: market-id, user: tx-sender}) err-user-not-staked))
+        (user-token-list (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? token-balances {market-id: market-id, user: tx-sender})))
+        (enough-balance (fold and-fold (map has-sufficient user-stake-list delta) true))
+        (market-end (+ (get market-start md) (get market-duration md)))
+        (original-sender tx-sender)
+  )
+    (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
+    (asserts! (not (get concluded md)) err-market-not-concluded)
+    (asserts! (is-eq (get resolution-state md) RESOLUTION_OPEN) err-market-not-open)
+    (asserts! (< burn-block-height market-end) err-market-ended)
+    (asserts! (> total-stakes u0) err-insufficient-liquidity)
+    (asserts! (< amount total-stakes) err-amount-too-high)
+    (asserts! (<= amount u50000000000000) err-amount-too-high)
+    (asserts! (> actual-refund u0) err-amount-too-low)
+    (asserts! enough-balance err-insufficient-balance)
+    (asserts! (>= actual-refund min-refund) err-slippage-too-high)
+
+    ;; Safe to subtract: balance and pool floors verified above
+    (let (
+          (updated-stakes (unwrap! (as-max-len? (map - stake-list delta) u10) err-arithmetic))
+          (updated-token-stakes (unwrap! (as-max-len? (map - stake-tokens-list delta) u10) err-arithmetic))
+          (updated-user-stakes (unwrap! (as-max-len? (map - user-stake-list delta) u10) err-arithmetic))
+          (updated-user-tokens (unwrap! (as-max-len? (map min-sub user-token-list delta) u10) err-arithmetic))
+    )
+      (asserts! (fold and-fold (map is-above-min updated-stakes) true) err-insufficient-liquidity)
+
+      (as-contract
+        (try! (contract-call? token transfer actual-refund tx-sender original-sender none)))
+
+      (map-set markets market-id
+        (merge md { stakes: updated-stakes, stake-tokens: updated-token-stakes }))
+      (map-set stake-balances {market-id: market-id, user: tx-sender} updated-user-stakes)
+      (map-set token-balances {market-id: market-id, user: tx-sender} updated-user-tokens)
+
+      (print {event: "remove-liquidity", market-id: market-id, lp: tx-sender, requested: amount, amount: actual-refund})
+      (ok actual-refund)
     )
   )
 )
@@ -862,6 +1053,32 @@
       (ok price)
     )
   )
+)
+
+;; Multiply a by SCALE-scaled factor b, dividing SCALE back out.
+;; Used with `map` to compute proportional per-category deltas.
+(define-private (scale-by (a uint) (b uint))
+  (/ (* a b) SCALE)
+)
+
+;; Pairwise check: does a have enough to cover b?
+(define-private (has-sufficient (a uint) (b uint))
+  (>= a b)
+)
+
+;; Saturating subtraction: returns max(0, a - b).
+(define-private (min-sub (a uint) (b uint))
+  (if (> a b) (- a b) u0)
+)
+
+;; Floor guard: a category is valid if empty or at least MIN_POOL.
+(define-private (is-above-min (s uint))
+  (or (is-eq s u0) (>= s MIN_POOL))
+)
+
+;; Boolean AND accumulator for use with `fold`.
+(define-private (and-fold (b bool) (acc bool))
+  (and b acc)
 )
 
 ;; Helper function to create a list with zeros after index N
