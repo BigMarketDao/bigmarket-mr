@@ -371,6 +371,32 @@
   )
 )
 
+;; Mirror of cpmm-cost: compute the token refund when selling `shares-in`
+;; from `selected-pool`. The shares come out of selected (which shrinks);
+;; the hypothetical other side grows by the same amount to preserve k.
+(define-private (cpmm-refund (selected-pool uint) (other-pool uint) (shares-in uint))
+  (begin
+    (asserts! (> selected-pool u0) err-insufficient-liquidity)
+    (asserts! (> other-pool u0) err-insufficient-liquidity)
+
+    ;; You cannot sell so much that selected drops to 0 or below MIN_POOL
+    (let (
+          (max-sellable (if (> selected-pool MIN_POOL) (- selected-pool MIN_POOL) u0))
+         )
+      (asserts! (<= shares-in max-sellable) err-overbuy)
+
+      (let (
+            (new-y (+ other-pool shares-in))
+            (numerator (* selected-pool other-pool))
+            (new-x (/ (* numerator SCALE) new-y))
+            (refund (/ (- (* selected-pool SCALE) new-x) SCALE))
+           )
+        (ok refund)
+      )
+    )
+  )
+)
+
 ;; Read-only: get current price to buy `amount` shares in a category
 (define-read-only (get-max-shares (market-id uint) (index uint) (total-cost uint))
   (let (
