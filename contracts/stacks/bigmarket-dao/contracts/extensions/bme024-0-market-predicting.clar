@@ -500,6 +500,7 @@
     )
       (map-set stake-balances {market-id: market-id, user: tx-sender} user-stake-updated)
       (map-set token-balances {market-id: market-id, user: tx-sender} user-token-updated)
+      (try! (contract-call? .bme030-0-reputation-token mint tx-sender u4 u1))
       (print {event: "market-stake", market-id: market-id, index: index, amount: amount-shares, cost: cost-of-shares, fee: fee, voter: tx-sender, max-cost: max-cost})
       (ok index)
     )
@@ -621,6 +622,7 @@
     )
     (map-set stake-balances {market-id: market-id, user: tx-sender} updated-user-stakes)
     (map-set token-balances {market-id: market-id, user: tx-sender} updated-user-tokens)
+    (try! (contract-call? .bme030-0-reputation-token mint tx-sender u3 u5))
 
     (print {event: "add-liquidity", market-id: market-id, lp: tx-sender, requested: amount, amount: actual-amount})
     (ok actual-amount)

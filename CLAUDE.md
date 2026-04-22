@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-BigMarket is a DAO-governed prediction market on Stacks (Clarity). It uses a hybrid FPMM + CLOB architecture: Fixed Product Market Maker for baseline liquidity, Central Limit Order Book for price discovery. All fund movement is on-chain through a central vault contract.
+BigMarket is a DAO-governed prediction market on Stacks (Clarity). It uses a hybrid CPMM + LP architecture.
 
 ## Commands
 
