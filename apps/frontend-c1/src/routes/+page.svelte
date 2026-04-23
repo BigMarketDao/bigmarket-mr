@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import MarketPlace from '$lib/components/home/MarketPlace.svelte';
 	import type { LeaderBoard, PredictionMarketCreateEvent } from '@bigmarket/bm-types';
 	import { PageContainer } from '@bigmarket/bm-ui';
 	import { onMount, type Snippet } from 'svelte';

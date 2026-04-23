@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { LeaderBoard, PredictionMarketCreateEvent } from '@bigmarket/bm-types';
 	import { onMount } from 'svelte';
-	import FilteredMarketView from './filter/FilteredMarketView.svelte';
 	import { marketSystemCategoriesStore } from '@bigmarket/bm-common';
 
 	const { markets, leaderBoard } = $props<{
@@ -9,7 +8,10 @@
 		leaderBoard: LeaderBoard;
 	}>();
 
-	onMount(async () => {});
+	onMount(async () => {
+		console.log('markets: ', markets);
+		console.log('leaderBoard: ', leaderBoard);
+	});
 </script>
 
 <div class="mx-auto w-full max-w-7xl space-y-10">
@@ -19,14 +21,14 @@
 	</section>
 
 	<!-- Info Panels -->
-	<section>
+	<!-- <section>
 		<InfoPanelContainer />
-	</section>
+	</section> -->
 
 	<!-- Ending Soon section removed - cards now show time info and are sorted by expiration -->
 
 	<!-- Leaderboard -->
-	<section>
+	<!-- <section>
 		<LeaderBoardDisplay layout={2} {leaderBoard} {markets} filterTo={undefined} />
-	</section>
+	</section> -->
 </div>

@@ -16,6 +16,7 @@
 		"test": "npm run test:unit -- --run"
 	},
 	"dependencies": {
+		"@bigmarket/bm-market-homepage": "workspace:*",
 		"@bigmarket/bm-common": "workspace:*",
 		"@bigmarket/bm-config": "workspace:*",
 		"@bigmarket/bm-design": "workspace:*",

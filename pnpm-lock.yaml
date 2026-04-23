@@ -172,6 +172,9 @@ importers:
       '@bigmarket/bm-design':
         specifier: workspace:*
         version: link:../../packages/bm-design
+      '@bigmarket/bm-market-homepage':
+        specifier: workspace:*
+        version: link:../../packages/bm-market-homepage
       '@bigmarket/bm-types':
         specifier: workspace:*
         version: link:../../packages/bm-types

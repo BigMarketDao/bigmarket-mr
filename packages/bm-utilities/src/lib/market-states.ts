@@ -6,12 +6,10 @@ import {
   type MarketData,
   type PredictionMarketCreateEvent,
   type ScalarMarketDataItem,
-  type Sip10Data,
   type UserStake,
 } from "@bigmarket/bm-types";
 import { getCategoryLabel, userStakeSum } from "@bigmarket/bm-utilities";
 
-const DAI_MULTIPLIER = 100000000;
 const PYTH_MULTIPLIER = 100000000;
 export const ORACLE_MULTIPLIER = PYTH_MULTIPLIER;
 

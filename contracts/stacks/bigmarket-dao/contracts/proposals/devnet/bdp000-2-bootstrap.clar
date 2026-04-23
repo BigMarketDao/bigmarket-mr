@@ -98,18 +98,6 @@
 
 		;; configure prediction markets
 		;; const allowedCreators = ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"];
-		(try! (contract-call? .bme050-0-vault set-token-allowed
-			'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.wrapped-stx true
-		))
-		(try! (contract-call? .bme050-0-vault set-token-allowed
-			'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.big-play true
-		))
-		(try! (contract-call? .bme050-0-vault set-token-allowed
-			'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sbtc true
-		))
-
-		;; configure prediction markets
-		;; const allowedCreators = ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"];
 		(try! (contract-call? .bme022-0-market-gating set-merkle-root-by-principal
 			.bme024-0-market-scalar-pyth
 			0x26067618f71da1da6fa33c9b7f8d989b87f71ade892e1c55ce3b46ac79a7e64e
