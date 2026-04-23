@@ -40,29 +40,6 @@ export function fmtMicroToStx(
   }
   return (amount / conv).toFixed(decimals);
 }
-export function formatFiat(
-  raw: number,
-  bare?: boolean,
-  inLocale?: string,
-  currencyCode?: string,
-): string {
-  const value = raw;
-  const locale = inLocale || "en-US";
-  if (bare) {
-    return value.toLocaleString(locale, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  } else {
-    return value.toLocaleString(locale, {
-      style: "currency",
-      currency: currencyCode ?? "USD",
-      currencyDisplay: "code", // shows "USD 1,234.56"
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  }
-}
 
 export function bitcoinToSats(amountBtc: number) {
   return Math.round(amountBtc * btcPrecision);

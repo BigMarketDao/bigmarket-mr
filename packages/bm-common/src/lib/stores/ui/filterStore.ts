@@ -11,13 +11,7 @@ export const selectedCurrency = persisted("selectedCurrency", {
 
 // Track user input amount
 
-export const searchType = writable("all");
 export const constructed = writable(false);
-export const sortState = writable("ending-soon");
-export const searchState = writable("all");
-export const categoryState = writable("all");
-export const marketState = writable("all");
-export const marketType = writable("all");
 export const showOnRampModal = writable(false);
 export const isLocalhost = writable(false);
 export const bitcoinMode = writable(false);

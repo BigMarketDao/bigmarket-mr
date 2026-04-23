@@ -1,5 +1,5 @@
 import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-import { daoConfigStore, requireDaoClient } from '$lib/stores/config/daoConfigStore';
+import { daoConfigStore, requireVaultClient } from '$lib/stores/config/daoConfigStore';
 import { get } from 'svelte/store';
 import {
 	allowedTokenStore,
@@ -23,7 +23,7 @@ async function loadVaultBalances(stacksApi: string): Promise<void> {
 	const stxAddress = getStxAddress();
 	if (!stxAddress || stxAddress === '??' || stxAddress === '?') return;
 
-	const client = requireDaoClient(daoConfig);
+	const client = requireVaultClient(daoConfig);
 
 	const results = await Promise.all(
 		tokens.map(async (t) => {

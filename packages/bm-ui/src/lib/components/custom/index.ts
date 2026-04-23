@@ -10,3 +10,6 @@ export { default as Banner } from "./Banner.svelte";
 export { default as BannerSlot } from "./BannerSlot.svelte";
 export { default as Bulletin } from "./Bulletin.svelte";
 export { default as Countdown } from "./Countdown.svelte";
+export { default as LogoContainer } from "./LogoContainer.svelte";
+export { default as LogoContainerSmall } from "./LogoContainerSmall.svelte";
+export { default as LogoContainerXSmall } from "./LogoContainerXSmall.svelte";

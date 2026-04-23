@@ -7,6 +7,21 @@ export interface BasicEvent {
   extension: string;
 }
 
+export enum ResolutionState {
+  RESOLUTION_OPEN = 0,
+  RESOLUTION_RESOLVING = 1,
+  RESOLUTION_DISPUTED = 2,
+  RESOLUTION_RESOLVED = 3,
+}
+
+export interface DaoEventExecuteProposal extends BasicEvent {
+  event: string;
+  event_index: number;
+  daoContract: string;
+  txId: string;
+  proposal: string;
+}
+
 export interface TokenPermissionEvent extends BasicEvent {
   marketType: number;
   allowed: boolean;

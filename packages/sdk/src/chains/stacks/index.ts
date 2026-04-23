@@ -4,3 +4,4 @@ export * from "./deposit";
 export * from "./govern";
 export * from "./utils";
 export * from "./adapter";
+export * from "./contractViewData";

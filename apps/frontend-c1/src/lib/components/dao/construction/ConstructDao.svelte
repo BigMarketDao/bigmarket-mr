@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { Auth } from '@bigmarket/bm-types';
 	import { constructed } from '@bigmarket/bm-common';
 	//import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
 	import {

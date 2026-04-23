@@ -5,11 +5,24 @@
 	import Disputes from '$lib/components/dao/disputes/Disputes.svelte';
 	import MakeProposal from '$lib/components/dao/proposals/MakeProposal.svelte';
 	import Proposals from '$lib/components/dao/proposals/Proposals.svelte';
-	import { exchangeRatesStore, selectedCurrency } from '@bigmarket/bm-common';
+	import {
+		constructed,
+		daoOverviewStore,
+		exchangeRatesStore,
+		selectedCurrency
+	} from '@bigmarket/bm-common';
 	import { onMount } from 'svelte';
 	import ConstructDao from '$lib/components/dao/construction/ConstructDao.svelte';
 	import { convertFiatToNative } from '$lib/core/app/conversion';
 	import ProvideLiquidity from '$lib/components/dao/liquidity/ProvideLiquidity.svelte';
+	import { getDaoOverview } from '$lib/core/app/loaders/governance/dao_api';
+	import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
+	import {
+		getContractDeploymentTxId,
+		isDaoConstructed
+	} from '$lib/core/app/loaders/dao_manager_helper';
+
+	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 
 	let fiatPerStx = $state(0);
 	let isLoading = $state(true);
@@ -25,6 +38,17 @@
 
 	onMount(async () => {
 		try {
+			let construction = false;
+			const cId = `${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`;
+			const txId = await getContractDeploymentTxId(cId);
+			if (txId) construction = await isDaoConstructed(cId);
+			constructed.set(construction ?? false);
+
+			if (!$daoOverviewStore) {
+				const daoOverview = await getDaoOverview();
+				daoOverviewStore.set(daoOverview);
+			}
+
 			// 0.05 USD per BIG -> 1 USD = 1/0.05 BIG = 20 BIG
 			// 1 USD = x STX
 			// x SXT = 1 USD = 1/0.05 BIG

@@ -10,7 +10,7 @@
 		getBtcAddress,
 		getStxAddress,
 		allowedTokenStore,
-		vaultBalanceStore
+		chainStore
 	} from '@bigmarket/bm-common';
 	import { resolve } from '$app/paths';
 	import { daoLink } from '$lib/core/tools/site';
@@ -49,7 +49,7 @@
 	let isOpen = $state(false);
 	let dropdownRef = $state<HTMLElement | null>(null);
 	let showStacksAddress = $state(true);
-	let blockHeight = $state(0);
+	let blockHeight = $state($chainStore.stacks.burn_block_height);
 	let stxAddress = $state('');
 	let btcAddress = $state('');
 	let bigAllowed = $state(false);
@@ -64,8 +64,7 @@
 	});
 
 	$effect(() => {
-		const u = $userWalletStore as { stacksInfo?: { burn_block_height?: number } };
-		blockHeight = u.stacksInfo?.burn_block_height ?? 0;
+		blockHeight = $chainStore.stacks.burn_block_height ?? 0;
 	});
 
 	const disWallet = async () => {
@@ -194,19 +193,20 @@
 							</div>
 						{/if}
 						{#each allowedTokens as token (token.token)}
-							<div class="space-y-1">
-								<div class="flex items-center justify-between">
-									<span class="text-xs text-gray-500 dark:text-gray-400"
-										>{token.sip10Data?.symbol}</span
-									>
-									<div class="flex items-center gap-1.5">
-										<CreditCard class="h-3 w-3 text-gray-400 dark:text-gray-500" />
-										<span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-											{fmtMicroToStx(getBalance(token.token) || 0, token.sip10Data?.decimals)}
-										</span>
+							{#if token.sip10Data?.symbol !== 'STX'}
+								<div class="space-y-1">
+									<div class="flex items-center justify-between">
+										<span class="text-xs text-gray-500 dark:text-gray-400"
+											>{token.sip10Data?.symbol}</span
+										>
+										<div class="flex items-center gap-1.5">
+											<CreditCard class="h-3 w-3 text-gray-400 dark:text-gray-500" />
+											<span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+												{fmtMicroToStx(getBalance(token.token) || 0, token.sip10Data?.decimals)}
+											</span>
+										</div>
 									</div>
-								</div>
-								<div class="flex items-center justify-between pl-2">
+									<!-- <div class="flex items-center justify-between pl-2">
 									<span class="text-[10px] text-gray-400 dark:text-gray-500">in vault</span>
 									<span class="text-[11px] text-gray-600 dark:text-gray-400">
 										{fmtMicroToStx(
@@ -214,8 +214,9 @@
 											token.sip10Data?.decimals
 										)}
 									</span>
+								</div> -->
 								</div>
-							</div>
+							{/if}
 						{/each}
 					</div>
 

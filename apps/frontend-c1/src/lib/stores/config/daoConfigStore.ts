@@ -1,4 +1,4 @@
-import type { DaoConfig } from '@bigmarket/bm-config';
+import type { DaoConfig } from '@bigmarket/bm-types';
 import { stacks } from '@bigmarket/sdk';
 import { writable } from 'svelte/store';
 
@@ -8,8 +8,11 @@ export function requireDaoConfig(config: DaoConfig | null): DaoConfig {
 	if (!config) throw new Error('DAO config not loaded');
 	return config;
 }
-export function requireDaoClient(config: DaoConfig | null) {
-	return stacks.createDaoClient(requireDaoConfig(config));
+export function requireVaultClient(config: DaoConfig | null) {
+	return stacks.createVaultClient(requireDaoConfig(config));
+}
+export function requireContractViewDataClient() {
+	return stacks.createContractViewDataClient();
 }
 export function requireDaoGovernanceClient(config: DaoConfig | null) {
 	return stacks.createDaoGovernanceClient(requireDaoConfig(config));

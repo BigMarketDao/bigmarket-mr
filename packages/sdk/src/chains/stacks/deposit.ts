@@ -10,7 +10,7 @@ import {
   type ClarityValue,
 } from "@stacks/transactions";
 import { fmtStxMicro } from "@bigmarket/bm-utilities";
-import { getFungibleTokenName, isSTX, pcForDeposit } from "./utils";
+import { pcForDeposit } from "./utils";
 import { callContractReadOnly } from "./utils/contract";
 
 export function parseToken(token: string) {
@@ -18,7 +18,7 @@ export function parseToken(token: string) {
   return Cl.contractPrincipal(address, name);
 }
 
-export function createDaoClient(daoConfig: DaoConfig) {
+export function createVaultClient(daoConfig: DaoConfig) {
   const deployer = daoConfig.VITE_DAO_DEPLOYER;
   const call = (
     contract: string,

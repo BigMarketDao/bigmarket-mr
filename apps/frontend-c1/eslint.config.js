@@ -40,7 +40,11 @@ export default defineConfig(
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
 		rules: {
-			'svelte/no-navigation-without-resolve': 'off'
+			'svelte/no-navigation-without-resolve': 'off',
+			// {@html} is intentionally used in several components for rich-text content
+			// (e.g. HTML passed via props). Downgraded to warn so it remains visible
+			// for security review without blocking the build.
+			'svelte/no-at-html-tags': 'warn'
 		}
 	},
 	{

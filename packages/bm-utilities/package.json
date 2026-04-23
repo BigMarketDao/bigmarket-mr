@@ -17,6 +17,11 @@
   },
   "dependencies": {
     "@bigmarket/bm-types": "workspace:*",
-    "@bigmarket/bm-utilities": "workspace:*"
+    "@bigmarket/bm-utilities": "workspace:*",
+    "luxon": "^3.7.2",
+    "viem": "^2.48.4"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.7.1"
   }
 }

@@ -2,7 +2,7 @@
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
 	import {
 		daoConfigStore,
-		requireDaoClient,
+		requireVaultClient,
 		requireDaoConfig
 	} from '$lib/stores/config/daoConfigStore';
 	import { allowedTokenStore, getStxAddress, showTxModal, watchTransaction } from '@bigmarket/bm-common';
@@ -43,7 +43,7 @@
 
 		isSubmitting = true;
 		try {
-			const response = await requireDaoClient($daoConfigStore).deposit(token, amount, getStxAddress());
+			const response = await requireVaultClient($daoConfigStore).deposit(token, amount, getStxAddress());
 			if (response.success && response.txid) {
 				showTxModal(response.txid);
 				watchTransaction(

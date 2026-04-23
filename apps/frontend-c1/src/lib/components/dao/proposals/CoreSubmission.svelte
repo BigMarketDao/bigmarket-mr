@@ -89,7 +89,7 @@
 			' bitcoin blocks'
 	);
 	const durationMessage = $derived(
-		'The voting window is ' +
+		'The voting window: ' +
 			proposalDuration +
 			' blocks, roughly ' +
 			(proposalDuration / 144).toFixed(2) +
@@ -126,7 +126,7 @@
 									bind:value={proposalStart}
 									type="number"
 									id="start-block"
-									class="h-[40px] w-60 rounded-lg border border-gray-400 px-2 py-1 text-gray-900 dark:text-gray-100"
+									class="h-[40px] w-60 rounded-lg border border-gray-400 px-2 py-1 text-gray-900"
 									aria-describedby="Contribution"
 								/>
 								<span class="text-sm text-gray-900 dark:text-gray-100"
@@ -145,7 +145,7 @@
 									bind:value={proposalDuration}
 									type="number"
 									id="duration-block"
-									class="h-[40px] w-60 rounded-lg border border-gray-400 px-2 py-1 text-gray-900 dark:text-gray-100"
+									class="h-[40px] w-60 rounded-lg border border-gray-400 px-2 py-1 text-gray-900"
 									aria-describedby="Contribution"
 								/>
 								<span class="text-sm text-gray-700 dark:text-gray-300"

@@ -71,10 +71,6 @@
 					extension: .bme032-0-scalar-strategy-hedge,
 					enabled: true,
 				}
-				{
-					extension: .bme050-0-vault,
-					enabled: true,
-				}
 			)))
 
 		;; Set core team members.

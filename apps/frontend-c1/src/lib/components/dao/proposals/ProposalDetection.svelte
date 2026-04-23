@@ -80,7 +80,7 @@
 			on:keyup={() => lookup()}
 			type="text"
 			id="propose-contract"
-			class="w-full rounded-md border p-3 text-black"
+			class="w-full rounded-md border p-3 text-gray-900"
 		/>
 		{#if message}
 			<div class="my-3">

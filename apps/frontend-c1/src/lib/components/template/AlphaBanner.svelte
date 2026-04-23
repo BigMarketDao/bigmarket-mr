@@ -4,7 +4,7 @@
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
 	import {
 		daoConfigStore,
-		requireDaoClient,
+		requireVaultClient,
 		requireDaoConfig
 	} from '$lib/stores/config/daoConfigStore';
 	import type { TxResult } from '@bigmarket/bm-types';
@@ -19,7 +19,7 @@
 	};
 
 	const claimTokens = async () => {
-		const response: TxResult = await requireDaoClient($daoConfigStore).claimFaucet(`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_BIG_PLAY}`, MAX_MINT, getStxAddress());
+		const response: TxResult = await requireVaultClient($daoConfigStore).claimFaucet(`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_BIG_PLAY}`, MAX_MINT, getStxAddress());
 		if (response.success) {
 			showTxModal(response.txid);
 			watchTransaction(
