@@ -5,19 +5,11 @@
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "files.exclude": {
-    "**/.pnpm": true,
-    "**/dist": true
+    "**/.pnpm": true
   },
   "search.exclude": {
     "**/node_modules": true,
     "**/dist": true
   },
-  "cSpell.words": [
-    "AKWJYC",
-    "QAHWFPGTVK",
-    "XNXDB",
-    "XXKPGP",
-    "YVEK",
-    "ZXGASRJ"
-  ]
+  "cSpell.words": ["AKWJYC", "QAHWFPGTVK", "XNXDB", "XXKPGP", "YVEK", "ZXGASRJ"]
 }

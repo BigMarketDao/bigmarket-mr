@@ -22,7 +22,7 @@ export enum SearchState {
   Cooling = "cooling",
   Closed = "resolved",
 }
-import { estimateBitcoinBlockTime } from "./blockTime";
+import { estimateBitcoinBlockTime } from "./blockTime.js";
 
 export const getMarketStatus = (
   currentHeight: number,
@@ -176,7 +176,10 @@ export const getWinningClaimAmounts = (
   const { grossRefund, marketFee, netAmount } = computePayout({
     userShares: BigInt(userStake.stakes[marketData.outcome!] ?? 0),
     totalTokenPool: BigInt(
-      marketData.stakeTokens.reduce((sum, v) => sum + BigInt(v), 0n),
+      marketData.stakeTokens.reduce(
+        (sum: bigint, v: number) => sum + BigInt(v),
+        0n,
+      ),
     ),
     winningPool: BigInt(marketData.stakes[marketData.outcome!]),
     marketFeeBips: BigInt(marketData.marketFeeBips),

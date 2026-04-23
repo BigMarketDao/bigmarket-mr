@@ -3,12 +3,12 @@ import type {
   MarketData,
   ScalarMarketDataItem,
 } from "@bigmarket/bm-types";
-import { ORACLE_MULTIPLIER } from "./market-states";
+import { ORACLE_MULTIPLIER } from "./market-states.js";
 import {
   DECIMALS_BY_FEED,
   fmtFiatFromRaw,
   formatFiat,
-} from "./market-utilities";
+} from "./market-utilities.js";
 
 export function mapToMinMaxStringsFormatted(
   selectedCurrency: Currency,
