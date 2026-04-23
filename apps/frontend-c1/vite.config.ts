@@ -13,7 +13,7 @@ export default defineConfig({
 		}
 	},
 	ssr: {
-		noExternal: ['bits-ui', '@bigmarket/bm-config', '@bigmarket/bm-design', '@bigmarket/sdk']
+		noExternal: ['bits-ui', '@bigmarket/bm-config', '@bigmarket/bm-design', '@bigmarket/sdk', '@bigmarket/bm-utilities']
 	},
 	optimizeDeps: {
 		exclude: ['@bigmarket/bm-ui']
