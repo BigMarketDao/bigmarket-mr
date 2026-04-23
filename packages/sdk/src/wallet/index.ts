@@ -1,5 +1,5 @@
-import type { Chain, WalletSession } from "./types";
-import { getAdapter } from "../internal/registry";
+import type { Chain, WalletSession } from "./types.js";
+import { getAdapter } from "../internal/registry.js";
 
 let currentChain: Chain = "stacks";
 

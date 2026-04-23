@@ -22,7 +22,7 @@ export enum SearchState {
   Cooling = "cooling",
   Closed = "resolved",
 }
-import { estimateBitcoinBlockTime } from "./block-time";
+import { estimateBitcoinBlockTime } from "./blockTime";
 
 export const getMarketStatus = (
   currentHeight: number,

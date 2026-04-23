@@ -1,4 +1,4 @@
-import type { WalletAdapter, WalletSession } from "../../wallet/types";
+import type { WalletAdapter, WalletSession } from "../../wallet/types.js";
 
 export const stacksAdapter: WalletAdapter = {
   async connect(opts?: any) {

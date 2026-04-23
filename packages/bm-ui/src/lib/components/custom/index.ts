@@ -13,3 +13,4 @@ export { default as Countdown } from "./Countdown.svelte";
 export { default as LogoContainer } from "./LogoContainer.svelte";
 export { default as LogoContainerSmall } from "./LogoContainerSmall.svelte";
 export { default as LogoContainerXSmall } from "./LogoContainerXSmall.svelte";
+export { default as SlotModal } from "./SlotModal.svelte";

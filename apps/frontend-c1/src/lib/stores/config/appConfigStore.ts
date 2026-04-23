@@ -1,4 +1,4 @@
-import { type AppConfig } from '@bigmarket/bm-config';
+import { type AppConfig } from '@bigmarket/bm-types';
 import { writable } from 'svelte/store';
 
 export const appConfigStore = writable<AppConfig | null>(null);

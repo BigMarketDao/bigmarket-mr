@@ -21,7 +21,7 @@ import {
   TupleData,
   uintCV,
 } from "@stacks/transactions";
-import { callContractReadOnly } from "./contract";
+import { callContractReadOnly } from "./contract.js";
 import {
   hashSha256Sync,
   verifySignature as verifySignatureStacks,

@@ -1,5 +1,5 @@
 import { type DaoConfig } from "@bigmarket/bm-types";
-import { callContract } from "./tx";
+import { callContract } from "./tx.js";
 import {
   boolCV,
   bufferCV,

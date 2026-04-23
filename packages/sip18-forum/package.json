@@ -1,0 +1,57 @@
+{
+  "name": "@bigmarket/sip18-forum",
+  "version": "1.0.21",
+  "description": "Svelte components for a SIP-018 signed message forum",
+  "type": "module",
+  "main": "./src/lib/index.ts",
+  "types": "./src/lib/index.ts",
+  "svelte": "./src/lib/index.ts",
+  "exports": {
+    ".": {
+      "svelte": "./src/lib/index.ts",
+      "types": "./src/lib/index.ts",
+      "default": "./src/lib/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo 'Add linter'",
+    "test": "echo 'Add tests'",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.0",
+  "peerDependencies": {
+    "svelte": "^5.41.2"
+  },
+  "dependencies": {
+    "@2toad/profanity": "^3.1.1",
+    "@bigmarket/bm-common": "workspace:*",
+    "@bigmarket/sip18-forum-types": "workspace:*",
+    "@lucide/svelte": "^0.525.0",
+    "@noble/hashes": "^1.8.0",
+    "@scure/btc-signer": "^1.8.1",
+    "@stacks/bns": "7.2.0",
+    "@stacks/common": "7.0.2",
+    "@stacks/connect": "^8.2.0",
+    "@stacks/encryption": "7.2.0",
+    "@stacks/network": "7.2.0",
+    "@stacks/transactions": "7.2.0",
+    "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "@tailwindcss/vite": "^4.1.13",
+    "marked": "^18.0.2",
+    "vite": "^7.1.11"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.10",
+    "svelte": "^5.55.4",
+    "tailwindcss": "^4.2.2"
+  }
+}

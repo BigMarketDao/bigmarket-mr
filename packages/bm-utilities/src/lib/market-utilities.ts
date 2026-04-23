@@ -14,7 +14,7 @@ export const SUIUSD =
 export const TONUSD =
   "0x8963217838ab4cf5cadc172203c1f0b763fbaa45f346d8ee50ba994bbcac3026";
 
-const DECIMALS_BY_FEED: Record<string, number> = {
+export const DECIMALS_BY_FEED: Record<string, number> = {
   [BTCUSD]: 16,
   // If you *really* need per-feed scaling:
   [STXUSD]: 16,
@@ -61,7 +61,7 @@ export function formatFiat(
   }
 }
 
-function fmtFiatFromRaw(
+export function fmtFiatFromRaw(
   selectedCurrency: Currency,
   raw: bigint,
   decimals: number,
@@ -85,36 +85,5 @@ export function userStakeSum(userStake: UserStake | undefined) {
       : 0;
   } catch (err: any) {
     return 0;
-  }
-}
-export function getCategoryLabel(
-  selectedCurrency: Currency,
-  index: number,
-  marketData: MarketData,
-) {
-  const categories = marketData.categories;
-
-  const item = categories[index];
-  if (typeof item === "string") {
-    if (categories.length === 2) {
-      return item.toUpperCase() === "AGAINST" ? "NO" : "YES";
-    }
-    return item;
-  }
-
-  const decimals = DECIMALS_BY_FEED[marketData.priceFeedId!] ?? 16;
-
-  const min = BigInt(item.min);
-  const max = BigInt(item.max);
-
-  const minS = fmtFiatFromRaw(selectedCurrency, min, decimals);
-  const maxS = fmtFiatFromRaw(selectedCurrency, max, decimals);
-
-  if (index === 0) {
-    return `x < ${maxS}`;
-  } else if (index === categories.length - 1) {
-    return `x ≥ ${minS}`;
-  } else {
-    return `${minS} ≤ x < ${maxS}`;
   }
 }

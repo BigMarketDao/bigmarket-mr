@@ -1,12 +1,12 @@
 import { PredictionContractData, ResolutionVote } from "@bigmarket/bm-types";
-import { fetchDataVar } from "./tx";
+import { fetchDataVar } from "./tx.js";
 import {
   deserializeCV,
   principalCV,
   serializeCV,
   uintCV,
 } from "@stacks/transactions";
-import { callContractReadOnly } from "./utils/contract";
+import { callContractReadOnly } from "./utils/contract.js";
 
 export function createContractViewDataClient() {
   return {

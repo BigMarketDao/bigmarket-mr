@@ -1,7 +1,7 @@
 import { get, writable } from "svelte/store";
 import type { WalletAccount, WalletState } from "@bigmarket/bm-types";
 import { wallet } from "@bigmarket/sdk";
-import { userWalletStore } from "./ui/userWalletStore";
+import { userWalletStore } from "./ui/userWalletStore.js";
 
 const browser = typeof (globalThis as any).window !== "undefined";
 

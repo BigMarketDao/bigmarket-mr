@@ -4,22 +4,25 @@
   import { getCategoryLabel, getOutcomeMessageOneWord, isDisputeRunning, isResolving, isRunning, isRunningAtBlock } from "@bigmarket/bm-utilities";
   import { onMount } from "svelte";
   import Gauge from "./Gauge.svelte";
+  import CommentsHomepage from "./CommentsHomepage.svelte";
+  import MarketResolutionData from "./MarketResolutionData.svelte";
 
-	const { market, marketCategories, selectedCurrency, currentBurnHeight, disputeWindowLength, marketVotingDuration } = $props<{
+	const { market, selectedCurrency, currentBurnHeight, disputeWindowLength, marketVotingDuration, forumApi, isCoordinator } = $props<{
 		market: PredictionMarketCreateEvent;
-		marketCategories: Array<MarketCategory>;
 		selectedCurrency: Currency;
 		currentBurnHeight: number;
 		disputeWindowLength: number;
 		marketVotingDuration: number;
+		forumApi: string;
+		isCoordinator: boolean;
 	}>();
 
-  let inited = false;
-  let yesPercentage = 0;
-  $: totalStakesAll = (market?.marketData?.stakes || []).reduce(
+  let inited = $state(false);
+  let yesPercentage = $state(0);
+  let totalStakesAll = $state((market?.marketData?.stakes || []).reduce(
     (acc: number, v: number) => acc + v,
     0,
-  );
+  ) || 0);
 
   const optionChance = (i: number) => {
     if (!totalStakesAll) return '0%';
@@ -154,7 +157,7 @@ const isScalarMarket = $derived(market?.marketType === 2);
         {:else}
           <section class="flex items-center justify-center">
             <div class="flex w-full gap-2">
-              <div class="text-sm font-bold">{@html getOutcomeMessageOneWord(currentBurnHeight, $sessionStore.daoOverview?.contractData?.disputeWindowLength, $sessionStore.daoOverview?.contractData?.marketVotingDuration, market)}</div>
+              <div class="text-sm font-bold">{@html getOutcomeMessageOneWord(currentBurnHeight, disputeWindowLength, marketVotingDuration, market)}</div>
             </div>
           </section>
         {/if}
@@ -163,7 +166,7 @@ const isScalarMarket = $derived(market?.marketType === 2);
 
     <div>
       {#if market}
-        <CommentsHomepage {market} />
+        <CommentsHomepage {market} forumApi={forumApi} />
       {/if}
     </div>
     <div>
@@ -194,7 +197,7 @@ const isScalarMarket = $derived(market?.marketType === 2);
           {/if}
         </div>
         <div class="">
-          <MarketResolutionData {market} />
+          <MarketResolutionData {market} {selectedCurrency} {currentBurnHeight} {disputeWindowLength} {marketVotingDuration} {isCoordinator} />
         </div>
       </div>
     </div>

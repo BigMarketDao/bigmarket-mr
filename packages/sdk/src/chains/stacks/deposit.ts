@@ -1,5 +1,5 @@
 import { type DaoConfig } from "@bigmarket/bm-types";
-import { callContract } from "./tx";
+import { callContract } from "./tx.js";
 import {
   Cl,
   Pc,
@@ -10,8 +10,8 @@ import {
   type ClarityValue,
 } from "@stacks/transactions";
 import { fmtStxMicro } from "@bigmarket/bm-utilities";
-import { pcForDeposit } from "./utils";
-import { callContractReadOnly } from "./utils/contract";
+import { pcForDeposit } from "./utils/index.js";
+import { callContractReadOnly } from "./utils/contract.js";
 
 export function parseToken(token: string) {
   const [address, name] = token.split(".");

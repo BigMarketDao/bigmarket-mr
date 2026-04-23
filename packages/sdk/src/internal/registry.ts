@@ -1,5 +1,5 @@
-import type { Chain, WalletAdapter } from "../wallet/types";
-import { stacksAdapter } from "../chains/stacks/adapter";
+import type { Chain, WalletAdapter } from "../wallet/types.js";
+import { stacksAdapter } from "../chains/stacks/adapter.js";
 
 const adapters: Record<Chain, WalletAdapter> = {
   stacks: stacksAdapter,

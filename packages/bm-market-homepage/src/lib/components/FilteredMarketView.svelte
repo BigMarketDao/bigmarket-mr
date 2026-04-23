@@ -8,13 +8,15 @@
 	import { ChevronDown, Search, XIcon } from 'lucide-svelte';
   import MarketEntry from './markets/MarketEntry.svelte';
 
-	const { markets, marketCategories, selectedCurrency, currentBurnHeight, disputeWindowLength, marketVotingDuration } = $props<{
+	const { markets, marketCategories, selectedCurrency, currentBurnHeight, disputeWindowLength, marketVotingDuration, forumApi, isCoordinator } = $props<{
 		markets: Array<PredictionMarketCreateEvent>;
 		marketCategories: Array<MarketCategory>;
 		selectedCurrency: Currency;
 		currentBurnHeight: number;
 		disputeWindowLength: number;
 		marketVotingDuration: number;
+		forumApi: string;
+		isCoordinator: boolean;
 	}>();
 
 	let filteredMarkets: Array<PredictionMarketCreateEvent> = $state([]);
@@ -25,7 +27,7 @@
 	let debouncedSearchTerm = $state(''); 
 	let debounceHandle: any = $state(null);
 	let componentKey = $state(0);
-	let sortBy: 'ending-soon' | 'newest' | 'tvl' | 'outcomes' = $state('ending-soon');
+	let sortBy: string = $state('ending-soon');
 
 	const searchStateLabels: Record<SearchState, string> = {
 		[SearchState.All]: 'All Markets',
@@ -102,19 +104,18 @@
 		searchStateStore.set('all');
 	};
 
-	const handleChangeCategory = (searchStateLabel: string) => {
-		searchStateStore.set(searchStateLabel);
-		categoryStateStore.set(searchStateLabel);
-	};
-
+	const handleChangeCategory = (label: string) => {
+  searchStateStore.set(label || 'all');
+  categoryStateStore.set(label || 'all');
+};
 	const updateMarketStatus = () => {
 		searchStateStore.set('all');
 		marketStateStore.set(localMarketStatus);
 		componentKey++;
 	};
 
-	const updateSortState = (sortby: 'ending-soon' | 'newest' | 'tvl' | 'outcomes') => {
-		sortStateStore.set(sortby);
+	const updateSortState = (sortby: string) => {
+		sortStateStore.set(sortby as 'ending-soon' | 'newest' | 'tvl' | 'outcomes');
 		componentKey++;
 	};
 
@@ -155,40 +156,43 @@
 	<div class="overflow-x-auto">
 		<nav class="inline-flex items-center gap-5 whitespace-nowrap">
 			{#key componentKey}
-				<CategoryButton label="tvl" active={$searchStateStore} onChangeCategory={updateSortState}>
-					<div slot="body">
-						<span class="inline-flex items-center gap-1.5">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								class="h-4 w-4"
-							>
-								<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-								<polyline points="17 6 23 6 23 12"></polyline>
-							</svg>
-							Trending
-						</span>
-					</div>
-				</CategoryButton>
-				<CategoryButton label="newest" active={$searchStateStore} onChangeCategory={updateSortState}
-					><div slot="body">New</div></CategoryButton
-				>
-				<CategoryButton label="all" active={$searchStateStore} onChangeCategory={handleAll}
-					><div slot="body">{searchStateLabels[searchState]}</div></CategoryButton
-				>
-				{#each marketCategories as category}
-					{#if category.active}<CategoryButton
-							label={category.name}
-							active={$categoryStateStore}
-							onChangeCategory={handleChangeCategory}
-							><div slot="body">{category.displayName}</div></CategoryButton
-						>{/if}
-				{/each}
+			<CategoryButton label="tvl" active={$searchStateStore} onChangeCategory={updateSortState}>
+				{#snippet body()}
+					<span class="inline-flex items-center gap-1.5">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="h-4 w-4"
+						>
+							<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+							<polyline points="17 6 23 6 23 12"></polyline>
+						</svg>
+						Trending
+					</span>
+				{/snippet}
+			</CategoryButton>
+			<CategoryButton label="newest" active={$searchStateStore} onChangeCategory={updateSortState}>
+				{#snippet body()}New{/snippet}
+			</CategoryButton>
+			<CategoryButton label="all" active={$searchStateStore} onChangeCategory={handleAll}>
+				{#snippet body()}{searchStateLabels[searchState]}{/snippet}
+			</CategoryButton>
+			{#each marketCategories as category}
+				{#if category.active}
+					<CategoryButton
+						label={category.name}
+						active={$categoryStateStore}
+						onChangeCategory={handleChangeCategory}
+					>
+						{#snippet body()}{category.displayName}{/snippet}
+					</CategoryButton>
+				{/if}
+			{/each}
 			{/key}
 		</nav>
 	</div>
@@ -307,7 +311,7 @@
 			class="mt-4 grid gap-4 sm:grid-cols-2 md:mt-6 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
 		>
 			{#each filteredMarkets as market}
-				<MarketEntry {market} {marketCategories} {selectedCurrency} {currentBurnHeight} {disputeWindowLength} {marketVotingDuration} />
+				<MarketEntry {market} {selectedCurrency} {currentBurnHeight} {disputeWindowLength} {marketVotingDuration} {forumApi} {isCoordinator} />
 			{/each}
 		</div>
 	{:else}
