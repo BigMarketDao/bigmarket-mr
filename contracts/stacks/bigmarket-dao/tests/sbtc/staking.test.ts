@@ -40,7 +40,7 @@ describe('prediction fees and stakes', () => {
 				Cl.tuple({
 					creator: principalCV(deployer),
 					'market-data-hash': bufferFromHex(metadataHash()),
-					'stake-tokens': listCV([uintCV(69800000n), uintCV(53960000n), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0)]),
+					'stake-tokens': listCV([uintCV(69834900n), uintCV(53997020n), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0)]),
 					stakes: listCV([uintCV(65224266n), uintCV(53669384n), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0)]),
 					categories: listCV([stringAsciiCV('nay'), stringAsciiCV('yay')]),
 					outcome: noneCV(),
@@ -69,7 +69,7 @@ describe('prediction fees and stakes', () => {
 			Cl.some(
 				Cl.tuple({
 					creator: principalCV(deployer),
-					'stake-tokens': listCV([uintCV(69800000n), uintCV(53960000n), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0)]),
+					'stake-tokens': listCV([uintCV(69834900n), uintCV(53997020n), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0)]),
 					stakes: listCV([uintCV(65224266n), uintCV(53669384n), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0), uintCV(0)]),
 					categories: listCV([stringAsciiCV('nay'), stringAsciiCV('yay')]),
 					outcome: noneCV(),

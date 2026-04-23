@@ -86,6 +86,7 @@
 (define-data-var market-counter uint u0)
 (define-data-var dispute-window-length uint u144)
 (define-data-var dev-fee-bips uint u100)
+(define-data-var lp-fee-split-bips uint u3000) ;; 30% of dev-fee to LPs, DAO-configurable
 (define-data-var market-fee-bips-max uint u1000)
 (define-data-var dev-fund principal tx-sender)
 (define-data-var resolution-agent principal tx-sender)
@@ -201,6 +202,17 @@
     (ok true)
   )
 )
+
+(define-public (set-lp-fee-split-bips (new-split uint))
+  (begin
+    (asserts! (<= new-split u10000) err-max-market-fee-bips-exceeded)
+    (try! (is-dao-or-extension))
+    (var-set lp-fee-split-bips new-split)
+    (ok true)
+  )
+)
+
+(define-read-only (get-lp-fee-split-bips) (var-get lp-fee-split-bips))
 
 (define-public (set-market-fee-bips-max (new-fee uint))
   (begin
@@ -453,11 +465,17 @@
         (other-pool (- total-pool selected-pool))
         (sender-balance (unwrap! (contract-call? token get-balance tx-sender) err-insufficient-balance))
         (fee (/ (* max-cost (var-get dev-fee-bips)) u10000))
+        (lp-fee (/ (* fee (var-get lp-fee-split-bips)) u10000))
+        (multisig-fee (- fee lp-fee))
         (cost-of-shares (if (> max-cost fee) (- max-cost fee) u0))
         (max-by-floor (if (> other-pool MIN_POOL) (- other-pool MIN_POOL) u0))
         (amount-shares (unwrap! (cpmm-shares selected-pool other-pool cost-of-shares) err-insufficient-balance))
         (max-cost-of-shares (unwrap! (cpmm-cost selected-pool other-pool max-by-floor) err-overbuy))
         (market-end (+ (get market-start md) (get market-duration md)))
+        ;; Pre-trade proportional weights for LP-fee injection across stake-tokens
+        (lp-scale (if (> total-pool u0) (/ (* lp-fee SCALE) total-pool) u0))
+        (lp-scale-list (list lp-scale lp-scale lp-scale lp-scale lp-scale lp-scale lp-scale lp-scale lp-scale lp-scale))
+        (lp-delta (map scale-by stake-list lp-scale-list))
   )
     ;; Validate token and market state
     (asserts! (< index (len categories)) err-category-not-found)
@@ -474,16 +492,21 @@
     (asserts! (<= amount-shares max-by-floor) err-overbuy)
 
     ;; --- Token Transfers ---
-    (try! (contract-call? token transfer cost-of-shares tx-sender (as-contract tx-sender) none))
-    (if (> fee u0)
-      (try! (contract-call? token transfer fee tx-sender (var-get dev-fund) none))
+    ;; Buyer pays cost-of-shares + lp-fee into the vault; multisig-fee goes to dev-fund.
+    (try! (contract-call? token transfer (+ cost-of-shares lp-fee) tx-sender (as-contract tx-sender) none))
+    (if (> multisig-fee u0)
+      (try! (contract-call? token transfer multisig-fee tx-sender (var-get dev-fund) none))
       true
     )
 
     ;; --- Update Market State ---
+    ;; Credit buyer's purchase to the selected category, then inject LP fee into
+    ;; stake-tokens proportionally to pre-trade stakes. No new shares are issued,
+    ;; so the fee inflates per-share payouts at claim time.
     (let (
       (updated-stakes (unwrap! (replace-at? stake-list index (+ selected-pool amount-shares)) err-category-not-found))
-      (updated-token-stakes (unwrap! (replace-at? stake-tokens-list index (+ selected-token-pool cost-of-shares)) err-category-not-found))
+      (token-stakes-with-purchase (unwrap! (replace-at? stake-tokens-list index (+ selected-token-pool cost-of-shares)) err-category-not-found))
+      (updated-token-stakes (unwrap! (as-max-len? (map + token-stakes-with-purchase lp-delta) u10) err-arithmetic))
     )
       (map-set markets market-id (merge md {stakes: updated-stakes, stake-tokens: updated-token-stakes}))
     )
@@ -501,7 +524,7 @@
       (map-set stake-balances {market-id: market-id, user: tx-sender} user-stake-updated)
       (map-set token-balances {market-id: market-id, user: tx-sender} user-token-updated)
       (try! (contract-call? .bme030-0-reputation-token mint tx-sender u4 u1))
-      (print {event: "market-stake", market-id: market-id, index: index, amount: amount-shares, cost: cost-of-shares, fee: fee, voter: tx-sender, max-cost: max-cost})
+      (print {event: "market-stake", market-id: market-id, index: index, amount: amount-shares, cost: cost-of-shares, fee: fee, lp-fee: lp-fee, multisig-fee: multisig-fee, voter: tx-sender, max-cost: max-cost})
       (ok index)
     )
   )

@@ -89,14 +89,14 @@ describe('prediction contract', () => {
 		expect(response.result).toEqual(Cl.ok(Cl.bool(true)));
 
 		await assertStakeBalance(alice, 1385512, 0);
-		await assertContractBalance(simnet, marketPredictingCPMM, 101425000n);
+		await assertContractBalance(simnet, marketPredictingCPMM, 101447500n);
 
 		response = simnet.callPublicFn('bme024-0-market-predicting', 'claim-winnings', [Cl.uint(0), Cl.principal(stxToken)], alice);
-		expect(response.result).toEqual(Cl.ok(Cl.uint(2461258)));
+		expect(response.result).toEqual(Cl.ok(Cl.uint(2461804)));
 
 		// betty pays thed market creat fee of 1000 but receives 10% of alice winnings
-		await assertUserBalance(simnet, alice, 100000000961258n);
-		await assertUserBalance(simnet, `${deployer}.bme022-0-market-gating`, 273473n);
+		await assertUserBalance(simnet, alice, 100000000961804n);
+		await assertUserBalance(simnet, `${deployer}.bme022-0-market-gating`, 273533n);
 		await assertUserBalance(simnet, deployer, 100000000000000n);
 		await assertStakeBalance(alice, 0, 0);
 		await assertContractBalance(simnet, marketPredictingCPMM, 98690269n);
@@ -128,7 +128,7 @@ describe('prediction contract', () => {
 		expect(response.result).toEqual(Cl.ok(Cl.bool(true)));
 
 		await assertStakeBalance(alice, 11089494, 0);
-		await assertContractBalance(simnet, marketPredictingCPMM, 157000000n);
+		await assertContractBalance(simnet, marketPredictingCPMM, 157900000n);
 
 		response = simnet.callPublicFn('bme024-0-market-predicting', 'claim-winnings', [Cl.uint(0), Cl.principal(stxToken)], alice);
 		expect(response.result).toEqual(Cl.error(Cl.uint(10006)));
@@ -141,9 +141,9 @@ describe('prediction contract', () => {
 		await assertStakeBalance(wallace, 0, 12582400);
 
 		response = simnet.callPublicFn('bme024-0-market-predicting', 'claim-winnings', [Cl.uint(0), Cl.principal(stxToken)], fred);
-		expect(response.result).toEqual(Cl.ok(Cl.uint(31401510n)));
+		expect(response.result).toEqual(Cl.ok(Cl.uint(31581496)));
 		response = simnet.callPublicFn('bme024-0-market-predicting', 'claim-winnings', [Cl.uint(0), Cl.principal(stxToken)], wallace);
-		expect(response.result).toEqual(Cl.ok(Cl.uint(25251994n)));
+		expect(response.result).toEqual(Cl.ok(Cl.uint(25396733n)));
 
 		// betty pays thed market creat fee of 1000 but receives 10% of alice winnings
 		await assertUserBalance(simnet, alice, 99999985000000n);
@@ -153,7 +153,7 @@ describe('prediction contract', () => {
 		await assertStakeBalance(bob, 9457191, 0);
 		await assertStakeBalance(fred, 0, 0);
 		await assertStakeBalance(wallace, 0, 0);
-		await assertContractBalance(simnet, marketPredictingCPMM, 100346496n);
+		await assertContractBalance(simnet, marketPredictingCPMM, 100921771n);
 	});
 });
 

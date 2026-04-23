@@ -111,7 +111,7 @@ describe('claiming errors', () => {
 		await resolveMarket(0, 'cheetah', 2);
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(0);
-		assertContractBalance(simnet, marketPredictingCPMM, 102969999n);
+		assertContractBalance(simnet, marketPredictingCPMM, 102978999n);
 	});
 
 	it('claim err-user-not-winner-or-claimed', async () => {
@@ -122,7 +122,7 @@ describe('claiming errors', () => {
 		await resolveMarket(0, 'cheetah', 2);
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(0);
-		assertContractBalance(simnet, marketPredictingCPMM, 12969n);
+		assertContractBalance(simnet, marketPredictingCPMM, 12978n);
 		await claim(fred, 0, 80, 10008);
 	});
 
@@ -134,7 +134,7 @@ describe('claiming errors', () => {
 		await resolveMarket(0, 'cheetah', 2);
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(0);
-		assertContractBalance(simnet, marketPredictingCPMM, 100002969n);
+		assertContractBalance(simnet, marketPredictingCPMM, 100002978n);
 		await claim(alice, 0, 80, 10006);
 	});
 
@@ -156,17 +156,17 @@ describe('claiming errors', () => {
 
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(0);
-		assertContractBalance(simnet, marketPredictingCPMM, 39699n);
+		assertContractBalance(simnet, marketPredictingCPMM, 39789n);
 		assertDataVarNumber(simnet, marketPredictingCPMM, 'dev-fee-bips', 100);
 		assertDataVarNumber(simnet, marketPredictingCPMM, 'market-fee-bips-max', 300);
 
 		// claim for the treasury seed fund
 		response = simnet.callPublicFn('bme006-0-treasury', 'claim-for-dao', [Cl.principal(deployer + '.bme024-0-market-predicting'), Cl.uint(0), Cl.principal(stxToken)], bob);
 		// console.log('claim winner ok', response.events);
-		expect(response.result).toEqual(Cl.ok(Cl.uint(7124)));
+		expect(response.result).toEqual(Cl.ok(Cl.uint(7139)));
 
-		await claim(betty, 0, 32574);
-		assertContractBalance(simnet, marketPredictingCPMM, 1n);
+		await claim(betty, 0, 32643);
+		assertContractBalance(simnet, marketPredictingCPMM, 7n);
 	});
 
 	it('claim winner ok', async () => {
@@ -192,21 +192,21 @@ describe('claiming errors', () => {
 
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(0);
-		assertContractBalance(simnet, marketPredictingCPMM, 89199n);
+		assertContractBalance(simnet, marketPredictingCPMM, 89439n);
 		assertDataVarNumber(simnet, marketPredictingCPMM, 'dev-fee-bips', 100);
 		assertDataVarNumber(simnet, marketPredictingCPMM, 'market-fee-bips-max', 300);
 
 		// claim for the treasury seed fund
 		response = simnet.callPublicFn('bme006-0-treasury', 'claim-for-dao', [Cl.principal(deployer + '.bme024-0-market-predicting'), Cl.uint(0), Cl.principal(stxToken)], bob);
 		// console.log('claim winner ok', response.events);
-		expect(response.result).toEqual(Cl.ok(Cl.uint(5927)));
+		expect(response.result).toEqual(Cl.ok(Cl.uint(5942)));
 
-		await claim(fred, 0, 20094);
-		await claim(bob, 0, 27101);
-		await claim(developer, 0, 36075);
+		await claim(fred, 0, 20145);
+		await claim(bob, 0, 27170);
+		await claim(developer, 0, 36167);
 		await claim(alice, 0, 80, 10006);
 		await claim(betty, 0, 80, 10006);
-		assertContractBalance(simnet, marketPredictingCPMM, 2n);
+		assertContractBalance(simnet, marketPredictingCPMM, 15n);
 	});
 });
 

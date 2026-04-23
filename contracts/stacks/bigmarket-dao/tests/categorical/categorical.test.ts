@@ -121,7 +121,7 @@ describe('claiming errors', async () => {
 		await resolveMarket(simnet, 0, 'cheetah', 2);
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(simnet, 0);
-		assertContractBalance(simnet, marketPredictingCPMM, 200005938n);
+		assertContractBalance(simnet, marketPredictingCPMM, 200005956n);
 	});
 
 	it('claim err-user-not-winner-or-claimed', async () => {
@@ -133,7 +133,7 @@ describe('claiming errors', async () => {
 		await resolveMarket(simnet, 0, 'cheetah', 2);
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(simnet, 0);
-		assertContractBalance(simnet, marketPredictingCPMM, 200005938n);
+		assertContractBalance(simnet, marketPredictingCPMM, 200005956n);
 		await claim(simnet, fred, 0, 80, 10008);
 	});
 
@@ -146,7 +146,7 @@ describe('claiming errors', async () => {
 		await resolveMarket(simnet, 0, 'cheetah', 2);
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(simnet, 0);
-		assertContractBalance(simnet, marketPredictingCPMM, 200005938n);
+		assertContractBalance(simnet, marketPredictingCPMM, 200005956n);
 		await claim(simnet, alice, 0, 80, 10006);
 	});
 
@@ -167,7 +167,7 @@ describe('claiming errors', async () => {
 
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(simnet, 0);
-		assertContractBalance(simnet, marketPredictingCPMM, 200005938n);
+		assertContractBalance(simnet, marketPredictingCPMM, 200005956n);
 		assertDataVarNumber(simnet, marketPredictingCPMM, 'dev-fee-bips', 100);
 		assertDataVarNumber(simnet, marketPredictingCPMM, 'market-fee-bips-max', 300);
 

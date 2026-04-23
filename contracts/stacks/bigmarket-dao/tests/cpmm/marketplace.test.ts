@@ -138,14 +138,14 @@ describe('claiming errors', () => {
 		const result = await resolveMarket(0, 'lion', 0);
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(0);
-		assertContractBalance(simnet, marketPredictingCPMM, 100000989n);
+		assertContractBalance(simnet, marketPredictingCPMM, 100000992n);
 
 		await claim(alice, 0, 2936);
 		await claim(bob, 0, 2999);
 		await claimDao(`${deployer}.bme024-0-market-predicting`, 0, 99995052);
 		await printMarketBalances(alice, 0);
 		await printMarketBalances(bob, 0);
-		assertContractBalance(simnet, marketPredictingCPMM, 2n);
+		assertContractBalance(simnet, marketPredictingCPMM, 5n);
 	});
 });
 

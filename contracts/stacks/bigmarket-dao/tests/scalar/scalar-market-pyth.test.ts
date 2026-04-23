@@ -184,7 +184,7 @@ describe('claiming errors', () => {
 		await resolveMarket(0, 3);
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(0);
-		assertContractBalance(simnet, marketScalingCPMM, 100002966n);
+		assertContractBalance(simnet, marketScalingCPMM, 100002975n);
 
 		await claim(fred, 0, 80, 10008);
 	});
@@ -200,7 +200,7 @@ describe('claiming errors', () => {
 		await resolveMarket(0, 3);
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(0);
-		assertContractBalance(simnet, marketScalingCPMM, 100002966n);
+		assertContractBalance(simnet, marketScalingCPMM, 100002975n);
 		await claim(alice, 0, 80, 10006);
 	});
 
@@ -215,7 +215,7 @@ describe('claiming errors', () => {
 		await resolveMarket(0, 3);
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(0);
-		assertContractBalance(simnet, marketScalingCPMM, 100002966n);
+		assertContractBalance(simnet, marketScalingCPMM, 100002975n);
 		await claim(bob, 0, 80, 10006);
 	});
 
@@ -234,7 +234,7 @@ describe('claiming errors', () => {
 
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(0);
-		assertContractBalance(simnet, marketScalingCPMM, 100002966n);
+		assertContractBalance(simnet, marketScalingCPMM, 100002975n);
 		assertDataVarNumber(simnet, marketScalingCPMM, 'dev-fee-bips', 100);
 		assertDataVarNumber(simnet, marketScalingCPMM, 'market-fee-bips-max', 300);
 
@@ -257,7 +257,7 @@ describe('claiming errors', () => {
 
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(0);
-		assertContractBalance(simnet, marketScalingCPMM, 100002966n);
+		assertContractBalance(simnet, marketScalingCPMM, 100002975n);
 
 		let response = await claim(alice, 0, 0, 10006);
 		response = await claim(bob, 0, 29677);
@@ -353,7 +353,7 @@ describe('claiming errors', () => {
 		await resolveMarket(0, 3);
 		simnet.mineEmptyBlocks(25);
 		await resolveMarketUndisputed(0);
-		assertContractBalance(simnet, marketScalingCPMM, 100002966n);
+		assertContractBalance(simnet, marketScalingCPMM, 100002975n);
 		assertDataVarNumber(simnet, marketScalingCPMM, 'dev-fee-bips', 100);
 		assertDataVarNumber(simnet, marketScalingCPMM, 'market-fee-bips-max', 300);
 		const response = await claim(alice, 0, 29686);
