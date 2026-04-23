@@ -6,16 +6,14 @@
 	import { onMount, type Snippet } from 'svelte';
 
 	const { data } = $props<{
-		data: {
-			markets: Array<PredictionMarketCreateEvent>;
-			leaderBoard: LeaderBoard;
-		};
+		markets: Array<PredictionMarketCreateEvent>;
+		leaderBoard: LeaderBoard;
+		network: string;
 		children: Snippet; // or Snippet if you want to be precise
 	}>();
 
 	const { markets, leaderBoard } = data;
-	console.log('fetching markets: ', markets);
-	console.log('fetching leaderboard: ', leaderBoard);
+	console.log('fetching data: ', JSON.stringify(data, null, 2));
 	onMount(async () => {
 		if (!browser) return;
 	});

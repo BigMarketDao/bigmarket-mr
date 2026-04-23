@@ -38,42 +38,44 @@ export function createVaultClient(daoConfig: DaoConfig) {
     );
 
   return {
-    deposit(token: string, amount: number, senderAddress: string) {
-      const microAmount = fmtStxMicro(amount);
-      const postConditions = pcForDeposit(token, senderAddress, microAmount);
-      return call(
-        daoConfig.VITE_DAO_VAULT,
-        "deposit",
-        [parseToken(token), uintCV(microAmount)],
-        postConditions,
-        "deny",
-      );
-    },
+    // deposit(token: string, amount: number, senderAddress: string) {
+    //   const microAmount = fmtStxMicro(amount);
+    //   const postConditions = pcForDeposit(token, senderAddress, microAmount);
+    //   return call(
+    //     daoConfig.VITE_DAO_VAULT,
+    //     "deposit",
+    //     [parseToken(token), uintCV(microAmount)],
+    //     postConditions,
+    //     "deny",
+    //   );
+    // },
 
-    withdraw(token: string, amount: number, senderAddress: string) {
-      return call(daoConfig.VITE_DAO_VAULT, "withdraw", [
-        parseToken(token),
+    // withdraw(token: string, amount: number, senderAddress: string) {
+    //   return call(daoConfig.VITE_DAO_VAULT, "withdraw", [
+    //     parseToken(token),
+    //     uintCV(amount),
+    //   ]);
+    // },
+
+    // future functions stay VERY small
+    stake(amount: number, senderAddress: string) {
+      return call(daoConfig.VITE_DAO_MARKET_PREDICTING, "stake", [
         uintCV(amount),
       ]);
     },
 
-    // future functions stay VERY small
-    stake(amount: number, senderAddress: string) {
-      return call(daoConfig.VITE_DAO_VAULT, "stake", [uintCV(amount)]);
-    },
-
-    getBalance(stacksApi: string, userAddress: string, token: string) {
-      const [tokenAddress, tokenName] = token.split(".");
-      return callContractReadOnly(stacksApi, {
-        contractAddress: daoConfig.VITE_DAO_DEPLOYER,
-        contractName: daoConfig.VITE_DAO_VAULT,
-        functionName: "get-balance",
-        functionArgs: [
-          `0x${serializeCV(principalCV(userAddress))}`,
-          `0x${serializeCV(Cl.contractPrincipal(tokenAddress, tokenName))}`,
-        ],
-      });
-    },
+    // getBalance(stacksApi: string, userAddress: string, token: string) {
+    //   const [tokenAddress, tokenName] = token.split(".");
+    //   return callContractReadOnly(stacksApi, {
+    //     contractAddress: daoConfig.VITE_DAO_DEPLOYER,
+    //     contractName: daoConfig.VITE_DAO_MARKET_PREDICTING,
+    //     functionName: "get-balance",
+    //     functionArgs: [
+    //       `0x${serializeCV(principalCV(userAddress))}`,
+    //       `0x${serializeCV(Cl.contractPrincipal(tokenAddress, tokenName))}`,
+    //     ],
+    //   });
+    // },
 
     claimFaucet(token: string, amount: number, senderAddress: string) {
       const microAmount = fmtStxMicro(amount);

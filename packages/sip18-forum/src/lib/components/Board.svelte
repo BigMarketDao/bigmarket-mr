@@ -5,18 +5,24 @@
   } from '@bigmarket/sip18-forum-types';
   import BoardMessages from './BoardMessages.svelte';
   import { onMount } from 'svelte';
-  import type { Config } from '../utils/forum_helper';
+  import type { Classes, Config } from '../utils/forum_helper';
 
-  export let forumId: string; //page.params.forumId
-  export let config: Config;
-  export let boards: Array<AuthenticatedForumMessageBoard>;
-  export let messages: Array<AuthenticatedForumContent>;
-  export let isConnected;
-  let board: AuthenticatedForumMessageBoard | undefined;
+
+  const { classes = {}, forumId, config, boards, messages, isConnected } = $props<{
+    classes: Classes;
+		forumId: string;
+		config: Config;
+		boards: Array<AuthenticatedForumMessageBoard>;
+      messages: Array<AuthenticatedForumContent>;
+    isConnected: boolean;
+	}>();
+
+
+  let board: AuthenticatedForumMessageBoard | undefined = $state(undefined);
 
   onMount(() => {
     const boardId = forumId;
-    board = boards.find((o) => o.forumMessageBoard.messageBoardId === boardId);
+    board = boards.find((o: AuthenticatedForumMessageBoard) => o.forumMessageBoard.messageBoardId === boardId);
   });
 </script>
 
@@ -29,7 +35,9 @@
         class="text-surface-contrast-500 bg-primary-50-950 rounded-2xl border-1 border-dashed p-3 py-4 shadow"
       >
         <BoardMessages
+          {classes}
           {config}
+          {forumId}
           {messages}
           messageBoardId={board.forumMessageBoard.messageBoardId}
           level={1}

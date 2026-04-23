@@ -4,11 +4,14 @@
 	import {
 		chainStore,
 		daoOverviewStore,
+		getStxAddress,
 		marketSystemCategoriesStore,
 		selectedCurrency
 	} from '@bigmarket/bm-common';
-	import { FilteredMarketView } from '@bigmarket/bm-market-homepage';
+	// import FilteredMarketView from './FilteredMarketView.svelte';
 	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { isCoordinator } from '$lib/core/tools/security';
+	import { FilteredMarketView } from '@bigmarket/bm-market-homepage';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const { markets, leaderBoard } = $props<{
@@ -33,8 +36,9 @@
 			disputeWindowLength={$daoOverviewStore.contractData.disputeWindowLength}
 			marketVotingDuration={$daoOverviewStore.contractData.marketVotingDuration}
 			forumApi={appConfig.VITE_FORUM_API}
+			isCoordinator={isCoordinator(getStxAddress())}
 		/>
-	</section>	
+	</section>
 
 	<!-- Info Panels -->
 	<!-- <section>

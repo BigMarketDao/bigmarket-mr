@@ -4,16 +4,21 @@
   import { onMount } from 'svelte';
   import { loadBoardMessages } from '../stores/threads';
   import NewMessageCard from './NewMessageCard.svelte';
-  import type { Config } from '../utils/forum_helper';
+  import type { Classes, Config } from '../utils/forum_helper';
 
-  export let config: Config;
-  export let messageBoardId;
-  export let messages: Array<AuthenticatedForumContent>;
-  export let level;
-  export let isConnected;
+  const { forumId, config, messageBoardId, level, messages, isConnected, classes = {} } = $props<{
+		forumId: string;
+    config: Config;
+		messageBoardId: string;
+		level: number;
+    messages: Array<AuthenticatedForumContent>;
+    isConnected: boolean;
+    classes: Classes;
+	}>();
 
-  const handleReload = async (data: any) => {
-    messages = await loadBoardMessages(config.VITE_FORUM_API, messageBoardId);
+  let loadedMessage:Array<AuthenticatedForumContent> = $derived(messages);
+    const handleReload = async (data: any) => {
+      loadedMessage = await loadBoardMessages(forumId, messageBoardId);
   };
 
   onMount(async () => {});
@@ -26,10 +31,11 @@
 	 	Messages and replies are identical - they are displayed recursively using level and parentId.
 	-->
   <NewMessageCard
+    {classes}
     {config}
     {messageBoardId}
     parentId={messageBoardId}
-    threadId={messages[0].forumContent.messageId}
+    threadId={loadedMessage[0].forumContent.messageId}
     onReload={handleReload}
     level={1}
     {isConnected}
@@ -37,7 +43,7 @@
 {/if}
 
 <ul class="space-y-4">
-  {#each messages as message}
-    <MessageCard {config} {isConnected} thread={messages[0]} {message} onReload={handleReload} />
+  {#each loadedMessage as message}
+    <MessageCard {config} {isConnected} thread={loadedMessage[0]} {message} onReload={handleReload} {classes} />
   {/each}
 </ul>

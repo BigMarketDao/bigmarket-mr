@@ -4,21 +4,23 @@
 	 * Binary Market Probability Gauge
 	 * Displays a semicircle gauge showing the Yes percentage for binary markets
 	 */
-	export let percent: number = 50; // yes-probability (0–100)
-	export let radius: number = 20; // Smaller radius for better fit
+	const { percent = 50, radius = 20 } = $props<{
+		percent: number;
+		radius: number
+	}>();
 
 	// semicircle geometry
 	const circumference = Math.PI * radius;
 	const offset = circumference - (percent / 100) * circumference;
 
 	// Dynamic color based on percentage thresholds
-	$: color =
+	const color = $derived(
 		percent > 60
 			? '#22c55e' // green
 			: percent >= 30
 				? '#eab308' // yellow
-				: '#ef4444'; // red
-
+				: '#ef4444' // red
+		);
 	const size = radius * 2 + 8; // viewBox size with padding
 	const strokeWidth = 3; // Thinner stroke
 	const centerX = size / 2;

@@ -2,8 +2,12 @@
   import NewMessageBoardModal from './NewMessageBoardModal.svelte';
   import { storedBoards } from '../stores/threads';
   import type { Config } from '../utils/forum_helper';
-  export let config: Config;
-  export let isConnected;
+    
+  const { config, isConnected } = $props<{
+    config: Config;
+    isConnected: boolean;
+	}>();
+
 </script>
 
 <div class="space-y-6 p-6">

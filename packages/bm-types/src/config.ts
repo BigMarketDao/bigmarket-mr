@@ -38,7 +38,6 @@ export interface DaoConfig {
   VITE_DAO_BIG_PLAY: string;
   VITE_DAO_LIQUIDITY_CONTRIBUTION: string;
   VITE_DAO_RESOLUTION_COORDINATOR: string;
-  VITE_DAO_VAULT: string;
   VITE_SBTC_DEPLOYER: string;
   VITE_PEPE_FULL_CONTRACT: string;
   VITE_USDH_FULL_CONTRACT: string;

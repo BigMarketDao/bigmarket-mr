@@ -4,14 +4,18 @@
 	import { storedBnsData } from '../../stores/threads';
 	import { getConfig } from '../../stores/stores_config';
 	import { authenticate, getBnsNameFromAddress, getStxAddress } from '../../utils/forum_helper';
-	import { isConnected } from '@bigmarket/bm-common/connection_wrapper';
 	import { onMount } from 'svelte';
 
-	let componentKey = 0;
-	let connected = false;
+	let componentKey = $state(0);
+	let connected = $state(false);
+	
+	const { isConnected } = $props<{
+		isConnected: boolean;
+	}>();
+
 
 	const toggleAuth = async () => {
-		if (connected) {
+		if (isConnected) {
 			await logUserOut();
 		} else {
 			await authenticate();
@@ -31,10 +35,10 @@
 
 {#key componentKey}
 	{#if connected}
-		<button on:click={toggleAuth} class="btn bg-primary-800"
+		<button onclick={toggleAuth} class="btn bg-primary-800"
 			><CircleUser class="mr-1 inline-block" size={20} /> {$storedBnsData}</button
 		>
 	{:else}
-		<button on:click={toggleAuth}><Wallet size={20} /></button>
+		<button onclick={toggleAuth}><Wallet size={20} /></button>
 	{/if}
 {/key}

@@ -1,14 +1,36 @@
 <script lang="ts">
 	import type { Currency, MarketCategory, PredictionMarketCreateEvent } from '@bigmarket/bm-types';
 	import { onMount } from 'svelte';
+	import { fromStore } from 'svelte/store';
 	import CategoryButton from './CategoryButton.svelte';
-	import { SearchState } from '../core/app/filtering';
-	import { categoryStateStore, marketStateStore, marketTypeStore, searchStateStore, searchTypeStore, sortStateStore } from '../stores/filterStore';
 	import { getMarketStatus, totalPoolSum } from '@bigmarket/bm-utilities';
-	import { ChevronDown, Search, XIcon } from 'lucide-svelte';
-  import MarketEntry from './markets/MarketEntry.svelte';
+	import { Search, TrendingUp, XIcon } from 'lucide-svelte';
+	import MarketEntry from './markets/MarketEntry.svelte';
+	import { SearchState } from '../core/app/filtering';
+	import {
+		categoryStateStore,
+		marketStateStore,
+		marketTypeStore,
+		searchStateStore,
+		searchTypeStore,
+		sortStateStore
+	} from '../stores/filterStore';
 
-	const { markets, marketCategories, selectedCurrency, currentBurnHeight, disputeWindowLength, marketVotingDuration, forumApi, isCoordinator } = $props<{
+	const categoryS = fromStore(categoryStateStore);
+	const marketStateS = fromStore(marketStateStore);
+	const marketTypeS = fromStore(marketTypeStore);
+	const sortStateS = fromStore(sortStateStore);
+
+	const {
+		markets,
+		marketCategories,
+		selectedCurrency,
+		currentBurnHeight,
+		disputeWindowLength,
+		marketVotingDuration,
+		forumApi,
+		isCoordinator
+	} = $props<{
 		markets: Array<PredictionMarketCreateEvent>;
 		marketCategories: Array<MarketCategory>;
 		selectedCurrency: Currency;
@@ -19,13 +41,10 @@
 		isCoordinator: boolean;
 	}>();
 
-	let filteredMarkets: Array<PredictionMarketCreateEvent> = $state([]);
-
 	let localMarketStatus: string = $state('all');
 	let localMarketType: string = $state('all types');
 	let searchTerm = $state('');
-	let debouncedSearchTerm = $state(''); 
-	let debounceHandle: any = $state(null);
+	let debouncedSearchTerm = $state('');
 	let componentKey = $state(0);
 	let sortBy: string = $state('ending-soon');
 
@@ -38,7 +57,7 @@
 		[SearchState.Cooling]: 'Cooling Markets',
 		[SearchState.Closed]: 'Closed Markets'
 	};
-	let searchState:SearchState = $state($marketStateStore as SearchState);
+	const searchState = $derived(marketStateS.current as SearchState);
 
 	let marketTypes = [
 		{ name: 'All types', value: 'all types' },
@@ -47,30 +66,51 @@
 		{ name: 'Scalar', value: 'scalar' }
 	];
 
-	// Debounce search for smoother UX
+	// Debounce search for smoother UX (timeout id must not be $state — effect reads it and would re-run forever)
 	$effect(() => {
-		clearTimeout(debounceHandle);
-		debounceHandle = setTimeout(() => {
+		const id = setTimeout(() => {
 			debouncedSearchTerm = searchTerm;
 		}, 200);
+		return () => clearTimeout(id);
 	});
 
 	// Sort helpers
 	const closeBlock = (m: PredictionMarketCreateEvent) =>
 		(m?.marketData?.marketStart || 0) + (m?.marketData?.marketDuration || 0);
 	const createdAt = (m: PredictionMarketCreateEvent) => m?.unhashedData?.createdAt || 0;
-	let sortComparator = $state((a: PredictionMarketCreateEvent, b: PredictionMarketCreateEvent) => {
-		if ($sortStateStore === 'ending-soon') return closeBlock(a) - closeBlock(b);
-		if ($sortStateStore === 'newest') return createdAt(b) - createdAt(a);
-		if ($sortStateStore === 'tvl')
-			return totalPoolSum(b.marketData.stakes) - totalPoolSum(a.marketData.stakes);
-		if ($sortStateStore === 'outcomes')
-			return (b.marketData.categories?.length || 0) - (a.marketData.categories?.length || 0);
-		return 0;
-	}); 
 
-	$effect(() => {
-		filteredMarkets = markets
+	const doesMatchState = (market: PredictionMarketCreateEvent, marketState: string) => {
+		if (marketState === 'all') return true;
+		return marketState === getMarketStatus(currentBurnHeight, market);
+	};
+
+	const doesMatchType = (market: PredictionMarketCreateEvent, marketType: string) => {
+		if (marketType === 'all') return true;
+		if (marketType === 'scalar') return market.marketType === 2;
+		if (marketType === 'bitcoin') return market.marketType === 3;
+		if (marketType === 'binary') return market.marketData.categories.length === 2;
+		if (marketType === 'multiple')
+			return market.marketType === 1 && market.marketData.categories.length > 2;
+		return true; //throw new Error('Unknown market type');
+	};
+
+	const filteredMarkets = $derived.by(() => {
+		const category = categoryS.current;
+		const mState = marketStateS.current;
+		const mType = marketTypeS.current;
+		const sortKey = sortStateS.current;
+
+		const comparator = (a: PredictionMarketCreateEvent, b: PredictionMarketCreateEvent) => {
+			if (sortKey === 'ending-soon') return closeBlock(a) - closeBlock(b);
+			if (sortKey === 'newest') return createdAt(b) - createdAt(a);
+			if (sortKey === 'tvl')
+				return totalPoolSum(b.marketData.stakes) - totalPoolSum(a.marketData.stakes);
+			if (sortKey === 'outcomes')
+				return (b.marketData.categories?.length || 0) - (a.marketData.categories?.length || 0);
+			return 0;
+		};
+
+		return markets
 			.filter((market: PredictionMarketCreateEvent) => {
 				let matchesSearch = true;
 				if (searchTerm && searchTerm.length > 0) {
@@ -82,19 +122,16 @@
 						market.unhashedData.category?.toLowerCase().includes(needle);
 				}
 
-				//let isAll = $searchState === 'all';
-				//if (isAll) return true;
-
 				const matchesCategory =
-					$categoryStateStore === 'all' ||
-					($categoryStateStore &&
-						(market.unhashedData.category || '').toLowerCase() === $categoryStateStore.toLowerCase());
-				const matchesMarketState = doesMatchState(market, $marketStateStore);
-				const matchesType = doesMatchType(market, $marketTypeStore);
+					category === 'all' ||
+					(category &&
+						(market.unhashedData.category || '').toLowerCase() === category.toLowerCase());
+				const matchesMarketState = doesMatchState(market, mState);
+				const matchesType = doesMatchType(market, mType);
 
 				return matchesSearch && matchesCategory && matchesMarketState && matchesType;
 			})
-			.sort(sortComparator);
+			.sort(comparator);
 	});
 
 	const handleAll = () => {
@@ -105,9 +142,10 @@
 	};
 
 	const handleChangeCategory = (label: string) => {
-  searchStateStore.set(label || 'all');
-  categoryStateStore.set(label || 'all');
-};
+		searchStateStore.set(label || 'all');
+		categoryStateStore.set(label || 'all');
+		componentKey++;
+	};
 	const updateMarketStatus = () => {
 		searchStateStore.set('all');
 		marketStateStore.set(localMarketStatus);
@@ -125,28 +163,12 @@
 		componentKey++;
 	};
 
-	const doesMatchState = (market: PredictionMarketCreateEvent, marketState: string) => {
-		if (marketState === 'all') return true;
-		return marketState === getMarketStatus(currentBurnHeight, market);
-	};
-
-	const doesMatchType = (market: PredictionMarketCreateEvent, marketType: string) => {
-		if (marketType === 'all') return true;
-		if (marketType === 'scalar') return market.marketType === 2;
-		if (marketType === 'bitcoin') return market.marketType === 3;
-		if (marketType === 'binary') return market.marketData.categories.length === 2;
-		if (marketType === 'multiple')
-			return market.marketType === 1 && market.marketData.categories.length > 2;
-		return true; //throw new Error('Unknown market type');
-	};
-
-	onMount(async () => {
-		// Initialize local UI state from global stores for proper default selection
+	onMount(() => {
+		// Initialize global stores for default tab / filters (list is derived from stores + props)
 		searchStateStore.set('all');
 		marketStateStore.set('open');
 		categoryStateStore.set('all');
 		marketTypeStore.set('all');
-		filteredMarkets = markets;
 	});
 </script>
 
@@ -154,49 +176,44 @@
 <div class="space-y-4">
 	<!-- Row 1: Primary category tabs -->
 	<div class="overflow-x-auto">
-		<nav class="inline-flex items-center gap-5 whitespace-nowrap">
+		<nav class="flex items-center gap-2 gap-x-4 pb-2">
 			{#key componentKey}
-			<CategoryButton label="tvl" active={$searchStateStore} onChangeCategory={updateSortState}>
-				{#snippet body()}
-					<span class="inline-flex items-center gap-1.5">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							class="h-4 w-4"
+				<CategoryButton label="tvl" active={$sortStateStore} onChangeCategory={updateSortState}>
+					{#snippet body()}
+						<span class="flex items-center gap-2">
+							<TrendingUp class="h-4 w-4" />
+							Trending
+						</span>
+					{/snippet}
+				</CategoryButton>
+
+				<CategoryButton label="newest" active={$sortStateStore} onChangeCategory={updateSortState}>
+					{#snippet body()}New{/snippet}
+				</CategoryButton>
+
+				<CategoryButton label="all" active={$searchStateStore} onChangeCategory={handleAll}>
+					{#snippet body()}
+						{searchStateLabels[searchState]}
+					{/snippet}
+				</CategoryButton>
+
+				{#each marketCategories as category (category.name)}
+					{#if category.active}
+						<CategoryButton
+							label={category.name}
+							active={$categoryStateStore}
+							onChangeCategory={handleChangeCategory}
 						>
-							<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-							<polyline points="17 6 23 6 23 12"></polyline>
-						</svg>
-						Trending
-					</span>
-				{/snippet}
-			</CategoryButton>
-			<CategoryButton label="newest" active={$searchStateStore} onChangeCategory={updateSortState}>
-				{#snippet body()}New{/snippet}
-			</CategoryButton>
-			<CategoryButton label="all" active={$searchStateStore} onChangeCategory={handleAll}>
-				{#snippet body()}{searchStateLabels[searchState]}{/snippet}
-			</CategoryButton>
-			{#each marketCategories as category}
-				{#if category.active}
-					<CategoryButton
-						label={category.name}
-						active={$categoryStateStore}
-						onChangeCategory={handleChangeCategory}
-					>
-						{#snippet body()}{category.displayName}{/snippet}
-					</CategoryButton>
-				{/if}
-			{/each}
+							{#snippet body()}
+								{category.displayName}
+							{/snippet}
+						</CategoryButton>
+					{/if}
+				{/each}
 			{/key}
+			<span class="w-10">{$categoryStateStore}</span>
 		</nav>
 	</div>
-
 	<!-- Divider -->
 	<div class="h-px w-full bg-gray-200 dark:bg-gray-800"></div>
 
@@ -206,17 +223,17 @@
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
 			<!-- Search input that matches first card column width -->
 			<div class="relative col-span-1">
-				<label for="searchTerm" class="sr-only">Search</label>
+				<!-- <label for="searchTerm" class="sr-only">Search</label> -->
 				<input
 					id="searchTerm"
 					type="text"
 					bind:value={searchTerm}
 					placeholder="Search markets..."
-					class="h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-2 pl-9 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-gray-600"
+					class="h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-2 pl-20 text-sm text-gray-900 placeholder-gray-400 placeholder:mx-8 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-gray-600"
 				/>
-				<Search
+				<!-- <Search
 					class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-				/>
+				/> -->
 				{#if searchTerm}
 					<button
 						type="button"
@@ -246,9 +263,9 @@
 							<option value="tvl">TVL</option>
 							<option value="outcomes">Most outcomes</option>
 						</select>
-						<ChevronDown
+						<!-- <ChevronDown
 							class="pointer-events-none absolute top-1/2 right-0 h-3 w-3 -translate-y-1/2 text-gray-400"
-						/>
+						/> -->
 					</div>
 
 					<!-- Status -->
@@ -260,15 +277,14 @@
 						>
 							<option value="all" selected={$marketStateStore === 'all'}>All Markets</option>
 							<option value="open" selected={$marketStateStore === 'open'}>Open Markets</option>
-							<option value="resolving" selected={$marketStateStore === 'resolving'}>Resolving</option>
+							<option value="resolving" selected={$marketStateStore === 'resolving'}
+								>Resolving</option
+							>
 							<option value="disputed" selected={$marketStateStore === 'disputed'}>Disputed</option>
 							<option value="pending" selected={$marketStateStore === 'pending'}>Pending</option>
 							<option value="cooling" selected={$marketStateStore === 'cooling'}>Cooling</option>
 							<option value="resolved" selected={$marketStateStore === 'resolved'}>Closed</option>
 						</select>
-						<ChevronDown
-							class="pointer-events-none absolute top-1/2 right-0 h-3 w-3 -translate-y-1/2 text-gray-400"
-						/>
 					</div>
 
 					<!-- Type -->
@@ -278,7 +294,7 @@
 							onchange={() => updateMarketType(localMarketType)}
 							class="appearance-none bg-transparent px-2 py-1 pr-6 text-xs text-gray-600 hover:text-gray-800 focus:text-gray-800 focus:outline-none dark:text-gray-400 dark:hover:text-gray-200 dark:focus:text-gray-200"
 						>
-							{#each marketTypes as marketType}
+							{#each marketTypes as marketType (marketType.value)}
 								<option value={marketType.value}>{marketType.name}</option>
 							{/each}
 
@@ -286,9 +302,6 @@
 							<option value="boolean">Yes/No</option>
 							<option value="multiple">Multiple Choice</option> -->
 						</select>
-						<ChevronDown
-							class="pointer-events-none absolute top-1/2 right-0 h-3 w-3 -translate-y-1/2 text-gray-400"
-						/>
 					</div>
 
 					<!-- Vertical divider -->
@@ -310,8 +323,16 @@
 		<div
 			class="mt-4 grid gap-4 sm:grid-cols-2 md:mt-6 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
 		>
-			{#each filteredMarkets as market}
-				<MarketEntry {market} {selectedCurrency} {currentBurnHeight} {disputeWindowLength} {marketVotingDuration} {forumApi} {isCoordinator} />
+			{#each filteredMarkets as market (market.marketId + '-' + market.marketType)}
+				<MarketEntry
+					{market}
+					{selectedCurrency}
+					{currentBurnHeight}
+					{disputeWindowLength}
+					{marketVotingDuration}
+					{forumApi}
+					{isCoordinator}
+				/>
 			{/each}
 		</div>
 	{:else}

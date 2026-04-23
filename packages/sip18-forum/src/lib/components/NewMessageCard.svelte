@@ -16,18 +16,30 @@
     type Classes,
   } from '../utils/forum_helper';
 
-  export let config: Config;
-  export let messageBoardId: string; // board contains threads (top-level messages)
-  export let parentId: string; // parent message id
-  export let threadId: string; // parent thread id
-  export let level: number;
-  export let onReload: (data: string) => void;
-  export let classes: Classes = {};
-  export let isConnected: boolean;
+  // export let config: Config;
+  // export let messageBoardId: string; // board contains threads (top-level messages)
+  // export let parentId: string; // parent message id
+  // export let threadId: string; // parent thread id
+  // export let level: number;
+  // export let onReload: (data: string) => void;
+  // export let classes: Classes = {};
+  // export let isConnected: boolean;
+
+
+  const { config, messageBoardId, parentId, threadId, level, onReload, classes = {}, isConnected } = $props<{
+    config: Config;
+		messageBoardId: string;
+    parentId: string;
+    threadId: string;
+    level: number;
+    onReload: (data: string) => void;
+    classes: Classes;
+    isConnected: boolean;
+	}>();
+
 
   const defaultContainer = 'p-5 m-5 border rounded-xl p-4 shadow-sm';
   const defaultTitleInput = 'input w-full border-gray-300';
-  const defaultContentLabel = 'text-sm text-gray-700';
   const defaultContentEditor = 'textarea w-full min-h-[120px] border-gray-300';
   const defaultContentPreview = 'prose max-w-none bg-gray-100 p-4 rounded';
   const defaultError = 'text-sm text-red-600 mt-2';
@@ -37,14 +49,14 @@
 
   type MessageTemplate = ReturnType<typeof getNewMessageTemplate>;
 
-  let showPreview = false;
-  let error: string | null = null;
+  let showPreview = $state(false);
+  let error: string | null = $state(null);
   let loading = false;
   let composerOpen = false;
-  let componentKey = 0;
+  let componentKey = $state(0);
 
   let address: string = '';
-  let template: MessageTemplate;
+  let template: MessageTemplate|undefined = $state(undefined);
 
   // hydrate browser-only state
   onMount(async () => {
@@ -108,7 +120,7 @@
     <a
       class={classes.newMessageCard?.replyLink ?? defaultReplyLink}
       href="/"
-      on:click|preventDefault={() => (composerOpen = !composerOpen)}
+      onclick={(e) => {e.preventDefault(); (composerOpen = !composerOpen)}}
     >
       {#if level === 1}new thread{:else}reply{/if}
     </a>
@@ -118,36 +130,40 @@
 <!-- Composer Card -->
 {#if composerOpen}
   <div class={classes.newMessageCard?.container ?? defaultContainer}>
-    {#if level === 1}
-      <input
-        type="text"
-        placeholder="Thread title"
-        class={classes.newMessageCard?.titleInput ?? defaultTitleInput}
-        bind:value={template.title}
-      />
-    {/if}
-
-    <div class="space-y-2">
-      {#if !showPreview}
-        <textarea
-          id="content"
-          class={classes.newMessageCard?.contentEditor ?? defaultContentEditor}
-          bind:value={template.content}
-          placeholder="Write your post in Markdown…">{template.content}</textarea
-        >
-      {:else}
-        <div class={classes.newMessageCard?.contentPreview ?? defaultContentPreview}>
-          {@html marked(template.content)}
-        </div>
+    {#if template}
+      {#if level === 1}
+        <input
+          type="text"
+          placeholder="Thread title"
+          class={classes.newMessageCard?.titleInput ?? defaultTitleInput}
+          bind:value={template.title}
+        />
       {/if}
-      <button
-        type="button"
-        class="btn btn-sm btn-ghost"
-        on:click={() => (showPreview = !showPreview)}
-      >
-        {showPreview ? 'Edit Markdown' : 'Preview Markdown'}
-      </button>
-    </div>
+
+      <div class="space-y-2">
+        {#if !showPreview}
+          <textarea
+            id="content"
+            class={classes.newMessageCard?.contentEditor ?? defaultContentEditor}
+            bind:value={template.content}
+            placeholder="Write your post in Markdown…"
+          ></textarea>
+        {:else}
+          <div class={classes.newMessageCard?.contentPreview ?? defaultContentPreview}>
+            {@html marked(template.content)}
+          </div>
+        {/if}
+        <button
+          type="button"
+          class="btn btn-sm btn-ghost"
+          onclick={(e) => {e.preventDefault(); (showPreview = !showPreview)}}
+        >
+          {showPreview ? 'Edit Markdown' : 'Preview Markdown'}
+        </button>
+      </div>
+    {:else}
+      <p class="text-sm text-base-content/70">Loading form…</p>
+    {/if}
 
     {#if error}
       <p class={classes.newMessageCard?.error ?? defaultError}>{error}</p>
@@ -159,13 +175,13 @@
           <div class="flex gap-x-3">
             <button
               class={classes.newMessageCard?.buttonCancel ?? defaultButtonCancel}
-              on:click={() => (composerOpen = !composerOpen)}
+              onclick={() => (composerOpen = !composerOpen)}
             >
               {composerOpen ? 'Cancel' : 'New Message'}
             </button>
             <button
               class={classes.newMessageCard?.buttonPost ?? defaultButtonPost}
-              on:click={handleSubmit}
+              onclick={handleSubmit}
               disabled={loading}
             >
               {loading ? 'Posting…' : 'Post'}
@@ -175,7 +191,7 @@
           <button
             type="button"
             class={classes.newMessageCard?.buttonPost ?? defaultButtonPost}
-            on:click={handleConnect}
+            onclick={handleConnect}
             disabled={loading}
           >
             Connect Wallet

@@ -5,14 +5,26 @@
   import { loadThread } from '../stores/threads';
   import type { Classes, Config } from '../utils/forum_helper';
 
-  export let threadId: string; //page.params.threadId
-  export let config: Config;
-  export let thread: AuthenticatedForumContent;
-  export let classes: Classes = {};
+  // export let threadId: string; //page.params.threadId
+  // export let config: Config;
+  // export let thread: AuthenticatedForumContent;
+  // export let classes: Classes = {};
+  // export let isConnected: boolean;
+  
+  const { forumApi, threadId, config, threadIn, classes = {}, isConnected } = $props<{
+    forumApi: string;
+    threadId: string;
+		config: Config;
+		threadIn: AuthenticatedForumContent;
+    classes: Classes;
+    isConnected: boolean;
+	}>();
+
   const defaultRoot = 'p-4 bg-white rounded shadow';
 
+  let thread: AuthenticatedForumContent = $derived(threadIn);
   const handleReload = async (data: any) => {
-    thread = await loadThread(config.VITE_FORUM_API, thread.forumContent.messageId);
+    thread = await loadThread(forumApi, thread.forumContent.messageId);
   };
 
   onMount(async () => {
@@ -22,6 +34,6 @@
 
 <div class={classes.root || defaultRoot}>
   {#if thread}
-    <MessageCard {config} message={thread} {thread} onReload={handleReload} {classes} />
+    <MessageCard {config} {isConnected} message={thread} {thread} onReload={handleReload} {classes} />
   {/if}
 </div>

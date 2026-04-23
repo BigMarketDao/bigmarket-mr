@@ -9,14 +9,18 @@
   import type { Classes, Config } from '../utils/forum_helper';
   import { ShieldCheck, StopCircle } from '@lucide/svelte';
 
-  export let config: Config;
-  // the first message IS the thread - this gets replaces by replies so we keep the main thread
-  // for refreshing the tree.
-  export let thread: AuthenticatedForumContent;
-  export let message: AuthenticatedForumContent;
-  export let onReload: (data: string) => void;
-  export let classes: Classes = {};
-  export let isConnected: boolean;
+  // // the first message IS the thread - this gets replaces by replies so we keep the main thread
+  // // for refreshing the tree.
+  const { config, thread, message, onReload, classes = {}, isConnected } = $props<{
+    config: Config;
+		thread: AuthenticatedForumContent;
+		message: AuthenticatedForumContent;
+    onReload: (data: string) => void;
+    classes: Classes;
+    isConnected: boolean;
+	}>();
+
+
   const defaultTitle = 'text-primary-500 text-sm font-semibold';
   const defaultContainer = 'ml-4 border-l border-gray-200 pl-4';
   const defaultAuthor = 'text-xs text-gray-700 font-medium';
@@ -24,9 +28,10 @@
   const defaultIconError = 'text-red-500';
   const defaultBody = 'prose prose-sm text-gray-200';
 
-  let verified = false;
-  let identifier: string;
-  let displayName: string | undefined;
+  let verified = $state(false);
+  let identifier: string = $state('');
+  let displayName: string | undefined = $state(undefined);
+
   const handleReload = async (data: any) => {
     onReload(data);
   };
@@ -70,6 +75,7 @@
 	 	Messages and replies are identical - they are displayed recursively using level and parentId.
 	-->
   <NewMessageCard
+    {classes}
     {config}
     {isConnected}
     messageBoardId={message.forumContent.messageBoardId}
@@ -83,7 +89,7 @@
   {#if message?.forumContent.replies?.length}
     <ul class="mt-4 space-y-4">
       {#each message.forumContent.replies as reply}
-        <MessageCard {config} {isConnected} {thread} message={reply} onReload={handleReload} />
+        <MessageCard {config} {isConnected} {thread} message={reply} onReload={handleReload} {classes} />
       {/each}
     </ul>
   {/if}

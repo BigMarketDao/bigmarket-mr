@@ -18,12 +18,11 @@
 		group
 		flex flex-col
 		gap-6
-		rounded-2xl
+		rounded-md
 		border
-		border-zinc-200/70
-		bg-white
-		py-6
-		text-zinc-800
+		border-zinc-100/70
+		dark:bg-zinc-900
+		p-4
 
 		shadow-[0_6px_20px_rgba(0,0,0,0.06)]
 		transition-colors duration-200
@@ -31,9 +30,7 @@
 		hover:border-zinc-300
 		hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)]
 
-		dark:border-zinc-800
-		dark:bg-zinc-900
-		dark:text-zinc-100
+		bg-zinc-900
 		dark:shadow-[0_6px_20px_rgba(0,0,0,0.5)]
 		dark:hover:border-zinc-700
 		`,

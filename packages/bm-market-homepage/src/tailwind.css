@@ -1,0 +1,6 @@
+@import 'tailwindcss';
+@config "../tailwind.config.ts";
+/* Match apps/frontend-c1/src/routes/layout.css (class-based dark + plugins) */
+@custom-variant dark (&:where(.dark, .dark *));
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
