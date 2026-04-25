@@ -1,19 +1,18 @@
 <script lang="ts">
-	import { CircleUser, Wallet } from '@lucide/svelte';
+	import { CircleUser, Wallet } from 'lucide-svelte';
 	import { isLoggedIn, logUserOut } from '../../utils/signer';
 	import { storedBnsData } from '../../stores/threads';
 	import { getConfig } from '../../stores/stores_config';
 	import { authenticate, getBnsNameFromAddress, getStxAddress } from '../../utils/forum_helper';
 	import { onMount } from 'svelte';
 
-	let componentKey = $state(0);
-	let connected = $state(false);
-	
 	const { isConnected } = $props<{
 		isConnected: boolean;
 	}>();
 
-
+	let componentKey = $state(0);
+	let connected = $state(false);
+	
 	const toggleAuth = async () => {
 		if (isConnected) {
 			await logUserOut();

@@ -1,43 +1,20 @@
-import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-import { daoConfigStore, requireVaultClient } from '$lib/stores/config/daoConfigStore';
+import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 import { get } from 'svelte/store';
 import {
-	allowedTokenStore,
 	getStxAddress,
 	isLoggedIn,
 	userReputationStore,
-	userWalletStore,
-	vaultBalanceStore
+	userWalletStore
 } from '@bigmarket/bm-common';
-import type { AddressObject, UserReputationContractData } from '@bigmarket/bm-types';
-import { addresses, getTokenBalances, getWalletBalances } from '../app/loaders/walletLoaders';
+import type {
+	AddressObject,
+	UserReputation,
+	UserReputationContractData,
+	UserSettings
+} from '@bigmarket/bm-types';
+import { addresses, getWalletBalances } from '../app/loaders/walletLoaders';
 import { getUserReputation } from '../server/loaders/reputationLoaders';
-
-async function loadVaultBalances(stacksApi: string): Promise<void> {
-	const tokens = get(allowedTokenStore);
-	if (!tokens.length) return;
-
-	const daoConfig = get(daoConfigStore);
-	if (!daoConfig) return;
-
-	const stxAddress = getStxAddress();
-	if (!stxAddress || stxAddress === '??' || stxAddress === '?') return;
-
-	const client = requireVaultClient(daoConfig);
-
-	const results = await Promise.all(
-		tokens.map(async (t) => {
-			try {
-				const res = await client.getBalance(stacksApi, stxAddress, t.token);
-				return [t.token, Number(res?.value ?? 0)] as const;
-			} catch {
-				return [t.token, 0] as const;
-			}
-		})
-	);
-
-	vaultBalanceStore.set(Object.fromEntries(results));
-}
+import { getTokenBalances } from '@bigmarket/bm-utilities';
 
 export async function loadWalletData() {
 	if (!isLoggedIn()) return;
@@ -59,7 +36,11 @@ export async function loadWalletData() {
 		appConfig.VITE_BIGMARKET_API,
 		getStxAddress()
 	);
-	userReputationStore.set(userReputationData);
+	const uRep: UserReputation = {
+		name: '',
+		userSettings: {} as UserSettings,
+		userReputationData
+	};
 
-	await loadVaultBalances(appConfig.VITE_STACKS_API);
+	userReputationStore.set(uRep);
 }

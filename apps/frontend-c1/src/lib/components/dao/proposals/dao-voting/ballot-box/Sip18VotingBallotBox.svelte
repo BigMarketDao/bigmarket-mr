@@ -7,10 +7,10 @@
 		newVoteMessage,
 		postVoteMessage
 	} from '../../../../../core/app/loaders/governance/voting_sip18';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import { stacks } from '@bigmarket/sdk';
 	import type { SignatureData, VoteMessage, VotingEventProposeProposal } from '@bigmarket/bm-types';
-	import { getTransaction } from '$lib/core/app/loaders/walletLoaders';
+	import { getTransaction } from '@bigmarket/bm-utilities';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
 	let {

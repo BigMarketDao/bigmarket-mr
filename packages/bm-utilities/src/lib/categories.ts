@@ -1,5 +1,6 @@
 import type {
   Currency,
+  MarketCategoricalOption,
   MarketData,
   ScalarMarketDataItem,
 } from "@bigmarket/bm-types";
@@ -9,6 +10,9 @@ import {
   fmtFiatFromRaw,
   formatFiat,
 } from "./market-utilities.js";
+import { fmtMicroToStx } from "./format.js";
+
+export const MESSAGE_BOARD_ID = "90a5e66c-d42f-4307-a3fc-c871435ca244";
 
 export function mapToMinMaxStringsFormatted(
   selectedCurrency: Currency,
@@ -22,6 +26,11 @@ export function mapToMinMaxStringsFormatted(
       `${formatFiat(selectedCurrency, item.min / ORACLE_MULTIPLIER, false)} -> ${formatFiat(selectedCurrency, item.max / ORACLE_MULTIPLIER, true)}`,
   );
 }
+
+export const MARKET_BINARY_OPTION: Array<MarketCategoricalOption> = [
+  { label: "AGAINST", displayName: "against", icon: "👎" },
+  { label: "FOR", displayName: "for", icon: "👍" },
+];
 
 export function getCategoryLabel(
   selectedCurrency: Currency,
@@ -53,4 +62,14 @@ export function getCategoryLabel(
   } else {
     return `${minS} ≤ x < ${maxS}`;
   }
+}
+export function mapToMinMaxStrings(
+  data: Array<string | ScalarMarketDataItem>,
+): string[] {
+  if (typeof data[0] === "string") {
+    return data as string[]; // Directly return if already an array of strings
+  }
+  return (data as { min: number; max: number }[]).map(
+    (item) => `${fmtMicroToStx(item.min)},${fmtMicroToStx(item.max)}`,
+  );
 }

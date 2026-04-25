@@ -11,7 +11,7 @@
 //   TokenBalances,
 //   TokenPermissionEvent,
 //   UserReputationContractData,
-// } from "@bigmarket/bm-helpers";
+// } from "@bigmarket/bm-types";
 // import { persisted } from "svelte-local-storage-store";
 // import { writable } from "svelte/store";
 // import { type Currency } from "@bigmarket/bm-types";

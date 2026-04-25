@@ -8,8 +8,8 @@
 	import { watchTransaction } from '@bigmarket/bm-common';
 	import { Countdown } from '@bigmarket/bm-ui';
 	import { onMount } from 'svelte';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoConfigStore, requireDaoGovernanceClient } from '$lib/stores/config/daoConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
+	import { daoConfigStore, requireDaoGovernanceClient } from '@bigmarket/bm-common';
 	import { fetchStacksInfo } from '$lib/core/server/loaders/blockchainLoaders';
 	import { fmtNumber } from '@bigmarket/bm-utilities';
 	import Holding from '$lib/components/common/Holding.svelte';

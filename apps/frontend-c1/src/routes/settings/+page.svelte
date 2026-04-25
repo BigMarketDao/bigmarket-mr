@@ -2,12 +2,12 @@
 	import { signAdminMessage } from '$lib/core/app/loaders/governance/voting_sip18';
 	import type { ContractBalances, PredictionContractData } from '@bigmarket/bm-types';
 	import { onMount } from 'svelte';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import {
 		daoConfigStore,
 		requireContractViewDataClient,
 		requireDaoConfig
-	} from '$lib/stores/config/daoConfigStore';
+	} from '@bigmarket/bm-common';
 	import { daoOverviewStore, getStxAddress, readBaseDaoEvents } from '@bigmarket/bm-common';
 	import { Bulletin, PageContainer } from '@bigmarket/bm-ui';
 	import DaoHero from '$lib/components/dao/DaoHero.svelte';

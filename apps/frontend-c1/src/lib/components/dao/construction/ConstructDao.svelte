@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { constructed } from '@bigmarket/bm-common';
-	//import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	//import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import {
 		daoConfigStore,
 		requireDaoConfig,
 		requireDaoGovernanceClient
-	} from '$lib/stores/config/daoConfigStore';
+	} from '@bigmarket/bm-common';
 	import { readBaseDaoEvents } from '../../../core/app/loaders/governance/dao_api';
 	import DaoBanner from '$lib/components/dao/DaoBanner.svelte';
 	import BootstrapDao from './BootstrapDao.svelte';
 	import { base } from '$app/paths';
-	import { requireAppConfig, appConfigStore } from '$lib/stores/config/appConfigStore';
+	import { requireAppConfig, appConfigStore } from '@bigmarket/bm-common';
 	import { signAdminMessage } from '$lib/core/app/loaders/governance/voting_sip18';
 
 	//const appConfig = $derived(requireAppConfig($appConfigStore));

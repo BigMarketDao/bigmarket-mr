@@ -3,8 +3,8 @@
 	import { onMount } from 'svelte';
 	import { getCurrentProposalLink } from '../../../core/app/loaders/governance/proposals';
 	import { getStxAddress, isLoggedIn, showTxModal } from '@bigmarket/bm-common';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoConfigStore, requireDaoGovernanceClient } from '$lib/stores/config/daoConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
+	import { daoConfigStore, requireDaoGovernanceClient } from '@bigmarket/bm-common';
 	import type { FundingData, TxResult } from '@bigmarket/bm-types';
 	import { fetchStacksInfo } from '$lib/core/server/loaders/blockchainLoaders';
 	import { fmtMicroToStx, fmtNumber } from '@bigmarket/bm-utilities';
@@ -129,7 +129,7 @@
 								bind:value={proposalStartDelay}
 								type="number"
 								id="start-block"
-								class="h-[40px] w-60 rounded-lg border border-gray-400 px-2 py-1 dark:text-gray-900 text-gray-100"
+								class="h-[40px] w-60 rounded-lg border border-gray-400 px-2 py-1 text-gray-100 dark:text-gray-900"
 								aria-describedby="Contribution"
 							/>
 							<span class="text-sm text-[#131416]/[0.64]"
@@ -144,7 +144,7 @@
 								bind:value={proposalDuration}
 								type="number"
 								id="duration-block"
-								class="h-[40px] w-60 rounded-lg border border-gray-400 px-2 py-1 dark:text-gray-900 text-gray-100"
+								class="h-[40px] w-60 rounded-lg border border-gray-400 px-2 py-1 text-gray-100 dark:text-gray-900"
 								aria-describedby="Contribution"
 							/>
 							<span class="text-sm text-[#131416]/[0.64]"

@@ -81,29 +81,37 @@
 	<Card data-testId="market-card">
 		<div>
 			<!-- Header with market info and gauge aligned opposite -->
-			<div class="flex min-w-0 items-center justify-between gap-2.5">
-				<div class="flex min-w-0 items-center gap-2.5">
-					<div class="flex-shrink-0 overflow-hidden rounded bg-gray-100 dark:bg-gray-800">
+			<div class="flex min-w-0 items-start justify-between gap-3">
+				<!-- Left side -->
+				<div class="flex min-w-0 items-start gap-3">
+					<!-- Logo -->
+					<div
+						class="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800"
+					>
 						<LogoContainer logo={market.unhashedData.logo} />
 					</div>
-					<div class="min-w-0 space-y-0.5">
+
+					<!-- Title -->
+					<div class="min-w-0">
 						<h3
-							class="line-clamp-2 text-[13px] leading-4 font-semibold text-gray-900 dark:text-gray-100"
+							class="line-clamp-2 text-sm leading-5 font-semibold text-gray-900 dark:text-gray-100"
 						>
 							<a
 								href={`/market/${market.marketId}/${market.marketType}`}
 								data-sveltekit-preload
 								data-sveltekit-preload-data="hover"
 								data-sveltekit-preload-code="hover"
-								class="hover:text-orange-600 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-1 focus-visible:outline-none dark:hover:text-orange-400"
+								class="block hover:text-orange-600 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-1 focus-visible:outline-none dark:hover:text-orange-400"
 							>
 								{@html market.unhashedData.name}
 							</a>
 						</h3>
 					</div>
 				</div>
+
+				<!-- Right side -->
 				{#if isBinaryMarket}
-					<div class="flex items-center">
+					<div class="flex items-center pl-2">
 						<Gauge percent={yesPercentage} radius={20} />
 					</div>
 				{/if}

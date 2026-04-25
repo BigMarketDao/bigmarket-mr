@@ -1,5 +1,5 @@
 import { getCached, setCached } from './cache';
-import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 import { get } from 'svelte/store';
 import { getLeaderBoard } from '../loaders/reputationLoaders';
 import { fetchStacksInfo } from '../loaders/blockchainLoaders';

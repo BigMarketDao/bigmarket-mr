@@ -3,12 +3,12 @@
 
 	import { getStxAddress, isLoggedIn, showTxModal, watchTransaction } from '@bigmarket/bm-common';
 	import { onMount } from 'svelte';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import {
 		daoConfigStore,
 		requireDaoConfig,
 		requireDaoGovernanceClient
-	} from '$lib/stores/config/daoConfigStore';
+	} from '@bigmarket/bm-common';
 	import type { VotingEventProposeProposal } from '@bigmarket/bm-types';
 	import {
 		fmtMicroToStxFormatted,
@@ -16,7 +16,7 @@
 		fmtStxMicro
 	} from '@bigmarket/bm-utilities';
 	import { stacks } from '@bigmarket/sdk';
-	import { fetchUserBalances, getTransaction } from '$lib/core/app/loaders/walletLoaders';
+	import { fetchUserBalances } from '$lib/core/app/loaders/walletLoaders';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 	const client = $derived(requireDaoGovernanceClient($daoConfigStore));

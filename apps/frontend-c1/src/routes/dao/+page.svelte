@@ -13,14 +13,14 @@
 	} from '@bigmarket/bm-common';
 	import { onMount } from 'svelte';
 	import ConstructDao from '$lib/components/dao/construction/ConstructDao.svelte';
-	import { convertFiatToNative } from '$lib/core/app/conversion';
 	import ProvideLiquidity from '$lib/components/dao/liquidity/ProvideLiquidity.svelte';
 	import { getDaoOverview } from '$lib/core/app/loaders/governance/dao_api';
-	import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
+	import { daoConfigStore, requireDaoConfig } from '@bigmarket/bm-common';
 	import {
 		getContractDeploymentTxId,
 		isDaoConstructed
 	} from '$lib/core/app/loaders/dao_manager_helper';
+	import { convertFiatToNative } from '@bigmarket/bm-utilities';
 
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 

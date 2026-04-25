@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { csvMaker } from '$lib/core/tools/utils';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import { getStxAddress } from '@bigmarket/bm-common';
 	import { fmtMicroToStx } from '@bigmarket/bm-utilities';
 	import { stacks } from '@bigmarket/sdk';

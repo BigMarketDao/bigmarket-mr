@@ -5,12 +5,12 @@
 	import { getGovernanceToken, getMarketToken } from '$lib/core/app/loaders/governance/tokens';
 	import { connectWallet } from '@bigmarket/bm-common';
 	import { fmtMicroToStx, truncate } from '@bigmarket/bm-utilities';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import {
 		daoConfigStore,
 		requireDaoConfig,
 		requireDaoGovernanceClient
-	} from '$lib/stores/config/daoConfigStore';
+	} from '@bigmarket/bm-common';
 	import { getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
 	import { type TokenSalePurchase, type TokenSaleStage } from '@bigmarket/bm-types';
 	import { Wallet } from 'lucide-svelte';

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoConfigStore } from '$lib/stores/config/daoConfigStore';
-	import type { AppConfig, DaoConfig } from '@bigmarket/bm-config';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
+	import { daoConfigStore } from '@bigmarket/bm-common';
+	import type { AppConfig, DaoConfig } from '@bigmarket/bm-types';
 	import { onMount, type Snippet } from 'svelte';
 	import Header from '$lib/components/template/Header.svelte';
 	import Footer from '$lib/components/template/Footer.svelte';

@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import { Banner } from '@bigmarket/bm-ui';
 	import { getProposalLatest } from '../../../core/app/loaders/governance/proposals';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import { lookupContract } from '$lib/core/app/loaders/governance/dao_api';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 

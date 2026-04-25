@@ -5,7 +5,7 @@ import type {
 	ResolutionVote
 } from '@bigmarket/bm-types';
 import { get } from 'svelte/store';
-import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 
 export async function getDisputes(): Promise<Array<MarketDisputeRecord> | []> {
 	const appConfig = requireAppConfig(get(appConfigStore));

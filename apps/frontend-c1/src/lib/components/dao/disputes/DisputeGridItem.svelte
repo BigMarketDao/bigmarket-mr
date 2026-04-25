@@ -2,7 +2,7 @@
 	import { TypoHeader } from '@bigmarket/bm-ui';
 	import { stacks } from '@bigmarket/sdk';
 	import { base } from '$app/paths';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	import { BadgeCheck, ExternalLink } from 'lucide-svelte';
 	import { onMount } from 'svelte';

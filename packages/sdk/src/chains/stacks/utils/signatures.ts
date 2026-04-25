@@ -1,24 +1,24 @@
-import {
+import type {
   BaseAdminMessage,
-  ChainID,
   Domain,
   SignMessageResult,
   VoteMessage,
 } from "@bigmarket/bm-types";
+import { ChainID } from "@bigmarket/bm-types";
 import { bytesToHex, hexToBytes } from "@stacks/common";
 import {
   boolCV,
   bufferCV,
-  ClarityValue,
+  type ClarityValue,
   encodeStructuredDataBytes,
   principalCV,
   publicKeyFromSignatureRsv,
   publicKeyToAddressSingleSig,
   serializeCV,
   stringAsciiCV,
-  TupleCV,
+  type TupleCV,
   tupleCV,
-  TupleData,
+  type TupleData,
   uintCV,
 } from "@stacks/transactions";
 import { callContractReadOnly } from "./contract.js";
@@ -26,6 +26,11 @@ import {
   hashSha256Sync,
   verifySignature as verifySignatureStacks,
 } from "@stacks/encryption";
+import {
+  type BaseForumContent,
+  type ForumMessage,
+  type LinkedAccount,
+} from "@bigmarket/sip18-forum-types";
 
 function getDomainInternal(domain: Domain) {
   const chainId =
@@ -88,6 +93,38 @@ export function dataHashSip18(domain: Domain, voteMessage: VoteMessage) {
   return structuredDataHash;
 }
 
+export function dataHashSip18Forum(
+  domain: Domain,
+  forumMessage: BaseForumContent,
+) {
+  const domainCVValue = domainCV(domain);
+  const structuredDataHash = bytesToHex(
+    hashSha256Sync(
+      encodeStructuredDataBytes({
+        message: forumMessageToTupleCV(forumMessage),
+        domain: domainCVValue,
+      }),
+    ),
+  );
+  return structuredDataHash;
+}
+
+export function dataHashMarketSip18(
+  domain: Domain,
+  message: TupleCV<TupleData<ClarityValue>>,
+) {
+  const domainCVValue = domainCV(domain);
+  const structuredDataHash = bytesToHex(
+    hashSha256Sync(
+      encodeStructuredDataBytes({
+        message: message,
+        domain: domainCVValue,
+      }),
+    ),
+  );
+  return structuredDataHash;
+}
+
 export function verifySip18VoteSignature(
   domain: Domain,
   voteMessage: VoteMessage,
@@ -107,6 +144,21 @@ function voteMessageToTupleCV(message: VoteMessage) {
     voting_power: uintCV(message.voting_power),
   });
 }
+export function marketDataToTupleCV(
+  name: string,
+  category: string,
+  createdAt: number,
+  proposer: string,
+  token: string,
+) {
+  return tupleCV({
+    name: stringAsciiCV(name),
+    category: stringAsciiCV(category),
+    createdAt: uintCV(createdAt),
+    proposer: principalCV(proposer),
+    token: stringAsciiCV(token),
+  });
+}
 
 export async function requestAdminSignature(
   adminMessage: BaseAdminMessage,
@@ -119,6 +171,15 @@ export async function requestAdminSignature(
   });
   const domainCVValue = domainCV(domain);
   return await requestSignature(message, domainCVValue);
+}
+
+export async function requestForumSignature(
+  domain: Domain,
+  forumMessage: BaseForumContent,
+): Promise<SignMessageResult | null> {
+  const forumPostCV = forumMessageToTupleCV(forumMessage);
+  const domainCVValue = domainCV(domain);
+  return await requestSignature(forumPostCV, domainCVValue);
 }
 
 export async function requestVoteMessageSignature(
@@ -205,6 +266,70 @@ export function verifyDaoSignature(
       publicKey,
     );
     //console.log("verifySignatureRsv: result: " + result);
+  } catch (err: any) {}
+  return result ? stacksAddress : undefined;
+}
+
+export function getPreferredLinkedAccount(
+  linkedAccounts: Array<LinkedAccount>,
+): LinkedAccount | undefined {
+  return linkedAccounts.find((o) => o.preferred);
+}
+
+export function forumMessageToTupleCV(
+  message: BaseForumContent,
+): TupleCV<TupleData<ClarityValue>> {
+  const la = getPreferredLinkedAccount(message.linkedAccounts);
+  if (!la) throw new Error("Unable to convert this message");
+  return tupleCV({
+    identifier: stringAsciiCV(la.identifier),
+    created: uintCV(message.created),
+    title: stringAsciiCV(message.title),
+    content: stringAsciiCV(message.content),
+  });
+}
+
+export function verifyForumSignature(
+  domain: Domain,
+  forumContent: ForumMessage,
+  publicKey: string,
+  signature: string,
+): string | undefined {
+  const domainCVValue = domainCV(domain);
+  const structuredDataHash = bytesToHex(
+    hashSha256Sync(
+      encodeStructuredDataBytes({
+        message: forumMessageToTupleCV(forumContent),
+        domain: domainCVValue,
+      }),
+    ),
+  );
+  const signatureBytes = hexToBytes(signature);
+  const strippedSignature = signatureBytes.slice(0, -1);
+
+  let pubkey: string = "-";
+  let stacksAddress: string = "-";
+  try {
+    pubkey = publicKeyFromSignatureRsv(structuredDataHash, signature);
+
+    if (
+      domain.network === "mainnet" ||
+      domain.network === "testnet" ||
+      domain.network === "devnet"
+    ) {
+      stacksAddress = publicKeyToAddressSingleSig(pubkey, domain.network);
+    }
+
+    //console.log("sa: " + pubkey);
+  } catch (err: any) {}
+  //console.log("pubkey: " + pubkey);
+  let result = false;
+  try {
+    result = verifySignatureStacks(
+      bytesToHex(strippedSignature),
+      structuredDataHash,
+      publicKey,
+    );
   } catch (err: any) {}
   return result ? stacksAddress : undefined;
 }

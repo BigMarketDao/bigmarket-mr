@@ -1,5 +1,5 @@
 import type { Sip10Data, TokenPermissionEvent } from '@bigmarket/bm-types';
-import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
+import { daoConfigStore, requireDaoConfig } from '@bigmarket/bm-common';
 import { get } from 'svelte/store';
 import { allowedTokenStore } from '@bigmarket/bm-common';
 

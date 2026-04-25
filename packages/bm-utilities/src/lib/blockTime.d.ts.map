@@ -1,0 +1,1 @@
+{"version":3,"file":"blockTime.d.ts","sourceRoot":"","sources":["blockTime.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,qBAAqB,CAAC;AAGxD,wBAAgB,wBAAwB,CACtC,WAAW,EAAE,MAAM,EACnB,YAAY,EAAE,MAAM,EACpB,cAAc,GAAE,MAA+B,GAC9C,MAAM,CAYR;AACD,wBAAgB,OAAO,CACrB,aAAa,EAAE,YAAY,EAAE,EAC7B,YAAY,EAAE,MAAM,GACnB,YAAY,CASd"}

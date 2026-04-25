@@ -1,6 +1,6 @@
-import { bytesToHex, hexToBytes } from '@stacks/common';
-import { hashSha256Sync } from '@stacks/encryption';
-import { ChainId } from '@stacks/network';
+import { bytesToHex, hexToBytes } from "@stacks/common";
+import { hashSha256Sync } from "@stacks/encryption";
+import { ChainId } from "@stacks/network";
 import {
   encodeStructuredDataBytes,
   publicKeyFromSignatureRsv,
@@ -12,15 +12,29 @@ import {
   type ClarityValue,
   type TupleCV,
   type TupleData,
-} from '@stacks/transactions';
+} from "@stacks/transactions";
 import type {
   ForumMessage,
   BaseForumContent,
   LinkedAccount,
   ForumMessageBoard,
   AuthenticatedForumContent,
-} from '@bigmarket/sip18-forum-types';
-import { connect, getLocalStorage, request } from './connection_wrapper';
+} from "@bigmarket/sip18-forum-types";
+import { connect, getLocalStorage, request } from "./connection_wrapper";
+import type { Domain, SignMessageResult } from "@bigmarket/bm-types";
+import { stacks } from "@bigmarket/sdk";
+
+export async function openWalletForSignature(
+  config: Config,
+  message: BaseForumContent,
+): Promise<SignMessageResult | null> {
+  const domain: Domain = {
+    network: config.VITE_NETWORK,
+    appName: config.VITE_PUBLIC_APP_NAME,
+    appVersion: config.VITE_PUBLIC_APP_VERSION,
+  };
+  return await stacks.requestForumSignature(domain, message);
+}
 
 export interface SignatureData {
   signature: string;
@@ -29,11 +43,11 @@ export interface SignatureData {
 
 export async function getStxAddress() {
   try {
-    if (typeof window === 'undefined') return '???';
+    if (typeof window === "undefined") return "???";
     const userData = await getLocalStorage();
-    return userData?.addresses.stx[0].address || '???';
+    return userData?.addresses.stx[0].address || "???";
   } catch (err) {
-    return '???';
+    return "???";
   }
 }
 export interface Classes {
@@ -77,15 +91,18 @@ export async function getBnsNameFromAddress(
   return data.names?.[0] ?? undefined;
 }
 
-export function getNewBoardTemplate(stxAddress: string, bnsName: string): ForumMessageBoard {
+export function getNewBoardTemplate(
+  stxAddress: string,
+  bnsName: string,
+): ForumMessageBoard {
   const created = new Date().getTime();
   const messageBoardId = crypto.randomUUID();
   const forumMessageBoard: ForumMessageBoard = {
     messageBoardId,
     linkedAccounts: [getDefaultStacksLinkedAccount(stxAddress, bnsName)],
     owner: stxAddress,
-    title: '',
-    content: '',
+    title: "",
+    content: "",
     created,
     deleted: false,
   };
@@ -103,8 +120,8 @@ export function getNewMessageTemplate(
     parentId,
     messageId: crypto.randomUUID(),
     linkedAccounts: [getDefaultStacksLinkedAccount(stxAddress, bnsName)],
-    title: '',
-    content: '',
+    title: "",
+    content: "",
     created: new Date().getTime(),
     deleted: false,
     level,
@@ -112,9 +129,12 @@ export function getNewMessageTemplate(
   return forumMessage;
 }
 
-export function getDefaultStacksLinkedAccount(stxAddress: string, bnsName: string): LinkedAccount {
+export function getDefaultStacksLinkedAccount(
+  stxAddress: string,
+  bnsName: string,
+): LinkedAccount {
   const linkedAccount: LinkedAccount = {
-    source: 'stacks',
+    source: "stacks",
     identifier: stxAddress,
     verified: true,
     preferred: true,
@@ -128,27 +148,34 @@ export function getPreferredLinkedAccount(
   return linkedAccounts.find((o) => o.preferred);
 }
 
-export async function openWalletForSignature(config: Config, message: BaseForumContent) {
-  return (await request('stx_signStructuredMessage', {
-    message: forumMessageToTupleCV(message),
-    domain: domainCV(
-      getDomain(config.VITE_NETWORK, config.VITE_PUBLIC_APP_NAME, config.VITE_PUBLIC_APP_VERSION),
-    ),
-  })) as SignatureData;
-}
+// export async function openWalletForSignature(
+//   config: Config,
+//   message: BaseForumContent,
+// ) {
+//   return (await request("stx_signStructuredMessage", {
+//     message: forumMessageToTupleCV(message),
+//     domain: domainCV(
+//       getDomain(
+//         config.VITE_NETWORK,
+//         config.VITE_PUBLIC_APP_NAME,
+//         config.VITE_PUBLIC_APP_VERSION,
+//       ),
+//     ),
+//   })) as SignatureData;
+// }
 export async function authenticate(callback?: () => void) {
   try {
     const response = await connect({});
-    console.log('authenticate: ', response);
+    console.log("authenticate: ", response);
 
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-      const stxProvider = localStorage.getItem('STX_PROVIDER');
-      console.log('STX Provider from LocalStorage:', stxProvider);
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      const stxProvider = localStorage.getItem("STX_PROVIDER");
+      console.log("STX Provider from LocalStorage:", stxProvider);
     }
 
     if (callback) callback();
   } catch (err) {
-    console.error('Error in authenticate:', err);
+    console.error("Error in authenticate:", err);
   }
 }
 
@@ -161,41 +188,52 @@ export function verifyPost(config: Config, wrapper: AuthenticatedForumContent) {
       config.VITE_NETWORK,
     );
     if (la.identifier !== stxAddressFromKey) {
-      console.log('/polls: wrong voter: ' + la.identifier + ' signer: ' + stxAddressFromKey);
+      console.log(
+        "/polls: wrong voter: " +
+          la.identifier +
+          " signer: " +
+          stxAddressFromKey,
+      );
       return false;
     }
-    const forumPostCV = forumMessageToTupleCV(wrapper.forumContent);
+    const domain: Domain = {
+      network: config.VITE_NETWORK,
+      appName: config.VITE_PUBLIC_APP_NAME,
+      appVersion: config.VITE_PUBLIC_APP_VERSION,
+    };
 
-    let valid = verifyForumSignature(
-      config.VITE_NETWORK,
-      config.VITE_PUBLIC_APP_NAME,
-      config.VITE_PUBLIC_APP_VERSION,
-      forumPostCV,
+    const valid = stacks.verifyForumSignature(
+      domain,
+      wrapper.forumContent,
       wrapper.auth.publicKey,
       wrapper.auth.signature,
     );
 
     if (!valid) {
-      console.warn('Signature verification failed');
+      console.warn("Signature verification failed");
       return false;
     }
 
     return true;
   } catch (err: any) {
-    console.error('Post verification error:', err);
+    console.error("Post verification error:", err);
     throw new Error(`Post verification failed: ${err.message}`);
   }
 }
 
-export function getDomain(network: string, appName: string, appVersion: string) {
-  const chainId = network === 'mainnet' ? ChainId.Mainnet : ChainId.Testnet;
-  console.log('chainId: ' + chainId);
-  console.log('appName: ' + appName);
-  console.log('appVersion: ' + appVersion);
+export function getDomain(
+  network: string,
+  appName: string,
+  appVersion: string,
+) {
+  const chainId = network === "mainnet" ? ChainId.Mainnet : ChainId.Testnet;
+  console.log("chainId: " + chainId);
+  console.log("appName: " + appName);
+  console.log("appVersion: " + appVersion);
   return {
     name: appName,
     version: appVersion,
-    'chain-id': chainId,
+    "chain-id": chainId,
   };
 }
 
@@ -203,78 +241,26 @@ export function domainCV(domain: any) {
   return tupleCV({
     name: stringAsciiCV(domain.name),
     version: stringAsciiCV(domain.version),
-    'chain-id': uintCV(domain['chain-id']),
+    "chain-id": uintCV(domain["chain-id"]),
   });
 }
 
 // SIP-018 domain (must match client signing)
 export const domain = {
-  name: 'BigMarket',
-  version: '1.0.0',
+  name: "BigMarket",
+  version: "1.0.0",
   chainId: 1,
 };
 
-export function getC32AddressFromPublicKey(publicKeyHex: string, network: string): string {
+export function getC32AddressFromPublicKey(
+  publicKeyHex: string,
+  network: string,
+): string {
   //console.log("getC32AddressFromPublicKey: auth check");
 
-  if (network === 'mainnet' || network === 'testnet' || network === 'devnet') {
+  if (network === "mainnet" || network === "testnet" || network === "devnet") {
     const stacksAddress = publicKeyToAddressSingleSig(publicKeyHex, network);
     return stacksAddress;
   }
-  return 'unknown';
-}
-
-export function forumMessageToTupleCV(message: BaseForumContent): TupleCV<TupleData<ClarityValue>> {
-  const la = getPreferredLinkedAccount(message.linkedAccounts);
-  if (!la) throw new Error('Unable to convert this message');
-  return tupleCV({
-    identifier: stringAsciiCV(la.identifier),
-    created: uintCV(message.created),
-    title: stringAsciiCV(message.title),
-    content: stringAsciiCV(message.content),
-  });
-}
-
-export function verifyForumSignature(
-  network: string,
-  appName: string,
-  appVersion: string,
-  message: TupleCV<TupleData<ClarityValue>>,
-  publicKey: string,
-  signature: string,
-): string | undefined {
-  const chainId = network === 'mainnet' ? ChainId.Mainnet : ChainId.Testnet;
-  const domain = tupleCV({
-    name: stringAsciiCV(appName),
-    version: stringAsciiCV(appVersion),
-    'chain-id': uintCV(chainId),
-  });
-  const structuredDataHash = bytesToHex(
-    hashSha256Sync(encodeStructuredDataBytes({ message, domain })),
-  );
-
-  //console.log("signature.hash: " + structuredDataHash);
-
-  const signatureBytes = hexToBytes(signature);
-  const strippedSignature = signatureBytes.slice(0, -1);
-  //console.log("Stripped Signature (Hex):", bytesToHex(strippedSignature));
-
-  let pubkey: string = '-';
-  let stacksAddress: string = '-';
-  try {
-    pubkey = publicKeyFromSignatureRsv(structuredDataHash, signature);
-
-    if (network === 'mainnet' || network === 'testnet' || network === 'devnet') {
-      stacksAddress = publicKeyToAddressSingleSig(pubkey, network);
-    }
-
-    //console.log("sa: " + pubkey);
-  } catch (err: any) {}
-  //console.log("pubkey: " + pubkey);
-  let result = false;
-  try {
-    result = verifySignature(bytesToHex(strippedSignature), structuredDataHash, publicKey);
-    //console.log("verifySignatureRsv: result: " + result);
-  } catch (err: any) {}
-  return result ? stacksAddress : undefined;
+  return "unknown";
 }

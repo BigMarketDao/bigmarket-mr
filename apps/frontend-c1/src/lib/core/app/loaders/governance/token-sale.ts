@@ -1,6 +1,6 @@
 import { type TokenSalePurchase } from '@bigmarket/bm-types';
 import { get } from 'svelte/store';
-import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 
 export async function fetchTokenSalePurchases(address: string): Promise<TokenSalePurchase> {
 	const appConfig = requireAppConfig(get(appConfigStore));

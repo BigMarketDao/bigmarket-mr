@@ -1,4 +1,4 @@
-import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 import type { PredictionMarketCreateEvent } from '@bigmarket/bm-types';
 import { get } from 'svelte/store';
 

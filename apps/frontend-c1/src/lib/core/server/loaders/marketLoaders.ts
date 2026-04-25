@@ -1,9 +1,31 @@
+import { getNetworkFromUrl } from '@bigmarket/bm-config';
 import type {
+	AppConfig,
 	LeaderBoard,
 	MarketCategory,
 	PredictionMarketCreateEvent,
 	TokenPermissionEvent
 } from '@bigmarket/bm-types';
+import { getCached, setCached } from '../cache/cache';
+
+export async function loadMarketsAndLeaderboard(
+	appConfig: AppConfig,
+	url: URL
+): Promise<{ markets: Array<PredictionMarketCreateEvent>; leaderBoard: LeaderBoard }> {
+	const network = getNetworkFromUrl(url);
+	const key = `leader-market-list-${network}`; // separate cache per network
+
+	const cached = getCached(key);
+	if (cached)
+		return cached as { markets: Array<PredictionMarketCreateEvent>; leaderBoard: LeaderBoard };
+
+	const markets = await fetchMarketsServer(appConfig.VITE_BIGMARKET_API);
+	const leaderBoard = await getLeaderBoard(appConfig.VITE_BIGMARKET_API);
+
+	const result = { markets, leaderBoard };
+	setCached(key, result, 1000 * 60 * 3); // 1 minute
+	return result;
+}
 
 export async function fetchMarkets(bigmarketApiUrl: string) {
 	const path = `${bigmarketApiUrl}/pm/markets`;

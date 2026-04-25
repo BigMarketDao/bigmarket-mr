@@ -10,6 +10,7 @@ const config = {
 			if (filename.includes('bm-ui')) return true;
 			if (filename.includes('bm-common')) return true;
 			if (filename.includes('bm-market-homepage')) return true;
+			if (filename.includes('bm-market')) return true;
 			if (filename.includes('sip18-forum')) return true;
 
 			// disable for everything else (node_modules etc)

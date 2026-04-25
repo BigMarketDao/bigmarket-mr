@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "target": "ESNext",
+    "types": ["svelte"],
+    "paths": {
+      "@bigmarket/bm-ui": ["../bm-ui/dist/index.d.ts"],
+      "@bigmarket/bm-types": ["../bm-helpers/dist/index.d.ts"],
+      "@bigmarket/bm-common": ["../bm-common/dist/index.d.ts"],
+      "@bigmarket/sip18-forum": ["../sip18-forum/dist/index.d.ts"],
+      "@bigmarket/sip18-forum-types": ["../sip18-forum-types/dist/index.d.ts"]
+    }
+  },
+  // "references": [{ "path": "../bm-common" }, { "path": "../bm-helpers" }],
+  "include": ["src/**/*"]
+}

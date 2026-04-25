@@ -14,3 +14,5 @@ export { default as LogoContainer } from "./LogoContainer.svelte";
 export { default as LogoContainerSmall } from "./LogoContainerSmall.svelte";
 export { default as LogoContainerXSmall } from "./LogoContainerXSmall.svelte";
 export { default as SlotModal } from "./SlotModal.svelte";
+export { default as BlockHeightProgressBar } from "./BlockHeightProgressBar.svelte";
+export { default as Panel } from "./Panel.svelte";

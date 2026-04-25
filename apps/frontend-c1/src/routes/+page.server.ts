@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 		const markets = await fetchMarketsServer(appConfig.VITE_BIGMARKET_API);
 		const leaderBoard = await getLeaderBoard(appConfig.VITE_BIGMARKET_API);
-		console.log('fetching data: ', JSON.stringify({ network, markets, leaderBoard }, null, 2));
+		//console.log('fetching data: ', JSON.stringify({ network, markets, leaderBoard }, null, 2));
 		const result = { network, markets, leaderBoard };
 		setCached(key, result, 1000 * 60 * 1); // 30 secs
 		return result;

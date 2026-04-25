@@ -16,16 +16,6 @@
     type Classes,
   } from '../utils/forum_helper';
 
-  // export let config: Config;
-  // export let messageBoardId: string; // board contains threads (top-level messages)
-  // export let parentId: string; // parent message id
-  // export let threadId: string; // parent thread id
-  // export let level: number;
-  // export let onReload: (data: string) => void;
-  // export let classes: Classes = {};
-  // export let isConnected: boolean;
-
-
   const { config, messageBoardId, parentId, threadId, level, onReload, classes = {}, isConnected } = $props<{
     config: Config;
 		messageBoardId: string;
@@ -51,12 +41,12 @@
 
   let showPreview = $state(false);
   let error: string | null = $state(null);
-  let loading = false;
-  let composerOpen = false;
+  let loading = $state(false);
+  let composerOpen = $state(false);
   let componentKey = $state(0);
 
   let address: string = '';
-  let template: MessageTemplate|undefined = $state(undefined);
+  let template: MessageTemplate|undefined = $state<MessageTemplate|undefined>(undefined);
 
   // hydrate browser-only state
   onMount(async () => {

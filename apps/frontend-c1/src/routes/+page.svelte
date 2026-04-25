@@ -12,8 +12,9 @@
 		children: Snippet; // or Snippet if you want to be precise
 	}>();
 
-	const { markets, leaderBoard } = data;
-	console.log('fetching data: ', JSON.stringify(data, null, 2));
+	const markets = $derived(data.markets);
+	const leaderBoard = $derived(data.leaderBoard);
+	// console.log('fetching data: ', JSON.stringify(data, null, 2));
 	onMount(async () => {
 		if (!browser) return;
 	});

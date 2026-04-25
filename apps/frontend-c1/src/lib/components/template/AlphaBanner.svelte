@@ -1,37 +1,37 @@
 <script lang="ts">
-	import { Button } from '@bigmarket/bm-ui';
-	import { isLoggedIn, connectWallet, showTxModal, watchTransaction, getStxAddress } from '@bigmarket/bm-common';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import {
-		daoConfigStore,
-		requireVaultClient,
-		requireDaoConfig
-	} from '$lib/stores/config/daoConfigStore';
-	import type { TxResult } from '@bigmarket/bm-types';
+	// import { Button } from '@bigmarket/bm-ui';
+	// import { isLoggedIn, connectWallet, showTxModal, watchTransaction, getStxAddress } from '@bigmarket/bm-common';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
+	// import {
+	// 	daoConfigStore,
+	// 	requireVaultClient,
+	// 	requireDaoConfig
+	// } from '@bigmarket/bm-common';
+	// import type { TxResult } from '@bigmarket/bm-types';
 
-	let walletConnected = isLoggedIn();
+	// let walletConnected = isLoggedIn();
 	const appConfig = $derived(requireAppConfig($appConfigStore));
-	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
-	const MAX_MINT = 1000000000;
-	const authenticateWallet = async () => {
-		await connectWallet();
-		window.location.reload();
-	};
+	// const daoConfig = $derived(requireDaoConfig($daoConfigStore));
+	// const MAX_MINT = 1000000000;
+	// const authenticateWallet = async () => {
+	// 	await connectWallet();
+	// 	window.location.reload();
+	// };
 
-	const claimTokens = async () => {
-		const response: TxResult = await requireVaultClient($daoConfigStore).claimFaucet(`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_BIG_PLAY}`, MAX_MINT, getStxAddress());
-		if (response.success) {
-			showTxModal(response.txid);
-			watchTransaction(
-				appConfig.VITE_BIGMARKET_API,
-				appConfig.VITE_STACKS_API,
-				`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`,
-				response.txid
-			);
-		} else {
-			showTxModal('Unable to process right now');
-		}
-	};
+	// const claimTokens = async () => {
+	// 	const response: TxResult = await requireVaultClient($daoConfigStore).claimFaucet(`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_BIG_PLAY}`, MAX_MINT, getStxAddress());
+	// 	if (response.success) {
+	// 		showTxModal(response.txid);
+	// 		watchTransaction(
+	// 			appConfig.VITE_BIGMARKET_API,
+	// 			appConfig.VITE_STACKS_API,
+	// 			`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`,
+	// 			response.txid
+	// 		);
+	// 	} else {
+	// 		showTxModal('Unable to process right now');
+	// 	}
+	// };
 </script>
 
 <header
@@ -47,7 +47,7 @@
 		</div>
 
 		<div class="flex h-[80%] items-center gap-3 overflow-hidden text-gray-900 dark:text-gray-200">
-			<div
+			<!-- <div
 				class="border-bloodorange relative flex h-4 items-center overflow-hidden border-l-2 pl-2 sm:h-5 lg:h-6"
 			>
 				<span
@@ -83,7 +83,7 @@
 				>
 					Connect to Mint
 				</Button>
-			{/if}
+			{/if} -->
 		</div>
 	</nav>
 </header>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Sun, Moon } from '@lucide/svelte';
+	import { Sun, Moon } from 'lucide-svelte';
 
 	let isDark = true;
 

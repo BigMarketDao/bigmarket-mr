@@ -12,7 +12,7 @@
 	import { TypoHeader } from '@bigmarket/bm-ui';
 	import { base } from '$app/paths';
 	import { stacks } from '@bigmarket/sdk';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 
 	let {
 		dispute
@@ -60,7 +60,10 @@
 									<!-- <Icon src={AlertCircle} mini class="ml-2 inline-flex " /> -->
 									<button
 										class="flex cursor-pointer items-center gap-1 rounded-md px-3 py-1 text-orange-600 hover:bg-orange-50 dark:hover:bg-gray-800"
-										onclick={(e) => { e.preventDefault(); getCurrentLocked(); }}
+										onclick={(e) => {
+											e.preventDefault();
+											getCurrentLocked();
+										}}
 									>
 										<Recycle class="h-4 w-4" /> Reclaim ?
 									</button>
@@ -75,7 +78,11 @@
 			<div class="mt-4 flex flex-wrap gap-4 text-sm">
 				<a
 					class="flex items-center gap-1 rounded-md px-3 py-1 text-purple-600 hover:bg-purple-50 dark:hover:bg-gray-800"
-					href={stacks.explorerTxUrl(appConfig.VITE_NETWORK, appConfig.VITE_STACKS_EXPLORER, dispute.txId ?? '')}
+					href={stacks.explorerTxUrl(
+						appConfig.VITE_NETWORK,
+						appConfig.VITE_STACKS_EXPLORER,
+						dispute.txId ?? ''
+					)}
 					target="_blank"
 				>
 					<ExternalLink class="h-4 w-4" /> Explorer

@@ -4,7 +4,8 @@
 	import { get } from 'svelte/store';
 	import SlotModal from './SlotModal.svelte';
 	import { stacks } from '@bigmarket/sdk';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
+	const appConfig = $derived(requireAppConfig($appConfigStore));
 
 	let {
 		modal,
@@ -14,7 +15,6 @@
 		closeTxModal: () => void;
 	} = $props();
 
-	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const explorerUrl = $derived(
 		stacks.explorerTxUrl(appConfig.VITE_NETWORK, appConfig.VITE_STACKS_EXPLORER, modal.txId ?? '')
 	);

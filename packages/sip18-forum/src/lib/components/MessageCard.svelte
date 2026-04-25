@@ -2,12 +2,12 @@
   import { marked } from 'marked';
   import type { AuthenticatedForumContent } from '@bigmarket/sip18-forum-types';
   import NewMessageCard from './NewMessageCard.svelte';
-  import MessageCard from './MessageCard.svelte'; // self-import for recursion
+  import MessageCard from './MessageCard.svelte';
   import { getPreferredLinkedAccount, verifyPost } from '../utils/forum_helper';
   import { onMount } from 'svelte';
   import { getBnsNameFromAddress, getStxAddress } from '../utils/forum_helper';
   import type { Classes, Config } from '../utils/forum_helper';
-  import { ShieldCheck, StopCircle } from '@lucide/svelte';
+  import { ShieldCheck, StopCircle } from 'lucide-svelte';
 
   // // the first message IS the thread - this gets replaces by replies so we keep the main thread
   // // for refreshing the tree.
@@ -30,7 +30,7 @@
 
   let verified = $state(false);
   let identifier: string = $state('');
-  let displayName: string | undefined = $state(undefined);
+  let displayName: string | undefined = $state<string | undefined>(undefined);
 
   const handleReload = async (data: any) => {
     onReload(data);

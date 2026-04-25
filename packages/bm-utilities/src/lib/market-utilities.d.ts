@@ -1,0 +1,38 @@
+import type { Currency, ExchangeRate, MarketData, MarketVotingVoteEvent, Payout, PredictionMarketClaimEvent, PredictionMarketCreateEvent, PredictionMarketStakeEvent, PurchaseInfo, PurchaseInfoResponse, Sip10Data, TokenPermissionEvent, UserStake } from "@bigmarket/bm-types";
+export declare const CLAIMING_TIER = 1;
+export declare const LIQUIDITY_TIER = 4;
+export declare const STAKING_TIER = -1;
+export declare const CREATE_MARKET_TIER = 2;
+export declare const MARKET_VOTE_TIER = -1;
+export declare const RECLAIM_VOTES_TIER = 12;
+export declare const STXUSD = "0xec7a775f46379b5e943c3526b1c8d54cd49749176b0b98e02dde68d1bd335c17";
+export declare const BTCUSD = "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
+export declare const SOLUSD = "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d";
+export declare const ETHUSD = "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace";
+export declare const SUIUSD = "0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744";
+export declare const TONUSD = "0x8963217838ab4cf5cadc172203c1f0b763fbaa45f346d8ee50ba994bbcac3026";
+export declare const DECIMALS_BY_FEED: Record<string, number>;
+export declare function formatFiat(selectedCurrency: Currency, raw: number, bare?: boolean): string;
+export declare function fmtFiatFromRaw(selectedCurrency: Currency, raw: bigint, decimals: number): string;
+export declare function totalPoolSum(stakes?: number[]): number;
+export declare function userStakeSum(userStake: UserStake | undefined): number;
+export declare function getMarketToken(tokenContract: string, tokens: TokenPermissionEvent[]): Sip10Data;
+export declare function isSTX(token: string): boolean;
+export declare function getGovernanceToken(daoDeployer: string, governanceToken: string, tokens: Array<TokenPermissionEvent>): Sip10Data;
+export declare function validatePurchaseAgainstMax({ index, totalCost, feeBips, slippage }: PurchaseInfo, marketData: MarketData, decimals?: number): PurchaseInfoResponse;
+export declare function estimateMaxSpendIncludingFee(marketData: MarketData, index: number, feeBips: number, decimals?: number): {
+    maxSpendNet: number;
+    maxSpendIncludingFee: number;
+};
+export declare function cpmmPricePerShare(marketData: MarketData, index: number): number;
+export declare function resolveMarketAI(bmApiUrl: string, marketId: number, marketType: number): Promise<any>;
+export declare function fetchMarketsVotes(bmApiUrl: string, marketId: number, marketType: number): Promise<Array<MarketVotingVoteEvent>>;
+export declare function calculatePayoutCategorical(exchangeRates: ExchangeRate[], amount: number, decimals: number, userStake: UserStake | undefined, marketData: MarketData, currency: Currency): Array<Payout>;
+export declare const btcToken: Sip10Data;
+export declare function convertFiatToBitcoin(exchangeRates: ExchangeRate[], amountFiat: number, currency: Currency): number;
+export declare function getTierBalance(bmApiUrl: string, tier: number, address: string): Promise<number>;
+export declare function getPredictionMarket(bmApiUrl: string, marketId: number, marketType: number): Promise<any>;
+export declare function fetchMarketClaims(bmApiUrl: string, marketId: number, marketType: number): Promise<Array<PredictionMarketClaimEvent>>;
+export declare function getPredictionMarketSSR(bmApiUrl: string, marketId: number, marketType: number): Promise<PredictionMarketCreateEvent | undefined>;
+export declare function fetchMarketStakesSSR(bmApiUrl: string, marketId: number, marketType: number): Promise<Array<PredictionMarketStakeEvent>>;
+//# sourceMappingURL=market-utilities.d.ts.map

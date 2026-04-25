@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import CurrencyDropdown from '$lib/components/template/CurrencyDropdown.svelte';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import { daoLink, footerNavSections } from '$lib/core/tools/site';
 
 	const currentYear = new Date().getFullYear();

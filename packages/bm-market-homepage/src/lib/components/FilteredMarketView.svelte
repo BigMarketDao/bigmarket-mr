@@ -2,7 +2,7 @@
 	import type { Currency, MarketCategory, PredictionMarketCreateEvent } from '@bigmarket/bm-types';
 	import { onMount } from 'svelte';
 	import { fromStore } from 'svelte/store';
-	import CategoryButton from './CategoryButton.svelte';
+	import CategoryButton from './markets/CategoryButton.svelte';
 	import { getMarketStatus, totalPoolSum } from '@bigmarket/bm-utilities';
 	import { Search, TrendingUp, XIcon } from 'lucide-svelte';
 	import MarketEntry from './markets/MarketEntry.svelte';
@@ -211,7 +211,6 @@
 					{/if}
 				{/each}
 			{/key}
-			<span class="w-10">{$categoryStateStore}</span>
 		</nav>
 	</div>
 	<!-- Divider -->

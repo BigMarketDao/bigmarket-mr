@@ -14,8 +14,8 @@
 	} from '@bigmarket/bm-common';
 	import { resolve } from '$app/paths';
 	import { daoLink } from '$lib/core/tools/site';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
+	import { daoConfigStore, requireDaoConfig } from '@bigmarket/bm-common';
 	import { ConnectButton } from '@bigmarket/bm-ui';
 	import { Crown, Power, Trophy, Vote, Settings, CreditCard, Blocks } from 'lucide-svelte';
 
@@ -206,15 +206,6 @@
 											</span>
 										</div>
 									</div>
-									<!-- <div class="flex items-center justify-between pl-2">
-									<span class="text-[10px] text-gray-400 dark:text-gray-500">in vault</span>
-									<span class="text-[11px] text-gray-600 dark:text-gray-400">
-										{fmtMicroToStx(
-											$vaultBalanceStore[token.token] ?? 0,
-											token.sip10Data?.decimals
-										)}
-									</span>
-								</div> -->
 								</div>
 							{/if}
 						{/each}

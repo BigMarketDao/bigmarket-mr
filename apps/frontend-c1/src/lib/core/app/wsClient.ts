@@ -1,5 +1,5 @@
 // src/lib/ws/wsClient.ts
-import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 import { get } from 'svelte/store';
 import { writable } from 'svelte/store';
 

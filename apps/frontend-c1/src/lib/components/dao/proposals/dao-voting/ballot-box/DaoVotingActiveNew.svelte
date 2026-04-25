@@ -6,16 +6,16 @@
 	import { showTxModal } from '@bigmarket/bm-common';
 	import { watchTransaction } from '@bigmarket/bm-common';
 	import { onMount } from 'svelte';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import {
 		daoConfigStore,
 		requireDaoConfig,
 		requireDaoGovernanceClient
-	} from '$lib/stores/config/daoConfigStore';
+	} from '@bigmarket/bm-common';
 	import type { VotingEventProposeProposal } from '@bigmarket/bm-types';
 	import { getProposalStatus, isVoting } from '$lib/core/app/loaders/governance/proposals';
-	import { fetchUserBalances, getTransaction } from '$lib/core/app/loaders/walletLoaders';
-	import { fmtNumber } from '@bigmarket/bm-utilities';
+	import { fetchUserBalances } from '$lib/core/app/loaders/walletLoaders';
+	import { fmtNumber, getTransaction } from '@bigmarket/bm-utilities';
 	import { stacks } from '@bigmarket/sdk';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));

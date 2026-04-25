@@ -4,3 +4,7 @@ export * from "./lib/market-utilities.js";
 export * from "./lib/market-states.js";
 export * from "./lib/blockTime.js";
 export * from "./lib/categories.js";
+export * from "./lib/conversion.js";
+export * from "./lib/shares.js";
+export * from "./lib/tokens.js";
+export * from "./lib/loaders.js";

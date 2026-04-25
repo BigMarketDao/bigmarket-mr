@@ -1,5 +1,5 @@
 import { get } from 'svelte/store';
-import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 import { getStxAddress } from '@bigmarket/bm-common';
 import { stacks } from '@bigmarket/sdk';
 import {

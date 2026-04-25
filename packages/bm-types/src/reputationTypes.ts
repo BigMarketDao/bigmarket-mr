@@ -2,6 +2,11 @@ export type UserSettings = {
   executiveTeamMember: boolean;
 };
 
+export type ReputationLeaderboardItem = {
+  recipient: string;
+  reputationScore: number;
+};
+
 export type UserReputation = {
   name: string;
   userSettings: UserSettings;

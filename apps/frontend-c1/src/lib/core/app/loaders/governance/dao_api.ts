@@ -3,12 +3,8 @@ import { showTxModal } from '@bigmarket/bm-common';
 import { getStxAddress } from '@bigmarket/bm-common';
 import { watchTransaction } from '@bigmarket/bm-common';
 import { get } from 'svelte/store';
-import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-import {
-	daoConfigStore,
-	requireDaoConfig,
-	requireDaoGovernanceClient
-} from '$lib/stores/config/daoConfigStore';
+import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
+import { daoConfigStore, requireDaoConfig, requireDaoGovernanceClient } from '@bigmarket/bm-common';
 import {
 	type Auth,
 	type DaoOverview,

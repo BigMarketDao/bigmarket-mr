@@ -15,8 +15,6 @@
     type Config,
   } from '../utils/forum_helper';
 
-  // export let config: Config;
-  // export let isConnected: boolean;
   const { config, isConnected } = $props<{
     config: Config;
     isConnected: boolean;
@@ -24,7 +22,7 @@
 
   let address = $state('');
   type BoardTemplate = ReturnType<typeof getNewBoardTemplate>;
-  let template: BoardTemplate|undefined = $state(undefined);
+  let template: BoardTemplate|undefined = $state<BoardTemplate|undefined>(undefined);
 
   let showPreview = $state(false);
   let error: string | null = $state(null);
@@ -57,7 +55,11 @@
 
     try {
       loading = true;
-      const { signature, publicKey } = await openWalletForSignature(getConfig(), template);
+      const response = await openWalletForSignature(getConfig(), template);
+      if (!response) {
+        throw new Error("Failed to request forum signature");
+      }
+      const { signature, publicKey } = response;
       await createBoard(config.VITE_FORUM_API, {
         forumContent: template,
         auth: { signature, publicKey },

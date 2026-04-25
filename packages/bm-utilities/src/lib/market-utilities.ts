@@ -1,5 +1,31 @@
-import type { Currency, MarketData, UserStake } from "@bigmarket/bm-types";
+import type {
+  Currency,
+  ExchangeRate,
+  MarketData,
+  MarketVotingVoteEvent,
+  Payout,
+  PredictionMarketClaimEvent,
+  PredictionMarketCreateEvent,
+  PredictionMarketStakeEvent,
+  PurchaseInfo,
+  PurchaseInfoResponse,
+  Sip10Data,
+  TokenBalances,
+  TokenPermissionEvent,
+  TransactionObject,
+  UserStake,
+} from "@bigmarket/bm-types";
 import { formatUnits } from "viem";
+import { fmtMicroToStxNumber, fmtStxMicro } from "./format.js";
+import { convertCryptoToFiatNumber } from "./conversion.js";
+import { estimateBitcoinBlockTime } from "./blockTime.js";
+
+export const CLAIMING_TIER = 1;
+export const LIQUIDITY_TIER = 4;
+export const STAKING_TIER = -1; // removed due to sybil
+export const CREATE_MARKET_TIER = 2;
+export const MARKET_VOTE_TIER = -1; // removed due to sybil
+export const RECLAIM_VOTES_TIER = 12;
 
 export const STXUSD =
   "0xec7a775f46379b5e943c3526b1c8d54cd49749176b0b98e02dde68d1bd335c17";
@@ -86,4 +112,330 @@ export function userStakeSum(userStake: UserStake | undefined) {
   } catch (err: any) {
     return 0;
   }
+}
+
+const defToken: Sip10Data = {
+  symbol: "BIG",
+  name: "BitcoinDAO Governance Token",
+  decimals: 6,
+  balance: 0,
+  tokenUri: "",
+  totalSupply: 0,
+};
+
+export function getMarketToken(
+  tokenContract: string,
+  tokens: TokenPermissionEvent[],
+): Sip10Data {
+  const token = tokens.find((t) => t.token === tokenContract);
+  return token?.sip10Data || defToken;
+}
+export function isSTX(token: string) {
+  return token.toLowerCase().indexOf("stx") > -1;
+}
+
+export function getGovernanceToken(
+  daoDeployer: string,
+  governanceToken: string,
+  tokens: Array<TokenPermissionEvent>,
+): Sip10Data {
+  const token = tokens.find(
+    (t) => t.token === `${daoDeployer}.${governanceToken}`,
+  );
+  return token?.sip10Data || defToken;
+}
+
+export function validatePurchaseAgainstMax(
+  { index, totalCost, feeBips, slippage }: PurchaseInfo,
+  marketData: MarketData,
+  decimals = 6,
+): PurchaseInfoResponse {
+  const BIPS = 10000;
+  const slippageBips = Math.floor(slippage * BIPS);
+
+  const fee = Math.floor((totalCost * feeBips) / BIPS);
+  const netCost = totalCost - fee;
+
+  const idealShares = cpmmSharesForCost(marketData, netCost, index);
+  const minShares = Math.floor(idealShares * ((BIPS - slippageBips) / BIPS));
+
+  const maxSpend = estimateMaxSpendIncludingFee(
+    marketData,
+    index,
+    feeBips,
+    decimals,
+  );
+  const idealSharesAtMaxSpend = cpmmSharesForCost(
+    marketData,
+    maxSpend.maxSpendNet,
+    index,
+  );
+  const minSharesAtMaxSpend = Math.floor(
+    idealSharesAtMaxSpend * ((BIPS - slippageBips) / BIPS),
+  );
+
+  if (totalCost > maxSpend.maxSpendIncludingFee) {
+    return {
+      willFail: true,
+      reason: `Overbuy: trying to spend ${fmtMicroToStxNumber(totalCost)}, max allowed is ${fmtMicroToStxNumber(maxSpend.maxSpendIncludingFee)} - refresh the page and try again`,
+      idealShares,
+      minShares,
+      maxSpendIncludingFee: maxSpend.maxSpendIncludingFee,
+      idealSharesAtMaxSpend,
+      minSharesAtMaxSpend,
+    };
+  }
+
+  return {
+    willFail: false,
+    idealShares,
+    minShares,
+    maxSpendIncludingFee: maxSpend.maxSpendIncludingFee,
+    idealSharesAtMaxSpend,
+    minSharesAtMaxSpend,
+  };
+}
+function cpmmSharesForCost(
+  marketData: MarketData,
+  cost: number,
+  index: number,
+): number {
+  if (cost === 0) return 0;
+
+  const stakes = marketData.stakes;
+  const selectedPool = Number(stakes[index]);
+
+  const totalPool = stakes.reduce((sum, s) => sum + Number(s), 0);
+  const otherPool = totalPool - selectedPool;
+
+  const numerator = selectedPool * otherPool;
+  const denominator = selectedPool + cost;
+  const newY = Math.floor(numerator / denominator);
+  const shares = otherPool - newY;
+
+  return shares;
+}
+export function estimateMaxSpendIncludingFee(
+  marketData: MarketData,
+  index: number,
+  feeBips: number,
+  decimals?: number,
+): { maxSpendNet: number; maxSpendIncludingFee: number } {
+  const BIPS = 10000;
+
+  const maxPurchase = cpmmMaxPurchase(marketData, index);
+  const pricePerShare = cpmmPricePerShare(marketData, index);
+
+  const rawCost = maxPurchase * pricePerShare;
+  const maxSpendNet = Math.floor(rawCost); // in microtokens
+
+  const maxSpendIncludingFee = Math.ceil(
+    (maxSpendNet * BIPS) / (BIPS - feeBips),
+  );
+
+  return { maxSpendNet, maxSpendIncludingFee };
+}
+function cpmmMaxPurchase(marketData: MarketData, index: number): number {
+  const stakes = marketData.stakes;
+  if (index < 0 || index >= stakes.length)
+    throw new Error("Invalid category index");
+
+  const selectedPool = Number(stakes[index]);
+  const totalPool = stakes.reduce((sum, s) => sum + Number(s), 0);
+  const otherPool = totalPool - selectedPool;
+
+  // Mirror Clarity's `(if (> other-pool u0) (- other-pool u1) u0)`
+  const maxPurchase = otherPool > 0 ? otherPool - 1 : 0;
+
+  return maxPurchase;
+}
+
+export function cpmmPricePerShare(
+  marketData: MarketData,
+  index: number,
+): number {
+  const stakes = marketData.stakes;
+  if (index < 0 || index >= stakes.length)
+    throw new Error("Invalid category index");
+
+  const selectedPool = stakes[index];
+  const totalPool = stakes.reduce((sum, s) => sum + s, 0);
+  const otherPool = totalPool - selectedPool;
+
+  if (otherPool === 0) return Infinity;
+
+  return selectedPool / otherPool;
+}
+
+export async function resolveMarketAI(
+  bmApiUrl: string,
+  marketId: number,
+  marketType: number,
+): Promise<any> {
+  const path = `${bmApiUrl}/agent/resolve/${marketId}/${marketType}`;
+  const response = await fetch(path);
+  const res = (await response.json()) || [];
+  return res;
+}
+export async function fetchMarketsVotes(
+  bmApiUrl: string,
+  marketId: number,
+  marketType: number,
+): Promise<Array<MarketVotingVoteEvent>> {
+  const path = `${bmApiUrl}/pm/markets/votes/${marketId}/${marketType}`;
+  const response = await fetch(path);
+  if (response.status === 404) return [];
+  const res = await response.json();
+  return res || [];
+}
+export function calculatePayoutCategorical(
+  exchangeRates: ExchangeRate[],
+  amount: number,
+  decimals: number,
+  userStake: UserStake | undefined,
+  marketData: MarketData,
+  currency: Currency,
+): Array<Payout> {
+  const mult = Number(`1e${decimals}`);
+  const microAmount = fmtStxMicro(amount, decimals); //Math.round(amount * mult);
+  const numCategories = marketData.categories.length;
+  const marketType =
+    marketData.coolDownPeriod && marketData.coolDownPeriod > 0 ? 2 : 1;
+
+  const userStakes: Array<number> = [];
+
+  for (let i = 0; i < numCategories; i++) {
+    userStakes.push(
+      userStake && userStake.stakes && userStake?.stakes.length > i
+        ? userStake?.stakes[i]
+        : 0,
+    );
+  }
+  const totalStakes = [...marketData.stakes];
+
+  // total stake in market
+  const totalMarketStake = totalStakes.reduce((sum, stake) => sum + stake, 0);
+  const payouts: Payout[] = [];
+
+  for (let i = 0; i < numCategories; i++) {
+    const myTotalStake = microAmount; //userStakes[i] + microAmount; // User's total stake in category i
+    const categoryPool = totalStakes[i]; // Total market stake in category i
+
+    // Calculate total stake excluding the current category
+    const totalNotI = totalMarketStake - categoryPool;
+
+    let stakeInMicro = 0;
+    if (categoryPool === 0) {
+      stakeInMicro = myTotalStake;
+    } else {
+      //payouts.push((myTotalStake * totalNotI) / categoryPool);
+      stakeInMicro = myTotalStake + (myTotalStake * totalNotI) / categoryPool;
+    }
+    const crypto = parseFloat(
+      fmtMicroToStxNumber(stakeInMicro, decimals).toFixed(decimals),
+    );
+    const cryptoCurr = decimals === 8 ? " BTC" : " STX";
+    const amountFiat = convertCryptoToFiatNumber(
+      exchangeRates,
+      currency,
+      decimals === 6,
+      crypto,
+    );
+    const amounts = {
+      fiat: String(amountFiat),
+      cryptoMicro: stakeInMicro,
+      crypto: crypto.toString() + cryptoCurr,
+      btc:
+        convertFiatToBitcoin(
+          exchangeRates,
+          convertCryptoToFiatNumber(
+            exchangeRates,
+            currency,
+            decimals === 6,
+            crypto,
+          ),
+          currency,
+        ).toString() + " BTC",
+    };
+    payouts.push(amounts);
+  }
+
+  return payouts;
+}
+export const btcToken: Sip10Data = {
+  symbol: "BTC",
+  name: "bitcoin",
+  decimals: 8,
+  balance: 0,
+  tokenUri: "",
+  totalSupply: 0,
+};
+
+export function convertFiatToBitcoin(
+  exchangeRates: ExchangeRate[],
+  amountFiat: number,
+  currency: Currency,
+): number {
+  // const microAmount = fmtStxMicro(amount, decimals); //Math.round(amount * mult);
+  const rate = exchangeRates.find((c) => c.currency === currency.code);
+  if (!rate) return 0;
+  const amountNative = amountFiat / (rate.fifteen ?? 0);
+  return parseFloat(amountNative.toFixed(btcToken.decimals)); //fmtStxMicro(amountNative, sip10Data.decimals);
+}
+export async function getTierBalance(
+  bmApiUrl: string,
+  tier: number,
+  address: string,
+): Promise<number> {
+  const path = `${bmApiUrl}/reputation/${tier}/${address}`;
+  const response = await fetch(path);
+  const result = (await response.json()) || 0;
+  return result || 0;
+}
+
+export async function getPredictionMarket(
+  bmApiUrl: string,
+  marketId: number,
+  marketType: number,
+) {
+  const path = `${bmApiUrl}/pm/markets/${marketId}/${marketType}`;
+  console.log("getPredictionMarket " + path);
+  const response = await fetch(path);
+  if (response.status === 404) return [];
+  const res = await response.json();
+  return res;
+}
+export async function fetchMarketClaims(
+  bmApiUrl: string,
+  marketId: number,
+  marketType: number,
+): Promise<Array<PredictionMarketClaimEvent>> {
+  const path = `${bmApiUrl}/pm/claims/${marketId}/${marketType}`;
+  const response = await fetch(path);
+  if (response.status === 404) return [];
+  const res = await response.json();
+  return res;
+}
+export async function getPredictionMarketSSR(
+  bmApiUrl: string,
+  marketId: number,
+  marketType: number,
+): Promise<PredictionMarketCreateEvent | undefined> {
+  const path = `${bmApiUrl}/pm/markets/${marketId}/${marketType}`;
+  console.log("getPredictionMarket " + path);
+  const response = await fetch(path);
+  if (response.status === 404) return undefined;
+  const res = await response.json();
+  return res;
+}
+export async function fetchMarketStakesSSR(
+  bmApiUrl: string,
+  marketId: number,
+  marketType: number,
+): Promise<Array<PredictionMarketStakeEvent>> {
+  const path = `${bmApiUrl}/pm/stakes/${marketId}/${marketType}`;
+  const response = await fetch(path);
+  if (response.status === 404) return [] as PredictionMarketStakeEvent[];
+  const res = await response.json();
+  return res;
 }

@@ -28,7 +28,7 @@
 		if (!rootEl?.contains(e.target as Node)) close();
 	}
 
-	const panelPos = $derived(() =>
+	const panelPos = $derived(
 		placement === 'top'
 			? 'bottom-full left-1/2 -translate-x-1/2 mb-5'
 			: placement === 'bottom'
@@ -38,7 +38,7 @@
 					: 'left-full top-1/2 -translate-y-1/2 ml-2'
 	);
 
-	const arrowPos = $derived(() =>
+	const arrowPos = $derived(
 		placement === 'top'
 			? 'top-full left-1/2 -translate-x-1/2'
 			: placement === 'bottom'

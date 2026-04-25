@@ -21,7 +21,7 @@
 		rounded-md
 		border
 		border-zinc-100/70
-		dark:bg-zinc-900
+		dark:bg-gray-900
 		p-4
 
 		shadow-[0_6px_20px_rgba(0,0,0,0.06)]
@@ -30,7 +30,7 @@
 		hover:border-zinc-300
 		hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)]
 
-		bg-zinc-900
+		bg-zinc-100
 		dark:shadow-[0_6px_20px_rgba(0,0,0,0.5)]
 		dark:hover:border-zinc-700
 		`,

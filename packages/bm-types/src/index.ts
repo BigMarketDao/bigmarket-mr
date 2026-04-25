@@ -13,3 +13,4 @@ export * from "./authTypes.js";
 export * from "./signatureTypes.js";
 export * from "./daoGovernanceTypes.js";
 export * from "./config.js";
+export * from "./gateKeeper.js";

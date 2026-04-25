@@ -5,12 +5,12 @@
 	import { connectWallet } from '@bigmarket/bm-common';
 	import { fmtMicroToStx, fmtMicroToStxNumber, truncate } from '@bigmarket/bm-utilities';
 	import { showTxModal } from '@bigmarket/bm-common';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import {
 		daoConfigStore,
 		requireDaoConfig,
 		requireDaoGovernanceClient
-	} from '$lib/stores/config/daoConfigStore';
+	} from '@bigmarket/bm-common';
 	import { stacks } from '@bigmarket/sdk';
 	import { getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
 	import { watchTransaction } from '@bigmarket/bm-common';

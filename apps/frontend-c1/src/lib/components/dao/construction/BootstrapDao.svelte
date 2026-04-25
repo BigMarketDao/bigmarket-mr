@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { daoConfigStore, requireDaoGovernanceClient } from '$lib/stores/config/daoConfigStore';
+	import { daoConfigStore, requireDaoGovernanceClient } from '@bigmarket/bm-common';
 	import { get } from 'svelte/store';
 	import { onMount } from 'svelte';
 

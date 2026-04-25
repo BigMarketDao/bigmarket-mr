@@ -9,4 +9,7 @@ export * from "./lib/stores/ui/allowedTokenStore.js";
 export * from "./lib/stores/ui/chainStore.js";
 export * from "./lib/stores/ui/marketSystemCategoriesStore.js";
 export * from "./lib/stores/ui/daoOverviewStore.js";
-export * from "./lib/stores/ui/vaultBalanceStore.js";
+export * from "./lib/stores/config/appConfigStore.js";
+export * from "./lib/stores/config/daoConfigStore.js";
+export * from "./lib/stores/ui/shareCostsStore.js";
+export * from "./lib/stores/ui/aiMarket.js";

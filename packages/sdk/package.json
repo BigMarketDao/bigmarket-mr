@@ -12,11 +12,14 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@bigmarket/bm-utilities": "workspace:*",
+    "@bigmarket/sip18-forum-types": "workspace:*",
     "@bigmarket/bm-types": "workspace:*",
+    "@bigmarket/bm-utilities": "workspace:*",
     "@stacks/common": "^7.3.1",
     "@stacks/connect": "^8.2.6",
     "@stacks/encryption": "^7.4.0",
-    "@stacks/transactions": "^7.4.0"
+    "@stacks/transactions": "^7.4.0",
+    "c32check": "^2.0.0",
+    "merkletreejs": "^0.6.0"
   }
 }

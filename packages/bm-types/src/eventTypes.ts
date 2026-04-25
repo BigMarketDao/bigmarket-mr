@@ -150,3 +150,64 @@ export interface PredictionMarketStakeEvent extends BasicEvent {
   fee: number;
   cost: number;
 }
+
+export interface PredictionMarketClaimEvent extends BasicEvent {
+  marketId: number;
+  marketType: number;
+  claimer: string;
+  indexWon: number;
+  userTokensInOutcome: number;
+  userSharesInOutcome: number;
+  winningPool: number;
+  daoFee: number;
+  marketFee: number;
+  totalPool: ResolutionState;
+  netRefund: number;
+}
+export interface ClaimWinnings {
+  _id: string; // typically ObjectId as string
+  event: "claim-winnings";
+  event_index: number;
+  txId: string;
+  daoContract: string;
+  extension: string;
+  marketId: number;
+  marketType: number;
+  indexWon: number;
+  claimer: string;
+  userStake: number;
+  userShare: number;
+  marketFee: number;
+  daoFee: number;
+  winningPool: number;
+  totalPool: number;
+}
+
+export interface UserMarketStake {
+  marketId: number;
+  marketType: number;
+  extension: string;
+  voter: string[]; // looks like an array of addresses
+  stakeTotal: number;
+  stakeIds: string[];
+  stakeAmounts: number[];
+  claimed: boolean;
+  claim: ClaimWinnings;
+  marketMeta: {
+    name: string;
+    description: string;
+    category: string;
+  };
+  marketData: MarketData;
+}
+
+export interface UserMarketStakesResponse {
+  stakes: UserMarketStake[];
+}
+export interface MarketTypeContainer {
+  marketType: number;
+  marketTypeDataCategorical: Array<MarketCategoricalOption>;
+  priceFeedId?: string;
+  priceFeedOptions: Array<{ label: string; value: string }>;
+  marketTypeDataScalar: Array<ScalarMarketDataItem>;
+}

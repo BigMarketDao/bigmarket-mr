@@ -2,16 +2,23 @@
 	import type { LeaderBoard, PredictionMarketCreateEvent } from '@bigmarket/bm-types';
 	import { onMount } from 'svelte';
 	import {
+		allowedTokenStore,
 		chainStore,
 		daoOverviewStore,
+		exchangeRatesStore,
 		getStxAddress,
 		marketSystemCategoriesStore,
 		selectedCurrency
 	} from '@bigmarket/bm-common';
 	// import FilteredMarketView from './FilteredMarketView.svelte';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
 	import { isCoordinator } from '$lib/core/tools/security';
-	import { FilteredMarketView } from '@bigmarket/bm-market-homepage';
+	import {
+		FilteredMarketView,
+		InfoPanelContainer,
+		LeaderBoardDisplay
+	} from '@bigmarket/bm-market-homepage';
+	import { getRate } from '@bigmarket/bm-utilities';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const { markets, leaderBoard } = $props<{
@@ -41,14 +48,24 @@
 	</section>
 
 	<!-- Info Panels -->
-	<!-- <section>
+	<section>
 		<InfoPanelContainer />
-	</section> -->
+	</section>
 
 	<!-- Ending Soon section removed - cards now show time info and are sorted by expiration -->
 
 	<!-- Leaderboard -->
-	<!-- <section>
-		<LeaderBoardDisplay layout={2} {leaderBoard} {markets} filterTo={undefined} />
-	</section> -->
+	<section>
+		<LeaderBoardDisplay
+			layout={2}
+			selectedCurrency={$selectedCurrency}
+			{leaderBoard}
+			{markets}
+			filterTo={undefined}
+			currentBurnHeight={$chainStore.stacks.burn_block_height}
+			rate={getRate($exchangeRatesStore, $selectedCurrency.code)}
+			tokens={$allowedTokenStore}
+			exchangeRates={$exchangeRatesStore}
+		/>
+	</section>
 </div>

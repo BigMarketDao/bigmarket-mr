@@ -5,12 +5,6 @@
   import { loadThread } from '../stores/threads';
   import type { Classes, Config } from '../utils/forum_helper';
 
-  // export let threadId: string; //page.params.threadId
-  // export let config: Config;
-  // export let thread: AuthenticatedForumContent;
-  // export let classes: Classes = {};
-  // export let isConnected: boolean;
-  
   const { forumApi, threadId, config, threadIn, classes = {}, isConnected } = $props<{
     forumApi: string;
     threadId: string;

@@ -3,11 +3,11 @@
 	import { fmtMicroToStxNumber, fmtNumber } from '@bigmarket/bm-utilities';
 
 	import { onMount } from 'svelte';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import type { VotingEventProposeProposal } from '@bigmarket/bm-types';
 	import { getStxAddress } from '@bigmarket/bm-common';
 	import { getBalanceAtHeight } from '$lib/core/app/loaders/walletLoaders';
-	//import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
+	//import { daoConfigStore, requireDaoConfig } from '@bigmarket/bm-common';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	//const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 

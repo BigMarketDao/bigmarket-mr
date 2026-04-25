@@ -6,12 +6,6 @@
   import NewMessageCard from './NewMessageCard.svelte';
   import type { Classes, Config } from '../utils/forum_helper';
 
-  // export let config: Config;
-  // export let messageBoardId;
-  // export let messages: Array<AuthenticatedForumContent>;
-  // export let level;
-  // export let isConnected;
-
   const { forumId, config, messageBoardId, level, messages, isConnected, classes = {} } = $props<{
 		forumId: string;
     config: Config;

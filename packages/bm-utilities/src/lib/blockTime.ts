@@ -1,3 +1,4 @@
+import type { ExchangeRate } from "@bigmarket/bm-types";
 import { DateTime } from "luxon";
 
 export function estimateBitcoinBlockTime(
@@ -16,4 +17,17 @@ export function estimateBitcoinBlockTime(
     .setZone(userTZ);
 
   return estimatedTime.toFormat("dd MMM yy HH:mm ZZZ");
+}
+export function getRate(
+  exchangeRates: ExchangeRate[],
+  currencyCode: string,
+): ExchangeRate {
+  const rate = exchangeRates.find((o) => o.currency === currencyCode);
+  if (!rate)
+    return {
+      symbol: "$",
+      name: "US Dollar",
+      currency: "USD",
+    } as ExchangeRate;
+  return rate;
 }

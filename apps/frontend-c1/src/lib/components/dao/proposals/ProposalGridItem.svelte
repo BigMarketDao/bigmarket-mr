@@ -9,8 +9,8 @@
 	import { isConcluded, isPostVoting } from '../../../core/app/loaders/governance/proposals';
 	import { lookupContract, reclaimVotes } from '../../../core/app/loaders/governance/dao_api';
 	import { Bulletin } from '@bigmarket/bm-ui';
-	import { appConfigStore, requireAppConfig } from '$lib/stores/config/appConfigStore';
-	import { daoConfigStore, requireDaoConfig } from '$lib/stores/config/daoConfigStore';
+	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
+	import { daoConfigStore, requireDaoConfig } from '@bigmarket/bm-common';
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 	let {
