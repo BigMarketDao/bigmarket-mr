@@ -169,6 +169,9 @@ importers:
       '@bigmarket/bm-config':
         specifier: workspace:*
         version: link:../../packages/bm-config
+      '@bigmarket/bm-create-market':
+        specifier: workspace:*
+        version: link:../../packages/bm-create-market
       '@bigmarket/bm-design':
         specifier: workspace:*
         version: link:../../packages/bm-design

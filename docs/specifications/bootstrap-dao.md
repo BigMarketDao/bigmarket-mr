@@ -1,10 +1,4 @@
-Good call — this is exactly the right moment to step back into **use cases before more code**. You’ve hit a dependency boundary (bootstrap), so modelling it properly will save you a lot of pain later.
-
-Let’s write this cleanly and in a way that maps directly to your architecture.
-
----
-
-# 🧩 Use Case: User Bootstraps DAO
+# 🧩 User Bootstraps DAO
 
 ---
 

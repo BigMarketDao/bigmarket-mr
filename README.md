@@ -1,185 +1,363 @@
-# BigMarket FPMM
-
-A minimal, use-case driven monorepo for building the BigMarket prediction market protocol on Stacks.
-
-This repository is intentionally lightweight.
-We build the system through **concrete user flows**, not abstract architecture.
+Here’s a clean, production-ready **[README.md](http://README.md)** for your monorepo. It’s structured for contributors, grant reviewers, and future devs.
 
 ---
 
-## 🧭 Approach
+# **BigMarket Monorepo**
 
-Instead of designing all components upfront, we follow:
-
-> **Use case → implementation → structure**
-
-Each feature is introduced as a **vertical slice** that touches:
-
-- smart contracts
-- SDK
-- frontend
-
-This keeps the system:
-
-- simple
-- testable
-- grounded in real behaviour
+Decentralised prediction markets built on Stacks, with a modular cross-chain architecture and Svelte-based UI.
 
 ---
 
-## 🧱 Current Focus
+## **Overview**
 
-The initial architecture is defined by the **vault trading flow**:
+This monorepo contains:
 
-1. **Deposit** — user deposits SIP-010 tokens into a vault
-2. **Allocate** — user uses deposited funds in a market position
-3. **Withdraw** — user withdraws unused or settled funds
+- **Smart contracts (Clarity)** — on-chain market logic
+- **API layer** — off-chain services and indexing
+- **UI applications** — Svelte 5 frontends
+- **Shared packages** — SDK, types, utilities, UI components
 
-This establishes the core primitives:
+The architecture is designed for:
 
-- token custody
-- internal accounting
-- market interaction
+- modular reuse
+- cross-chain expansion (Stacks, Solana, Sui)
+- white-label deployments
 
 ---
 
-## 📁 Repository Structure
+## **Repository Structure**
 
-```text
+```bash
 .
-├── apps
-│   ├── backend-api        # minimal backend (future use, currently thin)
-│   └── frontend-c1        # primary client UI (client 1)
-│       └── src
-│
-├── contracts
-│   └── stacks
-│       └── bigmarket-dao  # Clarity smart contracts (Clarinet project)
-│
-├── docs
-│   ├── contracts          # contract-level notes and specs
-│   ├── flows              # sequence / interaction flows
-│   ├── invariants         # system invariants and guarantees
-│   └── use-cases          # source of truth for architecture
-│
-├── packages
-│   ├── sdk                # thin TypeScript contract interaction layer
-│   ├── types              # shared types (introduced as needed)
-│   └── ui                 # shared UI components (introduced as needed)
-│
-└── scripts                # repo utilities (e.g. initialise.sh)
+├── apps/                  # Frontend applications
+│   └── web/               # Main SvelteKit app (market UI)
+
+├── api/                   # Backend services (Node.js / MongoDB)
+│   └── src/
+
+├── contracts/             # Clarity smart contracts
+│   ├── markets/
+│   ├── dao/
+│   └── extensions/
+
+├── packages/              # Shared libraries
+│   ├── bm-common/         # Shared stores, config helpers
+│   ├── bm-config/         # Environment + config management
+│   ├── bm-create-market/  # Market creation UI + logic
+│   ├── bm-design/         # Design tokens / Tailwind base
+│   ├── bm-market/         # Market UI components
+│   ├── bm-market-homepage/# Market listing / discovery UI
+│   ├── bm-types/          # Shared TypeScript types
+│   ├── bm-ui/             # Core UI component library
+│   ├── bm-utilities/      # Formatting + helpers
+│   ├── sdk/               # Cross-chain SDK abstraction
+│   ├── sip18-forum/       # Forum components
+│   ├── sip18-forum-types/ # Forum types
+│   └── tsconfig/          # Shared TS config
+
+├── pnpm-workspace.yaml
+├── turbo.json / build config (if used)
+└── README.md
+
 ```
 
 ---
 
-## 📌 Key Principles
+## **Package Design Principles**
 
-### 1. Use Cases Drive Everything
+- **Separation of concerns**
+  - UI, logic, contracts clearly split
+- **Composable packages**
+  - UI can be reused across apps
+- **Chain abstraction**
+  - SDK exposes unified interface:
+    ```ts
+    sdk.chain('stacks')
+    sdk.chain('solana')
 
-All architecture decisions originate from `/docs/use-cases`.
-
-If a component is not required by a use case, it should not exist.
-
----
-
-### 2. Minimal by Default
-
-We avoid premature abstractions:
-
-- no indexer until needed
-- no backend logic unless required
-- no shared packages without duplication pressure
+    ```
+- **White-label ready**
+  - Apps can selectively include packages
 
 ---
 
-### 3. Clear Separation of Concerns
+## **Getting Started**
 
-- **contracts/** → on-chain logic (source of truth)
-- **packages/sdk** → interaction layer
-- **apps/frontend-c1** → user interface
-- **docs/** → system understanding
-
----
-
-### 4. Shared Vault Model
-
-The system uses a **central vault contract**:
-
-- users deposit SIP-010 tokens
-- balances are tracked internally
-- funds are allocated to markets from the vault
-- unused funds remain withdrawable
-
----
-
-## 🚀 Getting Started
-
-### Initialise repo structure
+### **Install dependencies**
 
 ```bash
-./scripts/initialise.sh
+pnpm install
+
 ```
 
 ---
 
-### Run frontend
+## **Running the Project**
+
+### **1. UI (SvelteKit App)**
 
 ```bash
-cd apps/frontend-c1
-# install + run depending on your setup
+pnpm --filter web dev
+
+```
+
+or (depending on naming):
+
+```bash
+pnpm --filter @bigmarket/web dev
+
+```
+
+Build:
+
+```bash
+pnpm --filter web build
+
 ```
 
 ---
 
-### Work with contracts
+### **2. API (Node Backend)**
 
 ```bash
-cd contracts/stacks/bigmarket-dao
+pnpm --filter api dev
+
+```
+
+Build:
+
+```bash
+pnpm --filter api build
+
+```
+
+Run production:
+
+```bash
+pnpm --filter api start
+
+```
+
+---
+
+### **3. Contracts (Clarity)**
+
+From the `contracts/` directory:
+
+#### Check contracts
+
+```bash
+clarinet check
+
+```
+
+#### Run tests
+
+```bash
 clarinet test
+
+```
+
+#### Deploy (testnet)
+
+```bash
+clarinet deploy --testnet
+
 ```
 
 ---
 
-## 🛠 Development Workflow
+## **Working with Packages**
 
-1. Define or refine a use case in:
+### Build a specific package
 
-   ```text
-   docs/use-cases/
-   ```
+```bash
+pnpm --filter @bigmarket/bm-ui build
 
-2. Implement contract changes
-
-3. Add SDK support
-
-4. Wire into frontend
-
-5. Repeat
+```
 
 ---
 
-## 🧪 What’s Not Included (Yet)
+### Watch mode (for UI libs)
 
-These will only be introduced when required:
+```bash
+pnpm --filter @bigmarket/bm-ui dev
 
-- indexer
-- matching engine
-- settlement service
-- complex backend APIs
-- advanced governance layers
+```
 
 ---
 
-## 🧠 Notes for Contributors / Agents
+### Rebuild all packages
 
-- Do not bypass the vault for fund movement
-- Keep contracts, SDK, and UI aligned with use cases
-- Prefer simple implementations over extensible abstractions
-- Add structure only when it is clearly required
+```bash
+pnpm -r build
+
+```
 
 ---
 
-## 📍 Status
+## **Development Workflow**
 
-This repository is in early-stage development.
-The current goal is to establish a **clean, working foundation** for the protocol.
+### 1. Modify shared package
+
+Example:
+
+```
+packages/bm-ui/
+
+```
+
+### 2. Rebuild or run in watch mode
+
+```bash
+pnpm --filter @bigmarket/bm-ui dev
+
+```
+
+### 3. App consumes updated package automatically
+
+---
+
+## **Tailwind + Design System**
+
+- Centralised in:
+
+```
+packages/bm-design
+
+```
+
+- UI packages depend on it
+- Apps must include it in `tailwind.config`
+
+---
+
+## **SDK Layer**
+
+Located in:
+
+```
+packages/sdk
+
+```
+
+Provides:
+
+- chain abstraction
+- shared transaction logic
+- future cross-chain compatibility
+
+Example:
+
+```ts
+import { getChain } from '@bigmarket/sdk';
+
+const chain = getChain('stacks');
+
+```
+
+---
+
+## **Key Features Delivered (Milestone 1)**
+
+- ✅ Complete CPMM trading layer:
+  - buy / sell shares
+  - add / remove liquidity
+- ✅ Modular SDK foundation
+- ✅ Svelte 5 Runes migration
+- ✅ Monorepo restructuring for:
+  - scalability
+  - white-label deployments
+
+---
+
+## **Common Commands**
+
+### Install everything
+
+```bash
+pnpm install
+
+```
+
+### Dev all (if using turbo)
+
+```bash
+pnpm dev
+
+```
+
+### Build all
+
+```bash
+pnpm build
+
+```
+
+### Lint
+
+```bash
+pnpm lint
+
+```
+
+---
+
+## **Troubleshooting**
+
+### Tailwind not applying (monorepo issue)
+
+- Ensure app `tailwind.config` includes packages:
+
+```js
+content: [
+  "../../packages/**/*.{svelte,ts}"
+]
+
+```
+
+---
+
+### Types not resolving
+
+- Ensure packages are built:
+
+```bash
+pnpm -r build
+
+```
+
+---
+
+### Svelte components not found
+
+Make sure:
+
+```json
+"types": "./dist/index.d.ts"
+
+```
+
+and build has been run.
+
+---
+
+## **Future Direction**
+
+- Cross-chain deployment (Solana / Sui)
+- Advanced execution models (hybrid CPMM + matching)
+- Institutional / ESG prediction markets
+
+---
+
+## **License**
+
+MIT (or your preferred license)
+
+---
+
+If you want, I can next:
+
+- turn this into a **grant-ready technical appendix**
+- or add a **diagram of architecture (contracts ↔ API ↔ UI ↔ SDK)** which would massively strengthen your submission
+

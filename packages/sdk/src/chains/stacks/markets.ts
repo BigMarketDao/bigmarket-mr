@@ -228,6 +228,127 @@ export function createMarketsClient(daoConfig: DaoConfig) {
         "deny",
       );
     },
+    async sellShares(
+      market: PredictionMarketCreateEvent,
+      tokenEvent: TokenPermissionEvent,
+      index: number,
+      sender: string,
+      sharesIn: number,
+      minRefund: number,
+      tierBalance?: number,
+
+      //   sender: string,
+      //   marketId: number,
+      //   minRefund: number,
+      //   category: string,
+      //   sharesIn: number,
+      //   token: ReturnType<typeof Cl.contractPrincipal> = wrappedStx
+      // ) {
+      //   return simnet.callPublicFn(marketPredicting, 'sell-category',
+      // [Cl.uint(marketId), Cl.uint(minRefund), Cl.stringAscii(category), token, Cl.uint(sharesIn)], sender);
+    ) {
+      //const [addr, name] = marketContract.split(".");
+
+      const functionName = "sell-category";
+      const contractAddress = market.extension.split(".")[0];
+      const contractName = market.extension.split(".")[1];
+      const categorical = mapToMinMaxStrings(market.marketData.categories)[
+        index
+      ];
+      const address = sender;
+      const postConditions = await getSip10PostConditions(
+        daoConfig.VITE_DAO_DEPLOYER,
+        daoConfig.VITE_DAO_REPUTATION_TOKEN,
+        STAKING_TIER,
+        tokenEvent,
+        address,
+        sharesIn,
+        tierBalance || 0,
+      );
+      //(define-public (sell-category (market-id uint) (min-refund uint) (index uint) (token <ft-token>) (shares-in uint))
+      let functionArgs = [
+        Cl.uint(market.marketId),
+        Cl.uint(minRefund),
+        Cl.stringAscii(categorical),
+        Cl.principal(market.marketData.token),
+        Cl.uint(sharesIn),
+      ];
+      if (market.marketType === 2) {
+        functionArgs = [
+          Cl.uint(market.marketId),
+          Cl.uint(minRefund),
+          Cl.uint(index),
+          Cl.principal(market.marketData.token),
+          Cl.uint(sharesIn),
+        ];
+      }
+
+      return callContract(
+        contractAddress,
+        contractName,
+        daoConfig.VITE_NETWORK,
+        functionName,
+        functionArgs,
+        postConditions,
+        "deny",
+      );
+    },
+    //(define-public (add-liquidity (market-id uint) (amount uint) (expected-total-stakes uint) (max-deviation-bips uint) (token <ft-token>))
+    async addLiquidity(
+      market: PredictionMarketCreateEvent,
+      token: TokenPermissionEvent,
+      index: number,
+      sender: string,
+      userCostMicro: number,
+      minShares: number,
+      tierBalance?: number,
+    ) {
+      //const [addr, name] = marketContract.split(".");
+
+      const functionName = "sell-category";
+      const contractAddress = market.extension.split(".")[0];
+      const contractName = market.extension.split(".")[1];
+      const categorical = mapToMinMaxStrings(market.marketData.categories)[
+        index
+      ];
+      const address = sender;
+      const postConditions = await getSip10PostConditions(
+        daoConfig.VITE_DAO_DEPLOYER,
+        daoConfig.VITE_DAO_REPUTATION_TOKEN,
+        STAKING_TIER,
+        token,
+        address,
+        userCostMicro,
+        tierBalance || 0,
+      );
+      //(define-public (sell-category (market-id uint) (min-refund uint) (index uint) (token <ft-token>) (shares-in uint))
+      let functionArgs = [
+        Cl.uint(market.marketId),
+        Cl.uint(minShares),
+        Cl.stringAscii(categorical),
+        Cl.principal(market.marketData.token),
+        Cl.uint(userCostMicro),
+      ];
+      if (market.marketType === 2) {
+        functionArgs = [
+          Cl.uint(market.marketId),
+          Cl.uint(minShares),
+          Cl.uint(index),
+          Cl.principal(market.marketData.token),
+          Cl.uint(userCostMicro),
+        ];
+      }
+
+      return callContract(
+        contractAddress,
+        contractName,
+        daoConfig.VITE_NETWORK,
+        functionName,
+        functionArgs,
+        postConditions,
+        "deny",
+      );
+    },
 
     async createMarket(
       contractName: string,

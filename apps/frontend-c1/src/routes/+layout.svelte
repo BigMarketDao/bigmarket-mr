@@ -1,7 +1,15 @@
 <script lang="ts">
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
-	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
+	import {
+		allowedTokenStore,
+		appConfigStore,
+		chainStore,
+		daoOverviewStore,
+		exchangeRatesStore,
+		marketSystemCategoriesStore,
+		requireAppConfig
+	} from '@bigmarket/bm-common';
 	import { daoConfigStore } from '@bigmarket/bm-common';
 	import type { AppConfig, DaoConfig } from '@bigmarket/bm-types';
 	import { onMount, type Snippet } from 'svelte';
@@ -45,6 +53,11 @@
 		children: Snippet; // or Snippet if you want to be precise
 	}>();
 	$effect(() => {
+		exchangeRatesStore.set(data.exchangeRates);
+		chainStore.set({ stacks: data.stacksInfo });
+		daoOverviewStore.set(data.daoOverview);
+		allowedTokenStore.set(data.tokens);
+		marketSystemCategoriesStore.set(data.marketCategories);
 		appConfigStore.set(data.appConfig);
 		daoConfigStore.set(data.daoConfig);
 		networkWarning = false;
@@ -78,13 +91,14 @@
 		console.log('data', data);
 		initAppShell(data?.appConfig?.VITE_STACKS_API);
 		await Promise.all([loadSystemData(data), initWallet().then(loadWalletData)]);
+
 		ready = true;
 		checkNetwork();
 	});
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
-{#if !ready || !$daoConfigStore || !$appConfigStore}
+{#if !ready || !$daoConfigStore || !$appConfigStore || !$exchangeRatesStore || !$chainStore || !$daoOverviewStore || !$allowedTokenStore || !$marketSystemCategoriesStore}
 	<!-- Splash screen -->
 	<div
 		id="splash-screen"

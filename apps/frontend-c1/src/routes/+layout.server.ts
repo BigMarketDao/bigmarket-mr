@@ -13,7 +13,7 @@ export const load: LayoutServerLoad = async ({ url }) => {
 	const key = `layout-data-${network}`;
 	// console.log('CACHE HIT: using appConfig= ', JSON.stringify(appConfig, null, 2));
 	// console.log('CACHE HIT: using daoConfig= ', JSON.stringify(daoConfig, null, 2));
-	console.log('layout-data-network: ' + key);
+	//console.log('layout-data-network: ' + key);
 	try {
 		const cached = getCached(key);
 		if (cached) {

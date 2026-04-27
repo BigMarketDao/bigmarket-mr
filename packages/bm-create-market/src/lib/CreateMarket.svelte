@@ -10,38 +10,27 @@
   import TokenSelection from './TokenSelection.svelte';
   import CriteriaSelectionDays from './CriteriaSelectionDays.svelte';
   import CriteriaSelectionSources from './CriteriaSelectionSources.svelte';
-
   import { confirmPoll, getSignature } from './app/market_creation';
   import { validatePoll, type ValidationResult } from './app/validation';
   import { showTxModal, requireAppConfig, requireDaoConfig, appConfigStore, daoConfigStore } from '@bigmarket/bm-common';
-
-  const appConfig = $derived(requireAppConfig($appConfigStore));
-	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
-
   import type {
     StoredOpinionPoll,
     CriterionSources,
     MarketCategoricalOption,
     ScalarMarketDataItem,
-    TokenPermissionEvent,
   } from '@bigmarket/bm-types';
   import type { MarketTypeContainer } from '@bigmarket/bm-types';
   import MainInformation from './MainInformation.svelte';
 
-
-  // export let examplePoll: StoredOpinionPoll;
-  // export let onPollSubmit: (data: string) => void;
-  // export let allowedTokens = $allowedTokenStore;
-  // export let onRegenerate: any;
-  // export let forceStep: number;
-  const { examplePoll, onPollSubmit, allowedTokens, onRegenerate, forceStep } = $props<{
+  const { examplePoll, onPollSubmit, onRegenerate, forceStep } = $props<{
     examplePoll: StoredOpinionPoll;
-		onPromptMarket: (data: any) => void;
-    allowedTokens: TokenPermissionEvent[];
-    onRegenerate: (data: any) => void;
+    onPollSubmit: (data: any) => void;
+		onRegenerate: (data: any) => void;
     forceStep: number;
 	}>();
 
+  const appConfig = $derived(requireAppConfig($appConfigStore));
+	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 
   let validation: ValidationResult = $state({ isValid: true, errors: {} });
   let template: StoredOpinionPoll = $derived({ ...examplePoll }) ;
