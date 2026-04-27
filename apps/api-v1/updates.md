@@ -49,7 +49,7 @@ db.events.createIndex({ event: 1, marketId: 1, extension: 1 })
 
 ## Backups
 
-mongodump --uri "mongodb://dockerdev1:OLrs4ve3wT3ypQSK@clusterbm0-shard-00-00.ci36c.mongodb.net:27017,clusterbm0-shard-00-01.ci36c.mongodb.net:27017,clusterbm0-shard-00-02.ci36c.mongodb.net:27017/?replicaSet=atlas-no3ycr-shard-0&ssl=true&authSource=admin&retryWrites=true&w=majority&appName=ClusterBM0" --out ~/hubgit/backup
+mongodump --uri "mongodb://user:password@clusterbm0-shard-00-00.ci36c.mongodb.net:27017,clusterbm0-shard-00-01.ci36c.mongodb.net:27017,clusterbm0-shard-00-02.ci36c.mongodb.net:27017/?replicaSet=atlas-no3ycr-shard-0&ssl=true&authSource=admin&retryWrites=true&w=majority&appName=ClusterBM0" --out ~/hubgit/backup
 
 ## Rollover
 
