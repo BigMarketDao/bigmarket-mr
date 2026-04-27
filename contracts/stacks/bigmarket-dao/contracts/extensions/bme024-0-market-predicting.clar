@@ -78,6 +78,7 @@
 (define-constant err-hedge-exec-mismatch (err u10105))
 (define-constant err-insufficient-liquidity (err u11041))
 (define-constant err-arithmetic (err u11043))
+(define-constant err-no-lp-position (err u10039))
 
 (define-constant marketplace .bme040-0-shares-marketplace)
 (define-constant MIN_POOL u1000)
@@ -118,6 +119,8 @@
     cool-down-period: uint,
     hedge-executor: (optional principal),
     hedged: bool,
+    lp-total-shares: uint,
+    accumulated-lp-fees: uint,
   }
 )
 ;; defines the minimum liquidity a market creator needs to provide
@@ -132,6 +135,12 @@
 (define-map token-balances
   { market-id: uint, user: principal }
   (list 10 uint)
+)
+;; LP accounting - independent of outcome shares. Earns a pro-rata cut of
+;; accumulated-lp-fees on the parent market, paid out at remove-liquidity.
+(define-map lp-balances
+  { market-id: uint, user: principal }
+  { lp-shares: uint }
 )
 (define-map allowed-tokens principal bool)
 
@@ -263,6 +272,33 @@
   (ok (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? token-balances {market-id: market-id, user: user})))
 )
 
+(define-read-only (get-lp-balance (market-id uint) (user principal))
+  (ok (get lp-shares (default-to {lp-shares: u0} (map-get? lp-balances {market-id: market-id, user: user}))))
+)
+
+;; Returns the on-chain accounting needed to verify the zero-sum invariant:
+;;   sum(user token-balances across all categories)
+;;   + accumulated-lp-fees
+;;   + tokens already paid out as platform fees / claims / LP-fee withdrawals
+;;   = total tokens ever deposited into the market.
+;; total-token-pool here is the sum of stake-tokens (i.e. tokens currently
+;; held against outcome positions). accumulated-lp-fees is held aside for LPs.
+(define-read-only (get-market-accounting (market-id uint))
+  (let (
+    (md (unwrap! (map-get? markets market-id) err-market-not-found))
+    (stake-tokens-list (get stake-tokens md))
+    (total-token-pool (fold + stake-tokens-list u0))
+  )
+    (ok {
+      total-token-pool: total-token-pool,
+      accumulated-lp-fees: (get accumulated-lp-fees md),
+      lp-total-shares: (get lp-total-shares md),
+      stakes: (get stakes md),
+      stake-tokens: stake-tokens-list,
+    })
+  )
+)
+
 ;; ---------------- public functions ----------------
 
 (define-public (create-market 
@@ -333,8 +369,10 @@
           cool-down-period: cool-down-final,
           hedge-executor: hedge-executor,
           hedged: false,
+          lp-total-shares: u0,
+          accumulated-lp-fees: u0,
         }
-      )   
+      )
       (var-set market-counter (+ new-id u1))
       (try! (contract-call? .bme030-0-reputation-token mint tx-sender u2 u8))
       (print {event: "create-market", market-id: new-id, categories: categories, market-fee-bips: market-fee-bips, token: token, market-data-hash: market-data-hash, creator: tx-sender, seed-amount: (* seed num-categories)})
@@ -472,10 +510,6 @@
         (amount-shares (unwrap! (cpmm-shares selected-pool other-pool cost-of-shares) err-insufficient-balance))
         (max-cost-of-shares (unwrap! (cpmm-cost selected-pool other-pool max-by-floor) err-overbuy))
         (market-end (+ (get market-start md) (get market-duration md)))
-        ;; Pre-trade proportional weights for LP-fee injection across stake-tokens
-        (lp-scale (if (> total-pool u0) (/ (* lp-fee SCALE) total-pool) u0))
-        (lp-scale-list (list lp-scale lp-scale lp-scale lp-scale lp-scale lp-scale lp-scale lp-scale lp-scale lp-scale))
-        (lp-delta (map scale-by stake-list lp-scale-list))
   )
     ;; Validate token and market state
     (asserts! (< index (len categories)) err-category-not-found)
@@ -493,6 +527,7 @@
 
     ;; --- Token Transfers ---
     ;; Buyer pays cost-of-shares + lp-fee into the vault; multisig-fee goes to dev-fund.
+    ;; The lp-fee tokens stay in the vault and are tracked via accumulated-lp-fees.
     (try! (contract-call? token transfer (+ cost-of-shares lp-fee) tx-sender (as-contract tx-sender) none))
     (if (> multisig-fee u0)
       (try! (contract-call? token transfer multisig-fee tx-sender (var-get dev-fund) none))
@@ -500,15 +535,19 @@
     )
 
     ;; --- Update Market State ---
-    ;; Credit buyer's purchase to the selected category, then inject LP fee into
-    ;; stake-tokens proportionally to pre-trade stakes. No new shares are issued,
-    ;; so the fee inflates per-share payouts at claim time.
+    ;; Credit buyer's purchase to the selected category. lp-fee is accumulated
+    ;; on the market record (not injected into stake-tokens), so per-share
+    ;; payouts at claim time reflect cost-of-shares only. LP fees are paid
+    ;; out separately at remove-liquidity from accumulated-lp-fees.
     (let (
       (updated-stakes (unwrap! (replace-at? stake-list index (+ selected-pool amount-shares)) err-category-not-found))
-      (token-stakes-with-purchase (unwrap! (replace-at? stake-tokens-list index (+ selected-token-pool cost-of-shares)) err-category-not-found))
-      (updated-token-stakes (unwrap! (as-max-len? (map + token-stakes-with-purchase lp-delta) u10) err-arithmetic))
+      (updated-token-stakes (unwrap! (replace-at? stake-tokens-list index (+ selected-token-pool cost-of-shares)) err-category-not-found))
     )
-      (map-set markets market-id (merge md {stakes: updated-stakes, stake-tokens: updated-token-stakes}))
+      (map-set markets market-id (merge md {
+        stakes: updated-stakes,
+        stake-tokens: updated-token-stakes,
+        accumulated-lp-fees: (+ (get accumulated-lp-fees md) lp-fee)
+      }))
     )
 
     ;; --- Update User Balances ---
@@ -549,6 +588,8 @@
         (user-tokens (unwrap! (element-at? user-token-list index) err-category-not-found))
         (gross-refund (unwrap! (cpmm-refund selected-pool other-pool shares-in) err-arithmetic))
         (fee (/ (* gross-refund (var-get dev-fee-bips)) u10000))
+        (lp-fee (/ (* fee (var-get lp-fee-split-bips)) u10000))
+        (multisig-fee (- fee lp-fee))
         (net-refund (if (> gross-refund fee) (- gross-refund fee) u0))
         (market-end (+ (get market-start md) (get market-duration md)))
         (original-sender tx-sender)
@@ -565,10 +606,12 @@
     (asserts! (>= selected-token-pool gross-refund) err-insufficient-contract-balance)
 
     ;; --- Token Transfers (contract -> dev-fund, contract -> seller) ---
+    ;; Only multisig-fee leaves the vault; lp-fee stays inside and is tracked
+    ;; via accumulated-lp-fees on the market record.
     (as-contract
       (begin
-        (if (> fee u0)
-          (try! (contract-call? token transfer fee tx-sender (var-get dev-fund) none))
+        (if (> multisig-fee u0)
+          (try! (contract-call? token transfer multisig-fee tx-sender (var-get dev-fund) none))
           true
         )
         (try! (contract-call? token transfer net-refund tx-sender original-sender none))
@@ -580,7 +623,11 @@
       (updated-stakes (unwrap! (replace-at? stake-list index (- selected-pool shares-in)) err-category-not-found))
       (updated-token-stakes (unwrap! (replace-at? stake-tokens-list index (- selected-token-pool gross-refund)) err-category-not-found))
     )
-      (map-set markets market-id (merge md {stakes: updated-stakes, stake-tokens: updated-token-stakes}))
+      (map-set markets market-id (merge md {
+        stakes: updated-stakes,
+        stake-tokens: updated-token-stakes,
+        accumulated-lp-fees: (+ (get accumulated-lp-fees md) lp-fee)
+      }))
     )
 
     ;; --- Update User Balances ---
@@ -593,7 +640,7 @@
     )
       (map-set stake-balances {market-id: market-id, user: tx-sender} user-stake-updated)
       (map-set token-balances {market-id: market-id, user: tx-sender} user-token-updated)
-      (print {event: "market-unstake", market-id: market-id, index: index, shares-in: shares-in, refund: net-refund, fee: fee, seller: tx-sender, min-refund: min-refund})
+      (print {event: "market-unstake", market-id: market-id, index: index, shares-in: shares-in, refund: net-refund, fee: fee, lp-fee: lp-fee, multisig-fee: multisig-fee, seller: tx-sender, min-refund: min-refund})
       (ok index)
     )
   )
@@ -626,6 +673,12 @@
         (updated-token-stakes (unwrap! (as-max-len? (map + stake-tokens-list delta) u10) err-arithmetic))
         (updated-user-stakes (unwrap! (as-max-len? (map + user-stake-list delta) u10) err-arithmetic))
         (updated-user-tokens (unwrap! (as-max-len? (map + user-token-list delta) u10) err-arithmetic))
+        ;; LP-share accounting (independent of outcome shares).
+        ;; First LP gets actual-amount as initial LP-shares; subsequent LPs
+        ;; receive shares pro-rata to the pre-deposit pool size.
+        (lp-total (get lp-total-shares md))
+        (existing-lp (default-to {lp-shares: u0} (map-get? lp-balances {market-id: market-id, user: tx-sender})))
+        (new-lp-shares (if (is-eq lp-total u0) actual-amount (/ (* actual-amount lp-total) total-stakes)))
   )
     (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
     (asserts! (not (get concluded md)) err-market-not-concluded)
@@ -641,13 +694,20 @@
     (try! (contract-call? token transfer actual-amount tx-sender (as-contract tx-sender) none))
 
     (map-set markets market-id
-      (merge md { stakes: updated-stakes, stake-tokens: updated-token-stakes })
+      (merge md {
+        stakes: updated-stakes,
+        stake-tokens: updated-token-stakes,
+        lp-total-shares: (+ lp-total new-lp-shares)
+      })
     )
     (map-set stake-balances {market-id: market-id, user: tx-sender} updated-user-stakes)
     (map-set token-balances {market-id: market-id, user: tx-sender} updated-user-tokens)
+    (map-set lp-balances
+      {market-id: market-id, user: tx-sender}
+      {lp-shares: (+ (get lp-shares existing-lp) new-lp-shares)})
     (try! (contract-call? .bme030-0-reputation-token mint tx-sender u3 u5))
 
-    (print {event: "add-liquidity", market-id: market-id, lp: tx-sender, requested: amount, amount: actual-amount})
+    (print {event: "add-liquidity", market-id: market-id, lp: tx-sender, requested: amount, amount: actual-amount, lp-shares-minted: new-lp-shares, lp-total-shares: (+ lp-total new-lp-shares)})
     (ok actual-amount)
   )
 )
@@ -658,6 +718,10 @@
 ;; Caller specifies token `amount` to withdraw; shares burnt in each
 ;; category are stakes[i] * amount / sum(stakes). Requires a balanced
 ;; LP-style position across all active categories.
+;; Returns proportional outcome shares to the caller. Strictly an outcome-share
+;; operation: it does NOT touch lp-shares or accumulated-lp-fees. LP fees and
+;; lp-share burns are handled separately by claim-lp-fees, which is callable
+;; at any time and independent of outcome share balance.
 (define-public (remove-liquidity (market-id uint) (amount uint) (min-refund uint) (token <ft-token>))
   (let (
         (md (unwrap! (map-get? markets market-id) err-market-not-found))
@@ -705,6 +769,39 @@
       (print {event: "remove-liquidity", market-id: market-id, lp: tx-sender, requested: amount, amount: actual-refund})
       (ok actual-refund)
     )
+  )
+)
+
+;; Burns the caller's lp-shares and pays out their pro-rata share of
+;; accumulated-lp-fees. Independent of outcome-share state and resolution
+;; state: callable while open, during cool-down, after resolution, or after
+;; conclusion. The only requirement is an existing lp-balances entry.
+(define-public (claim-lp-fees (market-id uint) (token <ft-token>))
+  (let (
+        (md (unwrap! (map-get? markets market-id) err-market-not-found))
+        (user-lp (unwrap! (map-get? lp-balances {market-id: market-id, user: tx-sender}) err-no-lp-position))
+        (user-lp-shares (get lp-shares user-lp))
+        (lp-total (get lp-total-shares md))
+        (accumulated (get accumulated-lp-fees md))
+        (fee-entitlement (if (is-eq lp-total u0) u0 (/ (* accumulated user-lp-shares) lp-total)))
+        (new-accumulated (if (> accumulated fee-entitlement) (- accumulated fee-entitlement) u0))
+        (original-sender tx-sender)
+  )
+    (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
+
+    (if (> fee-entitlement u0)
+      (as-contract (try! (contract-call? token transfer fee-entitlement tx-sender original-sender none)))
+      true
+    )
+
+    (map-set markets market-id (merge md {
+      lp-total-shares: (- lp-total user-lp-shares),
+      accumulated-lp-fees: new-accumulated
+    }))
+    (map-delete lp-balances {market-id: market-id, user: tx-sender})
+
+    (print {event: "claim-lp-fees", market-id: market-id, user: tx-sender, lp-shares-burned: user-lp-shares, fee-paid: fee-entitlement})
+    (ok fee-entitlement)
   )
 )
 

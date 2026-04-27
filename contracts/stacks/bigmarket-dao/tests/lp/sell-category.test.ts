@@ -1,9 +1,19 @@
-import { Cl } from '@stacks/transactions';
+import { Cl, ClarityType, type ClarityValue } from '@stacks/transactions';
 import { describe, expect, it } from 'vitest';
 import { createBinaryMarket, predictCategory } from '../categorical/categorical.test';
 import { alice, bob, constructDao, deployer } from '../dao_helpers';
 
 const marketPredicting = 'bme024-0-market-predicting';
+
+function getAccumulatedLpFees(marketId: number, user: string): bigint {
+	const { result } = simnet.callReadOnlyFn(marketPredicting, 'get-market-data', [Cl.uint(marketId)], user);
+	if (result.type !== ClarityType.OptionalSome) throw new Error(`expected market some, got ${result.type}`);
+	const inner = result.value;
+	if (inner.type !== ClarityType.Tuple) throw new Error(`expected tuple, got ${inner.type}`);
+	const v = inner.value['accumulated-lp-fees'];
+	if (v.type !== ClarityType.UInt) throw new Error('accumulated-lp-fees not uint');
+	return BigInt(v.value);
+}
 
 const ERR_AMOUNT_TOO_LOW = 10002;
 const ERR_MARKET_NOT_FOUND = 10005;
@@ -109,5 +119,21 @@ describe('sell-category', () => {
 		await predictCategory(alice, 0, 'nay', 1_500_000, 0);
 		const r = callSellCategory(alice, 0, 0, 'nay', 50_000);
 		expect(r.result).toEqual(Cl.ok(Cl.uint(0)));
+	});
+
+	it('ok: sell-category accumulates lp-fee on the market record', async () => {
+		await constructDao(simnet);
+		await createBinaryMarket(0);
+		// predict-category accumulates an initial lp-fee
+		await predictCategory(alice, 0, 'yay', 3_000_000, 1);
+		const accumulatedAfterPredict = getAccumulatedLpFees(0, alice);
+		expect(accumulatedAfterPredict).toBeGreaterThan(0n);
+
+		// selling produces a refund-side fee that must also be accumulated, not sent to dev-fund
+		const sellR = callSellCategory(alice, 0, 0, 'yay', 200_000);
+		expect(sellR.result).toEqual(Cl.ok(Cl.uint(1)));
+
+		const accumulatedAfterSell = getAccumulatedLpFees(0, alice);
+		expect(accumulatedAfterSell).toBeGreaterThan(accumulatedAfterPredict);
 	});
 });

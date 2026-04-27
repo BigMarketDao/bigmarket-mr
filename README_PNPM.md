@@ -1,5 +1,3 @@
-Install external dependencies at the root
-
 ## Install Dependencies
 
 ```bash

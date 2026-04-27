@@ -1,10 +1,13 @@
-Here’s a clean, production-ready **[README.md](http://README.md)** for your monorepo. It’s structured for contributors, grant reviewers, and future devs.
-
----
-
 # **BigMarket Monorepo**
 
-Decentralised prediction markets built on Stacks, with a modular cross-chain architecture and Svelte-based UI.
+BigMarket is a market-centric, categorical prediction market protocol where each market is an isolated zero-sum pool. Markets sit on a spectrum between parimutuel and full CPMM modalities, selected at creation time via market type. Liquidity is provided proportionally across all outcomes and earns fees from trading activity, split between the platform and an LP reward pool.
+
+Zero-sum per market. Every token that enters a market either exits via a winning claim, an LP withdrawal, or platform fees. Nothing is created or destroyed. This is auditable and provable in our contract logic.
+
+Market-centric isolation is design choice over protocols where liquidity is global. Each market has its own pool, its own CPMM curve, its own LP set. Risk is contained. A bad market doesn't contaminate others. BigMarket bridges the spectrum between parimutuel and CPMM. Where;
+
+- MARKET_TYPE_KNOCKOUT — parimutuel mode, buy and hold, no sell, simple pool split at resolution
+- MARKET_TYPE_AMM — CPMM mode, continuous pricing, buy and sell, LP fees
 
 ---
 
@@ -71,11 +74,12 @@ The architecture is designed for:
   - UI can be reused across apps
 - **Chain abstraction**
   - SDK exposes unified interface:
-    ```ts
-    sdk.chain('stacks')
-    sdk.chain('solana')
 
+    ```ts
+    sdk.chain("stacks");
+    sdk.chain("solana");
     ```
+
 - **White-label ready**
   - Apps can selectively include packages
 
@@ -250,10 +254,9 @@ Provides:
 Example:
 
 ```ts
-import { getChain } from '@bigmarket/sdk';
+import { getChain } from "@bigmarket/sdk";
 
-const chain = getChain('stacks');
-
+const chain = getChain("stacks");
 ```
 
 ---
@@ -310,10 +313,7 @@ pnpm lint
 - Ensure app `tailwind.config` includes packages:
 
 ```js
-content: [
-  "../../packages/**/*.{svelte,ts}"
-]
-
+content: ["../../packages/**/*.{svelte,ts}"];
 ```
 
 ---
@@ -360,4 +360,3 @@ If you want, I can next:
 
 - turn this into a **grant-ready technical appendix**
 - or add a **diagram of architecture (contracts ↔ API ↔ UI ↔ SDK)** which would massively strengthen your submission
-
