@@ -17,6 +17,7 @@ async function createBinaryMarketWithFees(marketId: number, fee: number, creator
 			Cl.none(),
 			Cl.none(),
 			Cl.uint(100000000),
+			Cl.none(),
 			Cl.none()
 		],
 		creator ? creator : deployer

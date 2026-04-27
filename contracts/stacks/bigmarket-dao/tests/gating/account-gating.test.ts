@@ -33,6 +33,7 @@ async function createBinaryMarket(marketId: number, creator?: string, token?: st
 			Cl.none(),
 			Cl.none(),
 			Cl.uint(100000000),
+			Cl.none(),
 			Cl.none()
 		],
 		creator ? creator : deployer
@@ -55,6 +56,7 @@ async function createBinaryMarketWithGating(marketId: number, proof: any, key?: 
 			Cl.none(),
 			Cl.none(),
 			Cl.uint(100000000),
+			Cl.none(),
 			Cl.none()
 		],
 		creator ? creator : deployer

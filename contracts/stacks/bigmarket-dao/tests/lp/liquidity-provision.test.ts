@@ -507,6 +507,7 @@ describe('create-market guardrails (existing)', () => {
 				Cl.none(),
 				Cl.none(),
 				Cl.uint(100000000),
+				Cl.none(),
 				Cl.none()
 			],
 			deployer

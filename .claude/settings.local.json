@@ -6,7 +6,9 @@
       "Bash(grep -r '$sessionStore\\\\|sessionStore' /Users/mijoco/hubgit/bigm_workspace/bigmarket-fpmm/apps '--include=*.svelte' '--include=*.ts' '--include=*.tsx' -n)",
       "Bash(xargs ls *)",
       "Bash(clarinet check *)",
-      "Bash(npx vitest *)"
+      "Bash(npx vitest *)",
+      "Bash(python3 *)",
+      "Bash(awk *)"
     ]
   }
 }

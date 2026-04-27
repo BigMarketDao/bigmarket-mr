@@ -34,6 +34,7 @@ describe('claiming errors', () => {
 				Cl.none(),
 				Cl.none(),
 				Cl.uint(100000000),
+				Cl.none(),
 				Cl.none()
 			],
 			deployer
@@ -241,6 +242,7 @@ export async function createBinaryMarketWithGating(marketId: number, proof: any,
 			Cl.none(),
 			Cl.none(),
 			Cl.uint(100000000),
+			Cl.none(),
 			Cl.none()
 		],
 		creator ? creator : deployer
@@ -266,6 +268,7 @@ export async function createBinaryMarketWithFees(marketId: number, fee: number, 
 			Cl.none(),
 			Cl.none(),
 			Cl.uint(100000000),
+			Cl.none(),
 			Cl.none()
 		],
 		creator ? creator : deployer
@@ -287,6 +290,7 @@ export async function createBinaryMarketWithErrorCode(errorCode: number, fee?: n
 			Cl.none(),
 			Cl.none(),
 			Cl.uint(100000000),
+			Cl.none(),
 			Cl.none()
 		],
 		creator ? creator : deployer
@@ -308,6 +312,7 @@ export async function createBinaryMarket(marketId: number, creator?: string, tok
 			Cl.none(),
 			Cl.none(),
 			Cl.uint(100000000),
+			Cl.none(),
 			Cl.none()
 		],
 		creator ? creator : deployer
@@ -330,6 +335,7 @@ async function createCategoricalMarket(marketId: number, creator?: string, token
 			Cl.none(),
 			Cl.none(),
 			Cl.uint(seed ? seed : 100000000),
+			Cl.none(),
 			Cl.none()
 		],
 		creator ? creator : deployer

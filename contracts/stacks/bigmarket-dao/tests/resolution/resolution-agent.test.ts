@@ -45,6 +45,7 @@ async function createBinaryMarket(marketId: number, creator?: string, token?: st
 			Cl.some(uintCV(12)),
 			Cl.some(uintCV(11)),
 			Cl.uint(100000000),
+			Cl.none(),
 			Cl.none()
 		],
 		creator ? creator : deployer

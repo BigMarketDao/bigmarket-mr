@@ -29,6 +29,14 @@
 ;; Market Types (2 => range based markets)
 (define-constant MARKET_TYPE u2)
 
+;; Market mechanisms describe HOW a market operates (orthogonal to MARKET_TYPE,
+;; which describes WHAT is being predicted).
+;;   KNOCKOUT - parimutuel: buy and hold, no sell, no LP, simple pool split at resolution
+;;   AMM      - CPMM: continuous pricing, buy and sell, LP fees
+(define-constant MECHANISM_KNOCKOUT u1)
+(define-constant MECHANISM_AMM      u2)
+(define-constant MECHANISM_DEFAULT  u2)
+
 ;; TODO Update resolve-market to reference correct pyth contract and remove local pyth from deployment
 ;; PYTH_ORACLE 'STR738QQX1PVTM6WTDF833Z18T8R0ZB791TCNEFM.pyth-storage-v4
 ;; PYTH_ORACLE 'SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
@@ -92,6 +100,9 @@
 (define-constant err-hedge-window (err u10101))
 (define-constant err-market-ended (err u10102))
 (define-constant err-no-lp-position (err u10103))
+(define-constant err-sell-not-permitted (err u10106))
+(define-constant err-mechanism-not-supported (err u10107))
+(define-constant err-invalid-mechanism (err u10108))
 
 (define-constant marketplace .bme040-0-shares-marketplace)
 (define-constant MIN_POOL u1)
@@ -144,6 +155,7 @@
     start-price: uint,
     lp-total-shares: uint,
     accumulated-lp-fees: uint,
+    market-mechanism: uint,
   }
 )
 ;; defines the minimum liquidity a market creator needs to provide
@@ -363,10 +375,10 @@
 
 ;; ---------------- public functions ----------------
 
-(define-public (create-market 
-    (fee-bips (optional uint)) 
-    (token <ft-token>) 
-    (market-data-hash (buff 32)) 
+(define-public (create-market
+    (fee-bips (optional uint))
+    (token <ft-token>)
+    (market-data-hash (buff 32))
     (proof (list 10 (tuple (position bool) (hash (buff 32)))))
     (treasury principal)
     (market-duration (optional uint))
@@ -374,6 +386,7 @@
     (price-feed-id (buff 32))
     (seed-amount uint)
     (hedge-executor (optional principal))
+    (market-mechanism (optional uint))
   )
     (let (
         (creator tx-sender)
@@ -381,6 +394,7 @@
         (market-fee-bips (default-to u0 fee-bips))
         (market-duration-final (default-to DEFAULT_MARKET_DURATION market-duration))
         (cool-down-final (default-to DEFAULT_COOL_DOWN_PERIOD cool-down-period))
+        (resolved-mechanism (default-to MECHANISM_DEFAULT market-mechanism))
         (current-block burn-block-height)
         (start-price (try! (get-current-price-safe price-feed-id)))
         ;;(start-price (match start-price-wrapped price price price u0))
@@ -399,6 +413,7 @@
       (asserts! (> delta u0) err-oracle-zero-delta)
       (asserts! (> market-duration-final u10) err-market-not-found)
       (asserts! (> cool-down-final u10) err-market-not-found)
+      (asserts! (or (is-eq resolved-mechanism MECHANISM_KNOCKOUT) (is-eq resolved-mechanism MECHANISM_AMM)) err-invalid-mechanism)
 
 		  (asserts! (> (len categories) u1) err-too-few-categories)
 		  (asserts! (<= market-fee-bips (var-get market-fee-bips-max)) err-max-market-fee-bips-exceeded)
@@ -447,11 +462,12 @@
           start-price: start-price,
           lp-total-shares: u0,
           accumulated-lp-fees: u0,
+          market-mechanism: resolved-mechanism,
         }
       )
       (var-set market-counter (+ new-id u1))
       (try! (contract-call? .bme030-0-reputation-token mint tx-sender u2 u8))
-      (print {event: "create-market", market-id: new-id, categories: categories, market-fee-bips: market-fee-bips, token: token, market-data-hash: market-data-hash, creator: tx-sender, seed-amount: (* seed num-categories), start-price: start-price })
+      (print {event: "create-market", market-id: new-id, categories: categories, market-fee-bips: market-fee-bips, token: token, market-data-hash: market-data-hash, creator: tx-sender, seed-amount: (* seed num-categories), start-price: start-price, market-mechanism: resolved-mechanism })
       (ok new-id)
   )
 )
@@ -601,28 +617,47 @@
     (asserts! (<= amount-shares max-by-floor) err-overbuy)
 
     ;; --- Token Transfers ---
-    ;; Buyer pays cost-of-shares + lp-fee into the vault; multisig-fee goes to dev-fund.
-    ;; The lp-fee tokens stay in the vault and are tracked via accumulated-lp-fees.
-    (try! (contract-call? token transfer (+ cost-of-shares lp-fee) tx-sender (as-contract tx-sender) none))
-    (if (> multisig-fee u0)
-      (try! (contract-call? token transfer multisig-fee tx-sender (var-get dev-fund) none))
-      true
+    ;; AMM:      cost-of-shares + lp-fee enter the vault (lp-fee tracked via
+    ;;           accumulated-lp-fees); multisig-fee goes to dev-fund.
+    ;; KNOCKOUT: no LP pool, so the full fee goes to dev-fund and only
+    ;;           cost-of-shares enters the vault.
+    (if (is-eq (get market-mechanism md) MECHANISM_AMM)
+      (begin
+        (try! (contract-call? token transfer (+ cost-of-shares lp-fee) tx-sender (as-contract tx-sender) none))
+        (if (> multisig-fee u0)
+          (try! (contract-call? token transfer multisig-fee tx-sender (var-get dev-fund) none))
+          true
+        )
+      )
+      (begin
+        (try! (contract-call? token transfer cost-of-shares tx-sender (as-contract tx-sender) none))
+        (if (> fee u0)
+          (try! (contract-call? token transfer fee tx-sender (var-get dev-fund) none))
+          true
+        )
+      )
     )
 
     ;; --- Update Market State ---
-    ;; Credit buyer's purchase to the selected category. lp-fee is accumulated
-    ;; on the market record (not injected into stake-tokens), so per-share
-    ;; payouts at claim time reflect cost-of-shares only. LP fees are paid
-    ;; out separately at remove-liquidity from accumulated-lp-fees.
+    ;; Credit buyer's purchase to the selected category. For AMM markets the
+    ;; lp-fee is accumulated on the market record. For KNOCKOUT markets there
+    ;; is no LP pool, so lp-fee never accrues anywhere - the full fee has
+    ;; gone to dev-fund.
     (let (
         (updated-stakes (unwrap! (replace-at? stake-list index (+ selected-pool amount-shares)) err-category-not-found))
         (updated-token-stakes (unwrap! (replace-at? stake-tokens-list index (+ selected-token-pool cost-of-shares)) err-category-not-found))
       )
-      (map-set markets market-id (merge md {
-        stakes: updated-stakes,
-        stake-tokens: updated-token-stakes,
-        accumulated-lp-fees: (+ (get accumulated-lp-fees md) lp-fee)
-      }))
+      (if (is-eq (get market-mechanism md) MECHANISM_AMM)
+        (map-set markets market-id (merge md {
+          stakes: updated-stakes,
+          stake-tokens: updated-token-stakes,
+          accumulated-lp-fees: (+ (get accumulated-lp-fees md) lp-fee)
+        }))
+        (map-set markets market-id (merge md {
+          stakes: updated-stakes,
+          stake-tokens: updated-token-stakes
+        }))
+      )
     )
 
     ;; --- Update User Balances ---
@@ -668,6 +703,7 @@
         (market-end (+ (get market-start md) (get market-duration md)))
         (original-sender tx-sender)
   )
+    (asserts! (is-eq (get market-mechanism md) MECHANISM_AMM) err-sell-not-permitted)
     (asserts! (< index (len categories)) err-category-not-found)
     (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
     (asserts! (not (get concluded md)) err-market-not-concluded)
@@ -754,6 +790,7 @@
         (existing-lp (default-to {lp-shares: u0} (map-get? lp-balances {market-id: market-id, user: tx-sender})))
         (new-lp-shares (if (is-eq lp-total u0) actual-amount (/ (* actual-amount lp-total) total-stakes)))
   )
+    (asserts! (is-eq (get market-mechanism md) MECHANISM_AMM) err-mechanism-not-supported)
     (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
     (asserts! (not (get concluded md)) err-market-not-concluded)
     (asserts! (is-eq (get resolution-state md) RESOLUTION_OPEN) err-market-not-open)
@@ -809,6 +846,7 @@
         (market-end (+ (get market-start md) (get market-duration md)))
         (original-sender tx-sender)
   )
+    (asserts! (is-eq (get market-mechanism md) MECHANISM_AMM) err-mechanism-not-supported)
     (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
     (asserts! (not (get concluded md)) err-market-not-concluded)
     (asserts! (is-eq (get resolution-state md) RESOLUTION_OPEN) err-market-not-open)
@@ -850,6 +888,10 @@
 (define-public (claim-lp-fees (market-id uint) (token <ft-token>))
   (let (
         (md (unwrap! (map-get? markets market-id) err-market-not-found))
+  )
+    (asserts! (is-eq (get market-mechanism md) MECHANISM_AMM) err-mechanism-not-supported)
+    (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
+    (let (
         (user-lp (unwrap! (map-get? lp-balances {market-id: market-id, user: tx-sender}) err-no-lp-position))
         (user-lp-shares (get lp-shares user-lp))
         (lp-total (get lp-total-shares md))
@@ -857,22 +899,21 @@
         (fee-entitlement (if (is-eq lp-total u0) u0 (/ (* accumulated user-lp-shares) lp-total)))
         (new-accumulated (if (> accumulated fee-entitlement) (- accumulated fee-entitlement) u0))
         (original-sender tx-sender)
-  )
-    (asserts! (is-eq (get token md) (contract-of token)) err-invalid-token)
-
-    (if (> fee-entitlement u0)
-      (as-contract (try! (contract-call? token transfer fee-entitlement tx-sender original-sender none)))
-      true
     )
+      (if (> fee-entitlement u0)
+        (as-contract (try! (contract-call? token transfer fee-entitlement tx-sender original-sender none)))
+        true
+      )
 
-    (map-set markets market-id (merge md {
-      lp-total-shares: (- lp-total user-lp-shares),
-      accumulated-lp-fees: new-accumulated
-    }))
-    (map-delete lp-balances {market-id: market-id, user: tx-sender})
+      (map-set markets market-id (merge md {
+        lp-total-shares: (- lp-total user-lp-shares),
+        accumulated-lp-fees: new-accumulated
+      }))
+      (map-delete lp-balances {market-id: market-id, user: tx-sender})
 
-    (print {event: "claim-lp-fees", market-id: market-id, user: tx-sender, lp-shares-burned: user-lp-shares, fee-paid: fee-entitlement})
-    (ok fee-entitlement)
+      (print {event: "claim-lp-fees", market-id: market-id, user: tx-sender, lp-shares-burned: user-lp-shares, fee-paid: fee-entitlement})
+      (ok fee-entitlement)
+    )
   )
 )
 

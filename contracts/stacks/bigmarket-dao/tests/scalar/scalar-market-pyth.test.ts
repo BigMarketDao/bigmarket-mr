@@ -292,6 +292,7 @@ describe('claiming errors', () => {
 				Cl.none(),
 				Cl.bufferFromHex(USD0),
 				Cl.uint(99000000),
+				Cl.none(),
 				Cl.none()
 			],
 			deployer
@@ -505,6 +506,7 @@ export async function createBinaryMarket(marketId: number, creator?: string, tok
 			Cl.none(),
 			Cl.bufferFromHex(USD0),
 			Cl.uint(100000000),
+			Cl.none(),
 			Cl.none()
 		],
 		creator ? creator : deployer
@@ -530,6 +532,7 @@ async function createScalarMarket(marketId: number, priceFeed: string, creator?:
 			Cl.none(),
 			Cl.bufferFromHex(priceFeed),
 			Cl.uint(100000000),
+			Cl.none(),
 			Cl.none()
 		],
 		creator ? creator : deployer
