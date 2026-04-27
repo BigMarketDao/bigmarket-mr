@@ -98,7 +98,13 @@ describe('Tests the rewards system over several epochs', () => {
 
 		//expect(tx.result).toEqual(Cl.ok(Cl.uint(0)));
 	});
-	it('Check effect of teir weight changes', async () => {
+	// Skipped after the bme030 audit fix: tier weights are now frozen once any
+	// token has been minted in that tier (set-tier-weight returns
+	// err-tier-weight-locked u30013). This test was specifically exercising the
+	// state-drift caused by mid-stream weight changes - the very behaviour the
+	// fix prevents. To re-enable, the contract would need a per-mint weight
+	// snapshot rather than a global freeze.
+	it.skip('Check effect of teir weight changes', async () => {
 		// --- CONFIG ---
 		users = [];
 		const NUM_USERS = 1; // or 1000 if you want to stress test

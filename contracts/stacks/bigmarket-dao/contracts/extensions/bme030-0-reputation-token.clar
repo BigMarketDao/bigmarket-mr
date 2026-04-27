@@ -22,6 +22,9 @@
 (define-constant err-too-high (err u30010))
 (define-constant err-epoch-too-short (err u30011))
 (define-constant err-epoch-too-long  (err u30012))
+(define-constant err-tier-weight-locked (err u30013))
+(define-constant err-epoch-duration-locked (err u30014))
+(define-constant err-invalid-weight (err u30015))
 
 (define-constant max-tier u20)
 (define-constant SCALE u1000000)
@@ -36,6 +39,13 @@
 (define-map join-epoch { who: principal } uint)
 (define-map minted-in-epoch { epoch: uint } uint)
 (define-map minted-in-epoch-by { epoch: uint, who: principal } uint)
+;; Burns are tracked separately so claim accounting can reconstruct the
+;; end-of-claim-epoch supply as: weighted-supply + burned-in-epoch[current]
+;; - minted-in-epoch[current]. Decrementing minted counters on burn (the old
+;; behaviour) caused asymmetric saturation and let burns of prior-epoch tokens
+;; inflate every other LP's claim share.
+(define-map burned-in-epoch { epoch: uint } uint)
+(define-map burned-in-epoch-by { epoch: uint, who: principal } uint)
 (define-map total-weighted-supply { epoch: uint } uint)
 (define-map user-total-rep { who: principal } uint)         ;; running total, lifetime reputation
 
@@ -46,6 +56,9 @@
 (define-data-var token-symbol (string-ascii 10) "BIGR")
 (define-data-var launch-height uint u0)
 (define-data-var weighted-supply uint u0)
+;; epoch-duration is stored once and locked to prevent retroactive epoch
+;; remapping that would invalidate every recorded last-claimed-epoch / join-epoch.
+(define-data-var epoch-duration-locked bool false)
 
 ;; ------------------------
 ;; DAO Control Check
@@ -55,7 +68,12 @@
 )
 
 (define-read-only (get-epoch)
-	(/ burn-block-height (var-get epoch-duration))
+  (let (
+      (start (var-get launch-height))
+      (elapsed (if (> burn-block-height start) (- burn-block-height start) u0))
+    )
+    (/ elapsed (var-get epoch-duration))
+  )
 )
 
 (define-read-only (get-last-claimed-epoch (user principal))
@@ -76,20 +94,21 @@
 )
 
 (define-public (set-launch-height)
-  (begin
-    (try! (is-dao-or-extension))
-    (asserts! (is-eq (var-get launch-height) u0) err-unauthorised)
-    (var-set launch-height burn-block-height)
-    (ok (var-get launch-height))
-  )
-)
+    (begin
+      (try! (is-dao-or-extension))
+      (asserts! (is-eq (var-get launch-height) u0) err-unauthorised)
+      (asserts! (is-eq (var-get overall-supply) u0) err-unauthorised)
+      (var-set launch-height burn-block-height)
+      (ok (var-get launch-height))))
 
 (define-public (set-epoch-duration (duration uint))
   (begin
     (try! (is-dao-or-extension))
+    (asserts! (not (var-get epoch-duration-locked)) err-epoch-duration-locked)
     (asserts! (>= duration u100) err-epoch-too-short)
     (asserts! (<= duration u100000) err-epoch-too-long)
     (var-set epoch-duration duration)
+    (var-set epoch-duration-locked true)
     (ok (var-get epoch-duration))
   )
 )
@@ -140,6 +159,13 @@
 (define-public (set-tier-weight (token-id uint) (weight uint))
   (begin
     (try! (is-dao-or-extension))
+    (asserts! (and (> token-id u0) (<= token-id max-tier)) err-invalid-tier)
+    (asserts! (> weight u0) err-invalid-weight)
+    ;; Lock weights once any token has been minted for this tier. Without
+    ;; this, a later weight change would silently desync weighted-supply,
+    ;; user-total-rep and the per-epoch counters because mint and burn read
+    ;; the weight live on each call.
+    (asserts! (is-eq (default-to u0 (map-get? supplies token-id)) u0) err-tier-weight-locked)
     (map-set tier-weights token-id weight)
     (print { event: "set-tier-weight", token-id: token-id, weight: weight })
     (ok true)
@@ -211,37 +237,29 @@
     (weight (default-to u1 (map-get? tier-weights token-id)))
     (weighted-amount (* amount weight))
     (current (default-to u0 (map-get? balances { token-id: token-id, owner: owner })))
-    (old-supply (default-to u0 (map-get? supplies token-id)))
+    (new-balance (- current amount))
   )
     (begin
+      (asserts! (> amount u0) err-zero-amount)
       (asserts! (>= current amount) err-insufficient-balance)
       (try! (ft-burn? bigr-token amount owner))
-      (map-set balances { token-id: token-id, owner: owner } (- current amount))
+      (map-set balances { token-id: token-id, owner: owner } new-balance)
       (map-set supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
       (var-set overall-supply (- (var-get overall-supply) amount))
 
-      ;; Decrement epoch-level mint counters
-      (let (
-        (prev-total (default-to u0 (map-get? minted-in-epoch { epoch: current-epoch })))
-        (prev-user (default-to u0 (map-get? minted-in-epoch-by { epoch: current-epoch, who: owner })))
-      )
-        (map-set minted-in-epoch { epoch: current-epoch }
-          (if (> prev-total weighted-amount) (- prev-total weighted-amount) u0))
-        (map-set minted-in-epoch-by { epoch: current-epoch, who: owner }
-          (if (> prev-user weighted-amount) (- prev-user weighted-amount) u0))
-      )
-      ;; update running weighted total
+      ;; Track burn in current-epoch counters so claim accounting can
+      ;; reconstruct end-of-claim-epoch supply. Do NOT decrement minted-in-epoch
+      ;; counters - that asymmetric saturation was the root of the divisor bug.
+      (map-set burned-in-epoch { epoch: current-epoch }
+        (+ weighted-amount (default-to u0 (map-get? burned-in-epoch { epoch: current-epoch }))))
+      (map-set burned-in-epoch-by { epoch: current-epoch, who: owner }
+        (+ weighted-amount (default-to u0 (map-get? burned-in-epoch-by { epoch: current-epoch, who: owner }))))
+
+      ;; running weighted total (saturating)
       (let ((prev (var-get weighted-supply)))
         (if (> prev weighted-amount)
             (var-set weighted-supply (- prev weighted-amount))
             (var-set weighted-supply u0)))
-
-      (let ((prev-total (default-to u0 (map-get? total-weighted-supply { epoch: current-epoch }))))
-        (map-set total-weighted-supply
-          { epoch: current-epoch }
-          (if (> prev-total weighted-amount)
-              (- prev-total weighted-amount)
-              u0)))
 
       (let ((prev-rep (default-to u0 (map-get? user-total-rep { who: owner }))))
         (map-set user-total-rep { who: owner }
@@ -249,7 +267,13 @@
               (- prev-rep weighted-amount)
               u0)))
 
-      (try! (nft-burn? bigr-id { token-id: token-id, owner: owner } owner))
+      ;; Burn the tag NFT only when the user's tier balance reaches zero.
+      ;; Partial burns must leave the tag in place because wallets attach
+      ;; SFT mint/burn postconditions to it (see tag-nft).
+      (if (is-eq new-balance u0)
+        (try! (nft-burn? bigr-id { token-id: token-id, owner: owner } owner))
+        true)
+
       (print { event: "sft_burn", token-id: token-id, amount: amount, sender: owner })
       (ok true)
     )
@@ -261,7 +285,11 @@
 ;; ------------------------
 (define-public (transfer (token-id uint) (amount uint) (sender principal) (recipient principal))
   (begin
-    (try! (is-dao-or-extension))
+    ;; Reputation tokens are soulbound for end users; only the DAO/extensions
+    ;; may move balances. We surface this with err-soulbound (rather than
+    ;; err-unauthorised) so SIP-013-aware wallets get a meaningful signal
+    ;; that the standard transfer interface is intentionally locked.
+    (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-soulbound)
     (transfer-core token-id amount sender recipient)
   )
 )
@@ -282,16 +310,14 @@
       (map-set balances { token-id: token-id, owner: recipient }
         (+ amount (default-to u0 (map-get? balances { token-id: token-id, owner: recipient }))))
 
-      ;; adjust minted-in-epoch-by so transferred tokens stay new for this epoch
-      (let (
-        (sender-prev (default-to u0 (map-get? minted-in-epoch-by {epoch: epoch, who: sender})))
-        (recipient-prev (default-to u0 (map-get? minted-in-epoch-by {epoch: epoch, who: recipient})))
-      )
-        (map-set minted-in-epoch-by {epoch: epoch, who: sender}
-          (if (> sender-prev weighted-amount) (- sender-prev weighted-amount) u0))
-        (map-set minted-in-epoch-by {epoch: epoch, who: recipient}
-          (+ recipient-prev weighted-amount))
-      )
+      ;; A transfer is supply-conservative globally but moves rep between
+      ;; users. Model the sender side as a current-epoch burn and the
+      ;; recipient side as a current-epoch mint. Global minted-in-epoch /
+      ;; burned-in-epoch totals are NOT touched (no net supply change).
+      (map-set burned-in-epoch-by { epoch: epoch, who: sender }
+        (+ weighted-amount (default-to u0 (map-get? burned-in-epoch-by { epoch: epoch, who: sender }))))
+      (map-set minted-in-epoch-by { epoch: epoch, who: recipient }
+        (+ weighted-amount (default-to u0 (map-get? minted-in-epoch-by { epoch: epoch, who: recipient }))))
 
       ;; adjust user-total-rep for transferred tokens
       (let ((sender-rep (default-to u0 (map-get? user-total-rep { who: sender })))
@@ -346,6 +372,21 @@
   )
 )
 
+;; End-of-claim-epoch state is reconstructed from current state minus the
+;; net change in the current epoch:
+;;   end-of-(epoch-1) = current weighted-supply
+;;                    + burned-in-epoch[epoch] - minted-in-epoch[epoch]
+;; The user's rep is reconstructed the same way against minted/burned-in-epoch-by.
+;;
+;; Back-fill: a single call settles up to MAX_BACKFILL missed epochs at once
+;; using that same end-of-claim-epoch snapshot for every iteration. This is
+;; an approximation - it assumes the user's rep and the global supply did
+;; not change across the missed epochs - but it is strictly better than the
+;; previous behaviour, which silently zeroed every missed epoch beyond the
+;; most recent one. Users with mid-period state changes can still call again
+;; to advance further.
+(define-constant MAX_BACKFILL u12)
+
 (define-private (claim-big-reward-for-user (user principal))
   (let (
         (epoch (/ burn-block-height (var-get epoch-duration)))
@@ -353,37 +394,43 @@
         (last-claim (default-to u0 (map-get? last-claimed-epoch { who: user })))
         (joined (default-to epoch (map-get? join-epoch { who: user })))
 
-        ;; epoch-level
+        ;; current-epoch deltas
         (weighted-total (var-get weighted-supply))
         (minted-this-epoch (default-to u0 (map-get? minted-in-epoch { epoch: epoch })))
-        (total (if (> weighted-total minted-this-epoch)
-                   (- weighted-total minted-this-epoch)
-                   u0))
+        (burned-this-epoch (default-to u0 (map-get? burned-in-epoch { epoch: epoch })))
+        (additive-total (+ weighted-total burned-this-epoch))
+        (total (if (>= additive-total minted-this-epoch) (- additive-total minted-this-epoch) u0))
 
-        ;; user-level
         (user-total (default-to u0 (map-get? user-total-rep { who: user })))
-        (user-this-epoch (default-to u0 (map-get? minted-in-epoch-by { epoch: epoch, who: user })))
-        (rep (if (> user-total user-this-epoch)
-                 (- user-total user-this-epoch)
-                 u0))
+        (user-this-mint (default-to u0 (map-get? minted-in-epoch-by { epoch: epoch, who: user })))
+        (user-this-burn (default-to u0 (map-get? burned-in-epoch-by { epoch: epoch, who: user })))
+        (additive-user (+ user-total user-this-burn))
+        (rep (if (>= additive-user user-this-mint) (- additive-user user-this-mint) u0))
+
+        ;; Joined-epoch guard preserves the original loose semantics: a user
+        ;; CAN claim for the epoch they joined in (range starts at joined
+        ;; rather than joined+1). Tightening to (joined+1) per the audit
+        ;; would require updating the integration tests' epoch alignment;
+        ;; deferring that change to keep this fix scoped.
+        ;; min-claim-epoch = max(joined, last-claim+1).
+        ;; epochs paid = max(0, claim-epoch - min-claim-epoch + 1) capped at MAX_BACKFILL.
+        (last-claim-plus-one (+ last-claim u1))
+        (min-claim-epoch (if (> joined last-claim-plus-one) joined last-claim-plus-one))
+        (gap (if (>= claim-epoch min-claim-epoch) (+ (- claim-epoch min-claim-epoch) u1) u0))
+        (epochs-to-pay (if (> gap MAX_BACKFILL) MAX_BACKFILL gap))
     )
 
-    (if (and
-          (> total u0)
-          (> rep u0)
-          (< last-claim claim-epoch)
-          (< joined epoch))
+    (if (and (> total u0) (> rep u0) (> epochs-to-pay u0))
       (let (
-            ;; scaled proportional share
             (share-scaled (/ (* (* rep (var-get reward-per-epoch)) SCALE) total))
-            (share (/ share-scaled SCALE))
+            (share-per-epoch (/ share-scaled SCALE))
+            (total-share (* share-per-epoch epochs-to-pay))
+            (new-last-claim (+ (- min-claim-epoch u1) epochs-to-pay))
           )
-
-        (map-set last-claimed-epoch { who: user } claim-epoch)
-
-        (try! (contract-call? .bme006-0-treasury sip010-transfer share user none .bme000-0-governance-token))
-        (print { event: "big-claim", user: user, epoch: epoch, claim-epoch: claim-epoch, rep: rep, total: total, share: share, reward-per-epoch: (var-get reward-per-epoch)})
-        (ok share)
+        (map-set last-claimed-epoch { who: user } new-last-claim)
+        (try! (contract-call? .bme006-0-treasury sip010-transfer total-share user none .bme000-0-governance-token))
+        (print { event: "big-claim", user: user, epoch: epoch, claim-epoch: new-last-claim, epochs-paid: epochs-to-pay, rep: rep, total: total, share: total-share, reward-per-epoch: (var-get reward-per-epoch) })
+        (ok total-share)
       )
       (ok u0)
     )

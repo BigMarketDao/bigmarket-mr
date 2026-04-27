@@ -31,7 +31,8 @@ describe('Reputation', () => {
 		tx = simnet.callPublicFn(reputationSft, 'burn', [Cl.principal(alice), Cl.uint(1), Cl.uint(10)], alice);
 		expect(tx.result).toEqual(Cl.error(Cl.uint(30001)));
 		tx = simnet.callPublicFn(reputationSft, 'transfer', [Cl.uint(1), Cl.uint(10), Cl.principal(alice), Cl.principal(bob)], alice);
-		expect(tx.result).toEqual(Cl.error(Cl.uint(30001)));
+		// transfer is soulbound for non-DAO callers (was err-unauthorised u30001)
+		expect(tx.result).toEqual(Cl.error(Cl.uint(30003)));
 	});
 
 	it('check disable hedging', async () => {
@@ -77,7 +78,8 @@ describe('minting', () => {
 	it('only dao can transfer', async () => {
 		await constructDao(simnet);
 		let response = simnet.callPublicFn(reputationSft, 'transfer', [Cl.uint(0), Cl.uint(1000), Cl.principal(alice), Cl.principal(bob)], deployer);
-		expect(response.result).toEqual(Cl.error(Cl.uint(30001)));
+		// transfer is soulbound for non-DAO callers (was err-unauthorised u30001)
+		expect(response.result).toEqual(Cl.error(Cl.uint(30003)));
 	});
 	it('dao can mint and burn additional amount', async () => {
 		await constructDao(simnet);
@@ -183,8 +185,11 @@ describe('claiming', () => {
 		bal = simnet.callReadOnlyFn(`${deployer}.${reputationSft}`, 'get-overall-balance', [Cl.principal(alice)], alice);
 		expect(bal.result).toEqual(Cl.ok(Cl.uint(1010)));
 
+		// First claim back-fills 3 unclaimed epochs (epochs 1, 2, 3) since
+		// mineEmptyBlocks(4000) advanced the chain to epoch 4. alice's
+		// per-epoch share is 5_000_000_000 (half of 10 BIG; bob holds the other half).
 		let response = simnet.callPublicFn(reputationSft, 'claim-big-reward', [], alice);
-		expect(response.result).toEqual(Cl.ok(Cl.uint(5000000000)));
+		expect(response.result).toEqual(Cl.ok(Cl.uint(15000000000)));
 
 		response = simnet.callPublicFn(reputationSft, 'claim-big-reward', [], alice);
 		expect(response.result).toEqual(Cl.ok(Cl.uint(0)));
@@ -206,11 +211,12 @@ describe('claiming', () => {
 		bal = simnet.callReadOnlyFn(`${deployer}.${reputationSft}`, 'get-overall-balance', [Cl.principal(alice)], alice);
 		expect(bal.result).toEqual(Cl.ok(Cl.uint(1010)));
 
+		// Both alice and bob each back-fill 3 epochs at 5 BIG/epoch = 15 BIG.
 		let response = simnet.callPublicFn(reputationSft, 'claim-big-reward', [], alice);
-		expect(response.result).toEqual(Cl.ok(Cl.uint(5000000000)));
+		expect(response.result).toEqual(Cl.ok(Cl.uint(15000000000)));
 
 		response = simnet.callPublicFn(reputationSft, 'claim-big-reward', [], bob);
-		expect(response.result).toEqual(Cl.ok(Cl.uint(5000000000)));
+		expect(response.result).toEqual(Cl.ok(Cl.uint(15000000000)));
 	});
 
 	it('alice and bob can claim subsequent epochs', async () => {
@@ -236,11 +242,12 @@ describe('claiming', () => {
 		bal = simnet.callReadOnlyFn(`${deployer}.${reputationSft}`, 'get-overall-balance', [Cl.principal(alice)], alice);
 		expect(bal.result).toEqual(Cl.ok(Cl.uint(1010)));
 
+		// First claim back-fills 3 unclaimed epochs (1, 2, 3).
 		let response = simnet.callPublicFn(reputationSft, 'claim-big-reward', [], alice);
-		expect(response.result).toEqual(Cl.ok(Cl.uint(5000000000)));
+		expect(response.result).toEqual(Cl.ok(Cl.uint(15000000000)));
 
 		response = simnet.callPublicFn(reputationSft, 'claim-big-reward', [], bob);
-		expect(response.result).toEqual(Cl.ok(Cl.uint(5000000000)));
+		expect(response.result).toEqual(Cl.ok(Cl.uint(15000000000)));
 
 		bal = simnet.callReadOnlyFn(`${deployer}.${reputationSft}`, 'get-epoch', [], bob);
 		expect(bal.result).toEqual(Cl.uint(4));
@@ -279,11 +286,12 @@ describe('claiming', () => {
 		bal = simnet.callReadOnlyFn(`${deployer}.${reputationSft}`, 'get-overall-balance', [Cl.principal(alice)], alice);
 		expect(bal.result).toEqual(Cl.ok(Cl.uint(1010)));
 
+		// Both back-fill 3 unclaimed epochs (1, 2, 3) at 5 BIG/epoch each.
 		let response = simnet.callPublicFn(reputationSft, 'claim-big-reward', [], alice);
-		expect(response.result).toEqual(Cl.ok(Cl.uint(5000000000)));
+		expect(response.result).toEqual(Cl.ok(Cl.uint(15000000000)));
 
 		response = simnet.callPublicFn(reputationSft, 'claim-big-reward', [], bob);
-		expect(response.result).toEqual(Cl.ok(Cl.uint(5000000000)));
+		expect(response.result).toEqual(Cl.ok(Cl.uint(15000000000)));
 	});
 });
 
