@@ -22,23 +22,25 @@
     (sol-id 0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d)
     (big-id 0xff0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d)
     (bigr-id 0xfffd8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d)
+	(now (unwrap-panic (get-stacks-block-info? time (- stacks-block-height u1))))
+
 
     (price (if (is-eq price-feed-id btc-id)
-              9500000      ;; $95.000000 with expo -8
+              9500000000      ;; $95.000000 with expo -8
               (if (is-eq price-feed-id eth-id)
-                  10500000  ;; $105.000000
+                  10500000000  ;; $105.000000
                   (if (is-eq price-feed-id stx-id)
-                      11500000
-                      (if (is-eq price-feed-id big-id) 0 (if (is-eq price-feed-id bigr-id) 1000000000 12500000))))))
+                      11500000000
+                      (if (is-eq price-feed-id big-id) 0 (if (is-eq price-feed-id bigr-id) 1000000000 12500000000))))))
     )
     (ok {
-      price: price,     ;; = 100.000000 with expo -8
-      conf: u1,              ;; = 0.000001 with expo -8  0.001% error
+      price: price,
+      conf: u1,
       expo: -8,
-      ema-price: 100000000,
+      ema-price: price,
       ema-conf: u1,
-      publish-time: u1000,   ;; recent enough
-      prev-publish-time: u999
+      publish-time: now,
+      prev-publish-time: (- now u1)
     })
 ))
 ;; Title: pyth-storage

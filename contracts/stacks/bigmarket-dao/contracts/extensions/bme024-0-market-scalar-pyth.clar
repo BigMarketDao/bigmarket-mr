@@ -1255,7 +1255,7 @@
 ;; Helper function to create a list with zeros after index N
 (define-private (zero-after-n (original-list (list 10 uint)) (n uint))
   (let (
-    (element-0 (if (<= u0 n) (unwrap-panic (element-at? original-list u0)) u0))
+    (element-0 (if (< u0 n) (unwrap-panic (element-at? original-list u0)) u0))
     (element-1 (if (< u1 n) (unwrap-panic (element-at? original-list u1)) u0))
     (element-2 (if (< u2 n) (unwrap-panic (element-at? original-list u2)) u0))
     (element-3 (if (< u3 n) (unwrap-panic (element-at? original-list u3)) u0))
@@ -1287,13 +1287,28 @@
 
 (define-private (category-bands (start-price uint) (delta uint))
   (let (
-    ;; Symmetric bands around start-price
-    (element-0 {min: u0, max: (- start-price (* delta u2))})                          ;; big loss
-    (element-1 {min: (- start-price (* delta u2)), max: (- start-price delta)})       ;; small loss
-    (element-2 {min: (- start-price delta), max: start-price})                        ;; slight loss
-    (element-3 {min: start-price, max: (+ start-price delta)})                        ;; slight gain
-    (element-4 {min: (+ start-price delta), max: (+ start-price (* delta u2))})       ;; small gain
-    (element-5 {min: (+ start-price (* delta u2)), max: u4294967295})                 ;; big gain
+    (two-delta (* delta u2))
+
+    (safe-2delta
+      (if (> start-price two-delta)
+          (- start-price two-delta)
+          u0))
+
+    (safe-1delta
+      (if (> start-price delta)
+          (- start-price delta)
+          u0))
+
+    ;; upper bounds are always safe (addition cannot underflow)
+    (plus-1delta (+ start-price delta))
+    (plus-2delta (+ start-price two-delta))
+
+    (element-0 {min: u0, max: safe-2delta})
+    (element-1 {min: safe-2delta, max: safe-1delta})
+    (element-2 {min: safe-1delta, max: start-price})
+    (element-3 {min: start-price, max: plus-1delta})
+    (element-4 {min: plus-1delta, max: plus-2delta})
+    (element-5 {min: plus-2delta, max: u4294967295})
   )
     (list element-0 element-1 element-2 element-3 element-4 element-5)
   )
@@ -1357,10 +1372,10 @@
 (define-private (scale-pyth (val uint) (expo int)) ;; -> uint
   (let ((v-abs (abs-int (to-int val))))
     (if (< expo 0)
-        ;; multiply for negative exponent
-        (to-uint (* v-abs (to-int (pow u10 (to-uint (abs-int expo))))))
-        ;; divide for positive exponent
-        (to-uint (/ v-abs (to-int (pow u10 (to-uint expo))))))
+        ;; negative exponent => divide
+        (to-uint (/ v-abs (to-int (pow u10 (to-uint (abs-int expo))))))
+        ;; positive exponent => multiply
+        (to-uint (* v-abs (to-int (pow u10 (to-uint expo))))))
   )
 )
 

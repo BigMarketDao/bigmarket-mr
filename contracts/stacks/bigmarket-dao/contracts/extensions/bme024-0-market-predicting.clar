@@ -1191,7 +1191,7 @@
 ;; Helper function to create a list with zeros after index N
 (define-private (zero-after-n (original-list (list 10 uint)) (n uint))
   (let (
-    (element-0 (if (<= u0 n) (unwrap-panic (element-at? original-list u0)) u0))
+    (element-0 (if (< u0 n) (unwrap-panic (element-at? original-list u0)) u0))
     (element-1 (if (< u1 n) (unwrap-panic (element-at? original-list u1)) u0))
     (element-2 (if (< u2 n) (unwrap-panic (element-at? original-list u2)) u0))
     (element-3 (if (< u3 n) (unwrap-panic (element-at? original-list u3)) u0))
