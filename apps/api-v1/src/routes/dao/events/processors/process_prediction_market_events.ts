@@ -7,15 +7,19 @@ import { ObjectId } from 'mongodb';
 import { daoEventCollection } from '../../../../lib/data/db_models.js';
 import {
 	findPredictionContractEventByContractAndIndex,
+	updateAddLiquidityEvent,
 	updateAllowedTokensEvent,
+	updateClaimLpFeeEvent,
 	updateClaimWinningsEvent,
 	updateDisputeResolutionEvent,
 	updateMarketStakeEvent,
 	updatePredictionMarketCreateEvent,
+	updateRemoveLiquidityEvent,
 	updateResolveMarketEvent,
 	updateResolveMarketUndisputedEvent,
 	updateResolveMarketVoteEvent,
-	updateTransferStakeEvent
+	updateTransferStakeEvent,
+	updateUnstakeEvent
 } from '../../../predictions/markets_helper.js';
 import { saveDaoEvent } from '../dao_events_extension_helper.js';
 
@@ -89,6 +93,14 @@ export async function processMarketPredicitonCategoricalEvent(basicEvent: BasicE
 		event = await updateTransferStakeEvent(1, result, basicEvent);
 	} else if (result.value.event.value === 'claim-winnings') {
 		event = await updateClaimWinningsEvent(1, result, basicEvent);
+	} else if (result.value.event.value === 'market-unstake') {
+		event = await updateUnstakeEvent(1, result, basicEvent);
+	} else if (result.value.event.value === 'add-liquidity') {
+		event = await updateAddLiquidityEvent(1, result, basicEvent);
+	} else if (result.value.event.value === 'remove-liquidity') {
+		event = await updateRemoveLiquidityEvent(1, result, basicEvent);
+	} else if (result.value.event.value === 'claim-lp-fees') {
+		event = await updateClaimLpFeeEvent(1, result, basicEvent);
 	} else {
 		//console.log("processEvent: new event: ", event);
 	}

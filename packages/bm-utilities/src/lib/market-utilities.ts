@@ -20,9 +20,14 @@ import { fmtMicroToStxNumber, fmtStxMicro } from "./format.js";
 import { convertCryptoToFiatNumber } from "./conversion.js";
 import { estimateBitcoinBlockTime } from "./blockTime.js";
 
+export const NO_CLAIMING_TIER = -1;
 export const CLAIMING_TIER = 1;
 export const LIQUIDITY_TIER = 4;
-export const STAKING_TIER = -1; // removed due to sybil
+export const ADD_LIQUIDITY_TIER = 3; // removed due to sybil
+export const REMOVE_LIQUIDITY_TIER = -1; // removed due to sybil
+export const CLAIM_LIQUIDITY_TIER = -1; // removed due to sybil
+export const STAKING_TIER = 4; // removed due to sybil
+export const SELLING_TIER = -1; // removed due to sybil
 export const CREATE_MARKET_TIER = 2;
 export const MARKET_VOTE_TIER = -1; // removed due to sybil
 export const RECLAIM_VOTES_TIER = 12;

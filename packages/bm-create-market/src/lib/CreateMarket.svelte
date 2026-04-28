@@ -37,7 +37,7 @@
   let errorMessage = $state('');
   let isSubmitting = $state(false);
   let isWaitingForTransaction = $state(false);
-  let currentStep = $derived(forceStep);
+  let currentStep = $state(0);
 
   let inited = $state(false);
   let isBitcoinMarket = $derived($bitcoinMode);
@@ -129,22 +129,22 @@
   const handleCriterionUpdate = (duration: number, coolDown: number, startHeight: number) => {
     template.criterionDays = { duration, coolDown, startHeight };
     if (template.marketType === 2) onRegenerate(template, 1);
-    currentStep = 1;
-    nextStep();
+    //currentStep = 1;
+    //nextStep();
   };
 
   function regenerate() {
     if (template.marketType === 2) onRegenerate(template, 2);
-    currentStep = 2;
-    nextStep();
+    //currentStep = 2;
+    //nextStep();
   }
 
   function handleTokenChange() {
     if (template.marketType === 2) onRegenerate(template, 2);
     template.liquidity =
       $allowedTokenStore.find((o) => o.token === template.token)?.minLiquidity || 0;
-    currentStep = 2;
-    nextStep();
+    //currentStep = 2;
+    //nextStep();
   }
 
   const handleCriterionSourcesUpdate = (data: CriterionSources) => {
@@ -281,7 +281,7 @@
           onFeedChange={regenerate}
           testIdPrefix={'market-mgt:martypesel'}
         />
-        <LiquiditySelection {validation} {template} testIdPrefix={'market-mgt:liqsel'} />
+        <CategorySelection onCriteriaUpdate={handleCriterionUpdate} {validation} {template} testIdPrefix={'market-mgt:catsel'} />
         {#if !isBitcoinMarket}
           <TokenSelection
             onTokenChange={handleTokenChange}
@@ -290,7 +290,7 @@
             testIdPrefix={'market-mgt:toksel'}
           />
         {/if}
-        <CategorySelection onCriteriaUpdate={handleCriterionUpdate} {validation} {template} testIdPrefix={'market-mgt:catsel'} />
+        <LiquiditySelection {validation} {template} testIdPrefix={'market-mgt:liqsel'} />
       {:else if currentStep === 3}
         <div
           class="rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800"

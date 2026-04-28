@@ -115,7 +115,7 @@
       },
       market.marketData,
     );
-    const maxShares = await stacks.createMarketsClient(daoConfig).getMaxShares(
+    const maxShares = await stacks.createMarketsClient(daoConfig).fetchMaxShares(
       appConfig.VITE_STACKS_API,
       market.marketId,
       index,
@@ -125,10 +125,10 @@
     );
     const token = $allowedTokenStore.find((t) => t.token === market.marketData.token)!;
     const response = await stacks.createMarketsClient(daoConfig).buyShares(
+      getStxAddress(),
       market,
       token,
       index,
-      getStxAddress(),
       $shareCosts.userCostMicro,
       purchaseInfo.minShares,
     );
@@ -180,7 +180,7 @@
     const numberShares = Number(`1e${sip10Data.decimals}`);
     for (let i = 0; i < market.marketData.categories.length; i++) {
       //costs.push(await getCostPerShare(appConfig.VITE_STACKS_API, market.marketId, i, maxSpend * numberShares, market.extension.split('.')[0], market.extension.split('.')[1]));
-      const maxShares = await stacks.createMarketsClient(daoConfig).getMaxShares(
+      const maxShares = await stacks.createMarketsClient(daoConfig).fetchMaxShares(
         appConfig.VITE_STACKS_API,
         market.marketId,
         i,

@@ -27,6 +27,9 @@ importers:
 
   apps/api-v1:
     dependencies:
+      '@bigmarket/bm-types':
+        specifier: workspace:*
+        version: link:../../packages/bm-types
       '@mijoco/stx_helpers':
         specifier: ^0.7.42
         version: 0.7.42

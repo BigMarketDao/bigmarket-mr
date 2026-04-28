@@ -63,8 +63,6 @@
     onchange={tokenChange}
   >
     <!-- Fix: don't use `selected` with bind:value; let Svelte control selection -->
-    <option value="" disabled>Select a token</option>
-
     {#each displayTokens as token (token.value)}
       <option value={token.value} disabled={token.disabled}>{token.label}</option>
     {/each}

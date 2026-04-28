@@ -12,8 +12,10 @@ import { callContract } from "./tx.js";
 import {
   bufferCV,
   Cl,
+  ClarityType,
   type ClarityValue,
   contractPrincipalCV,
+  cvToValue,
   ListCV,
   listCV,
   noneCV,
@@ -28,11 +30,15 @@ import {
 } from "@stacks/transactions";
 import { callContractReadOnly } from "./utils/contract.js";
 import {
+  ADD_LIQUIDITY_TIER,
   CREATE_MARKET_TIER,
+  CLAIM_LIQUIDITY_TIER,
   getFungibleTokenName,
   getTierBalance,
   isSTX,
   mapToMinMaxStrings,
+  REMOVE_LIQUIDITY_TIER,
+  SELLING_TIER,
   STAKING_TIER,
 } from "@bigmarket/bm-utilities";
 import {
@@ -46,6 +52,22 @@ import {
   generateMerkleTreeUsingStandardPrincipal,
   proofToClarityValue,
 } from "./utils/gateKeeper.js";
+
+export function unwrapClarityValue(result: ClarityValue) {
+  switch (result.type) {
+    case ClarityType.ResponseOk:
+      return cvToValue(result.value);
+
+    case ClarityType.ResponseErr:
+      throw new Error(
+        `Contract error: ${JSON.stringify(cvToValue(result.value))}`,
+      );
+
+    default:
+      // raw values (bool, uint, optional, tuple, etc.)
+      return cvToValue(result);
+  }
+}
 
 async function getClarityProofForCreateMarket(
   gateKeeper: GateKeeper,
@@ -107,7 +129,7 @@ async function getArgsCV(
   creationGated: boolean,
   token: string,
   treasury: string,
-  stxAddress: string,
+  sender: string,
   marketFee: number,
   dataHash: string,
   marketInitialLiquidity: number,
@@ -115,6 +137,7 @@ async function getArgsCV(
   marketDuration: number,
   coolDownDuration: number,
   hedgeStrategy?: string,
+  mechanism?: number,
 ): Promise<ClarityValue[]> {
   const [contractAddress, contractName] = token.split(".");
   if (!contractAddress || !contractName) {
@@ -129,10 +152,11 @@ async function getArgsCV(
         hedgeStrategy.split(".")[1],
       )
     : noneCV();
+  const mechanismCV = mechanism ? someCV(uintCV(mechanism)) : noneCV();
   // Assumes `dataHash` is a 64-character hex string (32 bytes)
   const metadataHash = bufferCV(hexToBytes(dataHash));
   let proof = creationGated
-    ? await getClarityProofForCreateMarket(gateKeeper, stxAddress)
+    ? await getClarityProofForCreateMarket(gateKeeper, sender)
     : Cl.list([]);
   if (typeof priceFeedIdOrCatData === "string") {
     console.log("priceFeedId ===> " + priceFeedIdOrCatData);
@@ -147,6 +171,7 @@ async function getArgsCV(
       Cl.bufferFromHex(priceFeedIdOrCatData),
       uintCV(marketInitialLiquidity),
       hedgeCV,
+      mechanismCV,
     ];
   } else {
     console.log("CatData ===> ", priceFeedIdOrCatData);
@@ -164,21 +189,22 @@ async function getArgsCV(
       someCV(uintCV(coolDownDuration)),
       uintCV(marketInitialLiquidity),
       hedgeCV,
+      mechanismCV,
     ];
   }
 }
 
 export function createMarketsClient(daoConfig: DaoConfig) {
   const deployer = daoConfig.VITE_DAO_DEPLOYER;
-  const call = (contract: string, fn: string, args: ClarityValue[]) =>
-    callContract(deployer, contract, daoConfig.VITE_NETWORK, fn, args);
+  // const call = (contract: string, fn: string, args: ClarityValue[]) =>
+  //   callContract(deployer, contract, daoConfig.VITE_NETWORK, fn, args);
 
   return {
     async buyShares(
+      sender: string,
       market: PredictionMarketCreateEvent,
       token: TokenPermissionEvent,
       index: number,
-      sender: string,
       userCostMicro: number,
       minShares: number,
       tierBalance?: number,
@@ -191,13 +217,12 @@ export function createMarketsClient(daoConfig: DaoConfig) {
       const categorical = mapToMinMaxStrings(market.marketData.categories)[
         index
       ];
-      const address = sender;
       const postConditions = await getSip10PostConditions(
         daoConfig.VITE_DAO_DEPLOYER,
         daoConfig.VITE_DAO_REPUTATION_TOKEN,
         STAKING_TIER,
         token,
-        address,
+        sender,
         userCostMicro,
         tierBalance || 0,
       );
@@ -229,43 +254,31 @@ export function createMarketsClient(daoConfig: DaoConfig) {
       );
     },
     async sellShares(
-      market: PredictionMarketCreateEvent,
-      tokenEvent: TokenPermissionEvent,
-      index: number,
       sender: string,
+      market: PredictionMarketCreateEvent,
+      token: TokenPermissionEvent,
+      index: number,
       sharesIn: number,
       minRefund: number,
-      tierBalance?: number,
-
-      //   sender: string,
-      //   marketId: number,
-      //   minRefund: number,
-      //   category: string,
-      //   sharesIn: number,
-      //   token: ReturnType<typeof Cl.contractPrincipal> = wrappedStx
-      // ) {
-      //   return simnet.callPublicFn(marketPredicting, 'sell-category',
-      // [Cl.uint(marketId), Cl.uint(minRefund), Cl.stringAscii(category), token, Cl.uint(sharesIn)], sender);
     ) {
-      //const [addr, name] = marketContract.split(".");
-
       const functionName = "sell-category";
       const contractAddress = market.extension.split(".")[0];
       const contractName = market.extension.split(".")[1];
+
+      // categorical string (same mapping as buy)
       const categorical = mapToMinMaxStrings(market.marketData.categories)[
         index
       ];
-      const address = sender;
       const postConditions = await getSip10PostConditions(
         daoConfig.VITE_DAO_DEPLOYER,
         daoConfig.VITE_DAO_REPUTATION_TOKEN,
-        STAKING_TIER,
-        tokenEvent,
-        address,
-        sharesIn,
-        tierBalance || 0,
+        SELLING_TIER,
+        token,
+        sender,
+        0, // the contract will send tokens to the user
+        0,
       );
-      //(define-public (sell-category (market-id uint) (min-refund uint) (index uint) (token <ft-token>) (shares-in uint))
+
       let functionArgs = [
         Cl.uint(market.marketId),
         Cl.uint(minRefund),
@@ -273,6 +286,8 @@ export function createMarketsClient(daoConfig: DaoConfig) {
         Cl.principal(market.marketData.token),
         Cl.uint(sharesIn),
       ];
+
+      // scalar variant uses index instead of string
       if (market.marketType === 2) {
         functionArgs = [
           Cl.uint(market.marketId),
@@ -293,52 +308,35 @@ export function createMarketsClient(daoConfig: DaoConfig) {
         "deny",
       );
     },
-    //(define-public (add-liquidity (market-id uint) (amount uint) (expected-total-stakes uint) (max-deviation-bips uint) (token <ft-token>))
     async addLiquidity(
-      market: PredictionMarketCreateEvent,
-      token: TokenPermissionEvent,
-      index: number,
       sender: string,
-      userCostMicro: number,
-      minShares: number,
+      market: PredictionMarketCreateEvent,
+      amount: number,
+      expectedTotalStakes: number,
+      maxDeviationBips: number,
+      tokenEvent: TokenPermissionEvent,
       tierBalance?: number,
     ) {
-      //const [addr, name] = marketContract.split(".");
-
-      const functionName = "sell-category";
+      const functionName = "add-liquidity";
       const contractAddress = market.extension.split(".")[0];
       const contractName = market.extension.split(".")[1];
-      const categorical = mapToMinMaxStrings(market.marketData.categories)[
-        index
-      ];
-      const address = sender;
       const postConditions = await getSip10PostConditions(
         daoConfig.VITE_DAO_DEPLOYER,
         daoConfig.VITE_DAO_REPUTATION_TOKEN,
-        STAKING_TIER,
-        token,
-        address,
-        userCostMicro,
+        ADD_LIQUIDITY_TIER,
+        tokenEvent,
+        sender,
+        amount,
         tierBalance || 0,
       );
-      //(define-public (sell-category (market-id uint) (min-refund uint) (index uint) (token <ft-token>) (shares-in uint))
+      //(define-public (add-liquidity (market-id uint) (amount uint) (expected-total-stakes uint) (max-deviation-bips uint) (token <ft-token>))
       let functionArgs = [
         Cl.uint(market.marketId),
-        Cl.uint(minShares),
-        Cl.stringAscii(categorical),
-        Cl.principal(market.marketData.token),
-        Cl.uint(userCostMicro),
+        Cl.uint(amount),
+        Cl.uint(expectedTotalStakes),
+        Cl.uint(maxDeviationBips),
+        Cl.uint(tokenEvent.token),
       ];
-      if (market.marketType === 2) {
-        functionArgs = [
-          Cl.uint(market.marketId),
-          Cl.uint(minShares),
-          Cl.uint(index),
-          Cl.principal(market.marketData.token),
-          Cl.uint(userCostMicro),
-        ];
-      }
-
       return callContract(
         contractAddress,
         contractName,
@@ -346,6 +344,63 @@ export function createMarketsClient(daoConfig: DaoConfig) {
         functionName,
         functionArgs,
         postConditions,
+        "deny",
+      );
+    },
+    async removeLiquidity(
+      sender: string,
+      market: PredictionMarketCreateEvent,
+      amount: number,
+      minRefund: number,
+      tokenEvent: TokenPermissionEvent,
+      tierBalance?: number,
+    ) {
+      const functionName = "remove-liquidity";
+      const contractAddress = market.extension.split(".")[0];
+      const contractName = market.extension.split(".")[1];
+      const postConditions = await getSip10PostConditions(
+        daoConfig.VITE_DAO_DEPLOYER,
+        daoConfig.VITE_DAO_REPUTATION_TOKEN,
+        REMOVE_LIQUIDITY_TIER,
+        tokenEvent,
+        sender,
+        0, // user sends 0 tokens - the contract will send tokens to the user
+        tierBalance || 0,
+      );
+      //(define-public (remove-liquidity (market-id uint) (amount uint) (min-refund uint) (token <ft-token>))
+      let functionArgs = [
+        Cl.uint(market.marketId),
+        Cl.uint(amount),
+        Cl.uint(minRefund),
+        Cl.uint(tokenEvent.token),
+      ];
+      return callContract(
+        contractAddress,
+        contractName,
+        daoConfig.VITE_NETWORK,
+        functionName,
+        functionArgs,
+        postConditions,
+        "deny",
+      );
+    },
+
+    async claimLpFees(
+      market: PredictionMarketCreateEvent,
+      tokenEvent: TokenPermissionEvent,
+    ) {
+      const functionName = "claim-lp-fees";
+      const contractAddress = market.extension.split(".")[0];
+      const contractName = market.extension.split(".")[1];
+      //(define-public (claim-lp-fees (market-id uint) (token <ft-token>))
+      let functionArgs = [Cl.uint(market.marketId), Cl.uint(tokenEvent.token)];
+      return callContract(
+        contractAddress,
+        contractName,
+        daoConfig.VITE_NETWORK,
+        functionName,
+        functionArgs,
+        [],
         "deny",
       );
     },
@@ -365,6 +420,7 @@ export function createMarketsClient(daoConfig: DaoConfig) {
       coolDownDuration: number,
       tierBalance: number,
       hedgeStrategy?: string,
+      mechanism?: number,
     ) {
       let functionArgs: ClarityValue[] = [];
       try {
@@ -381,6 +437,7 @@ export function createMarketsClient(daoConfig: DaoConfig) {
           marketDuration,
           coolDownDuration,
           hedgeStrategy,
+          mechanism, // AMM mechanism
         );
         // Function arguments prepared successfully
       } catch (error) {
@@ -539,7 +596,7 @@ export function createMarketsClient(daoConfig: DaoConfig) {
       }
     },
 
-    async getMaxShares(
+    async fetchMaxShares(
       stacksApi: string,
       marketId: number,
       index: number,
@@ -611,6 +668,193 @@ export function createMarketsClient(daoConfig: DaoConfig) {
       } catch (err: any) {
         return { stakes: [] };
       }
+    },
+
+    //(define-read-only (is-hedging-enabled) (var-get hedging-enabled))
+    async fetchIsHedgingEnabled(
+      stacksApi: string,
+      marketId: number,
+      contractAddress: string,
+      contractName: string,
+      user: string,
+      stacksHiroKey?: string,
+    ): Promise<UserStake> {
+      const data = {
+        contractAddress,
+        contractName,
+        functionName: "is-hedging-enabled",
+        functionArgs: [],
+      };
+      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+      return unwrapClarityValue(result);
+    },
+
+    async fetchLpFeeSplitBips(
+      stacksApi: string,
+      contractAddress: string,
+      contractName: string,
+      stacksHiroKey?: string,
+    ): Promise<UserStake> {
+      const data = {
+        contractAddress,
+        contractName,
+        functionName: "get-lp-fee-split-bips",
+        functionArgs: [],
+      };
+      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+      return unwrapClarityValue(result);
+    },
+
+    async fetchTokenMinimumSeed(
+      stacksApi: string,
+      contractAddress: string,
+      contractName: string,
+      token: string,
+      stacksHiroKey?: string,
+    ): Promise<UserStake> {
+      const data = {
+        contractAddress,
+        contractName,
+        functionName: "get-token-minimum-seed",
+        functionArgs: [`0x${serializeCV(principalCV(token))}`],
+      };
+      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+      return unwrapClarityValue(result);
+    },
+
+    async fetchIsAllowedToken(
+      stacksApi: string,
+      marketId: number,
+      contractAddress: string,
+      contractName: string,
+      token: string,
+      stacksHiroKey?: string,
+    ): Promise<UserStake> {
+      const data = {
+        contractAddress,
+        contractName,
+        functionName: "is-allowed-token",
+        functionArgs: [`0x${serializeCV(principalCV(token))}`],
+      };
+      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+      return unwrapClarityValue(result);
+    },
+
+    async fetchExpectedPayout(
+      stacksApi: string,
+      marketId: number,
+      index: number,
+      contractAddress: string,
+      contractName: string,
+      user: string,
+      stacksHiroKey?: string,
+    ): Promise<UserStake> {
+      const data = {
+        contractAddress,
+        contractName,
+        functionName: "get-expected-payout",
+        functionArgs: [
+          `0x${serializeCV(uintCV(marketId))}`,
+          `0x${serializeCV(uintCV(index))}`,
+          `0x${serializeCV(principalCV(user))}`,
+        ],
+      };
+      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+      return unwrapClarityValue(result);
+    },
+    async fetchMarketData(
+      stacksApi: string,
+      marketId: number,
+      contractAddress: string,
+      contractName: string,
+      stacksHiroKey?: string,
+    ): Promise<UserStake> {
+      const data = {
+        contractAddress,
+        contractName,
+        functionName: "get-market-data",
+        functionArgs: [`0x${serializeCV(uintCV(marketId))}`],
+      };
+      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+      return unwrapClarityValue(result);
+    },
+    async fetchTokenBalances(
+      stacksApi: string,
+      marketId: number,
+      sender: string,
+      contractAddress: string,
+      contractName: string,
+      stacksHiroKey?: string,
+    ): Promise<UserStake> {
+      const data = {
+        contractAddress,
+        contractName,
+        functionName: "get-token-balances",
+        functionArgs: [
+          `0x${serializeCV(uintCV(marketId))}`,
+          `0x${serializeCV(principalCV(sender))}`,
+        ],
+      };
+      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+      return unwrapClarityValue(result);
+    },
+    async fetchLpBalances(
+      stacksApi: string,
+      marketId: number,
+      sender: string,
+      contractAddress: string,
+      contractName: string,
+      stacksHiroKey?: string,
+    ): Promise<UserStake> {
+      const data = {
+        contractAddress,
+        contractName,
+        functionName: "get-lp-balances",
+        functionArgs: [
+          `0x${serializeCV(uintCV(marketId))}`,
+          `0x${serializeCV(principalCV(sender))}`,
+        ],
+      };
+      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+      return unwrapClarityValue(result);
+    },
+    async fetchMarketAccounting(
+      stacksApi: string,
+      marketId: number,
+      contractAddress: string,
+      contractName: string,
+      stacksHiroKey?: string,
+    ): Promise<UserStake> {
+      const data = {
+        contractAddress,
+        contractName,
+        functionName: "get-market-accounting",
+        functionArgs: [`0x${serializeCV(uintCV(marketId))}`],
+      };
+      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+      return unwrapClarityValue(result);
+    },
+    async fetchShareCost(
+      stacksApi: string,
+      marketId: number,
+      index: number,
+      amountShares: number,
+      contractAddress: string,
+      contractName: string,
+      stacksHiroKey?: string,
+    ): Promise<UserStake> {
+      const data = {
+        contractAddress,
+        contractName,
+        functionName: "get-share-cost",
+        functionArgs: [
+          `0x${serializeCV(uintCV(marketId))}`,
+          `0x${serializeCV(uintCV(index))}`,
+          `0x${serializeCV(uintCV(amountShares))}`,
+        ],
+      };
+      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+      return unwrapClarityValue(result);
     },
   };
 }

@@ -63,9 +63,6 @@
 			userData.visible = true;
 			return;
 		}
-
-		//const userShares = (await fetchUserStake(getConfig().VITE_STACKS_API, marketId, extension.split('.')[0], extension.split('.')[1], address)) || ({} as UserStake);
-		//const userTokens = (await fetchUserTokens(getConfig().VITE_STACKS_API, marketId, extension.split('.')[0], extension.split('.')[1], address)) || ({} as UserStake);
 		const marketUserData = {
 			marketId,
 			extension,

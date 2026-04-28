@@ -43,19 +43,18 @@ export const load: PageServerLoad = async ({ url, params }) => {
 		thread = await loadThread(appConfig.VITE_FORUM_API, market.unhashedData.forumMessageId);
 	}
 
-	const marketStakes = await fetchMarketStakesSSR(
+	const marketEvents = await fetchMarketStakesSSR(
 		appConfig.VITE_BIGMARKET_API,
 		marketId,
 		marketType
 	);
-	const result = { market, marketStakes, thread: thread || undefined };
-	//console.log('CACHE MISS: loading: market, marketStakes, marketType, marketId using: key=' + key);
+	const result = { market, marketEvents, thread: thread || undefined };
 
 	setCached(key, result, 1000 * 60 * 1); // 30 secs
 	return {
 		leaderAndMarketsData,
 		market,
-		marketStakes,
+		marketEvents,
 		thread: thread || undefined
 	};
 };
