@@ -11,16 +11,16 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install --production
+RUN pnpm install --production
 
 # Copy the rest of the application code
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN pnpm run build
 
 # Expose the application port
 EXPOSE ${PORT}
 
 # Define the command to run your application
-CMD ["npm", "start"]
+CMD ["pnpm", "start"]
