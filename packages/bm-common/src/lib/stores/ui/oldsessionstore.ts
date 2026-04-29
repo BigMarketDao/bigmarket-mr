@@ -3,7 +3,7 @@
 //   DaoOverview,
 //   ExchangeRate,
 //   MarketCategory,
-//   SharesPerCost,
+//   MaxBuyable,
 //   Sip10Data,
 //   StacksBalance,
 //   StacksInfo,

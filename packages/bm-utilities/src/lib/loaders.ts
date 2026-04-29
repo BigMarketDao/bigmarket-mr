@@ -6,6 +6,7 @@ import type {
   TransactionObject,
 } from "@bigmarket/bm-types";
 import { isSTX } from "./market-utilities.js";
+import { normalizeStakeEventsPayload } from "./stake-events-response.js";
 
 export async function getGateKeeper(bmApiUrl: string): Promise<GateKeeper> {
   const path = `${bmApiUrl}/gating/create-market`;
@@ -147,7 +148,7 @@ export async function fetchMarketStakes(
   const response = await fetch(path);
   if (response.status === 404) return [] as PredictionMarketStakeEvent[];
   const res = await response.json();
-  return res;
+  return normalizeStakeEventsPayload(res);
 }
 
 export async function getBnsNameFromAddress(

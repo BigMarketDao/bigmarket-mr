@@ -19,6 +19,7 @@ import { formatUnits } from "viem";
 import { fmtMicroToStxNumber, fmtStxMicro } from "./format.js";
 import { convertCryptoToFiatNumber } from "./conversion.js";
 import { estimateBitcoinBlockTime } from "./blockTime.js";
+import { normalizeStakeEventsPayload } from "./stake-events-response.js";
 
 export const NO_CLAIMING_TIER = -1;
 export const CLAIMING_TIER = 1;
@@ -46,13 +47,13 @@ export const TONUSD =
   "0x8963217838ab4cf5cadc172203c1f0b763fbaa45f346d8ee50ba994bbcac3026";
 
 export const DECIMALS_BY_FEED: Record<string, number> = {
-  [BTCUSD]: 16,
+  [BTCUSD]: 8,
   // If you *really* need per-feed scaling:
-  [STXUSD]: 16,
-  [SOLUSD]: 16,
-  [SUIUSD]: 16,
-  [ETHUSD]: 16,
-  [TONUSD]: 16,
+  [STXUSD]: 8,
+  [SOLUSD]: 8,
+  [SUIUSD]: 8,
+  [ETHUSD]: 8,
+  [TONUSD]: 8,
 };
 
 const currencyToLocale: Record<string, string> = {
@@ -442,5 +443,5 @@ export async function fetchMarketStakesSSR(
   const response = await fetch(path);
   if (response.status === 404) return [] as PredictionMarketStakeEvent[];
   const res = await response.json();
-  return res;
+  return normalizeStakeEventsPayload(res);
 }

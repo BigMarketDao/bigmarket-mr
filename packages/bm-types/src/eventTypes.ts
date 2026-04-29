@@ -51,6 +51,13 @@ export interface PredictionMarketCreateEvent extends BasicEvent {
   stacksHeight?: number;
   seedAmount?: number;
 }
+export interface PredictionMarketAccounting {
+  totalTokenPool: number;
+  accumulatedLpFees: number;
+  lpTotalShares: number;
+  stakes: Array<number>;
+  stakeTokens: Array<number>;
+}
 export type MarketData = {
   concluded: boolean;
   creator: string;

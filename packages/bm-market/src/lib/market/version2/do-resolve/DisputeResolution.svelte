@@ -26,37 +26,13 @@
       errorMessage = 'Please connect your wallet';
       return;
     }
-    // 	(market-data-hash (buff 32))               ;; market metadata hash
-    // (data {market-id: uint, start-burn-height: uint, end-burn-height: uint})
-    // (merkle-root (optional (buff 32)))      ;; Optional Merkle root for gating
-    const merkle = merkelRoot ? someCV(bufferCV(hexToBytes(merkelRoot))) : noneCV();
-    const contractAddress = market.extension.split('.')[0];
-    const contractName = daoConfig.VITE_DAO_MARKET_VOTING;
-    let functionName = 'create-market-vote';
-    const functionArgs = [
-      Cl.contractPrincipal(
-        daoConfig.VITE_DAO_DEPLOYER,
-        daoConfig.VITE_DAO_MARKET_PREDICTING,
-      ),
-      Cl.uint(market.marketId),
-      listCV(Array(market.marketData.categories.length).fill(uintCV(0))),
-      uintCV(market.marketData.categories.length),
-    ];
-
-    const response = await requestWallet(
-      `${contractAddress}.${contractName}`,
-      functionName,
-      functionArgs,
-      [],
-      'deny',
-    );
-    if (response?.txid) {
+    const response = await stacks.createMarketsClient(daoConfig).createMarketVote(market);
+    if (response.success && response.txid) {
       showTxModal(response.txid);
       watchTransaction(appConfig.VITE_BIGMARKET_API, appConfig.VITE_STACKS_API, `${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_MARKET_VOTING}`, response.txid);
     } else {
       showTxModal('Unable to process right now');
-    }
-    onDispute({ txId, error: false, message: 'vote sent to contract' });
+    }    onDispute({ txId, error: false, message: 'vote sent to contract' });
   };
 
   const lookupTransaction = async (txId: string) => {

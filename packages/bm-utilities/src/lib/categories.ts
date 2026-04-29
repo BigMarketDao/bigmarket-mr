@@ -47,13 +47,15 @@ export function getCategoryLabel(
     return item;
   }
 
-  const decimals = DECIMALS_BY_FEED[marketData.priceFeedId!] ?? 16;
+  const exponent = DECIMALS_BY_FEED[marketData.priceFeedId!] ?? -8;
+  // Example: BTC/USD often exponent = -8
+  const decimals = Math.abs(exponent * 100);
 
   const min = BigInt(item.min);
   const max = BigInt(item.max);
 
-  const minS = fmtFiatFromRaw(selectedCurrency, min, decimals);
-  const maxS = fmtFiatFromRaw(selectedCurrency, max, decimals);
+  const minS = fmtFiatFromRaw(selectedCurrency, min, 2);
+  const maxS = fmtFiatFromRaw(selectedCurrency, max, 2);
 
   if (index === 0) {
     return `x < ${maxS}`;

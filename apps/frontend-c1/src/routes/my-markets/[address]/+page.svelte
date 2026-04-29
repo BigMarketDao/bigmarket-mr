@@ -128,7 +128,7 @@
 			const tokenKey = market.marketData.token; // contract id
 			const mid = market.marketId + '_' + market.marketType;
 			userStakes.push({ mid, shares: userSharesMap?.stakes || [] });
-			userTokens.push({ mid, tokens: userTokensMap?.stakes || [] });
+			userTokens.push({ mid, tokens: userTokensMap?.tokens || [] });
 			if (
 				typeof market.marketData.outcome === 'number' &&
 				canUserClaim(market.marketData.outcome, userSharesMap?.stakes || [])

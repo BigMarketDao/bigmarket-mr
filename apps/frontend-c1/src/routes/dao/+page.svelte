@@ -121,11 +121,11 @@
 									</div>
 									<!-- Right Sidebar: Purchase Widget (2 columns width) -->
 									<!-- TODO MJC: REPUTATION <div class="max-w-3xl"> -->
-									<div class="lg:col-span-2">
+									<!-- <div class="lg:col-span-2">
 										<div class="">
 											<ProvideLiquidity {fiatPerStx} />
 										</div>
-									</div>
+									</div> -->
 								</div>
 							{:else if currentPage === 'bootup'}
 								<ConstructDao />

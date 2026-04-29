@@ -32,29 +32,29 @@ export const load: PageServerLoad = async ({ url, params }) => {
 	}
 
 	const market = await getPredictionMarketSSR(appConfig.VITE_BIGMARKET_API, marketId, marketType);
-	let thread: AuthenticatedForumContent | undefined;
 	if (!market) {
 		return {
 			status: 302,
 			redirect: '/'
 		};
 	}
+	let thread: AuthenticatedForumContent | undefined;
 	if (market.unhashedData.forumMessageId) {
 		thread = await loadThread(appConfig.VITE_FORUM_API, market.unhashedData.forumMessageId);
 	}
 
-	const marketEvents = await fetchMarketStakesSSR(
+	const marketStakes = await fetchMarketStakesSSR(
 		appConfig.VITE_BIGMARKET_API,
 		marketId,
 		marketType
 	);
-	const result = { market, marketEvents, thread: thread || undefined };
+	const result = { market, marketStakes, thread: thread || undefined };
 
 	setCached(key, result, 1000 * 60 * 1); // 30 secs
 	return {
 		leaderAndMarketsData,
 		market,
-		marketEvents,
+		marketStakes,
 		thread: thread || undefined
 	};
 };
