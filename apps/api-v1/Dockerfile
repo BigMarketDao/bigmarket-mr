@@ -10,6 +10,7 @@ ENV NODE_ENV=${NODE_ENV}
 WORKDIR /app
 
 # Copy package files and install dependencies
+RUN npm install -g pnpm
 COPY package*.json ./
 RUN pnpm install --production
 
