@@ -86,7 +86,7 @@ describe('gating market  creation', () => {
 		let response = await createBinaryMarket(0, deployer, stxToken);
 	});
 
-	it('err-unauthorised', async () => {
+	it('ERR_UNAUTHORISED', async () => {
 		await constructDao(simnet);
 		let response = simnet.callPublicFn(
 			'bme022-0-market-gating',

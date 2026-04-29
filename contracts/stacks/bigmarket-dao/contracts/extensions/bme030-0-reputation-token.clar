@@ -10,7 +10,7 @@
 (impl-trait 'SPDBEG5X8XD50SPM1JJH0E5CTXGDV5NJTKAKKR5V.sip013-transfer-many-trait.sip013-transfer-many-trait)
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 
-(define-constant err-unauthorised (err u30001))
+(define-constant ERR_UNAUTHORISED (err u30001))
 (define-constant err-already-minted (err u30002))
 (define-constant err-soulbound (err u30003))
 (define-constant err-insufficient-balance (err u30004))
@@ -70,7 +70,7 @@
 ;; DAO Control Check
 ;; ------------------------
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 (define-read-only (get-epoch)
@@ -122,8 +122,8 @@
 (define-public (set-launch-height)
     (begin
       (try! (is-dao-or-extension))
-      (asserts! (is-eq (var-get launch-height) u0) err-unauthorised)
-      (asserts! (is-eq (var-get overall-supply) u0) err-unauthorised)
+      (asserts! (is-eq (var-get launch-height) u0) ERR_UNAUTHORISED)
+      (asserts! (is-eq (var-get overall-supply) u0) ERR_UNAUTHORISED)
       (var-set launch-height burn-block-height)
       (ok (var-get launch-height))))
 
@@ -328,7 +328,7 @@
   (begin
     ;; Reputation tokens are soulbound for end users; only the DAO/extensions
     ;; may move balances. Hence, err-soulbound (rather than
-    ;; err-unauthorised) so SIP-013-aware wallets get a meaningful signal
+    ;; ERR_UNAUTHORISED) so SIP-013-aware wallets get a meaningful signal
     ;; that the standard transfer interface is intentionally locked.
     (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-soulbound)
     (transfer-core token-id amount sender recipient)

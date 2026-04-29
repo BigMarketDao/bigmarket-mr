@@ -20,7 +20,7 @@
 (define-constant RESOLUTION_DISPUTED u2)
 (define-constant RESOLUTION_RESOLVED u3)
 
-(define-constant err-unauthorised (err u10000))
+(define-constant ERR_UNAUTHORISED (err u10000))
 (define-constant err-invalid-market-type (err u10001))
 (define-constant err-amount-too-low (err u10002))
 (define-constant err-wrong-market-type (err u10003))
@@ -92,7 +92,7 @@
 
 ;; ---------------- access control ----------------
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 ;; ---------------- getters / setters ----------------
@@ -221,7 +221,7 @@
         true
       )
       ;; ensure the user is allowed to create if gating by merkle proof is required
-      (if (var-get creation-gated) (try! (as-contract (contract-call? .bme022-0-market-gating can-access-by-account sender proof))) true)
+      (if (var-get creation-gated) (try! (as-contract? (contract-call? .bme022-0-market-gating can-access-by-account sender proof))) true)
 
       ;; all checks pass - insert market data
       (map-set markets
@@ -430,7 +430,7 @@
         (md (unwrap! (map-get? markets market-id) err-market-not-found))
         (index (unwrap! (index-of? (get categories md) category) err-category-not-found))
     )
-    (asserts! (is-eq tx-sender (var-get resolution-agent)) err-unauthorised)
+    (asserts! (is-eq tx-sender (var-get resolution-agent)) ERR_UNAUTHORISED)
     (asserts! (is-eq (get resolution-state md) RESOLUTION_OPEN) err-market-wrong-state)
 
     (map-set markets market-id
@@ -648,7 +648,7 @@
       ;; assume here the contract has the funds to cover payouts.
       ;; in fact the liquidity will come from direct sbtc into this contract from the bitcoin staking address
       ;; (try! (contract-call? token transfer transfer-amount tx-sender .bme023-0-market-predicting none))
-      (try! (as-contract (contract-call? token transfer fee .bme023-0-market-bitcoin (var-get dev-fund) none)))
+      (try! (as-contract? (contract-call? token transfer fee .bme023-0-market-bitcoin (var-get dev-fund) none)))
 
       (ok transfer-amount)
     )
@@ -662,5 +662,5 @@
 
 ;; Placeholder: staking does not support this
 (define-public (transfer-shares (market-id uint) (outcome uint) (from principal) (to principal) (amount uint) (t <ft-token>))
-  err-unauthorised
+  ERR_UNAUTHORISED
 )

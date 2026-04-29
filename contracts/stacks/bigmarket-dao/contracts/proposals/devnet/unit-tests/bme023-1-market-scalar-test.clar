@@ -13,7 +13,7 @@
 ;; PYTH_ORACLE 'ST20M5GABDT6WYJHXBT5CDH4501V1Q65242SPRMXH.pyth-storage-v3
 ;; PYTH_ORACLE 'SP3R4F6C1J3JQWWCVZ3S7FRRYPMYG6ZW6RZK31FXY.pyth-storage-v3
 
-(define-constant err-unauthorised (err u10000))
+(define-constant ERR_UNAUTHORISED (err u10000))
 
 ;; Resolve a market invoked by ai-agent.
 ;;(tuple (conf uint) (ema-conf uint) (ema-price int) (expo int) (prev-publish-time uint) (price int) (publish-time uint))

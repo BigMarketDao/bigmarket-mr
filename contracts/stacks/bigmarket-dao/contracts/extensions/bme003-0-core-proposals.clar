@@ -14,7 +14,7 @@
 
 (define-data-var core-team-sunset-height uint u0) ;; does not expire by default - can be changed by proposal
 
-(define-constant err-unauthorised (err u3300))
+(define-constant ERR_UNAUTHORISED (err u3300))
 (define-constant err-not-core-team-member (err u3301))
 (define-constant err-sunset-height-reached (err u3302))
 (define-constant err-sunset-height-in-past (err u3303))
@@ -29,7 +29,7 @@
 ;; --- Authorisation check
 
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 ;; --- Internal DAO functions

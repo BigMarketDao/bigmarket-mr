@@ -86,7 +86,7 @@ describe('voting on resolution', () => {
 		);
 	});
 
-	it('err-unauthorised - dao function', async () => {
+	it('ERR_UNAUTHORISED - dao function', async () => {
 		await constructDao(simnet);
 		let response = await createBinaryMarket(0);
 		expect(response.result).toEqual(Cl.ok(Cl.uint(0)));

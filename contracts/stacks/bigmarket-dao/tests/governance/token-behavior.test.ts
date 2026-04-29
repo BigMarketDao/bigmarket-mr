@@ -105,7 +105,7 @@ describe('governance token — coverage add-ons', () => {
 		expect(ro.result).toEqual(Cl.bool(false));
 	});
 
-	it('auth-required setters revert with err-unauthorised (u3000)', async () => {
+	it('auth-required setters revert with ERR_UNAUTHORISED (u3000)', async () => {
 		constructDao(simnet);
 
 		// set-name

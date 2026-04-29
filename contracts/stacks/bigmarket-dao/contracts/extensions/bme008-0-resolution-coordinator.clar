@@ -5,7 +5,7 @@
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 
 ;; --- Errors
-(define-constant err-unauthorised               (err u6100))
+(define-constant ERR_UNAUTHORISED               (err u6100))
 (define-constant err-not-resolution-team-member (err u6101))
 (define-constant err-already-executed           (err u6102))
 
@@ -26,7 +26,7 @@
 
 ;; --- Auth
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 ;; --- Admin
@@ -97,7 +97,7 @@
       (if (>= count required)
         ;; quorum for this label reached resolve with the LABEL (string)
         (begin
-          (try! (as-contract (contract-call? .bme024-0-market-predicting resolve-market market-id label)))
+          (try! (as-contract? (contract-call? .bme024-0-market-predicting resolve-market market-id label)))
           (ok {status: "resolved", label: label, count: count})
         )
         ;; not yet at threshold

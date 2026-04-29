@@ -121,7 +121,7 @@ describe('Hedging - Market Contract', () => {
 		tx = simnet.callPublicFn(marketPredicting, 'execute-hedge', [Cl.uint(0), Cl.principal(`${deployer}.${scalarStrategyHedge}`), tokenA, tokenB, tokenIn, tokenOut], alice);
 		expect(tx.result).toEqual(Cl.error(Cl.uint(10038)));
 	});
-	it('err-unauthorised - cant call it directly', async () => {
+	it('ERR_UNAUTHORISED - cant call it directly', async () => {
 		constructDao(simnet);
 		passProposalByCoreVote('bdp000-hedge1');
 

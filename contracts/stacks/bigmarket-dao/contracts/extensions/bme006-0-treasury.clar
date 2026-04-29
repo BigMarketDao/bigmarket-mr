@@ -10,10 +10,10 @@
 ;; directly. The treasury extension merely adds a bit of separation.
 
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
-(use-trait prediction-market-trait .prediction-market-trait.prediction-market-trait)
+(use-trait prediction-market-trait 'SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ.prediction-market-trait.prediction-market-trait)
 (use-trait ft-velar-token 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 
-(define-constant err-unauthorised (err u3000))
+(define-constant ERR_UNAUTHORISED (err u3000))
 (define-constant err-invalid-amount (err u3001))
 (define-constant err-invalid-slippage (err u3002))
 
@@ -52,7 +52,7 @@
 ;; --- Authorisation check
 
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 ;; --- Internal DAO functions
@@ -77,8 +77,9 @@
 	)
     (try! (is-dao-or-extension))
     (asserts! (>= amount min-amount) err-invalid-amount)
-    (try! (as-contract (contract-call? .univ2-router swap-exact-tokens-for-tokens
-           u0 token0 token1 token-in token-out share-fee-to amount min-amount)))
+    (try! (as-contract? ((with-all-assets-unsafe)) (try! (contract-call? .univ2-router swap-exact-tokens-for-tokens
+           u0 token0 token1 token-in token-out share-fee-to amount min-amount))
+    true))
     (print {event:"swap-tokens", amount:amount, min-amount:min-amount})
     (ok true)
   )
@@ -97,8 +98,9 @@
     (try! (is-dao-or-extension))
     (asserts! (and (>= slip-bips u1) (<= slip-bips u3000)) err-invalid-slippage)
     (asserts! (> amount min-amount) err-invalid-amount)
-    (try! (as-contract (contract-call? .univ2-router swap-exact-tokens-for-tokens
-           u0 token0 token1 token-in token-out share-fee-to amount min-amount)))
+    (try! (as-contract? ((with-all-assets-unsafe)) (try! (contract-call? .univ2-router swap-exact-tokens-for-tokens
+           u0 token0 token1 token-in token-out share-fee-to amount min-amount))
+    true))
     (print {event:"swap-tokens", amount:amount, min-amount:min-amount, slip-bips:slip-bips})
     (ok true)
   )
@@ -110,30 +112,60 @@
 	(begin
 		(try! (is-dao-or-extension))
 		(match memo to-print (print to-print) 0x)
-		(as-contract (stx-transfer? amount tx-sender recipient))
+		(as-contract? ((with-stx amount)) (try! (stx-transfer? amount tx-sender recipient)) true)
 	)
+)
+;; (define-public (stx-transfer (amount uint) (recipient principal) (memo (optional (buff 34))))
+;; 	(begin
+;; 		(try! (is-dao-or-extension))
+;; 		(match memo to-print (print to-print) 0x)
+;; 		(as-contract? (stx-transfer? amount tx-sender recipient))
+;; 	)
+;; )
+
+(define-private (sum-transfer-amounts
+  (item {amount: uint, recipient: principal, memo: (optional (buff 34))})
+  (acc uint))
+  (+ acc (get amount item))
 )
 
-(define-public (stx-transfer-many (transfers (list 200 {amount: uint, recipient: principal, memo: (optional (buff 34))})))
-	(begin
-		(try! (is-dao-or-extension))
-		(as-contract (fold stx-transfer-many-iter transfers (ok true)))
-	)
+(define-public (stx-transfer-many
+  (transfers (list 200 {amount: uint, recipient: principal, memo: (optional (buff 34))})))
+  (let (
+      (total-amount (fold sum-transfer-amounts transfers u0))
+    )
+    (begin
+      (try! (is-dao-or-extension))
+      (try! (as-contract? ((with-stx total-amount))
+        (try! (fold stx-transfer-many-iter transfers (ok true)))
+        true
+      ))
+      (ok true)
+    )
+  )
 )
+;; (define-public (stx-transfer-many (transfers (list 200 {amount: uint, recipient: principal, memo: (optional (buff 34))})))
+;; 	(begin
+;; 		(try! (is-dao-or-extension))
+;; 		(as-contract? (fold stx-transfer-many-iter transfers (ok true)))
+;; 	)
+;; )
 
 ;; SIP009
 
 (define-public (sip009-transfer (token-id uint) (recipient principal) (asset <sip009-transferable>))
 	(begin
 		(try! (is-dao-or-extension))
-		(as-contract (contract-call? asset transfer token-id tx-sender recipient))
+		(as-contract? ((with-all-assets-unsafe)) (try! (contract-call? asset transfer token-id tx-sender recipient)) true)
 	)
 )
 
 (define-public (sip009-transfer-many (data (list 200 {token-id: uint, recipient: principal})) (asset <sip009-transferable>))
 	(begin
 		(try! (is-dao-or-extension))
-		(as-contract (fold sip009-transfer-many-iter data asset))
+		(try! (as-contract? ((with-all-assets-unsafe))
+			(fold sip009-transfer-many-iter data asset)
+		))
 		(ok true)
 	)
 )
@@ -143,41 +175,53 @@
 (define-public (sip010-transfer (amount uint) (recipient principal) (memo (optional (buff 34))) (asset <sip010-transferable>))
 	(begin
 		(try! (is-dao-or-extension))
-		(as-contract (contract-call? asset transfer amount tx-sender recipient memo))
+		(as-contract? ((with-all-assets-unsafe)) (try! (contract-call? asset transfer amount tx-sender recipient memo)) true)
 	)
 )
 
 (define-public (sip010-transfer-many (data (list 200 {amount: uint, recipient: principal, memo: (optional (buff 34))})) (asset <sip010-transferable>))
 	(begin
 		(try! (is-dao-or-extension))
-		(as-contract (fold sip010-transfer-many-iter data asset))
+		(try! (as-contract? ((with-all-assets-unsafe))
+			(fold sip010-transfer-many-iter data asset)
+		))
 		(ok true)
 	)
 )
 
 ;; SIP013
 
-(define-public (sip013-transfer (token-id uint) (amount uint) (recipient principal) (memo (optional (buff 34))) (asset <sip013-transferable>))
-	(begin
-		(try! (is-dao-or-extension))
-		(as-contract (match memo memo-buff
-			(contract-call? asset transfer-memo token-id amount tx-sender recipient memo-buff)
-			(contract-call? asset transfer token-id amount tx-sender recipient)
-		))
-	)
+(define-public (sip013-transfer
+  (token-id uint)
+  (amount uint)
+  (recipient principal)
+  (memo (optional (buff 34)))
+  (asset <sip013-transferable>))
+  (begin
+    (try! (is-dao-or-extension))
+    (try! (as-contract? ((with-all-assets-unsafe))
+      (match memo
+        memo-buff
+          (try! (contract-call? asset transfer-memo token-id amount tx-sender recipient memo-buff))
+          (try! (contract-call? asset transfer token-id amount tx-sender recipient))
+      )
+      true
+    ))
+    (ok true)
+  )
 )
 
 (define-public (sip013-transfer-many (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal})) (asset <sip013-transferable-many>))
 	(begin
 		(try! (is-dao-or-extension))
-		(as-contract (contract-call? asset transfer-many transfers))
+		(as-contract? ((with-all-assets-unsafe)) (try! (contract-call? asset transfer-many transfers)) true)
 	)
 )
 
 (define-public (sip013-transfer-many-memo (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)})) (asset <sip013-transferable-many>))
 	(begin
 		(try! (is-dao-or-extension))
-		(as-contract (contract-call? asset transfer-many-memo transfers))
+		(as-contract? ((with-all-assets-unsafe)) (try! (contract-call? asset transfer-many-memo transfers)) true)
 	)
 )
 
@@ -213,8 +257,9 @@
 
 (define-public (claim-for-dao (market <prediction-market-trait>) (market-id uint) (token <ft-velar-token>))
   (begin
-    (as-contract
-      (contract-call? market claim-winnings market-id token)
+    (as-contract? ((with-all-assets-unsafe))
+      (try! (contract-call? market claim-winnings market-id token))
+      true
     )
   )
 )

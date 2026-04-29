@@ -31,7 +31,7 @@ describe('Reputation', () => {
 		tx = simnet.callPublicFn(reputationSft, 'burn', [Cl.principal(alice), Cl.uint(1), Cl.uint(10)], alice);
 		expect(tx.result).toEqual(Cl.error(Cl.uint(30001)));
 		tx = simnet.callPublicFn(reputationSft, 'transfer', [Cl.uint(1), Cl.uint(10), Cl.principal(alice), Cl.principal(bob)], alice);
-		// transfer is soulbound for non-DAO callers (was err-unauthorised u30001)
+		// transfer is soulbound for non-DAO callers (was ERR_UNAUTHORISED u30001)
 		expect(tx.result).toEqual(Cl.error(Cl.uint(30003)));
 	});
 
@@ -78,7 +78,7 @@ describe('minting', () => {
 	it('only dao can transfer', async () => {
 		await constructDao(simnet);
 		let response = simnet.callPublicFn(reputationSft, 'transfer', [Cl.uint(0), Cl.uint(1000), Cl.principal(alice), Cl.principal(bob)], deployer);
-		// transfer is soulbound for non-DAO callers (was err-unauthorised u30001)
+		// transfer is soulbound for non-DAO callers (was ERR_UNAUTHORISED u30001)
 		expect(response.result).toEqual(Cl.error(Cl.uint(30003)));
 	});
 	it('dao can mint and burn additional amount', async () => {

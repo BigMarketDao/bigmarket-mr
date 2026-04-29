@@ -13,7 +13,7 @@
 (use-trait ft-trait 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 
-(define-constant err-unauthorised (err u2200))
+(define-constant ERR_UNAUTHORISED (err u2200))
 (define-constant err-either-sip9-or-sip10-required (err u2201))
 (define-constant err-token-contract-invalid (err u2202))
 (define-constant err-token-ownership-invalid (err u2203))
@@ -39,7 +39,7 @@
 )
 
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 (define-public (set-merkle-root (hashed-id (buff 32)) (root (buff 32)))
@@ -148,8 +148,8 @@
 
         ;; Compute the Merkle proof leaf
         (contract-id (if is-nft-contract
-                         (unwrap! (to-consensus-buff? (as-contract (unwrap! nft-contract err-expecting-nft-contract))) err-expecting-nft-buffer)
-                         (unwrap! (to-consensus-buff? (as-contract (unwrap! ft-contract err-expecting-ft-contract))) err-expecting-ft-buffer)))
+                         (unwrap! (to-consensus-buff? (as-contract? (unwrap! nft-contract err-expecting-nft-contract))) err-expecting-nft-buffer)
+                         (unwrap! (to-consensus-buff? (as-contract? (unwrap! ft-contract err-expecting-ft-contract))) err-expecting-ft-buffer)))
         (leaf (sha256 contract-id))
 
         ;; Verify the Merkle proof

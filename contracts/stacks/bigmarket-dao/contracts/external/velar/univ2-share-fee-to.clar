@@ -24,7 +24,7 @@
 (define-public (harvest (token <ft-trait>) (amt uint))
   (begin
    (try! (check-owner))
-   (contract-call? token transfer amt (as-contract tx-sender) tx-sender none)
+   (contract-call? token transfer amt current-contract tx-sender none)
    ))
 
 ;;; eof

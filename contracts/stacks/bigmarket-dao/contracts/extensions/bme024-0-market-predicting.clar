@@ -44,7 +44,7 @@
 (define-constant RESOLUTION_DISPUTED u2)
 (define-constant RESOLUTION_RESOLVED u3)
 
-(define-constant err-unauthorised (err u10000))
+(define-constant ERR_UNAUTHORISED (err u10000))
 (define-constant err-invalid-market-type (err u10001))
 (define-constant err-amount-too-low (err u10002))
 (define-constant err-wrong-market-type (err u10003))
@@ -158,7 +158,7 @@
 
 ;; ---------------- access control ----------------
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 ;; ---------------- getters / setters ----------------
@@ -355,10 +355,10 @@
       (asserts! (>= seed-amount (* num-categories MIN_POOL)) err-insufficient-liquidity) ;; avoid rounding below floor
 
       ;; Transfer exactly the pool-seeding amount; any rounding dust stays with the caller
-      (try! (contract-call? token transfer (* seed num-categories) tx-sender (as-contract tx-sender) none))
+      (try! (contract-call? token transfer (* seed num-categories) tx-sender current-contract none))
 
       ;; ensure the user is allowed to create if gating by merkle proof is required
-      (if (var-get creation-gated) (try! (as-contract (contract-call? .bme022-0-market-gating can-access-by-account creator proof))) true)
+      (if (var-get creation-gated) (try! (as-contract? (contract-call? .bme022-0-market-gating can-access-by-account creator proof))) true)
       
       ;; dao is assigned the seed liquidity - share and tokens 1:1 at kick off
       (map-set stake-balances {market-id: new-id, user: (var-get dao-treasury)} share-list)
@@ -574,14 +574,14 @@
     ;;           cost-of-shares enters the vault.
     (if (is-eq (get market-mechanism md) MECHANISM_AMM)
       (begin
-        (try! (contract-call? token transfer (+ cost-of-shares lp-fee) tx-sender (as-contract tx-sender) none))
+        (try! (contract-call? token transfer (+ cost-of-shares lp-fee) tx-sender current-contract none))
         (if (> multisig-fee u0)
           (try! (contract-call? token transfer multisig-fee tx-sender (var-get dev-fund) none))
           true
         )
       )
       (begin
-        (try! (contract-call? token transfer cost-of-shares tx-sender (as-contract tx-sender) none))
+        (try! (contract-call? token transfer cost-of-shares tx-sender current-contract none))
         (if (> fee u0)
           (try! (contract-call? token transfer fee tx-sender (var-get dev-fund) none))
           true
@@ -757,7 +757,7 @@
     (asserts! (>= total-stakes lower-bound) err-slippage-too-high)
 
     ;; Transfer the actual computed amount; any rounding dust stays with caller
-    (try! (contract-call? token transfer actual-amount tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? token transfer actual-amount tx-sender current-contract none))
 
     (map-set markets market-id
       (merge md {
@@ -859,7 +859,7 @@
         (original-sender tx-sender)
     )
       (if (> fee-entitlement u0)
-        (as-contract (try! (contract-call? token transfer fee-entitlement tx-sender original-sender none)))
+        (as-contract? (try! (contract-call? token transfer fee-entitlement tx-sender original-sender none)))
         true
       )
 
@@ -883,7 +883,7 @@
       (market-end (+ (get market-start md) (get market-duration md)))
       (market-close (+ market-end (get cool-down-period md)))
     )
-    (asserts! (is-eq tx-sender (var-get resolution-agent)) err-unauthorised)
+    (asserts! (is-eq tx-sender (var-get resolution-agent)) ERR_UNAUTHORISED)
     (asserts! (>= burn-block-height market-close) err-market-wrong-state)
     (asserts! (is-eq (get resolution-state md) RESOLUTION_OPEN) err-market-wrong-state)
 

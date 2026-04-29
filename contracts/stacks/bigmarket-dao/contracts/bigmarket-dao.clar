@@ -8,7 +8,7 @@
 (use-trait extension-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 (use-trait proposal-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.proposal-trait.proposal-trait)
 
-(define-constant err-unauthorised (err u1000))
+(define-constant ERR_UNAUTHORISED (err u1000))
 (define-constant err-already-executed (err u1001))
 (define-constant err-invalid-extension (err u1002))
 (define-constant err-invalid-caller (err u1003))
@@ -20,7 +20,8 @@
 ;; --- Authorisation check
 
 (define-private (is-self-or-extension)
-	(ok (asserts! (or (is-eq tx-sender (as-contract tx-sender)) (is-extension contract-caller)) err-unauthorised))
+	;; note - allow when tx-sender is the dao contract itself !
+	(ok (asserts! (or (is-eq tx-sender current-contract) (is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 ;; --- Extensions
@@ -62,7 +63,8 @@
 		(try! (is-self-or-extension))
 		(asserts! (map-insert executed-proposals (contract-of proposal) stacks-block-height) err-already-executed)
 		(print {event: "execute", proposal: proposal})
-		(as-contract (contract-call? proposal execute sender))
+		;;(as-contract? (contract-call? proposal execute sender))
+    	(as-contract? () (try! (contract-call? proposal execute sender)))
 	)
 )
 
@@ -70,9 +72,10 @@
 
 (define-public (construct (proposal <proposal-trait>))
 	(let ((sender tx-sender))
-		(asserts! (is-eq sender (var-get executive)) err-unauthorised)
-		(var-set executive (as-contract tx-sender))
-		(as-contract (execute proposal sender))
+		(asserts! (is-eq sender (var-get executive)) ERR_UNAUTHORISED)
+		(var-set executive current-contract)
+		;;(as-contract? (execute proposal sender))
+    	(as-contract? () (try! (execute proposal sender)))
 	)
 )
 
@@ -82,6 +85,7 @@
 	(let ((sender tx-sender))
 		(asserts! (is-extension contract-caller) err-invalid-extension)
 		(asserts! (is-eq contract-caller (contract-of extension)) err-invalid-caller)
-		(as-contract (contract-call? extension callback sender memo))
+		;;(as-contract? (contract-call? extension callback sender memo))
+    	(as-contract? () (try! (contract-call? extension callback sender memo)))
 	)
 )

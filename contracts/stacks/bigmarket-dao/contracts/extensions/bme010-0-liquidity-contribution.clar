@@ -9,7 +9,7 @@
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 
 ;; Constants and Errors
-(define-constant err-unauthorised (err u5000))
+(define-constant ERR_UNAUTHORISED (err u5000))
 (define-constant err-minimum-stx (err u5002))
 
 (define-constant MICROSTX u1000000)
@@ -23,7 +23,7 @@
 
 ;; Authorization check
 (define-public (is-dao-or-extension)
-  (ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+  (ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 ;; DAO can update the reward rate

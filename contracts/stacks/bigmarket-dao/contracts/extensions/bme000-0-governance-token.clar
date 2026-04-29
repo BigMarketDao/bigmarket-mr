@@ -19,7 +19,7 @@
 (define-constant core-team-max-vesting u1500000000000) ;; 15% of total supply (10,000,000 BIG)
 (define-constant SCALE u1000000)
 
-(define-constant err-unauthorised (err u3000))
+(define-constant ERR_UNAUTHORISED (err u3000))
 (define-constant err-not-token-owner (err u3001))
 (define-constant err-not-core-team (err u3002))
 (define-constant err-no-vesting-schedule (err u3003))
@@ -50,7 +50,7 @@
 ;; --- Authorisation check
 
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 ;; ---- Vesting Methods ----
@@ -79,7 +79,7 @@
 	(asserts! (not (var-get claim-made)) err-recipients-are-locked)
 	(var-set current-key (+ u1 (var-get current-key)))
 	(var-set core-team-size (len core-team))
-	(as-contract (fold set-core-team-vesting-iter core-team (ok true)))
+	(fold set-core-team-vesting-iter core-team (ok true))
   )
 )
 (define-private (set-core-team-vesting-iter (item {recipient: principal, start-block: uint, duration: uint}) (previous-result (response bool uint)))
@@ -119,7 +119,7 @@
     
 	(asserts! (> burn-block-height midpoint) err-cliff-not-reached) 
 	(asserts! (> claimable u0) err-nothing-to-claim) 
-	(try! (as-contract (ft-mint? bmg-token claimable user)))
+	(try! (ft-mint? bmg-token claimable user))
 
     (map-set core-team-vesting {current-key: (var-get current-key), recipient: tx-sender}
         (merge vesting {claimed: (+ claimed claimable)}))
@@ -223,7 +223,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
 	(begin
 		(asserts! (or (is-eq tx-sender sender) (is-eq contract-caller sender)) err-not-token-owner)
-    	(asserts! (or (var-get transfers-active) (unwrap! (is-dao-or-extension) err-unauthorised)) err-transfers-blocked)
+    	(asserts! (or (var-get transfers-active) (unwrap! (is-dao-or-extension) ERR_UNAUTHORISED)) err-transfers-blocked)
 		(ft-transfer? bmg-token amount sender recipient)
 	)
 )

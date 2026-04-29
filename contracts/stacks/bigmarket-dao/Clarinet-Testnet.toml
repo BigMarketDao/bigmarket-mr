@@ -61,119 +61,119 @@ contract_id = 'SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1.univ2-router'
 
 [contracts.bdp000-bootstrap]
 path = 'contracts/proposals/testnet/bdp000-bootstrap.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bigmarket-dao]
 path = 'contracts/bigmarket-dao.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bme000-0-governance-token]
 path = 'contracts/extensions/bme000-0-governance-token.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bme001-0-proposal-voting]
 path = 'contracts/extensions/bme001-0-proposal-voting.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bme003-0-core-proposals]
 path = 'contracts/extensions/bme003-0-core-proposals.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bme004-0-core-execute]
 path = 'contracts/extensions/bme004-0-core-execute.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bme006-0-treasury]
 path = 'contracts/extensions/bme006-0-treasury.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bme010-0-token-sale]
 path = 'contracts/extensions/bme010-0-token-sale.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bme021-0-market-voting]
 path = 'contracts/extensions/bme021-0-market-voting.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bme022-0-market-gating]
 path = 'contracts/extensions/bme022-0-market-gating.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bme024-0-market-predicting]
 path = 'contracts/extensions/bme024-0-market-predicting.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bme024-0-market-scalar-pyth]
 path = 'contracts/extensions/bme024-0-market-scalar-pyth.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bme030-0-reputation-token]
 path = 'contracts/extensions/bme030-0-reputation-token.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.bme032-0-scalar-strategy-hedge]
 path = 'contracts/extensions/bme032-0-scalar-strategy-hedge.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.governance-token-trait]
 path = 'contracts/traits/governance-token-trait.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.prediction-market-trait]
 path = 'contracts/traits/prediction-market-trait.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.hedge-trait]
 path = 'contracts/traits/hedge-trait.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.proposal-trait]
 path = 'contracts/traits/proposal-trait.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.wrapped-stx]
 path = 'contracts/external/wrapped-stx.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 [repl.analysis]
 passes = []
 
 [contracts.hk-cursor-v2]
 path = 'contracts/external/pyth/hk/hk-cursor-v2.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.pyth-oracle-v4]
 path = 'contracts/external/pyth/pyth-oracle-v4.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.pyth-storage-v4]
 path = 'contracts/external/pyth/pyth-storage-v4.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [contracts.pyth-traits-v1]
 path = 'contracts/external/pyth/pyth-traits-v1.clar'
-clarity_version = 3
+clarity_version = 4
 epoch = 3.0
 
 [repl.analysis.check_checker]

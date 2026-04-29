@@ -15,7 +15,7 @@
 (use-trait ft-trait 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 (use-trait prediction-market-trait .prediction-market-trait.prediction-market-trait)
 
-(define-constant err-unauthorised (err u2100))
+(define-constant ERR_UNAUTHORISED (err u2100))
 (define-constant err-poll-already-exists (err u2102))
 (define-constant err-unknown-proposal (err u2103))
 (define-constant err-proposal-inactive (err u2105))
@@ -37,7 +37,7 @@
 ;; 		version: "1.0.0",
 ;; 		chain-id: chain-id
 ;; 	}
-;;     ) err-unauthorised)
+;;     ) ERR_UNAUTHORISED)
 ;; ))
 
 ;; (define-constant structured-data-header (concat structured-data-prefix message-domain-hash))
@@ -60,7 +60,7 @@
 ;; --- Authorisation check
 
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 ;; --- Internal DAO functions
@@ -91,7 +91,7 @@
     (asserts! (is-none (map-get? resolution-polls {market-id: market-id, market: (contract-of market)})) err-poll-already-exists)
     (asserts! (is-eq (len empty-votes) num-categories) err-poll-already-exists)
 		;; see market for access rules. 
-    (try! (as-contract (contract-call? market dispute-resolution market-id original-sender num-categories)))
+    (try! (as-contract? (contract-call? market dispute-resolution market-id original-sender num-categories)))
 
     ;; Register the poll
     (map-set resolution-polls {market-id: market-id, market: (contract-of market)}
@@ -192,7 +192,7 @@
 ;;         (amount (get amount message-data))
 ;;         ;; Verify the signature
 ;;         (message (tuple (attestation attestation) (market-id market-id) (timestamp timestamp) (vote (get category-for message-data))))
-;;         (structured-data-hash (sha256 (unwrap! (to-consensus-buff? message) err-unauthorised)))
+;;         (structured-data-hash (sha256 (unwrap! (to-consensus-buff? message) ERR_UNAUTHORISED)))
 ;;         (is-valid-sig (verify-signed-structured-data structured-data-hash (get signature input-vote) voter))
 ;;       )
 ;;     (if is-valid-sig

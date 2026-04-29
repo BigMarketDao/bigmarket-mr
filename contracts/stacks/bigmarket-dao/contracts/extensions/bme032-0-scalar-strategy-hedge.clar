@@ -11,7 +11,7 @@
 (use-trait ft-velar-token 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 
-(define-constant err-unauthorised (err u32000))
+(define-constant ERR_UNAUTHORISED (err u32000))
 (define-constant err-already-hedged (err u32001))
 (define-constant err-already-executed (err u32002))
 (define-constant err-hedge-not-found (err u32003))
@@ -48,7 +48,7 @@
 )
 
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised)))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED)))
 
 (define-public (set-hedge-multipliers (multipliers (list 6 uint)))
   (begin
@@ -167,7 +167,7 @@
 
     ;; compute bounded amount
     (let (
-      (balance (unwrap! (contract-call? token-in get-balance .bme006-0-treasury) err-unauthorised))
+      (balance (unwrap! (contract-call? token-in get-balance .bme006-0-treasury) ERR_UNAUTHORISED))
       (bips-mult (unwrap! (element-at? (var-get hedge-multipliers) predicted-index) err-token-incorrect)) ;; e.g., 750 = 7.5%
       (cap-bips (var-get max-hedge-bips))
       (bips (if (> bips-mult cap-bips) cap-bips bips-mult))
@@ -210,7 +210,7 @@
 
 (define-private (compute-swap-amount (token <ft-velar-token>) (index uint))
   (let (
-      (balance (unwrap! (contract-call? token get-balance .bme006-0-treasury) err-unauthorised))
+      (balance (unwrap! (contract-call? token get-balance .bme006-0-treasury) ERR_UNAUTHORISED))
       (bips (unwrap! (element-at? (var-get hedge-multipliers) index) err-token-incorrect))
       (amt-scaled (/ (* (* balance bips) SCALE) u10000))
       (amt (/ amt-scaled SCALE))

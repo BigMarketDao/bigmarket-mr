@@ -29,7 +29,7 @@
 (define-constant RESOLUTION_DISPUTED u2)
 (define-constant RESOLUTION_RESOLVED u3)
 
-(define-constant err-unauthorised (err u10000))
+(define-constant ERR_UNAUTHORISED (err u10000))
 (define-constant err-invalid-market-type (err u10001))
 (define-constant err-amount-too-low (err u10002))
 (define-constant err-wrong-market-type (err u10003))
@@ -102,7 +102,7 @@
 
 ;; ---------------- access control ----------------
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 ;; ---------------- getters / setters ----------------
@@ -234,7 +234,7 @@
         true
       )
       ;; ensure the user is allowed to create if gating by merkle proof is required
-      (if (var-get creation-gated) (try! (as-contract (contract-call? .bme022-0-market-gating can-access-by-account sender proof))) true)
+      (if (var-get creation-gated) (try! (as-contract? (contract-call? .bme022-0-market-gating can-access-by-account sender proof))) true)
 
       ;; all checks pass - insert market data
       (map-set markets
@@ -307,7 +307,7 @@
       (price-feed-id (get price-feed-id md))
       (id-header-hash (unwrap! (get-stacks-block-info? id-header-hash stacks-height) err-unknown-stacks-block))
       (price-data (get-dia-price stacks-height price-feed-id))
-      (parsed-price (parse-dia-price (unwrap! price-data err-unauthorised))) ;; Parse DIA response
+      (parsed-price (parse-dia-price (unwrap! price-data ERR_UNAUTHORISED))) ;; Parse DIA response
       (categories (get categories md))
       (first-category (unwrap! (element-at? categories u0) err-category-not-found))
       (winning-category-index
@@ -327,7 +327,7 @@
         )
       )
     )
-    (asserts! (is-eq tx-sender (var-get resolution-agent)) err-unauthorised)
+    (asserts! (is-eq tx-sender (var-get resolution-agent)) ERR_UNAUTHORISED)
     (asserts! (>= burn-block-height resolution-burn-block) err-market-wrong-state)
 
       ;; Ensure category was successfully assigned
@@ -600,5 +600,5 @@
 )
 ;; Placeholder: staking does not support this
 (define-public (transfer-shares (market-id uint) (outcome uint) (from principal) (to principal) (amount uint) (t <ft-token>))
-  err-unauthorised
+  ERR_UNAUTHORISED
 )

@@ -6,7 +6,7 @@
 (impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
 
 ;; --- constants and data vars
-(define-constant err-unauthorised (err u100))
+(define-constant ERR_UNAUTHORISED (err u100))
 (define-constant ERR_NOT_OWNER   (err u101))
 (define-constant ERR_ALREADY_MINTED (err u102))
 
@@ -14,7 +14,7 @@
 (define-map token-owners uint principal)
 
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 ;; --- read-only helpers
@@ -56,7 +56,7 @@
 ;; --- SIP009 transfer implementation
 (define-public (transfer (token-id uint) (sender principal) (recipient principal))
   (begin
-    (asserts! (is-eq tx-sender sender) err-unauthorised)
+    (asserts! (is-eq tx-sender sender) ERR_UNAUTHORISED)
     (try! (only-owner token-id))
     (map-set token-owners token-id recipient)
     (print {event: "transfer", id: token-id, from: sender, to: recipient})

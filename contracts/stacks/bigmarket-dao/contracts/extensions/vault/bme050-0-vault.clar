@@ -36,7 +36,7 @@
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 (use-trait sip010 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 
-(define-constant err-unauthorised (err u100))
+(define-constant ERR_UNAUTHORISED (err u100))
 (define-constant err-invalid-amount (err u101))
 (define-constant err-token-not-allowed (err u102))
 
@@ -54,7 +54,7 @@
         (is-eq tx-sender .bigmarket-dao)
         (contract-call? .bigmarket-dao is-extension contract-caller)
       )
-      err-unauthorised
+      ERR_UNAUTHORISED
     )
     (ok true)
   )
@@ -84,7 +84,7 @@
     (asserts! (> amount u0) err-invalid-amount)
     (let ((token-contract (contract-of token)))
       (asserts! (is-eq (default-to false (map-get? allowed-tokens token-contract)) true) err-token-not-allowed)
-      (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
+      (try! (contract-call? token transfer amount tx-sender current-contract none))
       (let ((prev (default-to u0 (map-get? balances {user: tx-sender, token: token-contract}))))
         (map-set balances {user: tx-sender, token: token-contract} (+ prev amount))
       )

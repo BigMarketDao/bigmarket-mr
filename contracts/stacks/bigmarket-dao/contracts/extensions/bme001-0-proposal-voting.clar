@@ -15,7 +15,7 @@
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 (use-trait proposal-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.proposal-trait.proposal-trait)
 
-(define-constant err-unauthorised (err u3000))
+(define-constant ERR_UNAUTHORISED (err u3000))
 (define-constant err-proposal-already-executed (err u3002))
 (define-constant err-proposal-already-exists (err u3003))
 (define-constant err-unknown-proposal (err u3004))
@@ -34,7 +34,7 @@
 ;; 		version: "1.0.0",
 ;; 		chain-id: chain-id
 ;; 	}
-;;     ) err-unauthorised)
+;;     ) ERR_UNAUTHORISED)
 ;; ))
 (define-constant custom-majority-upper u10000)
 ;; (define-constant structured-data-header (concat structured-data-prefix message-domain-hash))
@@ -58,7 +58,7 @@
 ;; --- Authorisation check
 
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 ;; --- Internal DAO functions
@@ -139,7 +139,7 @@
 ;; 		(voter (get voter message-data))
 ;; 		(amount (get amount message-data))
 ;; 		(for (get vote message-data))
-;; 		(structured-data-hash (sha256 (unwrap! (to-consensus-buff? message-data) err-unauthorised)))
+;; 		(structured-data-hash (sha256 (unwrap! (to-consensus-buff? message-data) ERR_UNAUTHORISED)))
 ;; 		;; Verify the signature
 ;; 		(is-valid-sig (verify-signed-structured-data structured-data-hash (get signature input-vote) voter))
 ;;     )
@@ -240,7 +240,7 @@
 ;;   (let
 ;;     (
 ;;       ;; Compute the structured data hash
-;;       	(structured-data-hash (sha256 (unwrap! (to-consensus-buff? message-data) err-unauthorised)))
+;;       	(structured-data-hash (sha256 (unwrap! (to-consensus-buff? message-data) ERR_UNAUTHORISED)))
 ;;     )
 ;;     ;; Verify the signature using the computed hash
 ;;     (ok (verify-signed-structured-data structured-data-hash signature signer))

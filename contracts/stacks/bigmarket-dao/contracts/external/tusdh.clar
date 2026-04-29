@@ -4,7 +4,7 @@
 
 (impl-trait 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 
-(define-constant err-unauthorised (err u3000))
+(define-constant ERR_UNAUTHORISED (err u3000))
 (define-constant err-not-token-owner (err u4))
 
 (define-fungible-token usdh-token)
@@ -17,7 +17,7 @@
 ;; --- Authorisation check
 
 (define-public (is-dao-or-extension)
-	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-unauthorised))
+	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
 )
 
 (define-public (set-name (new-name (string-ascii 32)))
