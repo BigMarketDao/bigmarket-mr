@@ -1,0 +1,14 @@
+# Used when building images with context = monorepo root (e.g. api-v1 Docker build)
+.git
+**/.git
+**/node_modules
+**/.pnpm-store
+.pnpm-store
+.turbo
+**/.svelte-kit
+**/.vite
+**/dist
+.env
+.env.*
+**/.DS_Store
+contracts
