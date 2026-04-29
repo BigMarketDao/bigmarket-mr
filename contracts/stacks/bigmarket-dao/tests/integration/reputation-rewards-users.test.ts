@@ -5,6 +5,9 @@ import { describe, expect, it } from 'vitest';
 import { bob, constructDao, deployer, liquidityCont, reputationSft } from '../dao_helpers';
 
 const SCALE = 1000000;
+/** Heavy simnet workload (many blocks mined + batched claims); overrides global testTimeout */
+const REPUTATION_REWARDS_USERS_TEST_MS = 600_000;
+
 let users: Array<Account> = [];
 const MAX_BATCH = 100;
 
@@ -130,7 +133,7 @@ describe('Tests the rewards system over several epochs', () => {
 		expect(totals.total).toBeGreaterThanOrEqual(9999999000);
 
 		//expect(tx.result).toEqual(Cl.ok(Cl.uint(0)));
-	}, 20000);
+	}, REPUTATION_REWARDS_USERS_TEST_MS);
 });
 
 async function getEpochUserData(user: string) {

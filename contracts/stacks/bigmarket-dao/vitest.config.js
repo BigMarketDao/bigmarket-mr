@@ -20,6 +20,8 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	test: {
+		/** Default max duration per test (ms). Slow Clarinet/simnet tests can override via `it(..., timeout)`. */
+		testTimeout: 60000,
 		environment: 'clarinet', // use vitest-environment-clarinet
 		pool: 'forks',
 		poolOptions: {
