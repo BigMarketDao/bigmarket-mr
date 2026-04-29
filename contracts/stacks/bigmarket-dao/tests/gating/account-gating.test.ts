@@ -175,8 +175,8 @@ describe('gating market  creation', () => {
 		await constructDao(simnet);
 		await passProposalByExecutiveSignals(simnet, 'bdp001-gating');
 		let allowedCreators = [
-			'ST1CV2YGRJA5X8BWS0GP31J9HF56M06CQK8998TSX',
-			'ST33YD6D9E9XSERRKVKY06D7XW5TRZGSRVZ920ECB',
+			'ST1GZKCXE2J2R9T2RKQQSR0C9AQTE2JV8FQE3EDW4',
+			'ST10NYX6Y0E30FQC8ANMHWGX632CAH3BGBA6KTPBV',
 			'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY',
 			'ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ',
 			'ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM',
@@ -184,9 +184,9 @@ describe('gating market  creation', () => {
 		];
 		let { tree, root } = generateMerkleTreeUsingStandardPrincipal(allowedCreators);
 		let merklProof = generateMerkleProof(tree, 'ST3RR3HF25CQ9A5DEWS4R1WKJSBCFKQXFBYPJK3WV');
-		const lookupRootKey = contractId2Key('ST1CV2YGRJA5X8BWS0GP31J9HF56M06CQK8998TSX.bme023-0-market-scalar-pyth');
+		const lookupRootKey = contractId2Key('ST1GZKCXE2J2R9T2RKQQSR0C9AQTE2JV8FQE3EDW4.bme023-0-market-scalar-pyth');
 		console.log(
-			'ST1CV2YGRJA5X8BWS0GP31J9HF56M06CQK8998TSX, ST33YD6D9E9XSERRKVKY06D7XW5TRZGSRVZ920ECB, ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY, ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ, ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM, STEZD95XQ194X67C1QJW4PHKDG8F5D66ZCYFX27A '
+			'ST1GZKCXE2J2R9T2RKQQSR0C9AQTE2JV8FQE3EDW4, ST10NYX6Y0E30FQC8ANMHWGX632CAH3BGBA6KTPBV, ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY, ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ, ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM, STEZD95XQ194X67C1QJW4PHKDG8F5D66ZCYFX27A '
 		);
 		console.log('--------------------------------------------------------------------------------------------------------------');
 		console.log(allowedCreators);
@@ -225,7 +225,7 @@ describe('gating market  creation', () => {
 		];
 		newRoot = generateMerkleTreeUsingStandardPrincipal(allowedCreators);
 		//let merklProof1 = generateMerkleProof(newRoot.tree, 'ST3RR3HF25CQ9A5DEWS4R1WKJSBCFKQXFBYPJK3WV');
-		const lookupRootKey2 = contractId2Key('ST1CV2YGRJA5X8BWS0GP31J9HF56M06CQK8998TSX.bme023-0-market-scalar-pyth');
+		const lookupRootKey2 = contractId2Key('ST1GZKCXE2J2R9T2RKQQSR0C9AQTE2JV8FQE3EDW4.bme023-0-market-scalar-pyth');
 		console.log('--------------------------------------------------------------------------------------------------------------');
 		console.log(allowedCreators);
 		console.log(

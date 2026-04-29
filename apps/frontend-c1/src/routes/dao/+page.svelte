@@ -7,24 +7,24 @@
 	import Proposals from '$lib/components/dao/proposals/Proposals.svelte';
 	import {
 		constructed,
-		daoOverviewStore,
-		exchangeRatesStore,
-		selectedCurrency
+		daoOverviewStore
+		// exchangeRatesStore,
+		// selectedCurrency
 	} from '@bigmarket/bm-common';
 	import { onMount } from 'svelte';
 	import ConstructDao from '$lib/components/dao/construction/ConstructDao.svelte';
-	import ProvideLiquidity from '$lib/components/dao/liquidity/ProvideLiquidity.svelte';
+	//import ProvideLiquidity from '$lib/components/dao/liquidity/ProvideLiquidity.svelte';
 	import { getDaoOverview } from '$lib/core/app/loaders/governance/dao_api';
 	import { daoConfigStore, requireDaoConfig } from '@bigmarket/bm-common';
 	import {
 		getContractDeploymentTxId,
 		isDaoConstructed
 	} from '$lib/core/app/loaders/dao_manager_helper';
-	import { convertFiatToNative } from '@bigmarket/bm-utilities';
+	//import { convertFiatToNative } from '@bigmarket/bm-utilities';
 
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 
-	let fiatPerStx = $state(0);
+	// let fiatPerStx = $state(0);
 	let isLoading = $state(true);
 	let error: string | null = $state(null);
 	let inited = $state(false);
@@ -53,12 +53,12 @@
 			// 1 USD = x STX
 			// x SXT = 1 USD = 1/0.05 BIG
 			// 1 STX = 1/x USD = 1/(0.05x)
-			try {
-				fiatPerStx = convertFiatToNative($exchangeRatesStore, 1, $selectedCurrency.code);
-			} catch (err) {
-				console.error('Failed to get STX token rate:', err);
-				fiatPerStx = 0;
-			}
+			// try {
+			// 	fiatPerStx = convertFiatToNative($exchangeRatesStore, 1, $selectedCurrency.code);
+			// } catch (err) {
+			// 	console.error('Failed to get STX token rate:', err);
+			// 	fiatPerStx = 0;
+			// }
 		} catch (err) {
 			console.error('Failed to load token sale data:', err);
 			error = 'Failed to load token sale data. Please check your connection and try again.';

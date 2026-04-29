@@ -49,8 +49,14 @@
 (define-map total-weighted-supply { epoch: uint } uint)
 (define-map user-total-rep { who: principal } uint)         ;; running total, lifetime reputation
 
+;; ### TESTNET VALUES ######################################################
+;;(define-data-var reward-per-epoch uint u100000000) ;; 100 BIG per epoch (in micro units)
+;;(define-data-var epoch-duration uint u144) ;; roughly daily
+
+;; ### MAINNET ONLY ######################################################
 (define-data-var reward-per-epoch uint u10000000000) ;; 10,000 BIG per epoch (in micro units)
 (define-data-var epoch-duration uint u4000) ;; roughly monthly
+
 (define-data-var overall-supply uint u0)
 (define-data-var token-name (string-ascii 32) "BigMarket Reputation Token")
 (define-data-var token-symbol (string-ascii 10) "BIGR")

@@ -170,7 +170,7 @@ export async function getMarketVotesUser(voter: string): Promise<any> {
 //(some (tuple (concluded false)
 // (end-burn-height u98564)
 // (num-categories u2)
-// (proposer ST1CV2YGRJA5X8BWS0GP31J9HF56M06CQK8998TSX)
+// (proposer ST1GZKCXE2J2R9T2RKQQSR0C9AQTE2JV8FQE3EDW4)
 // (votes (list u134000000 u55000000))
 // (winning-category none)))
 async function fetchResolutionVote(stacksApi: string, marketContract: string, marketId: number, contractAddress: string, contractName: string, stacksHiroKey?: string): Promise<ResolutionVote> {

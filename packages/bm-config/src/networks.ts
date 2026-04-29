@@ -87,7 +87,7 @@ export const daoConfigByNetwork: { [key: string]: DaoConfig } = {
   },
   testnet: {
     VITE_NETWORK: "testnet",
-    VITE_DAO_DEPLOYER: "ST1CV2YGRJA5X8BWS0GP31J9HF56M06CQK8998TSX",
+    VITE_DAO_DEPLOYER: "ST1GZKCXE2J2R9T2RKQQSR0C9AQTE2JV8FQE3EDW4",
     VITE_DAO_BASE_CONTRACTS: "ecosystem-dao,bigmarket-dao",
     VITE_DAO: "bigmarket-dao",
     VITE_DAO_PROPOSAL:
