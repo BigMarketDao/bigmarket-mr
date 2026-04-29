@@ -185,7 +185,7 @@
     <div
       class="flex justify-between w-full text-left text-[11px] font-bold text-gray-600 tabular-nums dark:text-gray-400"
     >
-      {marketStakes.length} traders
+      {marketStakes?.length ?? 0} traders
     </div>
   </div>
 

@@ -25,7 +25,6 @@
 	/>
 </svelte:head>
 
-<div>HI</div>
 <div class="mx-auto w-full max-w-7xl py-4 md:px-6">
 	<div class="my-2 flex w-full flex-col items-center">
 		<div>

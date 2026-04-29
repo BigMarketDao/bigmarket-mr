@@ -76,8 +76,28 @@
   )
 )
 
+(define-read-only (get-minted-in-epoch-by (epoch uint) (user principal))
+  (default-to u0 (map-get? minted-in-epoch-by { epoch: epoch, who: user }))
+)
+
+(define-read-only (get-burned-in-epoch-by (epoch uint) (user principal))
+  (default-to u0 (map-get? burned-in-epoch-by { epoch: epoch, who: user }))
+)
+
+(define-read-only (get-minted-in-epoch (epoch uint))
+  (default-to u0 (map-get? minted-in-epoch { epoch: epoch }))
+)
+
+(define-read-only (get-burned-in-epoch (epoch uint))
+  (default-to u0 (map-get? burned-in-epoch { epoch: epoch }))
+)
+
 (define-read-only (get-last-claimed-epoch (user principal))
   (default-to u0 (map-get? last-claimed-epoch { who: user }))
+)
+
+(define-read-only (get-join-epoch (user principal))
+  (default-to u0 (map-get? join-epoch { who: user }))
 )
 
 (define-read-only (get-latest-claimable-epoch)
@@ -111,6 +131,14 @@
     (var-set epoch-duration-locked true)
     (ok (var-get epoch-duration))
   )
+)
+
+(define-read-only (get-epoch-duration)
+  (ok (var-get epoch-duration))
+)
+
+(define-read-only (get-launch-height)
+  (ok (var-get launch-height))
 )
 
 (define-read-only (get-total-weighted-supply-at (epoch uint))
@@ -156,6 +184,10 @@
     (ok true)
   )
 )
+(define-read-only (get-reward-per-epoch)
+  (ok (var-get reward-per-epoch))
+)
+
 (define-public (set-tier-weight (token-id uint) (weight uint))
   (begin
     (try! (is-dao-or-extension))
@@ -171,6 +203,9 @@
     (ok true)
   )
 )
+(define-public (get-tier-weight (token-id uint))
+  (ok (default-to u1 (map-get? tier-weights token-id))))
+
 
 ;; ------------------------
 ;; Mint / Burn
@@ -286,7 +321,7 @@
 (define-public (transfer (token-id uint) (amount uint) (sender principal) (recipient principal))
   (begin
     ;; Reputation tokens are soulbound for end users; only the DAO/extensions
-    ;; may move balances. We surface this with err-soulbound (rather than
+    ;; may move balances. Hence, err-soulbound (rather than
     ;; err-unauthorised) so SIP-013-aware wallets get a meaningful signal
     ;; that the standard transfer interface is intentionally locked.
     (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) err-soulbound)

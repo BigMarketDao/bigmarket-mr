@@ -10,10 +10,11 @@
   import { showTxModal, shareCosts, allowedTokenStore} from '@bigmarket/bm-common';
   import { Countdown } from '@bigmarket/bm-ui';
   import { watchTransaction, exchangeRatesStore, isLoggedIn } from '@bigmarket/bm-common';
-  import type { Payout, PredictionMarketCreateEvent, ShareCost, SharesPerCost, Sip10Data, UserStake } from '@bigmarket/bm-types';
-  import { calculatePayoutCategorical, convertFiatToNative, estimateMaxSpendIncludingFee, fmtMicroToStx, fmtMicroToStxNumber, fmtStxMicro, getCategoryLabel, getMarketToken, getRate, getTierBalance, getTokenBalanceMicro, isCooling, isPostCooling, isResolvable, isStaking, isSTX, toFiat, validatePurchaseAgainstMax } from '@bigmarket/bm-utilities';
+  import type { Payout, PredictionMarketCreateEvent, ShareCost, MaxBuyable, Sip10Data, UserStake, MaxSellable } from '@bigmarket/bm-types';
+  import { calculatePayoutCategorical, convertFiatToNative, estimateMaxSpendIncludingFee, fmtMicroToStx, fmtMicroToStxNumber, fmtStxMicro, getCategoryLabel, getMarketToken, getRate, getTierBalance, getTokenBalanceMicro, isCooling, isPostCooling, isResolvable, isStaking, isSTX, STAKING_TIER, toFiat, validatePurchaseAgainstMax } from '@bigmarket/bm-utilities';
   import { stacks } from '@bigmarket/sdk';
   import { getSip10PostConditions } from '@bigmarket/sdk/dist/chains/stacks';
+  import MarketStakingPurchaseAmount from './market-staking-components/MarketStakingPurchaseAmount.svelte';
 
   const { market, userStake, preselectIndex } = $props<{
 		market: PredictionMarketCreateEvent;
@@ -26,7 +27,7 @@
 
   let feeBips = $derived($daoOverviewStore.contractData?.devFeeBips || 0);
   let componentKey = 0;
-  let sip10Data: Sip10Data = $derived(getMarketToken(market.marketData.token, $allowedTokenStore) || { symbol: '', decimals: 0, name: '', balance: 0, totalSupply: 0, tokenUri: '' });
+  let sip10Data: Sip10Data = $derived(getMarketToken(market.marketData.token, $allowedTokenStore) || { symbol: '', decimals: 0, name: '', balance: 0, totalSupply: 0, tokenUri: '' } as Sip10Data);
   let totalBalanceUToken: number = $state(0);
   let resolutionAgent: boolean=$derived(getStxAddress() === $daoOverviewStore.contractData?.resolutionAgent);
   let maxSpend = $state(1);
@@ -36,6 +37,7 @@
   let currentIndex = $state(-1);
   let connected = $state(false);
   let presetSelected = $state(1);
+
   let endOfMarket = $derived(
     (market.marketData?.marketStart || 0) + (market.marketData?.marketDuration || 0)
   );
@@ -62,23 +64,14 @@
     // showOnRampModal.set(!$showOnRampModal);
   };
 
-  function handlePresetAmount(val: number) {
-    maxSpend = val || 1;
-    presetSelected = val;
-    handleInput();
-  }
-
-  const handleInput = () => {
-    const userCostMicro = fmtStxMicro(maxSpend, sip10Data?.decimals || 0);
-    if (userCostMicro > totalBalanceUToken) {
-      errorMessage = 'Check balance to ensure enough funds';
-    }
-    const newShareCosts = $shareCosts;
-    newShareCosts.userCostMicro = userCostMicro;
-    stakeAmount.set(userCostMicro);
-    shareCosts.set(newShareCosts);
+  const getUserStakeAtIndex = (index: number):number => {
+    return userStake?.stakes[index] || 0;
   };
-  const setSlippage = (s: number) => {
+  const hasPosition = (index: number):number => {
+    return userStake && userStake.stakes[index] > 0;
+  };
+
+  const handleSetSlippage = (s: number) => {
     const newsShareCosts = $shareCosts;
     newsShareCosts.slippage = s;
     shareCosts.set(newsShareCosts);
@@ -88,7 +81,7 @@
     showInput = isStaking($chainStore.stacks.burn_block_height, market);
   };
 
-  const doPrediction = async (index: number) => {
+  const doBuy = async (index: number) => {
     if (typeof window === 'undefined') return false;
     errorMessage = undefined;
     if (!isLoggedIn()) {
@@ -115,7 +108,7 @@
       },
       market.marketData,
     );
-    const maxShares = await stacks.createMarketsClient(daoConfig).getMaxShares(
+    const maxShares = await stacks.createMarketsClient(daoConfig).fetchMaxShares(
       appConfig.VITE_STACKS_API,
       market.marketId,
       index,
@@ -124,13 +117,65 @@
       market.extension.split('.')[1],
     );
     const token = $allowedTokenStore.find((t) => t.token === market.marketData.token)!;
+    const tierBalance = await getTierBalance(appConfig.VITE_BIGMARKET_API, STAKING_TIER, getStxAddress());
+
     const response = await stacks.createMarketsClient(daoConfig).buyShares(
+      getStxAddress(),
       market,
       token,
       index,
-      getStxAddress(),
       $shareCosts.userCostMicro,
       purchaseInfo.minShares,
+      tierBalance
+    );
+    if (response.success) {
+      showTxModal(response.txid);
+      watchTransaction(appConfig.VITE_BIGMARKET_API, appConfig.VITE_STACKS_API, `${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_MARKET_VOTING}`, response.txid);
+    } else {
+      showTxModal('Unable to process right now');
+    }
+
+  };
+
+  const doSell= async (index: number) => {
+    if (typeof window === 'undefined') return false;
+    errorMessage = undefined;
+    if (!isLoggedIn()) {
+      errorMessage = 'Please connect your wallet';
+      return;
+    }
+    if ($shareCosts.userCostMicro <= 0) {
+      errorMessage = `Amount is required`;
+      return;
+    }
+    const purchaseInfo = validatePurchaseAgainstMax(
+      {
+        index,
+        totalCost: $shareCosts.userCostMicro,
+        feeBips: $daoOverviewStore.contractData?.devFeeBips || 0,
+        slippage: $shareCosts.slippage,
+      },
+      market.marketData,
+    );
+    const maxSellable: MaxSellable = await stacks.createMarketsClient(daoConfig).fetchSellRefund(
+      appConfig.VITE_STACKS_API,
+      market.marketId,
+      index,
+      $shareCosts.userCostMicro,
+      market.extension.split('.')[0],
+      market.extension.split('.')[1],
+    );
+    const token = $allowedTokenStore.find((t) => t.token === market.marketData.token)!;
+    const tierBalance = await getTierBalance(appConfig.VITE_BIGMARKET_API, STAKING_TIER, getStxAddress());
+    const minRefund = Math.floor(maxSellable.refund * $shareCosts.slippage) // 1% slippage tolerance
+
+    const response = await stacks.createMarketsClient(daoConfig).sellShares(
+      getStxAddress(),
+      market,
+      token,
+      index,
+      maxSellable.sharesIn,
+      minRefund,
     );
     if (response.success) {
       showTxModal(response.txid);
@@ -150,37 +195,16 @@
     }
   };
 
-  const getQuickBuyOptions = () => {
-    const quickSpend = estimateMaxSpendIncludingFee(
-      market.marketData,
-      currentIndex,
-      feeBips,
-    ).maxSpendIncludingFee;
-    const quickBuy: Array<{ label: string; value: number }> = [];
-    if (currentIndex < 0) return quickBuy;
-    if (quickSpend > 1000000 && totalBalanceUToken > 1000000)
-      quickBuy.push({ label: `1 ${sip10Data.symbol}`, value: 1 });
-    if (quickSpend > 5000000 && totalBalanceUToken > 5000000)
-      quickBuy.push({ label: `5 ${sip10Data.symbol}`, value: 5 });
-    if (quickSpend > 100000000 && totalBalanceUToken > 100000000)
-      quickBuy.push({ label: `100 ${sip10Data.symbol}`, value: 100 });
-    if (totalBalanceUToken > quickSpend)
-      quickBuy.push({ label: 'MAX', value: fmtMicroToStxNumber(quickSpend) });
-    else if (totalBalanceUToken > 2000000)
-      quickBuy.push({ label: 'MAX', value: fmtMicroToStxNumber(totalBalanceUToken - 1000000) });
-    return quickBuy;
-  };
-
   onMount(async () => {
     errorMessage = undefined;
     connected = isLoggedIn();
-    const costs: Array<SharesPerCost> = [];
+    const costs: Array<MaxBuyable> = [];
     // const netSpend = maxSpend * (1 - devFeeBips / 10000); // e.g. *0.98
 
     const numberShares = Number(`1e${sip10Data.decimals}`);
     for (let i = 0; i < market.marketData.categories.length; i++) {
       //costs.push(await getCostPerShare(appConfig.VITE_STACKS_API, market.marketId, i, maxSpend * numberShares, market.extension.split('.')[0], market.extension.split('.')[1]));
-      const maxShares = await stacks.createMarketsClient(daoConfig).getMaxShares(
+      const maxShares = await stacks.createMarketsClient(daoConfig).fetchMaxShares(
         appConfig.VITE_STACKS_API,
         market.marketId,
         i,
@@ -196,19 +220,11 @@
     if (isLoggedIn()) {
       const tokenBalances = $userWalletStore.tokenBalances;
       totalBalanceUToken = getTokenBalanceMicro(market.marketData.token, tokenBalances!);
-      // totalBalanceUToken = await fullBalanceInSip10Token(
-      //   appConfig.VITE_STACKS_API,
-      //   getStxAddress(),
-      //   market.marketData.token,
-      // );
-      // const sum = userStake ? userStakeSum(userStake) : 0;
-      // totalBalanceUToken = totalBalanceUToken - sum;
       resolutionAgent =
         getStxAddress() === $daoOverviewStore.contractData?.resolutionAgent;
     } else {
       totalBalanceUToken = 0;
     }
-    handleInput();
 
     // Preselect option and focus amount if deep-linked
     if (
@@ -294,21 +310,40 @@
             {@const isNo = isBinary && index === 0}
 
             <!-- Simple Button Design -->
+            <div class={`
+              min-w-0 max-w-full rounded-lg border p-3
+              ${
+                isYes
+                  ? 'border-green-200 bg-green-50 hover:bg-green-100 dark:border-green-700 dark:bg-green-900/20 dark:hover:bg-green-900/30'
+                  : isNo
+                    ? 'border-red-200 bg-red-50 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:hover:bg-red-900/30'
+                    : 'border-orange-200 bg-orange-50 hover:bg-orange-100 dark:border-orange-700 dark:bg-orange-900/20 dark:hover:bg-orange-900/30'
+              }
+              ${!connected ? 'cursor-not-allowed opacity-50' : ''}
+            `}>
+              <div                 class={`
+                text-right text-sm font-bold
+                ${isYes ? 'text-green-600 dark:text-green-400' : isNo ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}
+              `}
+          >
+
+                <div>            
+                  {#if hasPosition(index)}
+                    <div class="mt-1 inline-flex items-center rounded-full border border-green-200 bg-green-100/70 px-2.5 py-1 text-xs font-medium text-green-800 dark:border-green-900/70 dark:bg-green-900/30 dark:text-green-300">
+                      You own {fmtMicroToStx(getUserStakeAtIndex(index), sip10Data.decimals)} shares
+                    </div>
+                  {/if}
+                </div>
+              </div>
+
             <button
+            class={`
+              flex w-full cursor-pointer items-center justify-between p-3 uppercase transition-all
+              ${!connected ? 'cursor-not-allowed opacity-50' : ''}
+            `}
               type="button"
               disabled={!connected}
               onclick={() => connected && setCurrentIndex(isSelected ? -1 : index)}
-              class={`
-									flex w-full cursor-pointer items-center justify-between rounded-lg border p-3 uppercase transition-all
-									${
-                    isYes
-                      ? 'border-green-200 bg-green-50 hover:bg-green-100 dark:border-green-700 dark:bg-green-900/20 dark:hover:bg-green-900/30'
-                      : isNo
-                        ? 'border-red-200 bg-red-50 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:hover:bg-red-900/30'
-                        : 'border-orange-200 bg-orange-50 hover:bg-orange-100 dark:border-orange-700 dark:bg-orange-900/20 dark:hover:bg-orange-900/30'
-                  }
-									${!connected ? 'cursor-not-allowed opacity-50' : ''}
-								`}
             >
               <div class="flex items-center gap-3">
                 <div
@@ -327,9 +362,9 @@
                       `}
                   >
                     {#if isBinary}
-                      {@html getCategoryLabel($selectedCurrency, index, market.marketData)}
+                    <span class="text-white">{@html getCategoryLabel($selectedCurrency, index, market.marketData)}</span>
                     {:else}
-                      <span class="text-black"
+                      <span class="text-white"
                         >{@html getCategoryLabel($selectedCurrency, index, market.marketData)}</span
                       >
                     {/if}
@@ -340,6 +375,7 @@
 									</div> -->
                 </div>
               </div>
+
               <div
                 class={`
                     text-right text-sm font-bold
@@ -353,142 +389,9 @@
 
             <!-- Purchase Panel - Slides Open -->
             {#if isSelected && showInput && connected}
-              <div
-                class="mt-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
-                transition:slide={{ duration: 150 }}
-              >
-                <!-- Purchase Amount -->
-                <div class="mb-3">
-                  <label
-                    for="stake-input-{index}"
-                    class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
-                  >
-                    Purchase Amount
-                  </label>
-                  {#if totalBalanceUToken > 2000000}
-                    <div class="flex gap-2">
-                      <input
-                        id="stake-input-{index}"
-                        type="number"
-                        bind:value={maxSpend}
-                        oninput={handleInput}
-                        placeholder="Enter amount"
-                        class="flex-1 rounded border border-gray-300 bg-white px-2 py-1.5 text-sm transition-colors focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-orange-500"
-                      />
-                      <div
-                        class="rounded border border-gray-300 bg-gray-100 px-2 py-1.5 text-xs font-medium text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                      >
-                        {sip10Data.symbol}
-                      </div>
-                    </div>
-                    <!-- {:else if connected}<Banner bannerType="warning" message={`Balance too low to trade - <a href=${exchangeUrl(txId)} target="_blank">buy stacks</a> or mint BIG-PLAY`} />{/if} -->
-                  {:else if connected}<Banner
-                      bannerType="warning"
-                      message={`Balance too low to trade - mint ` + sip10Data.symbol}
-                    />{/if}
-                </div>
-
-                <!-- Quick Amount Pills -->
-                <div class="mb-3 flex flex-wrap gap-2">
-                  {#each getQuickBuyOptions() as option}
-                    <button
-                      onclick={() => handlePresetAmount(option.value)}
-                      class={`
-                            rounded px-2 py-1 text-xs font-medium transition-colors
-                            ${option.value === presetSelected ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'}
-                            focus:ring-1 focus:ring-orange-500/20 focus:outline-none
-                          `}
-                    >
-                      {option.label}
-                    </button>
-                  {/each}
-                </div>
-
-                <!-- Trade Info Box -->
-                {#if maxSpend > 0}
-                  <div class="mb-3 rounded bg-orange-50 p-2 dark:bg-orange-900/20">
-                    <div class="space-y-1">
-                      <!-- <div class="flex justify-between text-xs">
-												<span class="text-gray-600 dark:text-gray-400">You will receive:</span>
-												<span class="font-medium text-gray-900 dark:text-white">
-													{fmtMicroToStx($shareCosts.costs[index]?.shares)} shares
-												</span>
-											</div> -->
-                      <div class="flex justify-between text-xs">
-                        <span class="text-gray-600 dark:text-gray-400">You will pay:</span>
-                        <div class="text-right">
-                          <div class="font-medium text-gray-900 dark:text-white">
-                            {maxSpend}
-                            {sip10Data.symbol}
-                          </div>
-                          <div class="text-gray-500 dark:text-gray-400">
-                            ≈ {toFiat(
-                              getRate($exchangeRatesStore, $selectedCurrency.code),
-                              fmtStxMicro(maxSpend, sip10Data.decimals),
-                              sip10Data,
-                            )}
-                            {$selectedCurrency.code}
-                          </div>
-                        </div>
-                      </div>
-                      <div class="flex justify-between text-xs">
-                        <span class="text-gray-600 dark:text-gray-400">You can win:</span>
-                        <div class="text-right">
-                          <div class="font-medium text-orange-600 dark:text-orange-400">
-                            {(maxSpend / (probability / 100) - maxSpend).toFixed(2)}
-                            {sip10Data.symbol}
-                          </div>
-                          <div class="text-gray-500 dark:text-gray-400">
-                            ≈ {toFiat(
-                              getRate($exchangeRatesStore, $selectedCurrency.code),
-                              fmtStxMicro(
-                                maxSpend / (probability / 100) - maxSpend,
-                                sip10Data.decimals,
-                              ),
-                              sip10Data,
-                            )}
-                            {$selectedCurrency.code}
-                          </div>
-                        </div>
-                      </div>
-                      <div class="flex justify-between text-xs">
-                        <span class="text-gray-600 dark:text-gray-400">Total payout:</span>
-                        <div class="text-right">
-                          <div class="font-medium text-green-600 dark:text-green-400">
-                            {(maxSpend / (probability / 100)).toFixed(2)}
-                            {sip10Data.symbol}
-                          </div>
-                          <div class="text-gray-500 dark:text-gray-400">
-                            ≈ {toFiat(
-                              getRate($exchangeRatesStore, $selectedCurrency.code),
-                              fmtStxMicro(maxSpend / (probability / 100), sip10Data.decimals),
-                              sip10Data,
-                            )}
-                            {$selectedCurrency.code}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                {/if}
-
-                <!-- Trade Button -->
-                <button
-                  onclick={() => doPrediction(index)}
-                  disabled={!maxSpend || maxSpend <= 0}
-                  class="w-full cursor-pointer rounded bg-orange-500 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-orange-600 focus:ring-2 focus:ring-orange-500/20 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-white"
-                >
-                  {#if isBinary}
-                    BUY {@html getCategoryLabel($selectedCurrency, index, market.marketData)}
-                  {:else}
-                    BUY {@html getCategoryLabel($selectedCurrency, index, market.marketData)}
-                  {/if}
-                </button>
-
-                <!-- Note -->
-                <!-- <div class="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">Shares available for trading immediately.</div> -->
-              </div>
+              <MarketStakingPurchaseAmount marketData={market.marketData} probability={probability} index={index} connected={connected} totalBalanceUToken={totalBalanceUToken} userStakeAtIndex={getUserStakeAtIndex(index)} doBuy={doBuy} doSell={doSell} />
             {/if}
+          </div>
           {/each}
           {#if $bitcoinMode && txId}
             <div class="mb-4 text-white">
@@ -517,7 +420,7 @@
     <!-- Slippage Settings -->
     {#if showSlippage}
       <div class="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
-        <SlippageSlider slippage={$shareCosts.slippage} setSlippage={(s) => shareCosts.set({ ...$shareCosts, slippage: s })} />
+        <SlippageSlider slippage={$shareCosts.slippage} setSlippage={handleSetSlippage} />
       </div>
     {/if}
 

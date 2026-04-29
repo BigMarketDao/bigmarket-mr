@@ -51,6 +51,13 @@ export interface PredictionMarketCreateEvent extends BasicEvent {
   stacksHeight?: number;
   seedAmount?: number;
 }
+export interface PredictionMarketAccounting {
+  totalTokenPool: number;
+  accumulatedLpFees: number;
+  lpTotalShares: number;
+  stakes: Array<number>;
+  stakeTokens: Array<number>;
+}
 export type MarketData = {
   concluded: boolean;
   creator: string;
@@ -149,6 +156,63 @@ export interface PredictionMarketStakeEvent extends BasicEvent {
   voter: string;
   fee: number;
   cost: number;
+  lpFee: number;
+  multisigFee: number;
+  maxCost: number;
+}
+//event: "market-unstake"
+export interface PredictionMarketUnStakeEvent extends BasicEvent {
+  marketId: number;
+  marketType: number;
+  index: number;
+  sharesIn: number;
+  refund: number;
+  fee: number;
+  lpFee: number;
+  multisigFee: number;
+  seller: string;
+  minRefund: number;
+}
+export interface PredictionMarketEventChain {
+  market: PredictionMarketCreateEvent;
+  claims: Array<PredictionMarketClaimEvent>;
+  stakes: {
+    userStakes: Array<PredictionMarketStakeEvent>;
+    userUnstakes: Array<PredictionMarketUnStakeEvent>;
+  };
+  liquidity: {
+    addLiquidityEvents: Array<PredictionMarketLPAddEvent>;
+    removeLiquidityEvents: Array<PredictionMarketLPRemoveEvent>;
+    claimLpFeeEvents: Array<PredictionMarketLPClaimEvent>;
+  };
+}
+//event: "add-liquidity"
+export interface PredictionMarketLPAddEvent extends BasicEvent {
+  marketId: number;
+  marketType: number;
+  sender: string;
+  requested: number;
+  amount: number;
+  lpSharesMinted: number;
+  lpTotalShares: number;
+}
+
+//event: "remove-liquidity"
+export interface PredictionMarketLPRemoveEvent extends BasicEvent {
+  marketId: number;
+  marketType: number;
+  sender: string;
+  lpRequested: number;
+  lpActualRefund: number;
+}
+
+//event: "claim-lp-fees"
+export interface PredictionMarketLPClaimEvent extends BasicEvent {
+  marketId: number;
+  marketType: number;
+  sender: string;
+  lpSharesBurned: number;
+  feePaid: number;
 }
 
 export interface PredictionMarketClaimEvent extends BasicEvent {

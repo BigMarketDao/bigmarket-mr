@@ -10,9 +10,10 @@ export async function callContractReadOnly(
     url += "?tip=" + data.tip;
   }
   let val;
+  let response;
   try {
-    console.log("callContractReadOnly: url: ", url);
-    const response = await fetch(url, {
+    // console.log("callContractReadOnly: url: ", url);
+    response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -23,11 +24,18 @@ export async function callContractReadOnly(
         sender: data.contractAddress,
       }),
     });
+    if (!response.ok) {
+      console.error("callContractReadOnly4: response not ok: for data: ", data);
+      return null;
+    }
     val = await response.json();
   } catch (err) {
     console.error("callContractReadOnly4: ", err);
+    //console.log("callContractReadOnly4: response:  ", response);
+    return null;
   }
   try {
+    if (!val.result) return null;
     const result = cvToJSON(deserializeCV(val.result));
     return result;
   } catch (err: any) {

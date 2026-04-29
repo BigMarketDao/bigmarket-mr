@@ -32,13 +32,13 @@ export const load: PageServerLoad = async ({ url, params }) => {
 	}
 
 	const market = await getPredictionMarketSSR(appConfig.VITE_BIGMARKET_API, marketId, marketType);
-	let thread: AuthenticatedForumContent | undefined;
 	if (!market) {
 		return {
 			status: 302,
 			redirect: '/'
 		};
 	}
+	let thread: AuthenticatedForumContent | undefined;
 	if (market.unhashedData.forumMessageId) {
 		thread = await loadThread(appConfig.VITE_FORUM_API, market.unhashedData.forumMessageId);
 	}
@@ -49,7 +49,6 @@ export const load: PageServerLoad = async ({ url, params }) => {
 		marketType
 	);
 	const result = { market, marketStakes, thread: thread || undefined };
-	//console.log('CACHE MISS: loading: market, marketStakes, marketType, marketId using: key=' + key);
 
 	setCached(key, result, 1000 * 60 * 1); // 30 secs
 	return {

@@ -65,6 +65,56 @@ export async function getSip10PostConditions(
   }
   return postConditions;
 }
+export async function getSellCategoryPostConditions(
+  deployer: string,
+  extension: string,
+  tokenEvent: TokenPermissionEvent,
+  microAmount: number,
+) {
+  const postConditions: Array<PostCondition> = [];
+  let postConditionFt: PostCondition | null = null;
+  // the market token post condition
+  if (!isSTX(tokenEvent.token)) {
+    const formattedToken = (tokenEvent.token.split(".")[0] +
+      "." +
+      tokenEvent.token.split(".")[1]) as `${string}.${string}`;
+    const tokenName = tokenEvent.token;
+    postConditionFt = Pc.principal(`${deployer}.${extension}`)
+      .willSendGte(microAmount)
+      .ft(formattedToken, tokenName);
+  } else {
+    postConditionFt = Pc.principal(`${deployer}.${extension}`)
+      .willSendGte(microAmount)
+      .ustx();
+  }
+  postConditions.push(postConditionFt);
+  return postConditions;
+}
+export async function getClaimLPPostConditions(
+  deployer: string,
+  extension: string,
+  tokenEvent: TokenPermissionEvent,
+  microAmount: number,
+) {
+  const postConditions: Array<PostCondition> = [];
+  let postConditionFt: PostCondition | null = null;
+  // the market token post condition
+  if (!isSTX(tokenEvent.token)) {
+    const formattedToken = (tokenEvent.token.split(".")[0] +
+      "." +
+      tokenEvent.token.split(".")[1]) as `${string}.${string}`;
+    const tokenName = tokenEvent.token;
+    postConditionFt = Pc.principal(`${deployer}.${extension}`)
+      .willSendLte(microAmount)
+      .ft(formattedToken, tokenName);
+  } else {
+    postConditionFt = Pc.principal(`${deployer}.${extension}`)
+      .willSendLte(microAmount)
+      .ustx();
+  }
+  postConditions.push(postConditionFt);
+  return postConditions;
+}
 export async function getBigRPostConditionNft(
   deployer: string,
   repContract: string,

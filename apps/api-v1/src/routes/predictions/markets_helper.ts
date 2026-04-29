@@ -1,20 +1,20 @@
-import {
-	BasicEvent,
-	callContractReadOnly,
+import { callContractReadOnly, fetchContractBalances, fetchMarketData, getSip10Properties, readPredictionContractData } from '@mijoco/stx_helpers/dist/index.js';
+import type {
+	StoredOpinionPoll,
+	TokenPermissionEvent,
+	MarketCategory,
 	DaoOverview,
-	fetchContractBalances,
-	fetchMarketData,
-	getSip10Properties,
+	BasicEvent,
 	MarketData,
 	MarketVotingVoteEvent,
 	PredictionMarketClaimEvent,
 	PredictionMarketCreateEvent,
 	PredictionMarketStakeEvent,
-	readPredictionContractData,
-	StoredOpinionPoll,
-	TokenPermissionEvent,
-	type MarketCategory
-} from '@mijoco/stx_helpers/dist/index.js';
+	PredictionMarketUnStakeEvent,
+	PredictionMarketLPAddEvent,
+	PredictionMarketLPRemoveEvent,
+	PredictionMarketLPClaimEvent
+} from '@bigmarket/bm-types';
 import { daoEventCollection, marketCategoriesCollection, marketCollection } from '../../lib/data/db_models.js';
 import { findUserEnteredPollByHash } from '../polling/polling_helper.js';
 import { getConfig } from '../../lib/config.js';
@@ -357,6 +357,98 @@ export async function updateClaimWinningsEvent(marketType: number, result: any, 
 	return contractEvent;
 }
 
+//      (print {event: "claim-lp-fees", market-id: market-id, user: tx-sender, lp-shares-burned: user-lp-shares, fee-paid: fee-entitlement})
+export async function updateClaimLpFeeEvent(marketType: number, result: any, basicEvent: BasicEvent) {
+	const marketId = Number(result.value['market-id']?.value || 0);
+	const sender = result.value['lp']?.value;
+	const lpSharesBurned = result.value['lp-shares-burned']?.value;
+	const feePaid = result.value['fee-paid']?.value;
+	const contractEvent = {
+		...basicEvent,
+		marketType,
+		marketId,
+		sender,
+		lpSharesBurned,
+		feePaid
+	} as PredictionMarketLPClaimEvent;
+	await saveOrUpdateEvent(contractEvent);
+	await updateMarketData(marketId, marketType, basicEvent.extension);
+	return contractEvent;
+}
+
+//      (print {event: "remove-liquidity", market-id: market-id, lp: tx-sender, requested: amount, amount: actual-refund})
+export async function updateRemoveLiquidityEvent(marketType: number, result: any, basicEvent: BasicEvent) {
+	const marketId = Number(result.value['market-id']?.value || 0);
+	const sender = result.value['lp']?.value;
+	const lpRequested = result.value['requested']?.value;
+	const lpActualRefund = result.value['actual-refund']?.value;
+	const contractEvent = {
+		...basicEvent,
+		marketType,
+		marketId,
+		sender,
+		lpRequested,
+		lpActualRefund
+	} as PredictionMarketLPRemoveEvent;
+	await saveOrUpdateEvent(contractEvent);
+	await updateMarketData(marketId, marketType, basicEvent.extension);
+	return contractEvent;
+}
+
+//    (print {event: "add-liquidity", market-id: market-id, lp: tx-sender, requested: amount, amount: actual-amount, lp-shares-minted: new-lp-shares, lp-total-shares: (+ lp-total new-lp-shares)})
+export async function updateAddLiquidityEvent(marketType: number, result: any, basicEvent: BasicEvent) {
+	const marketId = Number(result.value['market-id']?.value || 0);
+	const sender = result.value['lp']?.value;
+	const requested = result.value['requested']?.value;
+	const amount = result.value['amount']?.value;
+	const lpSharesMinted = result.value['lp-shares-minted']?.value;
+	const lpTotalShares = result.value['lp-total-shares']?.value;
+
+	const contractEvent = {
+		...basicEvent,
+		marketType,
+		marketId,
+		sender,
+		requested,
+		amount,
+		lpSharesMinted,
+		lpTotalShares
+	} as PredictionMarketLPAddEvent;
+	await saveOrUpdateEvent(contractEvent);
+	await updateMarketData(marketId, marketType, basicEvent.extension);
+	return contractEvent;
+}
+
+//      (print {event: "market-unstake", market-id: market-id, index: index, shares-in: shares-in, refund: net-refund, fee: fee, lp-fee: lp-fee, multisig-fee: multisig-fee, seller: tx-sender, min-refund: min-refund})
+export async function updateUnstakeEvent(marketType: number, result: any, basicEvent: BasicEvent) {
+	const marketId = Number(result.value['market-id']?.value || 0);
+	const index = Number(result.value['index']?.value || 0);
+	const sharesIn = result.value['shares-in']?.value;
+	const refund = result.value['refund']?.value;
+	const fee = result.value['fee']?.value;
+	const lpFee = result.value['lp-fee']?.value;
+	const multisigFee = result.value['multisig-fee']?.value;
+	const seller = result.value['seller']?.value;
+	const minRefund = result.value['min-refund']?.value;
+	const contractEvent = {
+		...basicEvent,
+		marketType,
+		marketId,
+		sharesIn,
+		index,
+		refund,
+		fee,
+		lpFee,
+		multisigFee,
+		seller,
+		minRefund
+	} as PredictionMarketUnStakeEvent;
+	await saveOrUpdateEvent(contractEvent);
+	await updateMarketData(marketId, marketType, basicEvent.extension);
+	return contractEvent;
+}
+
+//      (print {event: "market-stake", market-id: market-id, index: index, amount: amount-shares, cost: cost-of-shares, fee: fee, lp-fee: lp-fee, multisig-fee: multisig-fee, voter: tx-sender, max-cost: max-cost})
 export async function updateMarketStakeEvent(marketType: number, result: any, basicEvent: BasicEvent) {
 	console.log('updateMarketStakeEvent: ' + marketType + ' : ' + basicEvent.extension);
 	const marketId = Number(result.value['market-id'].value);
@@ -365,6 +457,9 @@ export async function updateMarketStakeEvent(marketType: number, result: any, ba
 	const voter = result.value.voter.value;
 	const fee = Number(result.value.fee?.value || 0);
 	const cost = Number(result.value.cost?.value || 0);
+	const lpFee = Number(result.value['lp-fee']?.value || 0);
+	const multisigFee = Number(result.value['multisig-fee']?.value || 0);
+	const maxCost = Number(result.value['max-cost']?.value || 0);
 	console.log('updateMarketStakeEvent: found object: ' + voter);
 	const contractEvent = {
 		...basicEvent,
@@ -374,7 +469,10 @@ export async function updateMarketStakeEvent(marketType: number, result: any, ba
 		index,
 		voter,
 		fee,
-		cost
+		cost,
+		lpFee,
+		multisigFee,
+		maxCost
 	} as PredictionMarketStakeEvent;
 	console.log('updateMarketStakeEvent: update event data: ');
 	await saveOrUpdateEvent(contractEvent);
@@ -405,6 +503,10 @@ export async function fetchMarketVotes(marketId: number): Promise<Array<MarketVo
 	const result = await daoEventCollection.find({ marketId: marketId, extension: `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_VOTING}`, event: 'market-vote' }).toArray();
 	return result as unknown as Array<MarketVotingVoteEvent>;
 }
+export async function fetchMarketClaims(marketId: number, marketType: number): Promise<Array<PredictionMarketClaimEvent>> {
+	const result = await daoEventCollection.find({ extension: getContract(marketType), marketId, marketType, event: 'claim-winnings' }).toArray();
+	return result as unknown as Array<PredictionMarketClaimEvent>;
+}
 
 export function getContract(marketType: number): string {
 	let contract = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_BITCOIN}`;
@@ -412,18 +514,24 @@ export function getContract(marketType: number): string {
 	if (marketType === 2) contract = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`;
 	return contract;
 }
-export async function fetchMarketStakes(marketId: number, marketType: number): Promise<Array<PredictionMarketStakeEvent>> {
-	const result = await daoEventCollection.find({ extension: getContract(marketType), marketId, marketType, event: 'market-stake' }).toArray();
-	return result as unknown as Array<PredictionMarketStakeEvent>;
+export async function fetchMarketStakes(marketId: number, marketType: number): Promise<{ stakes: Array<PredictionMarketStakeEvent>; unstakes: Array<PredictionMarketUnStakeEvent> }> {
+	const stakes = (await daoEventCollection.find({ extension: getContract(marketType), marketId, marketType, event: 'market-stake' }).toArray()) as unknown as Array<PredictionMarketStakeEvent>;
+	const unstakes = (await daoEventCollection.find({ extension: getContract(marketType), marketId, marketType, event: 'market-unstake' }).toArray()) as unknown as Array<PredictionMarketUnStakeEvent>;
+	return { stakes, unstakes };
 }
 
-export async function fetchMarketClaims(marketId: number, marketType: number): Promise<Array<PredictionMarketClaimEvent>> {
-	const result = await daoEventCollection.find({ extension: getContract(marketType), marketId, marketType, event: 'claim-winnings' }).toArray();
-	return result as unknown as Array<PredictionMarketClaimEvent>;
+export async function fetchMarketLiquidityEvents(
+	marketId: number,
+	marketType: number
+): Promise<{ addLiquidityEvents: Array<PredictionMarketLPAddEvent>; removeLiquidityEvents: Array<PredictionMarketLPRemoveEvent>; claimLpFeeEvents: Array<PredictionMarketLPClaimEvent> }> {
+	const addLiquidityEvents = (await daoEventCollection.find({ extension: getContract(marketType), marketId, marketType, event: 'add-liquidity' }).toArray()) as unknown as Array<PredictionMarketLPAddEvent>;
+	const removeLiquidityEvents = (await daoEventCollection.find({ extension: getContract(marketType), marketId, marketType, event: 'remove-liquidity' }).toArray()) as unknown as Array<PredictionMarketLPRemoveEvent>;
+	const claimLpFeeEvents = (await daoEventCollection.find({ extension: getContract(marketType), marketId, marketType, event: 'claim-lp-fees' }).toArray()) as unknown as Array<PredictionMarketLPClaimEvent>;
+	return { addLiquidityEvents, removeLiquidityEvents, claimLpFeeEvents };
 }
 
 export async function fetchMarkets(): Promise<Array<PredictionMarketCreateEvent>> {
-	const result = await daoEventCollection.find({ 'unhashedData.processed': false, 'unhashedData.featured': true, event: 'create-market', unhashedData: { $ne: null, $exists: true } }).toArray();
+	const result = await daoEventCollection.find({ 'unhashedData.processed': false, 'unhashedData.featured': true, event: 'create-market', unhashedData: { $ne: null, $exists: true }, marketData: { $ne: null, $exists: true } }).toArray();
 	return result as unknown as Array<PredictionMarketCreateEvent>;
 }
 

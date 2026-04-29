@@ -11,12 +11,12 @@
 	import DaoBanner from '$lib/components/dao/DaoBanner.svelte';
 	import BootstrapDao from './BootstrapDao.svelte';
 	import { base } from '$app/paths';
-	import { requireAppConfig, appConfigStore } from '@bigmarket/bm-common';
+	//import { requireAppConfig, appConfigStore } from '@bigmarket/bm-common';
 	import { signAdminMessage } from '$lib/core/app/loaders/governance/voting_sip18';
 
 	//const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
-	const appConfig = $derived(requireAppConfig($appConfigStore));
+	//const appConfig = $derived(requireAppConfig($appConfigStore));
 	let daoContractId = $derived(`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`);
 	let showExtensions = false;
 	let showProposals = false;
@@ -64,19 +64,13 @@
 		>
 			{#if inited}
 				<div class="py-0">
+					<DaoBanner contractId={daoContractId} />
 					{#if !txId}
-						<DaoBanner contractId={daoContractId} />
 						<div>
-							<p>
-								No dao found for contract: {daoContractId} - {appConfig.VITE_NETWORK} - - {daoConfig.VITE_DAO_DEPLOYER}
-							</p>
+							<p>Not yet booted!</p>
 						</div>
 					{/if}
 					{#if !$constructed}
-						<DaoBanner contractId={daoContractId} />
-						<div>
-							<p>DAO for contract: {daoContractId} is not bootstrapped</p>
-						</div>
 						<div>
 							<BootstrapDao {daoContractId} />
 						</div>

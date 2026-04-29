@@ -22,17 +22,17 @@
   );
 
   // ✅ local editable state
-  let liquidityUi = $state<number>(100);
+  let liquidityUi = $state<number>(Number(fmtMicroToStx(template.liquidity)));
 
   // ✅ sync FROM template → UI
-  $effect(() => {
-    const current = template?.liquidity ?? 100000000;
-    const next = current / Math.pow(10, sip10Data.decimals);
+  // $effect(() => {
+  //   const current = liquidityUi ?? 100000000;
+  //   const next = current / Math.pow(10, sip10Data.decimals);
 
-    if (!Number.isNaN(next) && next !== liquidityUi) {
-      liquidityUi = next;
-    }
-  });
+  //   if (!Number.isNaN(next) && next !== liquidityUi) {
+  //     liquidityUi = next;
+  //   }
+  // });
 
   // ✅ sync FROM UI → template
   function updateLiquidity() {
@@ -105,7 +105,6 @@
   </div>
 
   <div class="text-xs text-gray-500 dark:text-gray-400">
-    {fmtMicroToStx(template.liquidity ?? 0, sip10Data.decimals)}
-    {sip10Data.symbol} (micro: {template.liquidity ?? 0})
+    {fmtMicroToStx(liquidityUi * Math.pow(10, sip10Data.decimals), sip10Data.decimals)} {sip10Data.symbol}
   </div>
 </div>

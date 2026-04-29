@@ -557,6 +557,31 @@
     (ok { shares: shares-clamped, fee: fee, cost-of-shares: cost-of-shares })
   )
 )
+(define-read-only (get-sell-refund (market-id uint) (index uint) (shares-in uint))
+  (let (
+        (market-data (unwrap! (map-get? markets market-id) err-market-not-found))
+        (stake-list (get stakes market-data))
+        (selected-pool (unwrap! (element-at? stake-list index) err-category-not-found))
+        (total-pool (fold + stake-list u0))
+        (other-pool (- total-pool selected-pool))
+        (max-sellable (if (> selected-pool MIN_POOL) (- selected-pool MIN_POOL) u0))
+        (gross-refund (unwrap! (cpmm-refund selected-pool other-pool shares-in) err-arithmetic))
+        (fee (/ (* gross-refund (var-get dev-fee-bips)) u10000))
+        (lp-fee (/ (* fee (var-get lp-fee-split-bips)) u10000))
+        (multisig-fee (- fee lp-fee))
+        (net-refund (if (> gross-refund fee) (- gross-refund fee) u0))
+       )
+    (ok {
+      refund: net-refund,
+      gross-refund: gross-refund,
+      fee: fee,
+      lp-fee: lp-fee,
+      multisig-fee: multisig-fee,
+      shares-in: shares-in,
+      max-sellable: max-sellable
+    })
+  )
+)
 ;; Inverse: given a token `cost`, how many shares can be bought safely?
 (define-private (cpmm-shares (selected-pool uint) (other-pool uint) (cost uint))
   (begin

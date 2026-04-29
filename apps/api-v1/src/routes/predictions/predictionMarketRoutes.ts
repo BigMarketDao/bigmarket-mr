@@ -7,6 +7,7 @@ import {
 	fetchAllowedTokens,
 	fetchMarket,
 	fetchMarketClaims,
+	fetchMarketLiquidityEvents,
 	fetchMarkets,
 	fetchMarketStakes,
 	fetchMarketVotes,
@@ -14,6 +15,8 @@ import {
 	readMinTokenLiquidityToken,
 	updateDaoOverview
 } from './markets_helper.js';
+import type { PredictionMarketEventChain } from '@bigmarket/bm-types';
+
 import { GateKeeper, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { fetchCreateMarketMerkleInput } from '../gating/gating_helper.js';
@@ -98,6 +101,14 @@ router.get('/markets/:marketId/:marketType', async (req, res) => {
 	res.json(market);
 });
 
+router.get('/market-events/:marketId/:marketType', async (req, res) => {
+	const market = await fetchMarket(Number(req.params.marketId), Number(req.params.marketType));
+	const claims = await fetchMarketClaims(Number(req.params.marketId), Number(req.params.marketType));
+	const stakes = await fetchMarketStakes(Number(req.params.marketId), Number(req.params.marketType));
+	const liquidity = await fetchMarketLiquidityEvents(Number(req.params.marketId), Number(req.params.marketType));
+	res.json({ market, claims, stakes, liquidity }) as unknown as PredictionMarketEventChain;
+});
+
 router.get('/claims/:marketId/:marketType', async (req, res) => {
 	const market = await fetchMarketClaims(Number(req.params.marketId), Number(req.params.marketType));
 	res.json(market);
@@ -105,6 +116,11 @@ router.get('/claims/:marketId/:marketType', async (req, res) => {
 
 router.get('/stakes/:marketId/:marketType', async (req, res) => {
 	const market = await fetchMarketStakes(Number(req.params.marketId), Number(req.params.marketType));
+	res.json(market);
+});
+
+router.get('/liquidity/:marketId/:marketType', async (req, res) => {
+	const market = await fetchMarketLiquidityEvents(Number(req.params.marketId), Number(req.params.marketType));
 	res.json(market);
 });
 

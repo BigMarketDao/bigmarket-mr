@@ -21,16 +21,15 @@
     height: number | undefined;
 	}>();
 
-  let marketStakes: Array<PredictionMarketStakeEvent> = [];
+  let marketStakes = $state<Array<PredictionMarketStakeEvent>>([]);
   let homepage = false;
 
-  let sip10Data: Sip10Data;
+  let sip10Data!: Sip10Data;
   let series: { name: string; data: number[] }[] = [];
   //let options = {};
 
   // Helper function to process data
   let processStakeData = $derived((
-    currency: Currency,
     data: Array<PredictionMarketStakeEvent>,
     categories: string[],
   ) => {
@@ -62,24 +61,152 @@
     return (data as { min: number; max: number }[]).map((item, index) => `Range ${index}`);
   }
 
-  const initializeChart = (currency: Currency) => {
-    if (marketStakes && marketStakes.length > 0) {
+  /** Snapshot when API returns [] — plot pool depth per outcome in native token units */
+  function initializeSnapshotChart(): void {
+    const categories = mapToMinMaxStrings(market.marketData.categories);
+    const stakeTokens = market.marketData.stakeTokens ?? [];
+    const palette = ['#ea580c', '#22c55e', '#3b82f6', '#a855f7', '#eab308', '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#84cc16'];
+    const series = categories.map((category, idx) => {
+      const tokensMicro = stakeTokens[idx] ?? 0;
+      const human = fmtMicroToStxNumber(tokensMicro, sip10Data.decimals);
+      return { name: category, data: [human] };
+    });
+    const flat = series.flatMap((s) => s.data);
+    const maxNum = Math.max(...flat, 1e-12);
+
+    options = {
+      colors: palette.slice(0, Math.max(series.length, 1)),
+      theme: { mode: 'light' },
+      legend: {
+        show: !homepage && !simplified,
+        position: 'bottom',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        fontFamily: 'inherit',
+        markers: {
+          width: 6,
+          height: 6,
+          radius: 12,
+          offsetX: -5,
+          size: 5,
+        },
+        labels: {
+          useSeriesColors: true,
+          padding: 10,
+          vertical: 5,
+          colors: '#374151',
+        },
+        itemMargin: {
+          horizontal: 10,
+          vertical: 5,
+        },
+        onItemClick: {
+          toggleDataSeries: true,
+        },
+        onItemHover: {
+          highlightDataSeries: true,
+        },
+      },
+      series,
+      chart: {
+        type: 'line',
+        toolbar: { show: false },
+        zoom: { enabled: false },
+        height: height || 280,
+        background: 'transparent',
+        foreColor: '#374151',
+        fontFamily: 'inherit',
+      },
+      title: {
+        text: 'Pool depth by outcome (current)',
+        align: 'center',
+        style: {
+          fontSize: '11px',
+          color: '#374151',
+        },
+      },
+      markers: {
+        size: 5,
+        strokeWidth: 2,
+        hover: { size: 7 },
+      },
+      xaxis: {
+        categories: ['Current'],
+        type: 'category',
+        title: {
+          text: '',
+          style: {
+            fontSize: '10px',
+            color: '#6b7280',
+          },
+        },
+        labels: {
+          show: !simplified,
+          style: { fontSize: '12px', colors: '#4b5563' },
+        },
+      },
+      yaxis: {
+        title: {
+          text: simplified ? '' : `Tokens (${sip10Data.symbol})`,
+          style: {
+            fontSize: '12px',
+            color: '#6b7280',
+          },
+        },
+        min: 0,
+        max: maxNum * 1.05,
+        labels: {
+          show: !simplified,
+          formatter: (value: number) => value.toFixed(2),
+          style: { fontSize: '12px', colors: '#4b5563' },
+        },
+      },
+      grid: {
+        show: !simplified,
+        borderColor: '#e5e7eb',
+        strokeDashArray: 0,
+        position: 'back',
+      },
+      stroke: {
+        curve: 'smooth',
+        width: simplified ? 2 : 3,
+      },
+      tooltip: {
+        theme: 'light',
+        x: { show: true },
+        y: {
+          formatter: (v: number) => `${v.toFixed(4)} ${sip10Data.symbol}`,
+        },
+        style: {
+          fontSize: '12px',
+        },
+      },
+    };
+  }
+
+  const initializeChart = () => {
+    if (!sip10Data) return;
+
+    if (marketStakes.length > 0) {
       //let categories = mapToMinMaxStrings(market.marketData.categories);
       //let categories = (market.marketData.categories as { min: number; max: number }[]).map((item) => `${item.min},${item.max}`);
       let categories = mapToMinMaxStrings(market.marketData.categories);
-      const { xAxisData, categoryData } = processStakeData(currency, marketStakes, categories);
+      const { xAxisData, categoryData } = processStakeData(marketStakes, categories);
 
-      const maxStaked = Math.max(...Object.values(categoryData).flat()).toPrecision(3);
+      const maxNum = Math.max(...Object.values(categoryData).flat(), 1e-12);
 
       // Create series data for ApexCharts
+      const palette = ['#ea580c', '#22c55e', '#3b82f6', '#a855f7', '#eab308', '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#84cc16'];
 
       options = {
+        colors: palette.slice(0, categories.length),
+        theme: { mode: 'light' },
         legend: {
           show: !homepage && !simplified,
           position: 'bottom',
           fontSize: '12px',
           fontWeight: 'bold',
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: 'inherit',
           markers: {
             width: 6,
             height: 6,
@@ -88,10 +215,10 @@
             size: 5,
           },
           labels: {
-            useSeriesColors: false,
+            useSeriesColors: true,
             padding: 10,
             vertical: 5,
-            colors: isDark ? '#444' : '#444',
+            colors: '#374151',
           },
           itemMargin: {
             horizontal: 10,
@@ -114,20 +241,17 @@
           type: 'line',
           toolbar: { show: false },
           zoom: { enabled: !simplified },
-          height: height || 'auto',
+          height: height || 280,
           background: 'transparent',
-          style: {
-            fontSize: '10px',
-            color: '#444',
-            foreColor: isDark ? '#444' : '#374151', // text color inside apex elements
-          },
+          foreColor: '#374151',
+          fontFamily: 'inherit',
         },
         title: {
-          text: '% Chances',
+          text: 'Stake history (cumulative, native token)',
           align: 'center',
           style: {
-            fontSize: '10px', // Adjust font size
-            color: '#fff', // Custom color
+            fontSize: '11px',
+            color: '#374151',
           },
         },
         // tooltip: {
@@ -143,46 +267,49 @@
             text: '',
             style: {
               fontSize: '10px',
-              color: '#444',
+              color: '#6b7280',
             },
           },
           labels: {
             show: !simplified,
-            style: { fontSize: '12px', colors: isDark ? '#444' : '#ccc' },
+            style: { fontSize: '12px', colors: '#4b5563' },
           },
         },
         yaxis: {
           title: {
-            text: simplified ? '' : `Total Staked (${currency.code})`,
+            text: simplified ? '' : `Cumulative (${sip10Data.symbol})`,
             style: {
               fontSize: '12px',
-              color: '#444',
+              color: '#6b7280',
             },
           },
           min: 0,
-          max: Number(maxStaked),
+          max: maxNum * 1.05,
           labels: {
             show: !simplified,
             formatter: (value: number) => value.toFixed(2),
-            style: { fontSize: '12px', colors: isDark ? '#444' : '#444' },
+            style: { fontSize: '12px', colors: '#4b5563' },
           },
         },
         grid: {
           show: !simplified,
-          borderColor: isDark ? '#2d2d2d' : '#444',
+          borderColor: '#e5e7eb',
           strokeDashArray: 0,
           position: 'back',
+        },
+        markers: {
+          size: 0,
+          hover: { size: 5 },
         },
         stroke: {
           curve: 'smooth',
           width: simplified ? 2 : 3,
         },
         tooltip: {
-          theme: isDark ? 'dark' : 'light',
+          theme: 'light',
           x: { show: true },
           y: {
-            //formatter: (v: number) => `${v.toFixed(2)} ${$selectedCurrency.code}`
-            formatter: (v: number) => `${v.toFixed(2)} ${'BIG PLAY'}`,
+            formatter: (v: number) => `${v.toFixed(4)} ${sip10Data.symbol}`,
           },
           style: {
             fontSize: '12px',
@@ -204,25 +331,22 @@
         // 	}
         // }
       };
+    } else if ((market.marketData.stakeTokens ?? []).some((t: number) => Number(t) > 0)) {
+      initializeSnapshotChart();
     }
   };
 
-  let isDark = $derived(
-    document.documentElement.classList.contains('dark') ||
-    window.matchMedia?.('(prefers-color-scheme: dark)').matches);
-
   onMount(async () => {
     if (typeof window !== 'undefined') {
+      console.log('initializeChart: selectedCurrency: ', $selectedCurrency);
+      console.log('initializeChart: marketData: ', market.marketData);
       const mod = await import('svelte-apexcharts');
       chartAction = mod.default;
       chart = mod.chart;
 
       marketStakes = await fetchMarketStakes(appConfig.VITE_BIGMARKET_API, market.marketId, market.marketType);
       sip10Data = getMarketToken(market.marketData.token, $allowedTokenStore);
-
-      if (marketStakes) {
-        initializeChart($selectedCurrency);
-      }
+      initializeChart();
     }
   }); 
 </script>
@@ -231,11 +355,12 @@
   {#if title}
     <h2 class="card-title mb-6 text-2xl text-gray-900 dark:text-gray-100">{title}</h2>
   {/if}
+  {#if chart}
   <div
-    class={height
-      ? `h-[${height}px] text-gray-900 dark:text-gray-100`
-      : 'h-auto text-gray-900 dark:text-gray-100'}
+    class="min-h-[220px] text-gray-900 dark:text-gray-100"
+    style={height != null ? `min-height:${height}px` : undefined}
   >
-    <div class=" z-10 text-gray-900 dark:text-gray-100" use:chart={options}></div>
+    <div class=" z-10 min-h-[200px] text-gray-900 dark:text-gray-100" use:chart={options}></div>
   </div>
   {/if}
+  {/if} 

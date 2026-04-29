@@ -111,8 +111,9 @@
 			examplePoll.marketTypeDataScalar = [] as ScalarMarketDataItem[];
 			examplePoll.marketFee = data.marketFee / 100;
 		}
-		forceStep = myStep;
-		componentKey++;
+		console.log('handleGeneration', myStep);
+		//forceStep = myStep;
+		//componentKey++;
 	};
 
 	const setupExample = async (allowedTokens: Array<TokenPermissionEvent>) => {

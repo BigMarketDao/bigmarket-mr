@@ -15,21 +15,12 @@
 		market: PredictionMarketCreateEvent;
 	}>(); 
 
-  let errorMessage: string | undefined;
-  let txId: string | undefined;
+  let errorMessage: string | undefined = $state(undefined);
+  let txId: string | undefined = $state(undefined);
 
   const resolveMarket = async () => {
-    const contractAddress = market.extension.split('.')[0];
-    const contractName = market.extension.split('.')[1];
-    let functionName = 'resolve-market-undisputed';
-    const response = await requestWallet(
-      `${contractAddress}.${contractName}`,
-      functionName,
-      [uintCV(market.marketId)],
-      [],
-      'deny',
-    );
-    if (response?.txid) {
+    const response = await stacks.createMarketsClient(daoConfig).resolveMarketUndisputed(market);
+    if (response.success && response.txid) {
       showTxModal(response.txid);
       watchTransaction(appConfig.VITE_BIGMARKET_API, appConfig.VITE_STACKS_API, `${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_MARKET_VOTING}`, response.txid);
     } else {
