@@ -1,9 +1,9 @@
-import { Simnet } from '@hirosystems/clarinet-sdk';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils';
 import { Cl, ClarityValue } from '@stacks/transactions';
 import { expect } from 'vitest';
 import { contractId2Key, generateMerkleProof, generateMerkleTreeUsingStandardPrincipal } from './gating/gating';
+import { Simnet } from '@stacks/clarinet-sdk';
 
 export const accounts = simnet.getAccounts();
 export const deployer = accounts.get('deployer')!; // ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM

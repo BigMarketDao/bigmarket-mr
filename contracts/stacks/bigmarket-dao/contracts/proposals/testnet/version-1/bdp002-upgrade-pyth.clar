@@ -4,7 +4,7 @@
 ;; Description: This proposal upgrades BigMarket scalar markets to use V4 Pyth Oracles
 ;; It also 
 
-(impl-trait  .proposal-trait.proposal-trait)
+(impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.proposal-trait.proposal-trait)
 
 (define-public (execute (sender principal))
 	(begin

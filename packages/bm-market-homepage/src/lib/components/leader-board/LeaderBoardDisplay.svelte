@@ -968,7 +968,7 @@
 	   Line 109: Change `const USE_DUMMY_DATA = true;` to `const USE_DUMMY_DATA = false;`
 
 	2. VERIFY YOUR DAO CONTRACT:
-	   Check src/lib/config_dao.ts - make sure VITE_DOA_DEPLOYER has the correct address for your deployed contract
+	   Check src/lib/config_dao.ts - make sure VITE_DAO_DEPLOYER has the correct address for your deployed contract
 
 	3. TEST THE API ENDPOINT:
 	   Open: https://api.testnet.hiro.so/extended/v1/address/[YOUR_DAO_ADDRESS]/transactions?limit=10

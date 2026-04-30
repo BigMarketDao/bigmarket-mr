@@ -114,8 +114,10 @@
     (try! (stx-transfer? stx-amount tx-sender .bme006-0-treasury))
 
     ;; Mint tokens directly to the buyer
-    (try! (as-contract? (contract-call? .bme000-0-governance-token bmg-mint tokens-to-buy sender)))
-
+    (try! (as-contract? ()
+      (try! (contract-call? .bme000-0-governance-token bmg-mint tokens-to-buy sender))
+      true
+    ))
     ;; Update stage details
     (map-set ido-stage-details stage (merge stage-info {tokens-sold: (+ tokens-sold tokens-to-buy)}))
     (map-set ido-purchases {stage: stage, buyer: tx-sender} (+ current-stake tokens-to-buy))
@@ -177,8 +179,15 @@
     ;; Ensure stage is actually cancelled
     (asserts! (get cancelled stage-info) err-stage-not-cancelled)
     ;; Transfer STX back to the buyer / burn the bdg
-    (try! (as-contract? (contract-call? .bme006-0-treasury stx-transfer refund sender none)))
-    (try! (as-contract? (contract-call? .bme000-0-governance-token bmg-burn purchase-amount sender)))
+    (try! (as-contract? ()
+      (try! (contract-call? .bme006-0-treasury stx-transfer refund sender none))
+      true
+    ))
+    (try! (as-contract? ()
+      (try! (contract-call? .bme000-0-governance-token bmg-burn purchase-amount sender))
+      true
+    ))
+
     ;; Remove the purchase record
     (map-delete ido-purchases {stage: stage, buyer: tx-sender})
     (print {event: "ido-refund", buyer: tx-sender, refunded: purchase-amount, stage: stage})

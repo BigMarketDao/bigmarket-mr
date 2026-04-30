@@ -6,7 +6,7 @@
 ;; bitcoin only transactions - no stx needed for gas. Works with 
 ;; clarity-bitcoin-lib-v5 for bitcoin catamaran swaps into markets.
 
-(impl-trait  .prediction-market-trait.prediction-market-trait)
+(impl-trait 'SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ.prediction-market-trait.prediction-market-trait)
 (use-trait ft-token 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 
 (define-constant min-stake u100000) ;; Example: 100,000 satoshis (0.001 BTC)
@@ -221,8 +221,13 @@
         true
       )
       ;; ensure the user is allowed to create if gating by merkle proof is required
-      (if (var-get creation-gated) (try! (as-contract? (contract-call? .bme022-0-market-gating can-access-by-account sender proof))) true)
-
+      (if (var-get creation-gated)
+        (try! (as-contract? ()
+          (try! (contract-call? .bme022-0-market-gating can-access-by-account sender proof))
+          true
+        ))
+        true
+      )
       ;; all checks pass - insert market data
       (map-set markets
         new-id
@@ -559,14 +564,15 @@
     (asserts! (is-eq (get resolution-state md) RESOLUTION_RESOLVED) err-market-not-concluded)
     (asserts! (is-eq u0 (unwrap! (element-at? stakes winning-index) err-element-expected)) err-winning-stake-not-zero)
     (asserts! (> balance u0) err-losing-stake-is-zero)
-    (as-contract
+    (try! (as-contract? ((with-all-assets-unsafe))
       (begin
         (if (> balance u0)
           (try! (contract-call? token transfer balance tx-sender (var-get dao-treasury) none))
           true
         )
+        true
       )
-    )
+    ))
     (print {event: "transfer-losing-stakes", market-id: market-id, balance: balance})
     (ok true)
   )
@@ -595,14 +601,9 @@
       (asserts! (> daofee u0) err-dao-fee-bips-is-zero)
 
       ;; Perform transfers
-      (as-contract
+      (try! (as-contract? ((with-all-assets-unsafe))
         (begin
-          ;; Transfer user share, capped by initial contract balance
-
-          ;;(try! (stx-transfer? user-share-net tx-sender original-sender))
-          ;;(try! (stx-transfer? daofee tx-sender (var-get dao-treasury)))
-
-          (if (> user-share-net u0) 
+          (if (> user-share-net u0)
             (try! (contract-call? token transfer user-share-net tx-sender original-sender none))
             true
           )
@@ -610,13 +611,13 @@
             (try! (contract-call? token transfer daofee tx-sender (var-get dao-treasury) none))
             true
           )
-          (if (> marketfee u0) 
+          (if (> marketfee u0)
             (try! (contract-call? token transfer marketfee tx-sender treasury none))
             true
           )
+          true
         )
-      )
-
+      ))
       ;; Zero out user stake
       (map-set stake-balances { market-id: market-id, user: tx-sender } (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0))
 
@@ -648,8 +649,10 @@
       ;; assume here the contract has the funds to cover payouts.
       ;; in fact the liquidity will come from direct sbtc into this contract from the bitcoin staking address
       ;; (try! (contract-call? token transfer transfer-amount tx-sender .bme023-0-market-predicting none))
-      (try! (as-contract? (contract-call? token transfer fee .bme023-0-market-bitcoin (var-get dev-fund) none)))
-
+      (try! (as-contract? ((with-all-assets-unsafe))
+        (try! (contract-call? token transfer fee current-contract (var-get dev-fund) none))
+        true
+      ))
       (ok transfer-amount)
     )
   )

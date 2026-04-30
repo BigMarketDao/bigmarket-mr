@@ -1,15 +1,14 @@
 import {
   ClarityValue,
+  cvToValue,
   listCV,
   principalCV,
   serializeCV,
   uintCV,
 } from "@stacks/transactions";
 import { callContractReadOnly } from "./utils/contract.js";
-import { unwrapClarityValue } from "./markets.js";
 import { callContract } from "./tx.js";
 import { DaoConfig } from "@bigmarket/bm-types";
-import { uint } from "@stacks/transactions/dist/cl.js";
 
 export function createReputationClient(daoConfig: DaoConfig) {
   const contractAddress = daoConfig.VITE_DAO_DEPLOYER;
@@ -50,8 +49,6 @@ export function createReputationClient(daoConfig: DaoConfig) {
 
     async fetchLastEpochClaimed(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       sender: string,
       stacksHiroKey?: string,
     ): Promise<number> {
@@ -62,13 +59,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(principalCV(sender))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return result.value;
     },
 
     async fetchWeightedSupply(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       stacksHiroKey?: string,
     ): Promise<number> {
       const data = {
@@ -78,13 +73,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value?.value || -1);
     },
 
-    async fetchWeightedRep(
+    async fetchWeightedReputation(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       sender: string,
       stacksHiroKey?: string,
     ): Promise<number> {
@@ -95,16 +88,18 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(principalCV(sender))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      console.log(
+        "--------------------> fetchWeightedReputation: result: ",
+        result,
+      );
+      return Number(result?.value?.value || -1);
     },
 
     async fetchMintedInEpoch(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       epoch: number,
       stacksHiroKey?: string,
-    ): Promise<number> {
+    ): Promise<any> {
       const data = {
         contractAddress: contractAddress,
         contractName: contractName,
@@ -112,13 +107,12 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(uintCV(epoch))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      console.log("--------------------> fetchMintedInEpoch: result: ", result);
+      return Number(result?.value || -1);
     },
 
     async fetchMintedInEpochBy(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       epoch: number,
       sender: string,
       stacksHiroKey?: string,
@@ -133,13 +127,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         ],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value || -1);
     },
 
     async fetchBurnedInEpoch(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       epoch: number,
       stacksHiroKey?: string,
     ): Promise<number> {
@@ -150,13 +142,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(uintCV(epoch))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value || -1);
     },
 
     async fetchBurnedInEpochBy(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       epoch: number,
       sender: string,
       stacksHiroKey?: string,
@@ -171,14 +161,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         ],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value || -1);
     },
 
     async fetchEpoch(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
-      sender: string,
       stacksHiroKey?: string,
     ): Promise<number> {
       const data = {
@@ -188,13 +175,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value || -1);
     },
 
     async fetchLastClaimedEpoch(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       sender: string,
       stacksHiroKey?: string,
     ): Promise<number> {
@@ -205,14 +190,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(principalCV(sender))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value || -1);
     },
 
     async fetchLatestClaimableEpoch(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
-      sender: string,
       stacksHiroKey?: string,
     ): Promise<number> {
       const data = {
@@ -222,13 +204,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return result.value.type === "uint" ? result.value.value : result.value;
     },
 
-    async fetchBalance(
+    async fetchBalanceAtTier(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       nftTokenId: number,
       who: string,
       stacksHiroKey?: string,
@@ -243,14 +223,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         ],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value?.value || -1);
     },
 
     async fetchOverallBalance(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
-      nftTokenId: number,
       who: string,
       stacksHiroKey?: string,
     ): Promise<number> {
@@ -261,7 +238,7 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(principalCV(who))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value?.value || -1);
     },
 
     async fetchJoinEpoch(
@@ -279,13 +256,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(principalCV(who))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return result.value;
     },
 
     async fetchTotalWeightedSupplyAt(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       epochId: number,
       stacksHiroKey?: string,
     ): Promise<number> {
@@ -296,13 +271,25 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(uintCV(epochId))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value?.value || -1);
+    },
+
+    async fetchOverallSupply(
+      stacksApi: string,
+      stacksHiroKey?: string,
+    ): Promise<number> {
+      const data = {
+        contractAddress: contractAddress,
+        contractName: contractName,
+        functionName: "get-overall-supply",
+        functionArgs: [],
+      };
+      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+      return Number(result?.value?.value || -1);
     },
 
     async fetchTierWeight(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       nftTokenId: number,
       stacksHiroKey?: string,
     ): Promise<number> {
@@ -313,13 +300,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(uintCV(nftTokenId))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value?.value || -1);
     },
 
-    async fetchTotalSupply(
+    async fetchTotalSupplyPerNft(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       nftTokenId: number,
       stacksHiroKey?: string,
     ): Promise<number> {
@@ -330,13 +315,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(uintCV(nftTokenId))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value?.value || -1);
     },
 
     async fetchTotalWeightedSupply(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       stacksHiroKey?: string,
     ): Promise<number> {
       const data = {
@@ -346,31 +329,13 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value?.value || -1);
     },
 
-    async fetchUserTotalRep(
+    async fetchTokenName(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       stacksHiroKey?: string,
-    ): Promise<number> {
-      const data = {
-        contractAddress: contractAddress,
-        contractName: contractName,
-        functionName: "get-total-weighted-supply",
-        functionArgs: [],
-      };
-      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
-    },
-
-    async fetchName(
-      stacksApi: string,
-      contractAddress: string,
-      contractName: string,
-      stacksHiroKey?: string,
-    ): Promise<number> {
+    ): Promise<string> {
       const data = {
         contractAddress: contractAddress,
         contractName: contractName,
@@ -378,15 +343,13 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return result.value?.value || ""; // ? cvToValue(result.value) : "";
     },
 
-    async fetchSymbol(
+    async fetchTokenSymbol(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       stacksHiroKey?: string,
-    ): Promise<number> {
+    ): Promise<string> {
       const data = {
         contractAddress: contractAddress,
         contractName: contractName,
@@ -394,13 +357,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return result.value?.value || ""; // ? cvToValue(result.value) : "";
     },
 
-    async fetchDecimals(
+    async fetchTokenDecimals(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       stacksHiroKey?: string,
     ): Promise<number> {
       const data = {
@@ -410,13 +371,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value.value || 1);
     },
 
     async fetchEpochDuration(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       stacksHiroKey?: string,
     ): Promise<number> {
       const data = {
@@ -426,13 +385,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value.value || -1);
     },
 
     async fetchRewardPerEpoch(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       stacksHiroKey?: string,
     ): Promise<number> {
       const data = {
@@ -442,13 +399,11 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value?.value || -1);
     },
 
     async fetchLaunchHeight(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       stacksHiroKey?: string,
     ): Promise<number> {
       const data = {
@@ -458,16 +413,14 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result?.value?.value || -1);
     },
 
     async fetchTokenUri(
       stacksApi: string,
-      contractAddress: string,
-      contractName: string,
       nftTokenId: number,
       stacksHiroKey?: string,
-    ): Promise<number> {
+    ): Promise<string> {
       const data = {
         contractAddress: contractAddress,
         contractName: contractName,
@@ -475,7 +428,7 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(uintCV(nftTokenId))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return result.value?.value || ""; // ? cvToValue(result.value) : "";
     },
   };
 }

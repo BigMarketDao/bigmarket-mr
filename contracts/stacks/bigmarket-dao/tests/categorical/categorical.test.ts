@@ -1,4 +1,3 @@
-import { Simnet } from '@hirosystems/clarinet-sdk';
 import { Cl } from '@stacks/transactions';
 import { describe, expect, it } from 'vitest';
 import {
@@ -15,6 +14,7 @@ import {
 	stxToken,
 	tom
 } from '../dao_helpers';
+import { Simnet } from '@stacks/clarinet-sdk';
 
 describe('claiming errors', async () => {
 	it('err too few categories', async () => {

@@ -5,7 +5,7 @@
 	import type {
 		ReputationContractData,
 		UserReputation,
-		UserReputationContractData
+		ReputationByUserContractData
 	} from '@bigmarket/bm-types';
 	import { PageContainer } from '@bigmarket/bm-ui';
 	import { ParaContainer } from '@bigmarket/bm-ui';
@@ -17,7 +17,7 @@
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
 	let reputationData: ReputationContractData | undefined = $state(undefined);
-	let userReputationData: UserReputationContractData | undefined = $state(undefined);
+	let userReputationData: ReputationByUserContractData | undefined = $state(undefined);
 
 	/** Rows in the reputation breakdown table (static copy + on-chain balances by index). */
 	type RepActionMeta = {

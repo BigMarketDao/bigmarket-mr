@@ -69,7 +69,7 @@ async function convertMarketToLocalFormat(proposer: string, llmResponse: CreateM
 		outcomes: llmResponse.outcome_categories,
 		createdAt: new Date().getTime(),
 		proposer,
-		treasury: `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`,
+		treasury: `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`,
 		token: firstToken.token,
 		merkelRoot: '',
 		contractIds: [],

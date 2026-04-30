@@ -19,8 +19,8 @@ export async function getVotesByVoter(voter: string): Promise<any> {
 export async function getMarketVoteComplete(marketId: number, marketType: number): Promise<any> {
 	const market = (await fetchMarket(marketId, marketType)) as PredictionMarketCreateEvent;
 	const contract = getContract(marketType);
-	const resolutionVote = (await fetchResolutionVote(getConfig().stacksApi, contract, market.marketId, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_VOTING, getConfig().stacksHiroKey)) as ResolutionVote;
-	//const resolutionVote = (await fetchResolutionVote(getConfig().VITE_STACKS_API, contract, marketId, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_VOTING)) as ResolutionVote;
+	const resolutionVote = (await fetchResolutionVote(getConfig().stacksApi, contract, market.marketId, getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_VOTING, getConfig().stacksHiroKey)) as ResolutionVote;
+	//const resolutionVote = (await fetchResolutionVote(getConfig().VITE_STACKS_API, contract, marketId, getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_VOTING)) as ResolutionVote;
 	const marketVotes = (await getMarketVotesByMarket(market.extension, market.marketId)) as Array<MarketVotingVoteEvent>;
 	return { market, resolutionVote, marketVotes };
 }

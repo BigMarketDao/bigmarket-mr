@@ -195,7 +195,7 @@ async function createMarketOnChain(chain: number): Promise<any> {
 	const transaction = await makeContractCall({
 		postConditions: [],
 		postConditionMode: PostConditionMode.Allow,
-		contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
+		contractAddress: getDaoConfig().VITE_DAO_DEPLOYER,
 		contractName: getDaoConfig().VITE_DAO_MARKET_SCALAR,
 		functionName: 'create-market',
 		functionArgs: fa,
@@ -220,8 +220,8 @@ async function convertMarketToLocalFormat(meta: any, current: number): Promise<S
 		outcomes: meta.outcome_categories,
 		logo: meta.logo,
 		createdAt: new Date().getTime(),
-		proposer: getDaoConfig().VITE_DOA_DEPLOYER,
-		treasury: `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`,
+		proposer: getDaoConfig().VITE_DAO_DEPLOYER,
+		treasury: `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`,
 		token: token.token,
 		merkelRoot: '',
 		contractIds: [],
@@ -251,7 +251,7 @@ function sleep(ms: number) {
 }
 
 export async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {
-	if (market.extension !== `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
+	if (market.extension !== `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
 	const network = getStacksNetwork(getConfig().network);
 	console.log('resolveScalarMarketOnChain: resolving market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
 	const transaction = await makeContractCall({

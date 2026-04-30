@@ -10,23 +10,39 @@ export type ReputationLeaderboardItem = {
 export type UserReputation = {
   name: string;
   userSettings: UserSettings;
-  userReputationData?: UserReputationContractData;
+  userReputationData?: ReputationByUserContractData;
 };
 export type ReputationContractData = {
+  tierWeight: number;
+  totalSupplyPerNft: number;
+  tokenUri: string;
+  launchHeight: number;
+  rewardPerEpoch: number;
+  epochDuration: number;
+  decimals: number;
+  totalWeightedSupply: number;
+  currentEpoch: number;
   overallSupply: number;
   tokenName: string;
   tokenSymbol: string;
-  rewardPerEpoch: number;
-  currentEpoch: number;
   weightedSupply: number;
   totalSupplies?: Array<number>;
   tierMetaData: Record<BigRepTier, { label: string; weight: number }>;
 };
 
-export type UserReputationContractData = {
-  balances: Array<number>;
+export type ReputationByEpochContractData = {
+  mintedInEpoch: number;
+  burnedInEpoch: number;
+  totalWeightedSupply: number;
+};
+
+export type ReputationByUserContractData = {
+  balances?: Array<number>;
   overallBalance: number;
   weightedReputation: number;
+  balanceAtTier: number;
+  mintedInEpoch: number;
+  burnedInEpoch: number;
   lastClaimedEpoch: number;
 };
 export enum BigRepTier {

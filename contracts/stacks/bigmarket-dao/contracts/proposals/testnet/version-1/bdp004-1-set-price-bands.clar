@@ -3,7 +3,7 @@
 ;; Synopsis: Oracle Pyth V4 is now available
 ;; Description: This proposal updates the bands for scalar markets 
 
-(impl-trait  'ST31A25YBK50KFJ2QS0EQK9FNXEQJD4PR0828789R.proposal-trait.proposal-trait)
+(impl-trait  'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.proposal-trait.proposal-trait)
 
 (define-public (execute (sender principal))
 	(begin

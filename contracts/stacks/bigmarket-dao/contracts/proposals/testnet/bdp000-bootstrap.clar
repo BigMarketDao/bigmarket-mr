@@ -3,7 +3,7 @@
 ;; Sets up and configure the DAO
 ;; Allowed = ["ST1GZKCXE2J2R9T2RKQQSR0C9AQTE2JV8FQE3EDW4, ST10NYX6Y0E30FQC8ANMHWGX632CAH3BGBA6KTPBV, ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY, ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ, ST3SJD6KV86N90W0MREGRTM1GWXN8Z91PF6W0BQKM", "STEZD95XQ194X67C1QJW4PHKDG8F5D66ZCYFX27A"];
 
-(impl-trait  'ST31A25YBK50KFJ2QS0EQK9FNXEQJD4PR0828789R.proposal-trait.proposal-trait)
+(impl-trait  'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.proposal-trait.proposal-trait)
 
 (define-constant token-supply u100000000000000)
 
@@ -43,24 +43,21 @@
 		(try! (contract-call? .bme024-0-market-predicting set-dev-fund 'ST2XFH8D1MM2G11C0S6AZRSNP031RAY92XFABDE58))
 		(try! (contract-call? .bme024-0-market-predicting set-dao-treasury .bme006-0-treasury))
 		(try! (contract-call? .bme024-0-market-predicting set-creation-gated true))
-		(try! (contract-call? .bme024-0-market-predicting set-allowed-token .big-play true))
-		(try! (contract-call? .bme024-0-market-predicting set-allowed-token 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx true))
+		(try! (contract-call? .bme024-0-market-predicting set-allowed-token 'SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27.wrapped-stx true))
 		(try! (contract-call? .bme024-0-market-predicting set-allowed-token .bme000-0-governance-token true))
-		(try! (contract-call? .bme024-0-market-predicting set-allowed-token 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token true))
+		(try! (contract-call? .bme024-0-market-predicting set-allowed-token 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token true))
 		(try! (contract-call? .bme024-0-market-predicting set-market-fee-bips-max u1000))
-		(try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed .big-play u100000000))
-		(try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx u100000000))
+		(try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27.wrapped-stx u100000000))
 		(try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed .bme000-0-governance-token u100000000))
-		(try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token u100000000))
+		(try! (contract-call? .bme024-0-market-predicting set-token-minimum-seed 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token u100000000))
 
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-resolution-agent 'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-dev-fund 'ST2XFH8D1MM2G11C0S6AZRSNP031RAY92XFABDE58))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-dao-treasury .bme006-0-treasury))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-creation-gated true))
-		(try! (contract-call? .bme024-0-market-scalar-pyth set-allowed-token .big-play true))
-		(try! (contract-call? .bme024-0-market-scalar-pyth set-allowed-token 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx true))
+		(try! (contract-call? .bme024-0-market-scalar-pyth set-allowed-token 'SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27.wrapped-stx true))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-allowed-token .bme000-0-governance-token true))
-		(try! (contract-call? .bme024-0-market-scalar-pyth set-allowed-token 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token true))
+		(try! (contract-call? .bme024-0-market-scalar-pyth set-allowed-token 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token true))
 		;; STXUSD / BTCUSD / SOLUSD / ETHUSD
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-price-band-width 0xec7a775f46379b5e943c3526b1c8d54cd49749176b0b98e02dde68d1bd335c17 u2000))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-price-band-width 0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43 u1000))
@@ -68,10 +65,9 @@
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-price-band-width 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace u1000))
 		
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-market-fee-bips-max u1000))
-		(try! (contract-call? .bme024-0-market-scalar-pyth set-token-minimum-seed 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx u100000000))
+		(try! (contract-call? .bme024-0-market-scalar-pyth set-token-minimum-seed 'SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27.wrapped-stx u100000000))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-token-minimum-seed .bme000-0-governance-token u100000000))
-		(try! (contract-call? .bme024-0-market-scalar-pyth set-token-minimum-seed .big-play u100000000))
-		(try! (contract-call? .bme024-0-market-scalar-pyth set-token-minimum-seed 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token u100000000))
+		(try! (contract-call? .bme024-0-market-scalar-pyth set-token-minimum-seed 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token u100000000))
 
 		(try! (contract-call? .bme000-0-governance-token bmg-mint-many
 			(list

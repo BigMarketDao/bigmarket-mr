@@ -3,7 +3,7 @@ import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 import type {
 	ReputationContractData,
 	ReputationLeaderboardItem,
-	UserReputationContractData
+	ReputationByUserContractData
 } from '@bigmarket/bm-types';
 import { get } from 'svelte/store';
 
@@ -31,7 +31,7 @@ export async function getReputationContractData(): Promise<ReputationContractDat
 	return res;
 }
 
-export async function getUserReputation(address: string): Promise<UserReputationContractData> {
+export async function getUserReputation(address: string): Promise<ReputationByUserContractData> {
 	const appConfig = requireAppConfig(get(appConfigStore));
 	const path = `${appConfig.VITE_BIGMARKET_API}/reputation/${address}`;
 	const response = await fetch(path);

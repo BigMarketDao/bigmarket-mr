@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/token-sale', async (req, res) => {
 	const now = Date.now();
 	try {
-		const tokenSale = await fetchTokenSaleStages(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_TOKEN_SALE, getConfig().stacksHiroKey);
+		const tokenSale = await fetchTokenSaleStages(getConfig().stacksApi, getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_TOKEN_SALE, getConfig().stacksHiroKey);
 		res.json(tokenSale);
 	} catch (error) {
 		console.error('Error fetching contract data:', error);
@@ -19,7 +19,7 @@ router.get('/token-sale', async (req, res) => {
 router.get('/:address', async (req, res) => {
 	try {
 		console.log('token-sale/:address:');
-		const tokenSalePurchases = await fetchTokenSaleUserData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_TOKEN_SALE, req.params.address, undefined, getConfig().stacksHiroKey);
+		const tokenSalePurchases = await fetchTokenSaleUserData(getConfig().stacksApi, getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_TOKEN_SALE, req.params.address, undefined, getConfig().stacksHiroKey);
 		res.json(tokenSalePurchases);
 	} catch (error: any) {
 		console.error('Error fetching contract data:', error);

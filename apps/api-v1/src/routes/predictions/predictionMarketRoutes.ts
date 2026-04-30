@@ -36,6 +36,20 @@ router.get('/market-dao-data', async (req, res) => {
 	res.json(cachedData);
 });
 
+router.get('/market-dao-data/update/:address', async (req, res) => {
+	const now = Date.now();
+	await updateDaoOverview(req.params.address);
+	lastFetchTime = now;
+	res.json(cachedData);
+});
+
+router.get('/market-dao-data/update', async (req, res) => {
+	const now = Date.now();
+	await updateDaoOverview();
+	lastFetchTime = now;
+	res.json(cachedData);
+});
+
 router.post('/markets', async (req, res) => {
 	const { newPoll } = req.body;
 	// TODO MJC bug https://github.com/BigMarketDao/bigmarket-ui/issues/40
@@ -61,8 +75,8 @@ router.post('/markets', async (req, res) => {
 });
 
 router.get('/tokens/liquidity/:token', async (req, res) => {
-	const scalarMin = await readMinTokenLiquidityToken(getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_SCALAR, req.params.token);
-	const categoricalMin = await readMinTokenLiquidityToken(getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING, req.params.token);
+	const scalarMin = await readMinTokenLiquidityToken(getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_SCALAR, req.params.token);
+	const categoricalMin = await readMinTokenLiquidityToken(getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING, req.params.token);
 	res.json({ scalarMin, categoricalMin });
 });
 

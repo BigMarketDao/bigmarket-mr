@@ -1,4 +1,4 @@
-import type { LeaderBoard, UserReputationContractData } from '@bigmarket/bm-types';
+import type { LeaderBoard, ReputationByUserContractData } from '@bigmarket/bm-types';
 
 export async function getLeaderBoard(bigMarketApi: string): Promise<LeaderBoard> {
 	const path = `${bigMarketApi}/pm/markets/leader-board`;
@@ -9,7 +9,7 @@ export async function getLeaderBoard(bigMarketApi: string): Promise<LeaderBoard>
 export async function getUserReputation(
 	bigMarketApi: string,
 	address: string
-): Promise<UserReputationContractData> {
+): Promise<ReputationByUserContractData> {
 	const path = `${bigMarketApi}/reputation/${address}`;
 	const response = await fetch(path);
 	const res = (await response.json()) || 0;

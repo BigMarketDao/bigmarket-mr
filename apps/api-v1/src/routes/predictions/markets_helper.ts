@@ -13,7 +13,10 @@ import type {
 	PredictionMarketUnStakeEvent,
 	PredictionMarketLPAddEvent,
 	PredictionMarketLPRemoveEvent,
-	PredictionMarketLPClaimEvent
+	PredictionMarketLPClaimEvent,
+	ReputationContractData,
+	ReputationByEpochContractData,
+	ReputationByUserContractData
 } from '@bigmarket/bm-types';
 import { daoEventCollection, marketCategoriesCollection, marketCollection } from '../../lib/data/db_models.js';
 import { findUserEnteredPollByHash } from '../polling/polling_helper.js';
@@ -22,29 +25,48 @@ import { ObjectId } from 'mongodb';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { saveDaoEvent } from '../dao/events/dao_events_extension_helper.js';
 import { principalCV, serializeCV } from '@stacks/transactions';
+import { readReputationContractData, readReputationContractUserData, readReputationEpochContractData } from './reputation_data.js';
+import { stacks } from '@bigmarket/sdk';
 
 export let cachedData: DaoOverview | null = null; // simpple cache refreshed via cron
 
-export async function updateDaoOverview() {
+export async function updateDaoOverview(address?: string) {
 	try {
 		// Fetch contract data
-		const contractData = await readPredictionContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING, getConfig().stacksHiroKey);
+		const contractData = await readPredictionContractData(getConfig().stacksApi, getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING, getConfig().stacksHiroKey);
 		contractData.marketInitialLiquidity = 100000000;
-		const reputationData = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
-		//console.log('/market-dao-data: ', reputationData);
+
+		const t1 = await stacks.createReputationClient(getDaoConfig()).fetchTokenDecimals(getConfig().stacksApi, getConfig().stacksHiroKey);
+		console.log('updateDaoOverview: reputationData: ', t1);
+		const t2 = await stacks.createReputationClient(getDaoConfig()).fetchMintedInEpoch(getConfig().stacksApi, 0, getConfig().stacksHiroKey);
+		console.log('updateDaoOverview: reputationData: ', t2);
+		const t21 = await stacks.createReputationClient(getDaoConfig()).fetchBurnedInEpoch(getConfig().stacksApi, 0, getConfig().stacksHiroKey);
+		console.log('updateDaoOverview: reputationData: ', t21);
+		const t3 = await stacks.createReputationClient(getDaoConfig()).fetchTotalWeightedSupply(getConfig().stacksApi, getConfig().stacksHiroKey);
+		console.log('updateDaoOverview: reputationData: ', t3);
+
+		const reputationData: ReputationContractData = await readReputationContractData(getDaoConfig(), getConfig().stacksApi, 1, getConfig().stacksHiroKey);
+		const reputationEpochData: ReputationByEpochContractData = await readReputationEpochContractData(getDaoConfig(), getConfig().stacksApi, reputationData.currentEpoch, getConfig().stacksHiroKey);
+		let reputationUserData: ReputationByUserContractData;
+		if (address) {
+			reputationUserData = await readReputationContractUserData(getDaoConfig(), getConfig().stacksApi, address, reputationData.currentEpoch, 1, getConfig().stacksHiroKey);
+			console.log('updateDaoOverview: reputationUserData: ', reputationUserData);
+		}
+		console.log('updateDaoOverview: reputationEpochData: ', reputationEpochData);
+		console.log('updateDaoOverview: reputationData: ', reputationData);
 		// Fetch contract balances
 		try {
-			await readMinTokenLiquidity(getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING);
-			await readMinTokenLiquidity(getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_SCALAR);
+			await readMinTokenLiquidity(getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING);
+			await readMinTokenLiquidity(getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_SCALAR);
 		} catch (err: any) {
 			console.log('/market-dao-data: ', '==================================================================');
 		}
-		const scalarBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`, getConfig().stacksHiroKey);
-		const contractBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`, getConfig().stacksHiroKey);
-		const treasuryBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`, getConfig().stacksHiroKey);
+		const scalarBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`, getConfig().stacksHiroKey);
+		const contractBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`, getConfig().stacksHiroKey);
+		const treasuryBalances = await fetchContractBalances(getConfig().stacksApi, `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_TREASURY}`, getConfig().stacksHiroKey);
 		let tokenSale;
 		// try {
-		// 	tokenSale = await fetchTokenSaleStages(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_TOKEN_SALE, getConfig().stacksHiroKey);
+		// 	tokenSale = await fetchTokenSaleStages(getConfig().stacksApi, getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_TOKEN_SALE, getConfig().stacksHiroKey);
 		// } catch (err) {}
 
 		// Update cache
@@ -53,7 +75,10 @@ export async function updateDaoOverview() {
 			contractBalances,
 			scalarBalances,
 			treasuryBalances,
-			tokenSale
+			tokenSale,
+			reputationData,
+			reputationEpochData,
+			reputationUserData
 		};
 	} catch (error) {
 		console.error('Error fetching contract data:', error);
@@ -87,13 +112,13 @@ export async function readMinTokenLiquidityToken(deployer: string, contractName:
 	} catch (e: any) {
 		if (contractName === getDaoConfig().VITE_DAO_MARKET_PREDICTING) {
 			if (token === `${getDaoConfig().VITE_WRAPPED_STX_FULL_CONTRACT}`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.bme000-0-governance-token`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_DAO_DEPLOYER}.bme000-0-governance-token`) return 100000000;
 			else if (token === `${getDaoConfig().VITE_PEPE_FULL_CONTRACT}`) return 100000000;
 			else if (token === `${getDaoConfig().VITE_USDH_FULL_CONTRACT}`) return 100000000;
 			else if (token === `${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token`) return 100000000;
 		} else if (contractName === getDaoConfig().VITE_DAO_MARKET_SCALAR) {
 			if (token === `${getDaoConfig().VITE_WRAPPED_STX_FULL_CONTRACT}`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_DOA_DEPLOYER}.bme000-0-governance-token`) return 100000000;
+			else if (token === `${getDaoConfig().VITE_DAO_DEPLOYER}.bme000-0-governance-token`) return 100000000;
 			else if (token === `${getDaoConfig().VITE_PEPE_FULL_CONTRACT}`) return 100000000;
 			else if (token === `${getDaoConfig().VITE_USDH_FULL_CONTRACT}`) return 100000000;
 			else if (token === `${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token`) return 100000000;
@@ -500,7 +525,7 @@ export async function fetchAllMarketCategories(): Promise<Array<MarketCategory>>
 }
 
 export async function fetchMarketVotes(marketId: number): Promise<Array<MarketVotingVoteEvent>> {
-	const result = await daoEventCollection.find({ marketId: marketId, extension: `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_VOTING}`, event: 'market-vote' }).toArray();
+	const result = await daoEventCollection.find({ marketId: marketId, extension: `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_VOTING}`, event: 'market-vote' }).toArray();
 	return result as unknown as Array<MarketVotingVoteEvent>;
 }
 export async function fetchMarketClaims(marketId: number, marketType: number): Promise<Array<PredictionMarketClaimEvent>> {
@@ -509,9 +534,9 @@ export async function fetchMarketClaims(marketId: number, marketType: number): P
 }
 
 export function getContract(marketType: number): string {
-	let contract = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_BITCOIN}`;
-	if (marketType === 1) contract = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`;
-	if (marketType === 2) contract = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`;
+	let contract = `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_BITCOIN}`;
+	if (marketType === 1) contract = `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`;
+	if (marketType === 2) contract = `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`;
 	return contract;
 }
 export async function fetchMarketStakes(marketId: number, marketType: number): Promise<{ stakes: Array<PredictionMarketStakeEvent>; unstakes: Array<PredictionMarketUnStakeEvent> }> {

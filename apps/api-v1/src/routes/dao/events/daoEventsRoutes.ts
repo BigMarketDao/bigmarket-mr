@@ -21,9 +21,9 @@ router.post('/extensions/:daoContractId', async (req, res, next) => {
 			console.debug('post(/extensions/:daoContractId: dao' + req.params.daoContractId);
 			await readDaoExtensionEvents(true, req.params.daoContractId);
 			const events = await fetchBaseDaoEvents();
-			// await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
-			// await readScalarEvents(false, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
-			// await readBitcoinEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_BITCOIN);
+			// await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DAO_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
+			// await readScalarEvents(false, getDaoConfig().VITE_DAO_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DAO_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
+			// await readBitcoinEvents(true, getDaoConfig().VITE_DAO_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DAO_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_BITCOIN);
 			res.send(events);
 		}
 	} catch (error) {
@@ -39,9 +39,9 @@ router.post('/latest-events/:daoContractId', async (req, res, next) => {
 		await readDaoExtensionEvents(true, req.params.daoContractId);
 		await updateUICache();
 		//const events = await fetchBaseDaoEvents();
-		// await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
-		// await readScalarEvents(false, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
-		// await readBitcoinEvents(true, getDaoConfig().VITE_DOA_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_BITCOIN);
+		// await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DAO_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
+		// await readScalarEvents(false, getDaoConfig().VITE_DAO_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DAO_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
+		// await readBitcoinEvents(true, getDaoConfig().VITE_DAO_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DAO_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_BITCOIN);
 		res.send({ success: true });
 	} catch (error) {
 		console.log('Error in routes: ', error);
@@ -70,7 +70,7 @@ router.get('/extensions/is-core-team-member/:emergencyExecuteContractId/:stacksA
 
 router.get('/extensions/is-core-team-member/:stacksAddress', async (req, res, next) => {
 	try {
-		const emergencyExecuteContractId = getDaoConfig().VITE_DOA_DEPLOYER + '.' + getDaoConfig().VITE_DOA_EMERGENCY_EXECUTE_EXTENSION;
+		const emergencyExecuteContractId = getDaoConfig().VITE_DAO_DEPLOYER + '.' + getDaoConfig().VITE_DAO_EMERGENCY_EXECUTE_EXTENSION;
 		const result = await isExecutiveTeamMember(emergencyExecuteContractId, req.params.stacksAddress);
 		res.send(result);
 	} catch (error: any) {

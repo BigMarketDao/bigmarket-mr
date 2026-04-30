@@ -256,10 +256,9 @@
 )
 
 (define-public (claim-for-dao (market <prediction-market-trait>) (market-id uint) (token <ft-velar-token>))
-  (begin
-    (as-contract? ((with-all-assets-unsafe))
-      (try! (contract-call? market claim-winnings market-id token))
-      true
+  (as-contract? ((with-all-assets-unsafe))
+    (let ((claim-result (try! (contract-call? market claim-winnings market-id token))))
+      claim-result
     )
   )
 )

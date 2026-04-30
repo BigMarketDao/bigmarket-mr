@@ -56,6 +56,11 @@ export const appConfigByNetwork: Record<string, AppConfig> = {
 };
 export const daoConfigByNetwork: { [key: string]: DaoConfig } = {
   devnet: {
+    VITE_DAOS: "ecosystem-dao,bigmarket-dao",
+    VITE_DAO_SIP_VOTES: "bdp001-sip-021-nakamoto",
+    VITE_DAO_VOTING_CONTRACTS: "bme001-0-proposal-voting",
+    VITE_DAO_POX: "bme002-proposal-submission",
+    VITE_DAO_SCALAR_HEDGE_STRATEGY: "bme032-0-scalar-strategy-hedge",
     VITE_NETWORK: "devnet",
     VITE_DAO_DEPLOYER: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
     VITE_DAO: "bigmarket-dao",
@@ -86,6 +91,11 @@ export const daoConfigByNetwork: { [key: string]: DaoConfig } = {
       "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.wrapped-stx",
   },
   testnet: {
+    VITE_DAOS: "ecosystem-dao,bigmarket-dao",
+    VITE_DAO_SIP_VOTES: "bdp001-sip-021-nakamoto",
+    VITE_DAO_VOTING_CONTRACTS: "bme001-0-proposal-voting",
+    VITE_DAO_POX: "bme002-proposal-submission",
+    VITE_DAO_SCALAR_HEDGE_STRATEGY: "bme032-0-scalar-strategy-hedge",
     VITE_NETWORK: "testnet",
     VITE_DAO_DEPLOYER: "ST1GZKCXE2J2R9T2RKQQSR0C9AQTE2JV8FQE3EDW4",
     VITE_DAO_BASE_CONTRACTS: "ecosystem-dao,bigmarket-dao",
@@ -116,6 +126,11 @@ export const daoConfigByNetwork: { [key: string]: DaoConfig } = {
       "ST1CV2YGRJA5X8BWS0GP31J9HF56M06CQK8998TSX.wrapped-stx",
   },
   mainnet: {
+    VITE_DAOS: "ecosystem-dao,bigmarket-dao",
+    VITE_DAO_SIP_VOTES: "bdp001-sip-021-nakamoto",
+    VITE_DAO_VOTING_CONTRACTS: "bme001-0-proposal-voting",
+    VITE_DAO_POX: "bme002-proposal-submission",
+    VITE_DAO_SCALAR_HEDGE_STRATEGY: "bme032-0-scalar-strategy-hedge",
     VITE_NETWORK: "mainnet",
     VITE_DAO_DEPLOYER: "SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27",
     VITE_DAO_BASE_CONTRACTS: "ecosystem-dao,bigmarket-dao",

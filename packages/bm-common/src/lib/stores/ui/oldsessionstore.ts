@@ -10,7 +10,7 @@
 //   StoredOpinionPoll,
 //   TokenBalances,
 //   TokenPermissionEvent,
-//   UserReputationContractData,
+//   ReputationByUserContractData,
 // } from "@bigmarket/bm-types";
 // import { persisted } from "svelte-local-storage-store";
 // import { writable } from "svelte/store";
@@ -42,7 +42,7 @@
 //   stacksInfo: StacksInfo;
 //   tokens: Array<TokenPermissionEvent>;
 //   daoOverview: DaoOverview;
-//   userReputationData?: UserReputationContractData;
+//   userReputationData?: ReputationByUserContractData;
 //   tokenBalances: TokenBalances;
 //   walletSigningMode: boolean;
 // };

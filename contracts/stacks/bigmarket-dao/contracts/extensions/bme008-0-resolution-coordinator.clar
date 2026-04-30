@@ -97,7 +97,10 @@
       (if (>= count required)
         ;; quorum for this label reached resolve with the LABEL (string)
         (begin
-          (try! (as-contract? (contract-call? .bme024-0-market-predicting resolve-market market-id label)))
+          (try! (as-contract? ()
+            (try! (contract-call? .bme024-0-market-predicting resolve-market market-id label))
+            true
+          ))
           (ok {status: "resolved", label: label, count: count})
         )
         ;; not yet at threshold

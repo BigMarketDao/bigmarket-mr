@@ -16,8 +16,13 @@ export interface AppConfig {
 }
 export type Network = "devnet" | "testnet" | "mainnet";
 export interface DaoConfig {
+  VITE_DAOS: string;
+  VITE_DAO_SIP_VOTES: string;
+  VITE_DAO_VOTING_CONTRACTS: string;
+  VITE_DAO_POX: string;
   VITE_NETWORK: string;
   VITE_DAO_DEPLOYER: string;
+  VITE_DAO_SCALAR_HEDGE_STRATEGY: string;
   VITE_DAO_BASE_CONTRACTS: string;
   VITE_DAO: string;
   VITE_DAO_PROPOSAL: string;

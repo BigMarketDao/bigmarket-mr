@@ -4,7 +4,7 @@
 	import { fetchUserBalances } from '$lib/core/app/loaders/walletLoaders';
 	import { isCoordinator } from '$lib/core/tools/security';
 	import { connectWallet, getStxAddress, isLoggedIn, showTxModal } from '@bigmarket/bm-common';
-	import type { ReputationContractData, UserReputationContractData } from '@bigmarket/bm-types';
+	import type { ReputationContractData, ReputationByUserContractData } from '@bigmarket/bm-types';
 	import { Banner } from '@bigmarket/bm-ui';
 	import { fmtMicroToStx, fmtNumber, truncate } from '@bigmarket/bm-utilities';
 	import { stacks } from '@bigmarket/sdk';
@@ -17,7 +17,7 @@
 
 	const { reputationData, userReputationData } = $props<{
 		reputationData: ReputationContractData;
-		userReputationData: UserReputationContractData;
+		userReputationData: ReputationByUserContractData;
 	}>();
 
 	let claimable = $state(0n);

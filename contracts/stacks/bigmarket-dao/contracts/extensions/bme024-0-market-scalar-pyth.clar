@@ -39,7 +39,7 @@
 
 ;; TODO Update resolve-market to reference correct pyth contract and remove local pyth from deployment
 ;; PYTH_ORACLE 'STR738QQX1PVTM6WTDF833Z18T8R0ZB791TCNEFM.pyth-storage-v4
-;; PYTH_ORACLE 'SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
+;; PYTH_ORACLE 'STR738QQX1PVTM6WTDF833Z18T8R0ZB791TCNEFM.pyth-oracle-v4
 
 (define-constant DEFAULT_MARKET_DURATION u144) ;; ~1 day in Bitcoin blocks
 (define-constant DEFAULT_COOL_DOWN_PERIOD u144) ;; ~1 day in Bitcoin blocks

@@ -1,7 +1,7 @@
-import { Simnet } from '@hirosystems/clarinet-sdk';
 import { Cl, ClarityValue, noneCV } from '@stacks/transactions';
 import { describe, expect, it } from 'vitest';
 import { alice, bob, constructDao, deployer, marketPredictingCPMM, nftToken, passProposalByCoreVote, reputationSft, sbtcToken, stxToken, treasury } from '../dao_helpers';
+import { Simnet } from '@stacks/clarinet-sdk';
 
 const token = Cl.principal(nftToken);
 const ftToken1 = Cl.principal(stxToken);

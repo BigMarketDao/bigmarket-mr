@@ -1,14 +1,20 @@
-import type { ReputationContractData } from "./reputationTypes.js";
+import type {
+  ReputationByEpochContractData,
+  ReputationByUserContractData,
+  ReputationContractData,
+} from "./reputationTypes.js";
 import type { TokenSale, TokenSalePurchase } from "./tokenSaleTypes.js";
 
 export type DaoOverview = {
   contractData: PredictionContractData;
   reputationData?: ReputationContractData;
+  reputationEpochData?: ReputationByEpochContractData;
   scalarBalances: ContractBalances;
   contractBalances: ContractBalances;
   treasuryBalances: ContractBalances;
   tokenSale?: TokenSale;
   tokenSalePurchases?: Array<TokenSalePurchase>;
+  reputationUserData?: ReputationByUserContractData;
 };
 export type PredictionContractData = {
   marketCounter: number;

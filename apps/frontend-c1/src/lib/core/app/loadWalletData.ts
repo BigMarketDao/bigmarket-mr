@@ -9,7 +9,7 @@ import {
 import type {
 	AddressObject,
 	UserReputation,
-	UserReputationContractData,
+	ReputationByUserContractData,
 	UserSettings
 } from '@bigmarket/bm-types';
 import { addresses, getWalletBalances } from '../app/loaders/walletLoaders';
@@ -32,7 +32,7 @@ export async function loadWalletData() {
 	);
 	userWalletStore.set(obj);
 
-	const userReputationData: UserReputationContractData = await getUserReputation(
+	const userReputationData: ReputationByUserContractData = await getUserReputation(
 		appConfig.VITE_BIGMARKET_API,
 		getStxAddress()
 	);

@@ -1,7 +1,7 @@
-import { Simnet } from '@hirosystems/clarinet-sdk';
 import { Cl, ClarityValue } from '@stacks/transactions';
 import { describe, expect, it } from 'vitest';
 import { alice, constructDao, deployer, passProposalByCoreVote, tokenSale } from '../dao_helpers';
+import { Simnet } from '@stacks/clarinet-sdk';
 
 async function callSetter(simnet: Simnet, fn: string, args: ClarityValue[], code?: number) {
 	let tx = simnet.callPublicFn(tokenSale, fn, args, deployer);

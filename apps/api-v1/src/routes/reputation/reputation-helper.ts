@@ -1,9 +1,11 @@
-import { fetchCurrentEpoch, getPoxInfo, getStacksNetwork, UserReputationContractData } from '@mijoco/stx_helpers/dist/index.js';
+import { fetchCurrentEpoch, getPoxInfo, getStacksNetwork } from '@mijoco/stx_helpers/dist/index.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { daoEventCollection } from '../../lib/data/db_models.js';
 import { broadcastTransaction, listCV, makeContractCall, principalCV, standardPrincipalCV } from '@stacks/transactions';
 import { getConfig } from '../../lib/config.js';
 import cron from 'node-cron';
+import { ReputationByUserContractData } from '@bigmarket/bm-types';
+import { readReputationContractUserData } from '../predictions/reputation_data.js';
 
 export const runBatchClaimSweepJob = cron.schedule('30 0 * * 0', async (fireDate) => {
 	console.log('Running: runBatchClaimSweep at: ' + fireDate);
@@ -14,35 +16,43 @@ export const runBatchClaimSweepJob = cron.schedule('30 0 * * 0', async (fireDate
 	}
 });
 
-export async function getUserReputationContractData(address: string): Promise<UserReputationContractData> {
-	const { VITE_DOA_DEPLOYER, VITE_DAO_REPUTATION_TOKEN } = getDaoConfig();
-	const extension = `${VITE_DOA_DEPLOYER}.${VITE_DAO_REPUTATION_TOKEN}`;
-
+export async function getUserReputationContractData(address: string): Promise<ReputationByUserContractData> {
+	const { VITE_DAO_DEPLOYER, VITE_DAO_REPUTATION_TOKEN } = getDaoConfig();
+	const extension = `${VITE_DAO_DEPLOYER}.${VITE_DAO_REPUTATION_TOKEN}`;
 	// Fetch reputation mint history
-	const rows = await daoEventCollection.aggregate([{ $match: { event: 'sft_mint', extension, recipient: address } }, { $group: { _id: '$tokenId', total: { $sum: '$amount' } } }, { $project: { tokenId: '$_id', amount: '$total', _id: 0 } }]).toArray();
+	const mints = await daoEventCollection
+		.aggregate([{ $match: { event: 'sft_mint', extension, recipient: address } }, { $group: { _id: '$tokenId', total: { $sum: '$amount' } } }, { $project: { tokenId: '$_id', amount: '$total', _id: 0 } }])
+		.toArray();
+
+	const userRep = await readReputationContractUserData(getDaoConfig(), getConfig().stacksApi, address, 0, 1, getConfig().stacksHiroKey);
 
 	const balances: number[] = Array(10).fill(0);
 	let overallBalance = 0;
 	let weightedReputation = 0;
 
 	for (let i = 1; i <= 20; i++) {
-		const row = rows.find((t) => t.tokenId === i);
+		const row = mints.find((t) => t.tokenId === i);
 		const amount = row?.amount || 0;
 		balances[i - 1] = amount;
 		overallBalance += amount;
 		weightedReputation += amount * (WEIGHTS[i] || 0);
 	}
+	userRep.balances = balances;
+	// userRep.overallBalance = overallBalance;
+	// userRep.weightedReputation = weightedReputation;
 
 	// Fetch last claimed epoch
 	const claimEvent = await daoEventCollection.find({ event: 'big-claim', extension, user: address }).sort({ epoch: -1 }).limit(1).toArray();
-
 	const lastClaimedEpoch = claimEvent.length > 0 ? claimEvent[0].epoch : null;
-
-	return { balances, overallBalance, weightedReputation, lastClaimedEpoch };
+	// console.log('getUserReputationContractData: overallBalance: ', overallBalance);
+	// console.log('getUserReputationContractData: weightedReputation: ', weightedReputation);
+	// console.log('getUserReputationContractData: lastClaimedEpoch: ', lastClaimedEpoch);
+	// console.log('getUserReputationContractData: userRep: ', userRep);
+	return userRep;
 }
 
 export async function getTotalSupplies(): Promise<Array<number>> {
-	const extension = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_REPUTATION_TOKEN}`;
+	const extension = `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_REPUTATION_TOKEN}`;
 	const result = await daoEventCollection
 		.aggregate([
 			{
@@ -79,7 +89,7 @@ export async function getTotalSupplies(): Promise<Array<number>> {
 }
 
 export async function getTotalWeightedSupply(): Promise<number> {
-	const extension = `${getDaoConfig().VITE_DOA_DEPLOYER}.${getDaoConfig().VITE_DAO_REPUTATION_TOKEN}`;
+	const extension = `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_REPUTATION_TOKEN}`;
 	const result = await daoEventCollection
 		.aggregate([
 			{
@@ -225,7 +235,7 @@ const WEIGHTS: Record<number, number> = {
 	20: 1
 };
 
-// function fromMongoToUserReputation(rows: { tokenId: number; amount: number }[]): UserReputationContractData {
+// function fromMongoToUserReputation(rows: { tokenId: number; amount: number }[]): ReputationByUserContractData {
 // 	const balances: number[] = Array(10).fill(0);
 // 	let overallBalance = 0;
 // 	let weightedReputation = 0;
@@ -251,7 +261,7 @@ export async function runBatchClaimSweep(): Promise<{ message: string; txid?: st
 		const pox = await getPoxInfo(getConfig().stacksApi, getConfig().stacksHiroKey);
 		const currentHeight = pox.current_burnchain_block_height;
 		currentEpoch = Math.floor(currentHeight / 1000);
-		// if (currentEpoch < 0) currentEpoch = await fetchCurrentEpoch(getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
+		// if (currentEpoch < 0) currentEpoch = await fetchCurrentEpoch(getConfig().stacksApi, getDaoConfig().VITE_DAO, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
 		// else currentEpoch = currentEpoch / 1000;
 		console.log('runBatchClaimSweep: currentEpoch=' + currentHeight);
 		console.log('runBatchClaimSweep: currentEpoch=' + currentEpoch);
@@ -260,8 +270,8 @@ export async function runBatchClaimSweep(): Promise<{ message: string; txid?: st
 		return { message: err };
 	}
 
-	const { VITE_DOA_DEPLOYER, VITE_DAO_REPUTATION_TOKEN } = getDaoConfig();
-	const extension = `${VITE_DOA_DEPLOYER}.${VITE_DAO_REPUTATION_TOKEN}`;
+	const { VITE_DAO_DEPLOYER, VITE_DAO_REPUTATION_TOKEN } = getDaoConfig();
+	const extension = `${VITE_DAO_DEPLOYER}.${VITE_DAO_REPUTATION_TOKEN}`;
 
 	// Step 1: Find users who ever received BIGR
 	const usersCursor = daoEventCollection.aggregate([{ $match: { event: 'sft_mint', extension, recipient: { $type: 'string' } } }, { $group: { _id: '$recipient' } }, { $project: { _id: 0, recipient: '$_id' } }]);
@@ -305,14 +315,14 @@ export async function runBatchClaimSweep(): Promise<{ message: string; txid?: st
 }
 
 async function makeBatchClaimTx(eligibleUsers: Array<string>, currentEpoch: number): Promise<{ message: string; txid?: string }> {
-	//getConfig().stacksApi, getDaoConfig().VITE_DOA, getDaoConfig().VITE_DAO_REPUTATION_TOKEN;
+	//getConfig().stacksApi, getDaoConfig().VITE_DAO, getDaoConfig().VITE_DAO_REPUTATION_TOKEN;
 	const network = getStacksNetwork(getConfig().network);
 	const principalList = listCV(eligibleUsers.map((user) => principalCV(user)));
 	//console.log('principalList: ', principalList);
 
 	const transaction = await makeContractCall({
 		network,
-		contractAddress: getDaoConfig().VITE_DOA_DEPLOYER,
+		contractAddress: getDaoConfig().VITE_DAO_DEPLOYER,
 		contractName: getDaoConfig().VITE_DAO_REPUTATION_TOKEN,
 		functionName: 'claim-big-reward-batch',
 		functionArgs: [principalList],

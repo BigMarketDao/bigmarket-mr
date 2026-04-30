@@ -133,7 +133,7 @@ export async function handleContractOrTransactionEvent(daoContract: string, exte
 			event = await processReputationEvents(basicEvent, result);
 		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_SCALAR_HEDGE_STRATEGY) > -1) {
 			event = await processHedgeStrategyEvents(basicEvent, result);
-		} else if (extensionContract.indexOf(getDaoConfig().VITE_DOA_EMERGENCY_EXECUTE_EXTENSION) > -1) {
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_EMERGENCY_EXECUTE_EXTENSION) > -1) {
 			// no events
 		} else {
 			if (extensionContract.indexOf('bme023') === -1) {

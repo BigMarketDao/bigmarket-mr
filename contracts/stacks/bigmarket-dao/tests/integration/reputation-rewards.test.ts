@@ -1,4 +1,4 @@
-import { ParsedTransactionResult } from '@hirosystems/clarinet-sdk';
+import { ParsedTransactionResult } from '@stacks/clarinet-sdk';
 import { getPublicKeyFromPrivate } from '@stacks/encryption';
 import { Cl, ClarityValue, getAddressFromPrivateKey, makeRandomPrivKey } from '@stacks/transactions';
 import { describe, expect, it } from 'vitest';

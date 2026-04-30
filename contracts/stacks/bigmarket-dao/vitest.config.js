@@ -1,40 +1,18 @@
-/// <reference types="vitest" />
-
-import { getClarinetVitestsArgv, vitestSetupFilePath } from '@hirosystems/clarinet-sdk/vitest';
-import { defineConfig } from 'vite';
-
-/*
-  In this file, Vitest is configured so that it works seamlessly with Clarinet and the Simnet.
-
-  The `vitest-environment-clarinet` will initialise the clarinet-sdk
-  and make the `simnet` object available globally in the test files.
-
-  `vitestSetupFilePath` points to a file in the `@hirosystems/clarinet-sdk` package that does two things:
-    - run `before` hooks to initialize the simnet and `after` hooks to collect costs and coverage reports.
-    - load custom vitest matchers to work with Clarity values (such as `expect(...).toBeUint()`)
-
-  The `getClarinetVitestsArgv()` will parse options passed to the command `vitest run --`
-    - vitest run -- --manifest ./Clarinet.toml  # pass a custom path
-    - vitest run -- --coverage --costs          # collect coverage and cost reports
-*/
+// vitest.config.js
+import { defineConfig } from 'vitest/config';
+import { getClarinetVitestsArgv, vitestSetupFilePath } from '@stacks/clarinet-sdk/vitest';
 
 export default defineConfig({
 	test: {
-		/** Default max duration per test (ms). Slow Clarinet/simnet tests can override via `it(..., timeout)`. */
-		testTimeout: 60000,
-		environment: 'clarinet', // use vitest-environment-clarinet
+		environment: 'clarinet',
 		pool: 'forks',
 		poolOptions: {
 			forks: { singleFork: true }
 		},
-		setupFiles: [
-			vitestSetupFilePath
-			// custom setup files can be added here
-		],
+		setupFiles: [vitestSetupFilePath],
 		environmentOptions: {
 			clarinet: {
 				...getClarinetVitestsArgv()
-				// add or override options
 			}
 		}
 	}
