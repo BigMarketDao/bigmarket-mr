@@ -1,23 +1,23 @@
 // import { deserializeCV, principalCV, serializeCV, uintCV } from '@stacks/transactions';
-// import { callContractReadOnly, extractValue, fetchDataVar } from '@mijoco/stx_helpers/dist/index.js';
+import { stacks } from '@bigmarket/sdk';
 
-// export async function readReputationContractData(stacksApi: string, contractAddress: string, contractName: string): Promise<ReputationContractData> {
-// 	let rewardPerEpoch = await extractValue(stacksApi, contractAddress, contractName, 'reward-per-epoch');
-// 	let overallSupply = await extractValue(stacksApi, contractAddress, contractName, 'overall-supply');
-// 	let tokenName = await extractValue(stacksApi, contractAddress, contractName, 'token-name');
-// 	let tokenSymbol = await extractValue(stacksApi, contractAddress, contractName, 'token-symbol');
-
-// 	return {
-// 		overallSupply,
-// 		rewardPerEpoch,
-// 		tokenName,
-// 		tokenSymbol,
-// 		currentEpoch: await fetchCurrentEpoch(stacksApi, contractAddress, contractName),
-// 		weightedSupply: Number(await fetchWeightedSupply(stacksApi, contractAddress, contractName)),
-// 		totalSupplies: await fetchTotalSupplies(stacksApi, contractAddress, contractName),
-// 		tierMetaData: BigRepTierMetadata
-// 	};
-// }
+export async function readReputationContractData(stacksApi: string, contractAddress: string, contractName: string): Promise<ReputationContractData> {
+	let rewardPerEpoch = await extractValue(stacksApi, contractAddress, contractName, 'reward-per-epoch');
+	let overallSupply = await extractValue(stacksApi, contractAddress, contractName, 'overall-supply');
+	let tokenName = await extractValue(stacksApi, contractAddress, contractName, 'token-name');
+	let tokenSymbol = await extractValue(stacksApi, contractAddress, contractName, 'token-symbol');
+	const daoConfig = await getDaoConfig(daoId);
+	return {
+		overallSupply,
+		rewardPerEpoch,
+		tokenName,
+		tokenSymbol,
+		currentEpoch: await fetchCurrentEpoch(stacksApi, contractAddress, contractName),
+		weightedSupply: Number(await stacks.createReputationClient()fetchWeightedSupply(stacksApi, contractAddress, contractName)),
+		totalSupplies: await fetchTotalSupplies(stacksApi, contractAddress, contractName),
+		tierMetaData: BigRepTierMetadata
+	};
+}
 
 // export async function readUserReputationContractData(stacksApi: string, contractAddress: string, contractName: string, address: string): Promise<UserReputationContractData> {
 // 	return {

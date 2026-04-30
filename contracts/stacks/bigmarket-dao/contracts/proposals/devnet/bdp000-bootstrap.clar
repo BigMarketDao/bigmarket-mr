@@ -71,10 +71,6 @@
 					extension: .bme032-0-scalar-strategy-hedge,
 					enabled: true,
 				}
-				{
-					extension: .bme050-0-vault,
-					enabled: true,
-				}
 			)))
 
 		;; Set core team members.
@@ -99,15 +95,6 @@
 			'ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC true
 		))
 		(try! (contract-call? .bme004-0-core-execute set-signals-required u1)) ;; signal from 3 out of 4 team members requied.
-
-		;; configure prediction markets
-		;; const allowedCreators = ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"];
-		(try! (contract-call? .bme050-0-vault set-token-allowed
-			'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.wrapped-stx true
-		))
-		(try! (contract-call? .bme050-0-vault set-token-allowed
-			'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sbtc true
-		))
 
 		;; configure prediction markets
 		;; const allowedCreators = ["ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"];

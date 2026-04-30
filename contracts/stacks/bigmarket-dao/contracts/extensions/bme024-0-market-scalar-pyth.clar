@@ -20,8 +20,8 @@
 ;; The hedge strategy can be switched off by the dao.
 
 (use-trait ft-token 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
-(impl-trait .prediction-market-trait.prediction-market-trait)
-(use-trait hedge-trait .hedge-trait.hedge-trait)
+(impl-trait 'SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ.prediction-market-trait.prediction-market-trait)
+(use-trait hedge-trait 'SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ.hedge-trait.hedge-trait)
 (use-trait ft-velar-token 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 
@@ -431,8 +431,14 @@
 
 
       ;; ensure the user is allowed to create if gating by merkle proof is required
-      (if (var-get creation-gated) (try! (as-contract? (contract-call? .bme022-0-market-gating can-access-by-account creator proof))) true)
-      
+      (if (var-get creation-gated)
+          (try! (as-contract? ()
+            (try! (contract-call? .bme022-0-market-gating can-access-by-account creator proof))
+            true
+          ))
+          true
+      )      
+
       ;; dao is assigned the seed liquidity - share and tokens 1:1 at kick off
       (map-set stake-balances {market-id: new-id, user: (var-get dao-treasury)} share-list)
       (map-set token-balances {market-id: new-id, user: (var-get dao-treasury)} share-list)
@@ -743,16 +749,16 @@
     ;; --- Token Transfers (contract -> dev-fund, contract -> seller) ---
     ;; Only multisig-fee leaves the vault; lp-fee stays inside and is tracked
     ;; via accumulated-lp-fees on the market record.
-    (as-contract
+    (try! (as-contract? ((with-all-assets-unsafe))
       (begin
         (if (> multisig-fee u0)
           (try! (contract-call? token transfer multisig-fee tx-sender (var-get dev-fund) none))
           true
         )
         (try! (contract-call? token transfer net-refund tx-sender original-sender none))
+        true
       )
-    )
-
+    ))
     ;; --- Update Market State ---
     (let (
       (updated-stakes (unwrap! (replace-at? stake-list index (- selected-pool shares-in)) err-category-not-found))
@@ -892,8 +898,10 @@
     )
       (asserts! (fold and-fold (map is-above-min updated-stakes) true) err-insufficient-liquidity)
 
-      (as-contract
-        (try! (contract-call? token transfer actual-refund tx-sender original-sender none)))
+      (try! (as-contract? ((with-all-assets-unsafe))
+        (try! (contract-call? token transfer actual-refund tx-sender original-sender none))
+        true
+      ))
 
       (map-set markets market-id
         (merge md { stakes: updated-stakes, stake-tokens: updated-token-stakes }))
@@ -926,10 +934,12 @@
         (original-sender tx-sender)
     )
       (if (> fee-entitlement u0)
-        (as-contract? (try! (contract-call? token transfer fee-entitlement tx-sender original-sender none)))
+        (try! (as-contract? ((with-all-assets-unsafe))
+          (try! (contract-call? token transfer fee-entitlement tx-sender original-sender none))
+          true
+        ))
         true
       )
-
       (map-set markets market-id (merge md {
         lp-total-shares: (- lp-total user-lp-shares),
         accumulated-lp-fees: new-accumulated
@@ -1146,16 +1156,16 @@
     (asserts! (> net-refund u0) err-user-share-is-zero)
 
     ;; Transfer winnings and market fee
-    (as-contract
+    (try! (as-contract? ((with-all-assets-unsafe))
       (begin
         (if (> marketfee u0)
-            (try! (contract-call? token transfer marketfee tx-sender treasury none))
+          (try! (contract-call? token transfer marketfee tx-sender treasury none))
           true
         )
         (try! (contract-call? token transfer net-refund tx-sender original-sender none))
+        true
       )
-    )
-
+    ))
     ;; Zero out stake
     (map-set token-balances {market-id: market-id, user: tx-sender} (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0))
     (map-set stake-balances {market-id: market-id, user: tx-sender} (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0))

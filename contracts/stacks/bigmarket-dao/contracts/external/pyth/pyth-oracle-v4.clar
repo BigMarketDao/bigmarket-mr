@@ -2,8 +2,8 @@
 ;; Version: v3
 ;; Check for latest version: https://github.com/Trust-Machines/stacks-pyth-bridge#latest-version
 ;; Report an issue: https://github.com/Trust-Machines/stacks-pyth-bridge/issues
+(use-trait pyth-storage-trait 'SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-traits-v2.storage-trait)
 
-(use-trait pyth-storage-trait .pyth-traits-v2.storage-trait)
 
 (define-public (get-price
 		(price-feed-id (buff 32))

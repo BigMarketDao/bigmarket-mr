@@ -131,41 +131,43 @@
 
 ;; Validate proof of access
 (define-public (can-access-by-ownership
-    (market-data-hash (buff 32))                ;; The hashed ID
-    (nft-contract (optional <nft-trait>)) ;; Optional NFT contract
-    (ft-contract (optional <ft-trait>))   ;; Optional FT contract
-    (token-id (optional uint))         ;; Token ID for NFTs
-    (proof (list 10 (tuple (position bool) (hash (buff 32)))))       ;; The Merkle proof
-    (quantity uint)                    ;; Required token quantity
-  )
-  (let
-      (
-        ;; Determine if this is an NFT or FT contract
+    (market-data-hash (buff 32))
+    (nft-contract (optional <nft-trait>))
+    (ft-contract (optional <ft-trait>))
+    (token-id (optional uint))
+    (proof (list 10 (tuple (position bool) (hash (buff 32)))))
+    (quantity uint))
+  (let (
         (is-nft-contract (is-some nft-contract))
-
-        ;; Fetch the Merkle root for the poll
         (root (unwrap! (map-get? merkle-roots market-data-hash) err-expecting-merkle-root-for-poll))
-
-        ;; Compute the Merkle proof leaf
-        (contract-id (if is-nft-contract
-                         (unwrap! (to-consensus-buff? (as-contract? (unwrap! nft-contract err-expecting-nft-contract))) err-expecting-nft-buffer)
-                         (unwrap! (to-consensus-buff? (as-contract? (unwrap! ft-contract err-expecting-ft-contract))) err-expecting-ft-buffer)))
-        (leaf (sha256 contract-id))
-
-        ;; Verify the Merkle proof
-        (proof-valid (unwrap! (verify-merkle-proof leaf proof (get merkle-root root)) err-expecting-valid-merkle-proof))
-
-        ;; Verify ownership or balance
-        (ownership-valid
-          (if is-nft-contract
-              (unwrap! (verify-nft-ownership (unwrap! nft-contract err-expecting-nft-contract) tx-sender (unwrap! token-id err-expecting-token-id)) err-not-nft-owner)
-              (unwrap! (verify-ft-balance (unwrap! ft-contract err-expecting-ft-contract) tx-sender quantity) err-not-ft-owner)))
       )
-    ;; Ensure both conditions are satisfied
-    (asserts! proof-valid err-ownership-proof-invalid)
-    (asserts! ownership-valid err-token-ownership-invalid)
-    (ok true)
-  ))
+    (if is-nft-contract
+        (match nft-contract
+          nft
+            (let (
+                  (contract-id (unwrap! (to-consensus-buff? (contract-of nft)) err-expecting-nft-buffer))
+                  (leaf (sha256 contract-id))
+                  (proof-valid (unwrap! (verify-merkle-proof leaf proof (get merkle-root root)) err-expecting-valid-merkle-proof))
+                  (ownership-valid (unwrap! (verify-nft-ownership nft tx-sender (unwrap! token-id err-expecting-token-id)) err-not-nft-owner))
+                 )
+              (asserts! proof-valid err-ownership-proof-invalid)
+              (asserts! ownership-valid err-token-ownership-invalid)
+              (ok true))
+          err-expecting-nft-contract)
+        (match ft-contract
+          ft
+            (let (
+                  (contract-id (unwrap! (to-consensus-buff? (contract-of ft)) err-expecting-ft-buffer))
+                  (leaf (sha256 contract-id))
+                  (proof-valid (unwrap! (verify-merkle-proof leaf proof (get merkle-root root)) err-expecting-valid-merkle-proof))
+                  (ownership-valid (unwrap! (verify-ft-balance ft tx-sender quantity) err-not-ft-owner))
+                 )
+              (asserts! proof-valid err-ownership-proof-invalid)
+              (asserts! ownership-valid err-token-ownership-invalid)
+              (ok true))
+          err-expecting-ft-contract))
+  )
+)
 
 (define-public (can-access-by-account
     (sender principal)

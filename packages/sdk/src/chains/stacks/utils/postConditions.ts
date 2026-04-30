@@ -43,7 +43,7 @@ export async function getSip10PostConditions(
     const formattedToken = (tokenEvent.token.split(".")[0] +
       "." +
       tokenEvent.token.split(".")[1]) as `${string}.${string}`;
-    const tokenName = tokenEvent.token;
+    const tokenName = getFungibleTokenName(tokenEvent.token);
     const postConditionFt = Pc.principal(address)
       .willSendLte(microAmount)
       .ft(formattedToken, tokenName);
@@ -78,7 +78,7 @@ export async function getSellCategoryPostConditions(
     const formattedToken = (tokenEvent.token.split(".")[0] +
       "." +
       tokenEvent.token.split(".")[1]) as `${string}.${string}`;
-    const tokenName = tokenEvent.token;
+    const tokenName = getFungibleTokenName(tokenEvent.token);
     postConditionFt = Pc.principal(`${deployer}.${extension}`)
       .willSendGte(microAmount)
       .ft(formattedToken, tokenName);
@@ -103,7 +103,7 @@ export async function getClaimLPPostConditions(
     const formattedToken = (tokenEvent.token.split(".")[0] +
       "." +
       tokenEvent.token.split(".")[1]) as `${string}.${string}`;
-    const tokenName = tokenEvent.token;
+    const tokenName = getFungibleTokenName(tokenEvent.token);
     postConditionFt = Pc.principal(`${deployer}.${extension}`)
       .willSendLte(microAmount)
       .ft(formattedToken, tokenName);

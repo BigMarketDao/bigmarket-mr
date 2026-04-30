@@ -30,7 +30,7 @@ export async function updateDaoOverview() {
 		// Fetch contract data
 		const contractData = await readPredictionContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING, getConfig().stacksHiroKey);
 		contractData.marketInitialLiquidity = 100000000;
-		// const reputationData = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
+		const reputationData = await readReputationContractData(getConfig().stacksApi, getDaoConfig().VITE_DOA_DEPLOYER, getDaoConfig().VITE_DAO_REPUTATION_TOKEN, getConfig().stacksHiroKey);
 		//console.log('/market-dao-data: ', reputationData);
 		// Fetch contract balances
 		try {

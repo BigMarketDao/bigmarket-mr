@@ -321,7 +321,7 @@
 
       {#if currentStep < totalSteps - 1}
         <button data-testid="market-mgt:next" onclick={nextStep}>Next</button>
-      {:else if isValid()}
+      {:else}
         <button
           data-testid="market-mgt:create"
           onclick={openSigRequest}
@@ -337,9 +337,14 @@
             Create Market
           {/if}
         </button>
-      {:else}
-        <div data-testid="market-mgt:fix-validation">Fix validation errors</div>
       {/if}
     </div>
-  </div>
+    {#if !isValid()}
+    <div>{#each Object.values(validation.errors) as error}
+        <div class="text-red-500">{error}</div>
+      {/each}
+      <div data-testid="market-mgt:fix-validation">Fix validation errors</div>
+    </div>
+  {/if}
+</div>
 {/if}

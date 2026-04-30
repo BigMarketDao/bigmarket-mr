@@ -11,17 +11,13 @@
 ;; outcome from at least 2 and up to 10 potential outcomes.
 
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
-(use-trait nft-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
-(use-trait ft-trait 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
-(use-trait prediction-market-trait .prediction-market-trait.prediction-market-trait)
+(use-trait prediction-market-trait 'SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ.prediction-market-trait.prediction-market-trait)
 
 (define-constant ERR_UNAUTHORISED (err u2100))
 (define-constant err-poll-already-exists (err u2102))
 (define-constant err-unknown-proposal (err u2103))
 (define-constant err-proposal-inactive (err u2105))
 (define-constant err-already-voted (err u2106))
-(define-constant err-proposal-start-no-reached (err u2109))
-(define-constant err-expecting-root (err u2110))
 (define-constant err-proposal-already-concluded (err u2112))
 (define-constant err-end-burn-height-not-reached (err u2113))
 (define-constant err-no-votes-to-return (err u2114))
@@ -91,8 +87,11 @@
     (asserts! (is-none (map-get? resolution-polls {market-id: market-id, market: (contract-of market)})) err-poll-already-exists)
     (asserts! (is-eq (len empty-votes) num-categories) err-poll-already-exists)
 		;; see market for access rules. 
-    (try! (as-contract? (contract-call? market dispute-resolution market-id original-sender num-categories)))
-
+    ;; (try! (as-contract?  (contract-call? market dispute-resolution market-id original-sender num-categories)))
+    (try! (as-contract? ()
+      (try! (contract-call? market dispute-resolution market-id original-sender num-categories))
+      true
+    ))
     ;; Register the poll
     (map-set resolution-polls {market-id: market-id, market: (contract-of market)}
       {

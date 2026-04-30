@@ -2,7 +2,7 @@
 ;; Title: pyth-storage (mock)
 ;; Version: v4 (mocked to satisfy the v2 storage trait)
 
-(impl-trait .pyth-traits-v2.storage-trait)
+(impl-trait 'SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-traits-v2.storage-trait)
 
 (define-data-var mock-price int 100000000)           ;; 1.00000000 with expo -8
 (define-data-var mock-conf  uint u200000)             ;; 0.00200000 with expo -8
@@ -12,7 +12,6 @@
 (define-data-var mock-publish-time uint u1700000000)
 (define-data-var mock-prev-publish-time uint u1699999900)
 
-(impl-trait .pyth-traits-v2.storage-trait)
 
 (define-public (read-price-with-staleness-check (price-feed-id (buff 32)))
   (let (
@@ -48,7 +47,6 @@
 ;; Check for latest version: https://github.com/Trust-Machines/stacks-pyth-bridge#latest-version
 ;; Report an issue: https://github.com/Trust-Machines/stacks-pyth-bridge/issues
 
-(impl-trait .pyth-traits-v2.storage-trait)
 
 (define-constant ERR_NEWER_PRICE_AVAILABLE (err u5001))
 (define-constant ERR_STALE_PRICE (err u5002))

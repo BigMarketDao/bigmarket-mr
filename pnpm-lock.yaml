@@ -30,6 +30,12 @@ importers:
       '@bigmarket/bm-types':
         specifier: workspace:*
         version: link:../../packages/bm-types
+      '@bigmarket/bm-utilities':
+        specifier: workspace:*
+        version: link:../../packages/bm-utilities
+      '@bigmarket/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@mijoco/stx_helpers':
         specifier: ^0.7.42
         version: 0.7.42

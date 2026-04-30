@@ -9,7 +9,7 @@
 ;; set-core-team-vesting) up till the first claim. If more recipients are added they 
 ;; allocation is proportionally diluted.
 
-(impl-trait .governance-token-trait.governance-token-trait)
+(impl-trait 'SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ.governance-token-trait.governance-token-trait)
 (impl-trait 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 
