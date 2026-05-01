@@ -96,7 +96,7 @@ export async function getSignature(
     }
   }
   const bnsName =
-    (await getBnsNameFromAddress(appConfig.VITE_FORUM_API, getStxAddress())) ||
+    (await getBnsNameFromAddress(appConfig.VITE_STACKS_API, getStxAddress())) ||
     "";
   const forumContent: ForumMessage = {
     messageBoardId: MESSAGE_BOARD_ID,

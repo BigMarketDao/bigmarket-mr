@@ -47,7 +47,7 @@ export async function updateDaoOverview(address?: string) {
 
 		const reputationData: ReputationContractData = await readReputationContractData(getDaoConfig(), getConfig().stacksApi, 1, getConfig().stacksHiroKey);
 		const reputationEpochData: ReputationByEpochContractData = await readReputationEpochContractData(getDaoConfig(), getConfig().stacksApi, reputationData.currentEpoch, getConfig().stacksHiroKey);
-		let reputationUserData: ReputationByUserContractData;
+		let reputationUserData: ReputationByUserContractData | null = null;
 		if (address) {
 			reputationUserData = await readReputationContractUserData(getDaoConfig(), getConfig().stacksApi, address, reputationData.currentEpoch, 1, getConfig().stacksHiroKey);
 			console.log('updateDaoOverview: reputationUserData: ', reputationUserData);
@@ -88,7 +88,8 @@ export async function updateDaoOverview(address?: string) {
 export async function readMinTokenLiquidity(deployer: string, contractName: string): Promise<any> {
 	const tokens1 = await fetchAllowedTokens(1);
 	for (let t of tokens1) {
-		const l = await readMinTokenLiquidityToken(deployer, contractName, t.token);
+		let l = await stacks.createMarketsClient(getDaoConfig()).fetchTokenMinimumSeed(getConfig().stacksApi, `${deployer}.${contractName}`, contractName, t.token, getConfig().stacksHiroKey);
+		if (l === -1) l = readMinTokenLiquidityToken(contractName, t.token);
 		const atok = (await daoEventCollection.findOne({ event: 'allowed-token', token: t.token, extension: `${deployer}.${contractName}` })) as unknown as TokenPermissionEvent;
 		atok.minLiquidity = l;
 		await saveOrUpdateEvent(atok);
@@ -96,35 +97,35 @@ export async function readMinTokenLiquidity(deployer: string, contractName: stri
 	}
 }
 
-export async function readMinTokenLiquidityToken(deployer: string, contractName: string, token: string): Promise<any> {
-	try {
-		const functionArgs = [`0x${serializeCV(principalCV(token))}`];
-		const data = {
-			contractAddress: deployer,
-			contractName: contractName,
-			functionName: 'get-token-minimum-seed',
-			functionArgs
-		};
-		const result = await callContractReadOnly(getConfig().stacksApi, data, getConfig().stacksHiroKey);
-		//console.log('readMinTokenLiquidityToken: ', result);
-		if (result.success) return Number(result.value.value.value);
-		else return -1;
-	} catch (e: any) {
-		if (contractName === getDaoConfig().VITE_DAO_MARKET_PREDICTING) {
-			if (token === `${getDaoConfig().VITE_WRAPPED_STX_FULL_CONTRACT}`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_DAO_DEPLOYER}.bme000-0-governance-token`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_PEPE_FULL_CONTRACT}`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_USDH_FULL_CONTRACT}`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token`) return 100000000;
-		} else if (contractName === getDaoConfig().VITE_DAO_MARKET_SCALAR) {
-			if (token === `${getDaoConfig().VITE_WRAPPED_STX_FULL_CONTRACT}`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_DAO_DEPLOYER}.bme000-0-governance-token`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_PEPE_FULL_CONTRACT}`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_USDH_FULL_CONTRACT}`) return 100000000;
-			else if (token === `${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token`) return 100000000;
-		}
-		return 0;
+export function readMinTokenLiquidityToken(contractName: string, token: string): number {
+	// try {
+	// 	const functionArgs = [`0x${serializeCV(principalCV(token))}`];
+	// 	const data = {
+	// 		contractAddress: deployer,
+	// 		contractName: contractName,
+	// 		functionName: 'get-token-minimum-seed',
+	// 		functionArgs
+	// 	};
+	// 	const result = await callContractReadOnly(getConfig().stacksApi, data, getConfig().stacksHiroKey);
+	// 	//console.log('readMinTokenLiquidityToken: ', result);
+	// 	if (result.success) return Number(result.value.value.value);
+	// 	else return -1;
+	// } catch (e: any) {
+	if (contractName === getDaoConfig().VITE_DAO_MARKET_PREDICTING) {
+		if (token === `${getDaoConfig().VITE_WRAPPED_STX_FULL_CONTRACT}`) return 100000000;
+		else if (token === `${getDaoConfig().VITE_DAO_DEPLOYER}.bme000-0-governance-token`) return 100000000;
+		else if (token === `${getDaoConfig().VITE_PEPE_FULL_CONTRACT}`) return 100000000;
+		else if (token === `${getDaoConfig().VITE_USDH_FULL_CONTRACT}`) return 100000000;
+		else if (token === `${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token`) return 100000000;
+	} else if (contractName === getDaoConfig().VITE_DAO_MARKET_SCALAR) {
+		if (token === `${getDaoConfig().VITE_WRAPPED_STX_FULL_CONTRACT}`) return 100000000;
+		else if (token === `${getDaoConfig().VITE_DAO_DEPLOYER}.bme000-0-governance-token`) return 100000000;
+		else if (token === `${getDaoConfig().VITE_PEPE_FULL_CONTRACT}`) return 100000000;
+		else if (token === `${getDaoConfig().VITE_USDH_FULL_CONTRACT}`) return 100000000;
+		else if (token === `${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token`) return 100000000;
 	}
+	return 0;
+	// }
 }
 
 async function updateMarketData(marketId: number, marketType: number, marketContract: string) {

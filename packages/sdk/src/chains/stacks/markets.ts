@@ -834,7 +834,7 @@ export function createMarketsClient(daoConfig: DaoConfig) {
       contractName: string,
       token: string,
       stacksHiroKey?: string,
-    ): Promise<UserStake> {
+    ): Promise<number> {
       const data = {
         contractAddress,
         contractName,
@@ -842,7 +842,7 @@ export function createMarketsClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(principalCV(token))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return unwrapClarityValue(result);
+      return Number(result.value?.value?.value || -1);
     },
 
     async fetchIsAllowedToken(

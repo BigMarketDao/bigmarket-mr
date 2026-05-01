@@ -40,7 +40,7 @@
     verified = verifyPost(config, message);
     const preferedAccount = getPreferredLinkedAccount(message.forumContent.linkedAccounts);
     identifier = preferedAccount?.identifier || (await getStxAddress());
-    displayName = await getBnsNameFromAddress(config.VITE_FORUM_API, await getStxAddress());
+    displayName = await getBnsNameFromAddress(config.VITE_STACKS_API, await getStxAddress());
   });
 </script>
 

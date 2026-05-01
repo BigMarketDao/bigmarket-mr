@@ -18,7 +18,7 @@
 			await logUserOut();
 		} else {
 			await authenticate();
-			const name = await getBnsNameFromAddress(getConfig().VITE_FORUM_API, await getStxAddress());
+			const name = await getBnsNameFromAddress(getConfig().VITE_STACKS_API, await getStxAddress());
 			storedBnsData.set(name || (await getStxAddress()));
 			window.location.reload();
 		}

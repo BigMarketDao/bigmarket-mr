@@ -136,6 +136,13 @@ export function getMarketToken(
   const token = tokens.find((t) => t.token === tokenContract);
   return token?.sip10Data || defToken;
 }
+export function getMarketTokenEvent(
+  tokenContract: string,
+  tokens: TokenPermissionEvent[],
+): TokenPermissionEvent | null {
+  const token = tokens.find((t) => t.token === tokenContract);
+  return token || null;
+}
 export function isSTX(token: string) {
   return token.toLowerCase().indexOf("stx") > -1;
 }

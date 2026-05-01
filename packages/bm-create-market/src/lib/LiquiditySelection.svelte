@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { type StoredOpinionPoll } from '@bigmarket/bm-types';
+  import { type StoredOpinionPoll, type TokenPermissionEvent } from '@bigmarket/bm-types';
   import { Coins } from 'lucide-svelte';
   import { ParaContainer, Banner } from '@bigmarket/bm-ui';
-  import { fmtMicroToStx, fmtStxMicro, getMarketToken } from '@bigmarket/bm-utilities';
+  import { fmtMicroToStx, fmtStxMicro, getMarketToken, getMarketTokenEvent } from '@bigmarket/bm-utilities';
   import type { ValidationResult } from './app/validation';
   import { allowedTokenStore } from '@bigmarket/bm-common';
+  import { marketDataToTupleCV } from '@bigmarket/sdk/dist/chains/stacks';
 
   const {
     template,
@@ -20,6 +21,10 @@
   const sip10Data = $derived(
     getMarketToken(template?.token, $allowedTokenStore)
   );
+  const tokenEvent: TokenPermissionEvent | null = $derived(
+    getMarketTokenEvent(template?.token, $allowedTokenStore)
+  );
+  
 
   // ✅ local editable state
   let liquidityUi = $state<number>(Number(fmtMicroToStx(template.liquidity)));
@@ -106,5 +111,6 @@
 
   <div class="text-xs text-gray-500 dark:text-gray-400">
     {fmtMicroToStx(liquidityUi * Math.pow(10, sip10Data.decimals), sip10Data.decimals)} {sip10Data.symbol}
+    Minimum allowed: {((tokenEvent?.minLiquidity || -1))} {sip10Data.symbol}
   </div>
 </div>

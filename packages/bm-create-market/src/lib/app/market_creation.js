@@ -46,7 +46,7 @@ export async function getSignature(appConfig, daoConfig, template, daoOverview) 
             throw new Error("Please enter web references for market resolution");
         }
     }
-    const bnsName = (await getBnsNameFromAddress(appConfig.VITE_FORUM_API, getStxAddress())) ||
+    const bnsName = (await getBnsNameFromAddress(appConfig.VITE_STACKS_API, getStxAddress())) ||
         "";
     const forumContent = {
         messageBoardId: MESSAGE_BOARD_ID,

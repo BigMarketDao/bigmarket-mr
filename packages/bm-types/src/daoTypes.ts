@@ -14,7 +14,7 @@ export type DaoOverview = {
   treasuryBalances: ContractBalances;
   tokenSale?: TokenSale;
   tokenSalePurchases?: Array<TokenSalePurchase>;
-  reputationUserData?: ReputationByUserContractData;
+  reputationUserData?: ReputationByUserContractData | null;
 };
 export type PredictionContractData = {
   marketCounter: number;
