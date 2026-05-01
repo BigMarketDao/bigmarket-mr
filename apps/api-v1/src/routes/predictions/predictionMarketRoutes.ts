@@ -12,6 +12,7 @@ import {
 	fetchMarketStakes,
 	fetchMarketVotes,
 	findOpinionPollByTitle,
+	readMinTokenLiquidity2,
 	readMinTokenLiquidityToken,
 	updateDaoOverview
 } from './markets_helper.js';
@@ -75,8 +76,8 @@ router.post('/markets', async (req, res) => {
 });
 
 router.get('/tokens/liquidity/:token', async (req, res) => {
-	const scalarMin = await readMinTokenLiquidityToken(getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_SCALAR, req.params.token);
-	const categoricalMin = await readMinTokenLiquidityToken(getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING, req.params.token);
+	const scalarMin = await readMinTokenLiquidity2(getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_SCALAR, req.params.token);
+	const categoricalMin = await readMinTokenLiquidity2(getDaoConfig().VITE_DAO_DEPLOYER, getDaoConfig().VITE_DAO_MARKET_PREDICTING, req.params.token);
 	res.json({ scalarMin, categoricalMin });
 });
 

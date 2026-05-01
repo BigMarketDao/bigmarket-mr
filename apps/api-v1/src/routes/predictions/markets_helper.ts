@@ -85,7 +85,7 @@ export async function updateDaoOverview(address?: string) {
 	}
 }
 
-export async function readMinTokenLiquidity(deployer: string, contractName: string): Promise<any> {
+export async function readMinTokenLiquidity(deployer: string, contractName: string) {
 	const tokens1 = await fetchAllowedTokens(1);
 	for (let t of tokens1) {
 		let l = await stacks.createMarketsClient(getDaoConfig()).fetchTokenMinimumSeed(getConfig().stacksApi, `${deployer}.${contractName}`, contractName, t.token, getConfig().stacksHiroKey);
@@ -95,6 +95,12 @@ export async function readMinTokenLiquidity(deployer: string, contractName: stri
 		await saveOrUpdateEvent(atok);
 		//console.log('readMinTokenLiquidity: saved: ' + atok);
 	}
+}
+
+export async function readMinTokenLiquidity2(deployer: string, contractName: string, token: string) {
+	const atok = (await daoEventCollection.findOne({ event: 'allowed-token', token: token, extension: `${deployer}.${contractName}` })) as unknown as TokenPermissionEvent;
+	if (!atok) return -1;
+	return atok.minLiquidity || -1;
 }
 
 export function readMinTokenLiquidityToken(contractName: string, token: string): number {
