@@ -38,8 +38,8 @@ export function getCategoryLabel(
   marketData: MarketData,
 ) {
   const categories = marketData.categories;
-
   const item = categories[index];
+
   if (typeof item === "string") {
     if (categories.length === 2) {
       return item.toUpperCase() === "AGAINST" ? "NO" : "YES";
@@ -47,15 +47,11 @@ export function getCategoryLabel(
     return item;
   }
 
-  const exponent = DECIMALS_BY_FEED[marketData.priceFeedId!] ?? -8;
-  // Example: BTC/USD often exponent = -8
-  const decimals = Math.abs(exponent * 100);
-
   const min = BigInt(item.min);
   const max = BigInt(item.max);
 
-  const minS = fmtFiatFromRaw(selectedCurrency, min, 2);
-  const maxS = fmtFiatFromRaw(selectedCurrency, max, 2);
+  const minS = fmtFiatFromRaw(selectedCurrency, min, 0);
+  const maxS = fmtFiatFromRaw(selectedCurrency, max, 0);
 
   if (index === 0) {
     return `x < ${maxS}`;
@@ -65,6 +61,7 @@ export function getCategoryLabel(
     return `${minS} ≤ x < ${maxS}`;
   }
 }
+
 export function mapToMinMaxStrings(
   data: Array<string | ScalarMarketDataItem>,
 ): string[] {

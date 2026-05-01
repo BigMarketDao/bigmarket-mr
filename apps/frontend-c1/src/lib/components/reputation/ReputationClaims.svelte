@@ -80,13 +80,8 @@
 	onMount(async () => {
 		if (isLoggedIn()) {
 			const lastClaimed = await stacks
-				.createReputationClient()
-				.fetchLastEpochClaimed(
-					appConfig.VITE_STACKS_API,
-					daoConfig.VITE_DAO_DEPLOYER,
-					daoConfig.VITE_DAO_REPUTATION_TOKEN,
-					getStxAddress()
-				);
+				.createReputationClient(daoConfig)
+				.fetchLastEpochClaimed(appConfig.VITE_STACKS_API, getStxAddress());
 			console.log('lastClaimed: ', lastClaimed);
 			const decimals = 6n;
 			const precision = 10n ** decimals;

@@ -14,6 +14,7 @@
 	import type { AppConfig, DaoConfig } from '@bigmarket/bm-types';
 	import { onMount, type Snippet } from 'svelte';
 	import Header from '$lib/components/template/Header.svelte';
+	import ReputationCommunityBanner from '$lib/components/template/ReputationCommunityBanner.svelte';
 	import Footer from '$lib/components/template/Footer.svelte';
 	import { browser } from '$app/environment';
 	import AlphaBanner from '$lib/components/template/AlphaBanner.svelte';
@@ -114,6 +115,7 @@
 			<div class="shrink-0">
 				<AlphaBanner />
 				<Header />
+				<ReputationCommunityBanner />
 			</div>
 		{/if}
 
