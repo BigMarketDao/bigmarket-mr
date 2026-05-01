@@ -842,6 +842,8 @@ export function createMarketsClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(principalCV(token))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
+      if (!result) return -1;
+      console.log("--------> fetchTokenMinimumSeed: result: ", result);
       return Number(result.value?.value?.value || -1);
     },
 

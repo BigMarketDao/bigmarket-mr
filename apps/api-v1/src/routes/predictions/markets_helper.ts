@@ -101,7 +101,7 @@ export async function readMinTokenLiquidity(deployer: string, contractName: stri
 
 	for (const t of tokens1) {
 		let l = await stacks.createMarketsClient(getDaoConfig()).fetchTokenMinimumSeed(getConfig().stacksApi, `${deployer}.${contractName}`, contractName, t.token, getConfig().stacksHiroKey);
-
+		console.log('--------> readMinTokenLiquidity: l: ', l, t.token);
 		if (l === -1) {
 			l = readMinTokenLiquidityToken(contractName, t.token);
 		}
