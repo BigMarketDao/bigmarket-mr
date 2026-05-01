@@ -16,124 +16,128 @@ const MAX_BATCH = 100;
  */
 
 describe('Tests the rewards system over several epochs', () => {
-	it('Check batched rewards never award more then reward-per-epoch', async () => {
-		// --- CONFIG ---
-		users = [];
-		const contribAmount = 4000000;
-		const accounts = simnet.getAccounts();
-		let rewards = new Map<string, number>();
-		users.push({ address: accounts.get('wallet_4')! });
-		// users.push({ address: accounts.get('wallet_5')! });
-		// users.push({ address: accounts.get('wallet_6')! });
-		// users.push({ address: accounts.get('wallet_7')! });
-		// users.push({ address: accounts.get('wallet_8')! });
+	it(
+		'Check batched rewards never award more then reward-per-epoch',
+		async () => {
+			// --- CONFIG ---
+			users = [];
+			const contribAmount = 4000000;
+			const accounts = simnet.getAccounts();
+			let rewards = new Map<string, number>();
+			users.push({ address: accounts.get('wallet_4')! });
+			// users.push({ address: accounts.get('wallet_5')! });
+			// users.push({ address: accounts.get('wallet_6')! });
+			// users.push({ address: accounts.get('wallet_7')! });
+			// users.push({ address: accounts.get('wallet_8')! });
 
-		await constructDao(simnet);
-		addUsers(50, deployer);
+			await constructDao(simnet);
+			addUsers(50, deployer);
 
-		simnet.mineEmptyBlocks(100000);
-		console.log('= EPOCH 0 ================================================================');
-		console.log('getEpochData: ', await getEpochData());
-		for (let user of users) {
-			contributeStx(user, contribAmount);
-		}
-		let batches = chunkArray(users, MAX_BATCH);
-		let totals = { total: 0, count: 0 };
-		for (const [i, batchUsers] of batches.entries()) {
-			const res = doClaims(batchUsers, i, users.length);
-			totals.count += res.count;
-			totals.total += res.total;
-		}
-		expect(totals.total).toBeLessThanOrEqual(0);
-		expect(totals.total).toBeGreaterThanOrEqual(0);
+			simnet.mineEmptyBlocks(100000);
+			console.log('= EPOCH 0 ================================================================');
+			console.log('getEpochData: ', await getEpochData());
+			for (let user of users) {
+				contributeStx(user, contribAmount);
+			}
+			let batches = chunkArray(users, MAX_BATCH);
+			let totals = { total: 0, count: 0 };
+			for (const [i, batchUsers] of batches.entries()) {
+				const res = doClaims(batchUsers, i, users.length);
+				totals.count += res.count;
+				totals.total += res.total;
+			}
+			expect(totals.total).toBeLessThanOrEqual(0);
+			expect(totals.total).toBeGreaterThanOrEqual(0);
 
-		simnet.mineEmptyBlocks(1011);
-		console.log('= EPOCH 1 ================================================================');
-		addUsers(200, deployer);
-		console.log('getEpochData: ', await getEpochData());
-		rewards = new Map<string, number>();
-		rewards.set(users[0].address, 5000000000);
-		rewards.set(users[1].address, 5000000000);
-		for (let user of users) {
-			contributeStx(user, contribAmount);
-		}
-		batches = chunkArray(users, MAX_BATCH);
-		totals = { total: 0, count: 0 };
-		for (const [i, batchUsers] of batches.entries()) {
-			const res = doClaims(batchUsers, i, users.length);
-			totals.count += res.count;
-			totals.total += res.total;
-		}
-		console.log('= EPOCH 1 totals', totals);
+			simnet.mineEmptyBlocks(1011);
+			console.log('= EPOCH 1 ================================================================');
+			addUsers(200, deployer);
+			console.log('getEpochData: ', await getEpochData());
+			rewards = new Map<string, number>();
+			rewards.set(users[0].address, 5000000000);
+			rewards.set(users[1].address, 5000000000);
+			for (let user of users) {
+				contributeStx(user, contribAmount);
+			}
+			batches = chunkArray(users, MAX_BATCH);
+			totals = { total: 0, count: 0 };
+			for (const [i, batchUsers] of batches.entries()) {
+				const res = doClaims(batchUsers, i, users.length);
+				totals.count += res.count;
+				totals.total += res.total;
+			}
+			console.log('= EPOCH 1 totals', totals);
 
-		expect(totals.count).toBe(51);
-		expect(totals.total).toBeLessThanOrEqual(10000000000);
-		expect(totals.total).toBeGreaterThanOrEqual(9999999000);
+			expect(totals.count).toBe(51);
+			expect(totals.total).toBeLessThanOrEqual(10000000000);
+			expect(totals.total).toBeGreaterThanOrEqual(9999999000);
 
-		simnet.mineEmptyBlocks(1011);
-		console.log('= EPOCH 2 ================================================================');
-		addUsers(1200, deployer);
-		console.log('getEpochData: ', await getEpochData());
-		rewards = new Map<string, number>();
-		rewards.set(users[0].address, 4000000000);
-		rewards.set(users[1].address, 4000000000);
-		rewards.set(users[2].address, 2000000000);
-		for (let user of users) {
-			contributeStx(user, contribAmount);
-		}
-		batches = chunkArray(users, MAX_BATCH);
-		let overall = 0;
-		overall += doClaim(users[131]).total;
-		overall += doClaim(users[45]).total;
-		overall += doClaim(users[12]).total;
-		overall += doClaim(users[18]).total;
-		overall += doClaim(users[67]).total;
-		overall += doClaim(users[131]).total;
-		totals = { total: 0, count: 0 };
-		for (const [i, batchUsers] of batches.entries()) {
-			const res = doClaims(batchUsers, i, users.length);
-			totals.count += res.count;
-			totals.total += res.total;
-		}
-		console.log('= EPOCH 2 totals', totals);
-		expect(totals.count + 5).toBe(251);
-		expect(totals.total + overall).toBeLessThanOrEqual(10000000000);
-		expect(totals.total + overall).toBeGreaterThanOrEqual(9999999000);
+			simnet.mineEmptyBlocks(1011);
+			console.log('= EPOCH 2 ================================================================');
+			addUsers(1200, deployer);
+			console.log('getEpochData: ', await getEpochData());
+			rewards = new Map<string, number>();
+			rewards.set(users[0].address, 4000000000);
+			rewards.set(users[1].address, 4000000000);
+			rewards.set(users[2].address, 2000000000);
+			for (let user of users) {
+				contributeStx(user, contribAmount);
+			}
+			batches = chunkArray(users, MAX_BATCH);
+			let overall = 0;
+			overall += doClaim(users[131]).total;
+			overall += doClaim(users[45]).total;
+			overall += doClaim(users[12]).total;
+			overall += doClaim(users[18]).total;
+			overall += doClaim(users[67]).total;
+			overall += doClaim(users[131]).total;
+			totals = { total: 0, count: 0 };
+			for (const [i, batchUsers] of batches.entries()) {
+				const res = doClaims(batchUsers, i, users.length);
+				totals.count += res.count;
+				totals.total += res.total;
+			}
+			console.log('= EPOCH 2 totals', totals);
+			expect(totals.count + 5).toBe(251);
+			expect(totals.total + overall).toBeLessThanOrEqual(10000000000);
+			expect(totals.total + overall).toBeGreaterThanOrEqual(9999999000);
 
-		simnet.mineEmptyBlocks(1011);
-		console.log('= EPOCH 3 ================================================================');
-		addUsers(3600, deployer);
-		console.log('getEpochData: ', await getEpochData());
-		for (let user of users) {
-			contributeStx(user, contribAmount);
-		}
-		batches = chunkArray(users, MAX_BATCH);
-		totals = { total: 0, count: 0 };
-		overall = 0;
-		overall += doClaim(users[131]).total;
-		overall += doClaim(users[45]).total;
-		overall += doClaim(users[12]).total;
-		overall += doClaim(users[18]).total;
-		overall += doClaim(users[67]).total;
-		overall += doClaim(users[1450]).total;
-		overall += doClaim(users[899]).total;
-		overall += doClaim(users[999]).total;
-		overall += doClaim(users[777]).total;
-		overall += doClaim(users[666]).total;
-		for (const [i, batchUsers] of batches.entries()) {
-			const res = doClaims(batchUsers, i, users.length);
-			totals.count += res.count;
-			totals.total += res.total;
-		}
-		totals.total += overall;
-		totals.count += 10;
-		console.log('= EPOCH 3 totals', totals);
-		expect(totals.count).toBe(1451);
-		expect(totals.total).toBeLessThanOrEqual(10000000000);
-		expect(totals.total).toBeGreaterThanOrEqual(9999999000);
+			simnet.mineEmptyBlocks(1011);
+			console.log('= EPOCH 3 ================================================================');
+			addUsers(3600, deployer);
+			console.log('getEpochData: ', await getEpochData());
+			for (let user of users) {
+				contributeStx(user, contribAmount);
+			}
+			batches = chunkArray(users, MAX_BATCH);
+			totals = { total: 0, count: 0 };
+			overall = 0;
+			overall += doClaim(users[131]).total;
+			overall += doClaim(users[45]).total;
+			overall += doClaim(users[12]).total;
+			overall += doClaim(users[18]).total;
+			overall += doClaim(users[67]).total;
+			overall += doClaim(users[1450]).total;
+			overall += doClaim(users[899]).total;
+			overall += doClaim(users[999]).total;
+			overall += doClaim(users[777]).total;
+			overall += doClaim(users[666]).total;
+			for (const [i, batchUsers] of batches.entries()) {
+				const res = doClaims(batchUsers, i, users.length);
+				totals.count += res.count;
+				totals.total += res.total;
+			}
+			totals.total += overall;
+			totals.count += 10;
+			console.log('= EPOCH 3 totals', totals);
+			expect(totals.count).toBe(1451);
+			expect(totals.total).toBeLessThanOrEqual(10000000000);
+			expect(totals.total).toBeGreaterThanOrEqual(9999999000);
 
-		//expect(tx.result).toEqual(Cl.ok(Cl.uint(0)));
-	}, REPUTATION_REWARDS_USERS_TEST_MS);
+			//expect(tx.result).toEqual(Cl.ok(Cl.uint(0)));
+		},
+		REPUTATION_REWARDS_USERS_TEST_MS
+	);
 });
 
 async function getEpochUserData(user: string) {
