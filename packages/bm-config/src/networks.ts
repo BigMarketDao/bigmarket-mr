@@ -97,7 +97,7 @@ export const daoConfigByNetwork: { [key: string]: DaoConfig } = {
     VITE_DAO_POX: "bme002-proposal-submission",
     VITE_DAO_SCALAR_HEDGE_STRATEGY: "bme032-0-scalar-strategy-hedge",
     VITE_NETWORK: "testnet",
-    VITE_DAO_DEPLOYER: "ST1GZKCXE2J2R9T2RKQQSR0C9AQTE2JV8FQE3EDW4",
+    VITE_DAO_DEPLOYER: "ST30Q4WJYHGMYEE1CTGQ334R9M7KQ8ETVQ9NB134T",
     VITE_DAO_BASE_CONTRACTS: "ecosystem-dao,bigmarket-dao",
     VITE_DAO: "bigmarket-dao",
     VITE_DAO_PROPOSAL:

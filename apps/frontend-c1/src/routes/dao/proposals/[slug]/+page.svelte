@@ -97,7 +97,7 @@
 			{:else if isConclusionPending(proposal)}
 				<div class="flex justify-around">
 					<div class="my-3 text-sm">
-						{#if proposal.proposal !== 'ST1GZKCXE2J2R9T2RKQQSR0C9AQTE2JV8FQE3EDW4.bdp012-new-epoch-duration'}
+						{#if proposal.proposal !== 'ST30Q4WJYHGMYEE1CTGQ334R9M7KQ8ETVQ9NB134T.bdp012-new-epoch-duration'}
 							<a
 								href="/"
 								class="text-bloodorange"

@@ -6,8 +6,8 @@
 
 (define-public (execute (sender principal))
 	(begin
-		(try! (contract-call? 'ST1GZKCXE2J2R9T2RKQQSR0C9AQTE2JV8FQE3EDW4.bme030-0-reputation-token set-epoch-duration u144))
-		(try! (contract-call? 'ST1GZKCXE2J2R9T2RKQQSR0C9AQTE2JV8FQE3EDW4.bme030-0-reputation-token set-reward-per-epoch u100000000))
+		(try! (contract-call? 'ST30Q4WJYHGMYEE1CTGQ334R9M7KQ8ETVQ9NB134T.bme030-0-reputation-token set-epoch-duration u144))
+		(try! (contract-call? 'ST30Q4WJYHGMYEE1CTGQ334R9M7KQ8ETVQ9NB134T.bme030-0-reputation-token set-reward-per-epoch u100000000))
 		(ok true)
 	)
 )
