@@ -499,6 +499,41 @@ plan:
       path: contracts/proposals/devnet/unit-tests/bdp001-cancel-stage.clar
       clarity-version: 4
     - transaction-type: emulated-contract-publish
+      contract-name: bdp001-claim-burn-alice
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-burn-alice.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
+      contract-name: bdp001-claim-mint-alice
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-mint-alice.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
+      contract-name: bdp001-claim-mint-alice-extra
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-mint-alice-extra.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
+      contract-name: bdp001-claim-mint-tom
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-mint-tom.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
+      contract-name: bdp001-claim-tier-mix
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-tier-mix.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
+      contract-name: bdp001-claim-transfer
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-transfer.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
+      contract-name: bdp001-claim-uneven
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-uneven.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
       contract-name: bdp001-gating
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/proposals/devnet/bdp001-gating.clar
@@ -513,6 +548,9 @@ plan:
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/proposals/devnet/bdp001-gating-true-testnet.clar
       clarity-version: 4
+    epoch: '3.4'
+  - id: 8
+    transactions:
     - transaction-type: emulated-contract-publish
       contract-name: bdp001-initialise-token-sale
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
@@ -548,9 +586,6 @@ plan:
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/proposals/devnet/unit-tests/reputation/bdp001-sft-tier-weights.clar
       clarity-version: 4
-    epoch: '3.4'
-  - id: 8
-    transactions:
     - transaction-type: emulated-contract-publish
       contract-name: bdp001-sft-tokens-1
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
@@ -641,6 +676,9 @@ plan:
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/external/pyth/pyth-traits-v2.clar
       clarity-version: 4
+    epoch: '3.4'
+  - id: 9
+    transactions:
     - transaction-type: emulated-contract-publish
       contract-name: sip-010-trait-ft-standard
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM

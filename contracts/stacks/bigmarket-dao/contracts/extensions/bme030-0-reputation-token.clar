@@ -74,6 +74,9 @@
 )
 
 (define-read-only (get-epoch)
+  (current-epoch-zero-based)
+)
+(define-private (current-epoch-zero-based)
   (let (
       (start (var-get launch-height))
       (elapsed (if (> burn-block-height start) (- burn-block-height start) u0))
@@ -209,7 +212,7 @@
     (ok true)
   )
 )
-(define-public (get-tier-weight (token-id uint))
+(define-read-only (get-tier-weight (token-id uint))
   (ok (default-to u1 (map-get? tier-weights token-id))))
 
 
@@ -225,7 +228,7 @@
 
 (define-private (mint-core (recipient principal) (token-id uint) (amount uint))
   (let (
-    (current-epoch (/ burn-block-height (var-get epoch-duration)))
+    (current-epoch (current-epoch-zero-based))
     (weight (default-to u1 (map-get? tier-weights token-id)))
     (weighted-amount (* amount weight))
     (old-supply (default-to u0 (map-get? supplies token-id)))
@@ -274,7 +277,7 @@
 )
 (define-private (burn-core (owner principal) (token-id uint) (amount uint))
   (let (
-    (current-epoch (/ burn-block-height (var-get epoch-duration)))
+    (current-epoch (current-epoch-zero-based))
     (weight (default-to u1 (map-get? tier-weights token-id)))
     (weighted-amount (* amount weight))
     (current (default-to u0 (map-get? balances { token-id: token-id, owner: owner })))
@@ -341,7 +344,7 @@
         (sender-balance (default-to u0 (map-get? balances { token-id: token-id, owner: sender })))
         (weight (default-to u1 (map-get? tier-weights token-id)))
         (weighted-amount (* amount weight))
-        (epoch (/ burn-block-height (var-get epoch-duration)))
+        (epoch (current-epoch-zero-based))
       )
       (asserts! (>= sender-balance amount) err-insufficient-balance)
       (try! (ft-transfer? bigr-token amount sender recipient))
@@ -430,7 +433,7 @@
 
 (define-private (claim-big-reward-for-user (user principal))
   (let (
-        (epoch (/ burn-block-height (var-get epoch-duration)))
+        (epoch (current-epoch-zero-based))
         (claim-epoch (get-latest-claimable-epoch))
         (last-claim (default-to u0 (map-get? last-claimed-epoch { who: user })))
         (joined (default-to epoch (map-get? join-epoch { who: user })))
