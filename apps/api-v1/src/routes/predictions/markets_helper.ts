@@ -85,15 +85,40 @@ export async function updateDaoOverview(address?: string) {
 	}
 }
 
+// export async function readMinTokenLiquidity(deployer: string, contractName: string) {
+// 	const tokens1 = await fetchAllowedTokens(1);
+// 	for (let t of tokens1) {
+// 		let l = await stacks.createMarketsClient(getDaoConfig()).fetchTokenMinimumSeed(getConfig().stacksApi, `${deployer}.${contractName}`, contractName, t.token, getConfig().stacksHiroKey);
+// 		if (l === -1) l = readMinTokenLiquidityToken(contractName, t.token);
+// 		const atok = (await daoEventCollection.findOne({ event: 'allowed-token', token: t.token, extension: `${deployer}.${contractName}` })) as unknown as TokenPermissionEvent;
+// 		atok.minLiquidity = l;
+// 		await saveOrUpdateEvent(atok);
+// 		//console.log('readMinTokenLiquidity: saved: ' + atok);
+// 	}
+// }
 export async function readMinTokenLiquidity(deployer: string, contractName: string) {
 	const tokens1 = await fetchAllowedTokens(1);
-	for (let t of tokens1) {
+
+	for (const t of tokens1) {
 		let l = await stacks.createMarketsClient(getDaoConfig()).fetchTokenMinimumSeed(getConfig().stacksApi, `${deployer}.${contractName}`, contractName, t.token, getConfig().stacksHiroKey);
-		if (l === -1) l = readMinTokenLiquidityToken(contractName, t.token);
-		const atok = (await daoEventCollection.findOne({ event: 'allowed-token', token: t.token, extension: `${deployer}.${contractName}` })) as unknown as TokenPermissionEvent;
+
+		if (l === -1) {
+			l = readMinTokenLiquidityToken(contractName, t.token);
+		}
+
+		const atok = await daoEventCollection.findOne({
+			event: 'allowed-token',
+			token: t.token,
+			extension: `${deployer}.${contractName}`
+		});
+
+		if (!atok) {
+			console.log('readMinTokenLiquidity: no allowed-token event found for', t.token);
+			continue;
+		}
+
 		atok.minLiquidity = l;
-		await saveOrUpdateEvent(atok);
-		//console.log('readMinTokenLiquidity: saved: ' + atok);
+		await saveOrUpdateEvent(atok as unknown as BasicEvent);
 	}
 }
 
@@ -612,17 +637,30 @@ export async function findPredictionContractEventAndIndex(event_index: number, t
 	return result;
 }
 
+// async function saveOrUpdateEvent(contractEvent: BasicEvent) {
+// 	let pdb;
+// 	try {
+// 		pdb = await findPredictionContractEventByContractAndIndex(contractEvent.extension, contractEvent.event_index, contractEvent.txId);
+// 		if (pdb) {
+// 			if (contractEvent._id) await updateDaoEvent(new ObjectId(contractEvent._id), contractEvent);
+// 		} else {
+// 			await saveDaoEvent(contractEvent);
+// 		}
+// 	} catch (err: any) {
+// 		console.log('saveOrUpdateEvent: error1: ', pdb, err);
+// 	}
+// }
 async function saveOrUpdateEvent(contractEvent: BasicEvent) {
-	let pdb;
 	try {
-		pdb = await findPredictionContractEventByContractAndIndex(contractEvent.extension, contractEvent.event_index, contractEvent.txId);
-		if (pdb) {
-			if (contractEvent._id) await updateDaoEvent(new ObjectId(contractEvent._id), contractEvent);
+		const existing = await findPredictionContractEventByContractAndIndex(contractEvent.extension, contractEvent.event_index, contractEvent.txId);
+
+		if (existing) {
+			await updateDaoEvent(new ObjectId(existing._id), contractEvent);
 		} else {
 			await saveDaoEvent(contractEvent);
 		}
 	} catch (err: any) {
-		console.log('saveOrUpdateEvent: error1: ', pdb, err);
+		console.log('saveOrUpdateEvent error:', err, contractEvent);
 	}
 }
 async function updateDaoEvent(_id: ObjectId, changes: any) {

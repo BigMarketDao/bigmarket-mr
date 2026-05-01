@@ -70,15 +70,19 @@ export async function fetchDataVar(
   dataVarName: string,
   stacksHiroKey?: string,
 ) {
+  let url: string = "";
+  let result: any | null = null;
   try {
     //checkAddressForNetwork(getConfig().network, contractAddress)
-    const url = `${stacksApi}/v2/data_var/${contractAddress}/${contractName}/${dataVarName}`;
+    url = `${stacksApi}/v2/data_var/${contractAddress}/${contractName}/${dataVarName}`;
     const response = await fetch(url, {
       headers: { ...(stacksHiroKey ? { "x-api-key": stacksHiroKey } : {}) },
     });
-    const result = await response.json();
+    result = await response.json();
     return result;
   } catch (err) {
+    console.log("fetchDataVar: url: " + url);
+    console.log("fetchDataVar: result: " + result);
     console.log(
       "fetchDataVar: dataVarName: " +
         dataVarName +
