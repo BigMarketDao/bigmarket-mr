@@ -279,7 +279,6 @@ export interface ReputationBigClaimEvent extends BasicEvent {
   batched: boolean;
   user: string;
   epoch: number;
-  amount: number;
   claimEpoch: number;
   epochsPaid: number;
   reputation: number;

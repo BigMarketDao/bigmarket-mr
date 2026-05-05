@@ -13,14 +13,13 @@ import { BasicEvent, ReputationBigClaimEvent, ReputationSetTierEvent, Reputation
 // (print { event: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient })
 
 export async function processReputationEvents(basicEvent: BasicEvent, result: any) {
-	console.log('processReputationEvents: result: ', result);
 	if (result.value.event.value === 'set-tier-weight') {
 		//    (print { event: "set-tier-weight", token-id: token-id, weight: weight })
-		console.log('processReputationEvents: set-tier-weight: ', result.value);
+		//console.log('processReputationEvents: set-tier-weight: ', result.value);
 		const contractEvent: ReputationSetTierEvent = {
 			...basicEvent,
-			weight: Number(result.value.weight.value),
-			tokenId: Number(result.value['token-id'].value)
+			weight: Number(result.value?.weight?.value || 0),
+			tokenId: Number(result.value?.['token-id']?.value || 0)
 		} as ReputationSetTierEvent;
 		await saveOrUpdateEvent(contractEvent);
 		return contractEvent;
@@ -30,15 +29,15 @@ export async function processReputationEvents(basicEvent: BasicEvent, result: an
 		const contractEvent: ReputationBigClaimEvent = {
 			...basicEvent,
 			batched: false,
-			user: result.value.user.value,
-			epoch: Number(result.value.epoch.value),
-			claimEpoch: Number(result.value['claim-epoch'].value),
-			epochsPaid: Number(result.value['epochs-paid'].value),
-			reputation: Number(result.value.rep.value),
-			total: Number(result.value.total.value),
-			share: Number(result.value.share.value),
-			amount: Number(result.value.amount.value),
-			rewardPerEpoch: Number(result.value['reward-per-epoch'].value)
+			user: result.value?.user?.value,
+			epoch: Number(result.value?.epoch?.value),
+			claimEpoch: Number(result.value?.['claim-epoch']?.value || 0),
+			epochsPaid: Number(result.value?.['epochs-paid']?.value || 0),
+			reputation: Number(result.value?.rep?.value || 0),
+			total: Number(result.value?.total?.value || 0),
+			share: Number(result.value?.share?.value || 0),
+			amount: Number(result.value?.amount?.value || 0),
+			rewardPerEpoch: Number(result.value?.['reward-per-epoch']?.value || 0)
 		} as ReputationBigClaimEvent;
 		await saveOrUpdateEvent(contractEvent);
 		return contractEvent;
@@ -51,7 +50,7 @@ export async function processReputationEvents(basicEvent: BasicEvent, result: an
 		} as ReputationSftMintEvent;
 		await saveOrUpdateEvent(contractEvent);
 		return contractEvent;
-	} else if (result.value.event.value === 'sft_burn') {
+	} else if (result.value?.event?.value === 'sft_burn') {
 		const contractEvent: ReputationSftBurnEvent = {
 			...basicEvent,
 			sender: result.value.sender.value,
