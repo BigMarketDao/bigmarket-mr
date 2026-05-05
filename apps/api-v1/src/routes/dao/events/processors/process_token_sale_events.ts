@@ -83,16 +83,6 @@ export async function countVotes(proposal: string): Promise<number> {
 	}
 }
 
-export async function getPurcahses(proposal: string): Promise<Array<TokenSalePurchaseEvent>> {
-	const result = await daoEventCollection.find({ proposal, event: 'ido-purchase' }).toArray();
-	return result as unknown as Array<TokenSalePurchaseEvent>;
-}
-
-export async function getStageAdvancements(proposal: string): Promise<Array<TokenSaleAdvanceStageEvent>> {
-	const result = await daoEventCollection.find({ proposal, event: 'ido-stage-advanced' }).toArray();
-	return result as unknown as Array<TokenSaleAdvanceStageEvent>;
-}
-
 export async function getStageCancellations(proposal: string): Promise<Array<TokenSaleCancelStageEvent>> {
 	const result = await daoEventCollection.find({ proposal, event: 'cancel-ido-stage' }).toArray();
 	return result as unknown as Array<TokenSaleCancelStageEvent>;

@@ -275,3 +275,85 @@ export interface MarketTypeContainer {
   priceFeedOptions: Array<{ label: string; value: string }>;
   marketTypeDataScalar: Array<ScalarMarketDataItem>;
 }
+export interface ReputationBigClaimEvent extends BasicEvent {
+  batched: boolean;
+  user: string;
+  epoch: number;
+  amount: number;
+  claimEpoch: number;
+  epochsPaid: number;
+  reputation: number;
+  total: number;
+  share: number;
+  rewardPerEpoch: number;
+}
+export interface ReputationSetTierEvent extends BasicEvent {
+  weight: number;
+  tokenId: number;
+}
+export interface ReputationSftBurnEvent extends BasicEvent {
+  tokenId: number;
+  sender: string;
+  amount: number;
+}
+export interface ReputationSftMintEvent extends BasicEvent {
+  tokenId: number;
+  recipient: string;
+  amount: number;
+}
+export interface LiquidityContributionEvent extends BasicEvent {
+  bigr: number;
+  from: string;
+  amount: number;
+}
+export interface ReputationSftTransferEvent extends BasicEvent {
+  tokenId: number;
+  sender: string;
+  recipient: string;
+  amount: number;
+}
+export interface TokenSaleAdvanceStageEvent extends BasicEvent {
+  newStage: number;
+  burnStart: number;
+}
+export interface TokenSaleCancelStageEvent extends BasicEvent {
+  stage: number;
+}
+export interface TokenSaleRefundEvent extends BasicEvent {
+  buyer: string;
+  refunded: number;
+  stage: number;
+}
+export interface TokenSalePurchaseEvent extends BasicEvent {
+  buyer: string;
+  stage: number;
+  tokens: number;
+  stxAmount?: number;
+}
+export interface ScalarContractHedgeEvent extends BasicEvent {
+  marketContract: string;
+}
+export interface MarketContractHedgeEvent extends BasicEvent {
+  marketContract: string;
+}
+export interface MultipliersHedgeEvent extends BasicEvent {
+  multipliers: Array<number>;
+}
+export interface PerformCustomHedgeEvent extends BasicEvent {
+  marketId: number;
+  predictedIndex: number;
+}
+export interface PerformSwapHedgeEvent extends BasicEvent {
+  marketId: number;
+  predictedIndex: number;
+  feedId: string;
+}
+export interface SwapTokenPairHedgeEvent extends BasicEvent {
+  marketId: number;
+  predictedIndex: number;
+  feedId: string;
+  tokenIn: string;
+  tokenOut: string;
+  token0: string;
+  token1: string;
+}

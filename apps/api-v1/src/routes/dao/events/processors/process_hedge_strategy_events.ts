@@ -6,24 +6,17 @@ import { daoEventCollection } from '../../../../lib/data/db_models.js';
 import { findVotingContractEventByContractAndIndex, saveDaoEvent } from '../dao_events_extension_helper.js';
 import {
 	BasicEvent,
-	createBasicEvent,
 	MarketContractHedgeEvent,
 	MultipliersHedgeEvent,
 	PerformCustomHedgeEvent,
 	PerformSwapHedgeEvent,
-	ReputationBigClaimEvent,
-	ReputationSetTierEvent,
-	ReputationSftBurnEvent,
-	ReputationSftMintEvent,
-	ReputationSftTransferEvent,
 	ScalarContractHedgeEvent,
 	SwapTokenPairHedgeEvent,
 	TokenSaleAdvanceStageEvent,
 	TokenSaleCancelStageEvent,
-	TokenSaleInitialisationEvent,
 	TokenSalePurchaseEvent,
 	TokenSaleRefundEvent
-} from '@mijoco/stx_helpers/dist/index.js';
+} from '@bigmarket/bm-types';
 
 export async function processHedgeStrategyEvents(basicEvent: BasicEvent, result: any) {
 	if (result.value.event.value === 'perform-custom-hedge') {

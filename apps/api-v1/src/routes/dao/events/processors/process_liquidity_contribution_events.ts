@@ -4,20 +4,7 @@
 import { ObjectId } from 'mongodb';
 import { daoEventCollection } from '../../../../lib/data/db_models.js';
 import { findVotingContractEventByContractAndIndex, saveDaoEvent } from '../dao_events_extension_helper.js';
-import {
-	BasicEvent,
-	createBasicEvent,
-	LiquidityContributionEvent,
-	ReputationBigClaimEvent,
-	ReputationSftBurnEvent,
-	ReputationSftMintEvent,
-	ReputationSftTransferEvent,
-	TokenSaleAdvanceStageEvent,
-	TokenSaleCancelStageEvent,
-	TokenSaleInitialisationEvent,
-	TokenSalePurchaseEvent,
-	TokenSaleRefundEvent
-} from '@mijoco/stx_helpers/dist/index.js';
+import { BasicEvent, LiquidityContributionEvent, TokenSaleAdvanceStageEvent, TokenSaleCancelStageEvent, TokenSalePurchaseEvent, TokenSaleRefundEvent } from '@bigmarket/bm-types';
 
 // (print {type: "liquidity_contribution", from: user, amount: amount, bigr: bigr-earned})
 
@@ -56,16 +43,6 @@ export async function countVotes(proposal: string): Promise<number> {
 	} catch (err: any) {
 		return 0;
 	}
-}
-
-export async function getPurcahses(proposal: string): Promise<Array<TokenSalePurchaseEvent>> {
-	const result = await daoEventCollection.find({ proposal, event: 'ido-purchase' }).toArray();
-	return result as unknown as Array<TokenSalePurchaseEvent>;
-}
-
-export async function getStageAdvancements(proposal: string): Promise<Array<TokenSaleAdvanceStageEvent>> {
-	const result = await daoEventCollection.find({ proposal, event: 'ido-stage-advanced' }).toArray();
-	return result as unknown as Array<TokenSaleAdvanceStageEvent>;
 }
 
 export async function getStageCancellations(proposal: string): Promise<Array<TokenSaleCancelStageEvent>> {

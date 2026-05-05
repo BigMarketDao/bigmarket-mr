@@ -4,20 +4,7 @@
 import { ObjectId } from 'mongodb';
 import { daoEventCollection } from '../../../../lib/data/db_models.js';
 import { findVotingContractEventByContractAndIndex, saveDaoEvent } from '../dao_events_extension_helper.js';
-import {
-	BasicEvent,
-	createBasicEvent,
-	ReputationBigClaimEvent,
-	ReputationSetTierEvent,
-	ReputationSftBurnEvent,
-	ReputationSftMintEvent,
-	ReputationSftTransferEvent,
-	TokenSaleAdvanceStageEvent,
-	TokenSaleCancelStageEvent,
-	TokenSaleInitialisationEvent,
-	TokenSalePurchaseEvent,
-	TokenSaleRefundEvent
-} from '@mijoco/stx_helpers/dist/index.js';
+import { BasicEvent, ReputationBigClaimEvent, ReputationSetTierEvent, ReputationSftBurnEvent, ReputationSftMintEvent, ReputationSftTransferEvent, TokenSaleCancelStageEvent, TokenSaleRefundEvent } from '@bigmarket/bm-types';
 
 // (print { event: "big-claim-batch", user: user, epoch: epoch, amount: share, reward-per-epoch: (var-get reward-per-epoch) })
 // (print { event: "big-claim", user: user, epoch: epoch, amount: share, reward-per-epoch: (var-get reward-per-epoch) })
@@ -26,19 +13,10 @@ import {
 // (print { event: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient })
 
 export async function processReputationEvents(basicEvent: BasicEvent, result: any) {
-	if (result.value.event.value === 'big-claim-batch') {
-		const contractEvent: ReputationBigClaimEvent = {
-			...basicEvent,
-			batched: true,
-			user: result.value.user.value,
-			epoch: Number(result.value.epoch.value),
-			amount: Number(result.value.amount.value),
-			rewardPerEpoch: Number(result.value['reward-per-epoch'].value)
-		} as ReputationBigClaimEvent;
-		await saveOrUpdateEvent(contractEvent);
-		return contractEvent;
-	} else if (result.value.event.value === 'set-tier-weight') {
+	console.log('processReputationEvents: result: ', result);
+	if (result.value.event.value === 'set-tier-weight') {
 		//    (print { event: "set-tier-weight", token-id: token-id, weight: weight })
+		console.log('processReputationEvents: set-tier-weight: ', result.value);
 		const contractEvent: ReputationSetTierEvent = {
 			...basicEvent,
 			weight: Number(result.value.weight.value),
@@ -47,11 +25,18 @@ export async function processReputationEvents(basicEvent: BasicEvent, result: an
 		await saveOrUpdateEvent(contractEvent);
 		return contractEvent;
 	} else if (result.value.event.value === 'big-claim') {
+		//(print { event: "big-claim", user: user, epoch: epoch, claim-epoch: new-last-claim, epochs-paid: epochs-to-pay, rep: rep, total: total, share: total-share, reward-per-epoch: (var-get reward-per-epoch) })
+		console.log('processReputationEvents: big-claim: ', result.value);
 		const contractEvent: ReputationBigClaimEvent = {
 			...basicEvent,
 			batched: false,
 			user: result.value.user.value,
 			epoch: Number(result.value.epoch.value),
+			claimEpoch: Number(result.value['claim-epoch'].value),
+			epochsPaid: Number(result.value['epochs-paid'].value),
+			reputation: Number(result.value.rep.value),
+			total: Number(result.value.total.value),
+			share: Number(result.value.share.value),
 			amount: Number(result.value.amount.value),
 			rewardPerEpoch: Number(result.value['reward-per-epoch'].value)
 		} as ReputationBigClaimEvent;
@@ -86,7 +71,7 @@ export async function processReputationEvents(basicEvent: BasicEvent, result: an
 		await saveOrUpdateEvent(contractEvent);
 		return contractEvent;
 	} else {
-		//console.log("processEvent: new event: ", event);
+		console.log('processEvent: new processReputationEvents: ', result);
 	}
 }
 
@@ -110,16 +95,6 @@ export async function countVotes(proposal: string): Promise<number> {
 	} catch (err: any) {
 		return 0;
 	}
-}
-
-export async function getPurcahses(proposal: string): Promise<Array<TokenSalePurchaseEvent>> {
-	const result = await daoEventCollection.find({ proposal, event: 'ido-purchase' }).toArray();
-	return result as unknown as Array<TokenSalePurchaseEvent>;
-}
-
-export async function getStageAdvancements(proposal: string): Promise<Array<TokenSaleAdvanceStageEvent>> {
-	const result = await daoEventCollection.find({ proposal, event: 'ido-stage-advanced' }).toArray();
-	return result as unknown as Array<TokenSaleAdvanceStageEvent>;
 }
 
 export async function getStageCancellations(proposal: string): Promise<Array<TokenSaleCancelStageEvent>> {

@@ -61,7 +61,7 @@ export async function processCoreVotingEvent(basicEvent: BasicEvent, result: any
 		await saveOrUpdateEvent(contractEvent);
 		return contractEvent;
 	} else {
-		console.log('processEvent: new event: ', result);
+		console.log('processEvent: new processCoreVotingEvent: ', result);
 	}
 }
 

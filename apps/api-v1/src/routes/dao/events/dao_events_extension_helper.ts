@@ -104,7 +104,7 @@ export async function handleContractOrTransactionEvent(daoContract: string, exte
 	if (!event.contract_log) return;
 	const result = cvToJSON(deserializeCV(event.contract_log.value.hex));
 	const basicEvent = createBasicEvent(new ObjectId().toString(), event, daoContract, extensionContract, result.value.event.value);
-	console.log('processEvent: new event: ', result);
+	console.log('processEvent: any handleContractOrTransactionEvent: ', result);
 	try {
 		let event;
 		if (extensionContract.indexOf(getDaoConfig().VITE_DAO_TOKEN_SALE) > -1) {
@@ -137,7 +137,7 @@ export async function handleContractOrTransactionEvent(daoContract: string, exte
 			// no events
 		} else {
 			if (extensionContract.indexOf('bme023') === -1) {
-				console.log('processEvent: unexpected event: ', event);
+				console.log('processEvent: unknown handleContractOrTransactionEvent: unexpected event: ', event);
 			}
 		}
 		return event;
