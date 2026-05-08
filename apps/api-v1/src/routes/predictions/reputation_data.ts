@@ -5,7 +5,7 @@ import { getConfig } from '../../lib/config.js';
 export async function readReputationContractData(daoConfig: DaoConfig, stacksApi: string, nftTokenId?: number, stacksHiroKey?: string): Promise<ReputationContractData> {
 	return {
 		tierWeight: await stacks.createReputationClient(daoConfig).fetchTierWeight(stacksApi, nftTokenId || 1, stacksHiroKey),
-		tokenUri: await stacks.createReputationClient(daoConfig).fetchTokenUri(stacksApi, nftTokenId || 1, stacksHiroKey),
+		tokenUri: '', //await stacks.createReputationClient(daoConfig).fetchTokenUri(stacksApi, nftTokenId || 1, stacksHiroKey),
 		totalSupplyPerNft: await stacks.createReputationClient(daoConfig).fetchTotalSupplyPerNft(stacksApi, nftTokenId || 1, stacksHiroKey),
 		launchHeight: await stacks.createReputationClient(daoConfig).fetchLaunchHeight(stacksApi, stacksHiroKey),
 		rewardPerEpoch: await stacks.createReputationClient(daoConfig).fetchRewardPerEpoch(stacksApi, stacksHiroKey),
