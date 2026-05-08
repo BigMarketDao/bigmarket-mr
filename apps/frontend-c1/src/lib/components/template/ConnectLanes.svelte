@@ -5,15 +5,65 @@
 	import { getStxAddress, isLoggedIn, userWalletStore } from '@bigmarket/bm-common';
 	import { connectWallet } from '@bigmarket/bm-common';
 	import ConnectPlaywright from './testing/ConnectPlaywright.svelte';
+	import { requireAppConfig } from '@bigmarket/bm-common';
+	import { appConfigStore } from '@bigmarket/bm-common';
+	const appConfig = $derived(requireAppConfig($appConfigStore));
 
 	let walletAddress = typeof window !== 'undefined' ? getStxAddress() : '???';
+	let isPhantomConnected = $state(false);
 
-	onMount(() => {
-		// silentRestore();
+	// async function checkPhantomConnected() {
+	// 	const phantom = window.phantom?.solana;
+
+	// 	if (!phantom) return false;
+
+	// 	try {
+	// 		await phantom.connect({ onlyIfTrusted: true });
+	// 		return true;
+	// 	} catch {
+	// 		return false;
+	// 	}
+	// }
+	onMount(async () => {
+		const phantom = window.phantom?.solana;
+		isPhantomConnected = false;
+		if (phantom && isPhantomConnected) {
+			const response = await phantom.connect();
+			const publicKey = (
+				response as { publicKey: { toString: () => string } }
+			).publicKey.toString();
+			console.log('publicKey', publicKey);
+		}
 	});
 
-	const connect = async () => {
-		await connectWallet();
+	const connectStacks = async () => {
+		await connectWallet(appConfig.VITE_BIGMARKET_API,'stacks');
+		window.location.reload();
+	};
+
+	const connectPhantom = async () => {
+		// const phantom = window.phantom?.solana;
+		// if (!phantom) {
+		// 	window.open('https://phantom.app/', '_blank');
+		// 	return;
+		// }
+		// const response = await phantom.connect();
+		// const publicKey = (response as { publicKey: { toString: () => string } }).publicKey.toString();
+		// console.log('publicKey', publicKey);
+		// isPhantomConnected = true;
+		await connectWallet(appConfig.VITE_BIGMARKET_API, 'solana');
+
+		window.location.reload();
+	};
+
+	const disconnectPhantom = async () => {
+		const phantom = window.phantom?.solana;
+		if (!phantom) {
+			window.open('https://phantom.app/', '_blank');
+			return;
+		}
+		await phantom.disconnect();
+		isPhantomConnected = false;
 		window.location.reload();
 	};
 
@@ -25,10 +75,7 @@
 	// ];
 </script>
 
-<div
-	data-testid="wallet-connect:panel"
-	class="mx-auto max-w-xl"
->
+<div data-testid="wallet-connect:panel" class="mx-auto max-w-xl">
 	<div class="mb-4 flex items-center justify-between">
 		<TypoHeader level={2} className="text-neutral-900 dark:text-neutral-100"
 			>Buy STX &amp; Connect Wallet</TypoHeader
@@ -51,7 +98,12 @@
 						>Connect Wallet</TypoHeader
 					>
 					<ParaContainer>Full access including staking in markets.</ParaContainer>
-					<Button onclick={connect}>Connect</Button>
+					<Button onclick={connectStacks}>Connect Stacks</Button>
+					{#if isPhantomConnected}
+						<Button onclick={disconnectPhantom}>Disconnect Phantom</Button>
+					{:else}
+						<Button onclick={connectPhantom}>Connect Phantom</Button>
+					{/if}
 				</div>
 			</div>
 		{/if}

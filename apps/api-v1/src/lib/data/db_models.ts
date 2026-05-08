@@ -14,6 +14,7 @@ export let marketGatingCollection: Collection;
 export let marketInterestCollection: Collection;
 export let marketCategoriesCollection: Collection;
 export let marketLlmLogsCollection: Collection;
+export let crossChainMappingCollection: Collection;
 
 export let authUserCollection: Collection;
 export let authProviderAccountCollection: Collection;
@@ -57,6 +58,9 @@ export async function connect() {
 
 	daoEventCollection = database.collection('daoEventCollection');
 	await daoEventCollection.createIndex({ txId: 1, event_index: 1 }, { unique: true });
+
+	crossChainMappingCollection = database.collection('crossChainMappingCollection');
+	await crossChainMappingCollection.createIndex({ address: 1, mappedAddress: 1 }, { unique: true });
 
 	marketLlmLogsCollection = database.collection('marketLlmLogsCollection');
 	await marketLlmLogsCollection.createIndex({ marketId: 1, marketType: 1, event: 1 }, { unique: true });

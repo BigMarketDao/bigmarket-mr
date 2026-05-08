@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { ErrorRequestHandler } from 'express';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
 import cors from 'cors';
@@ -21,18 +21,16 @@ import { pythRoutes } from './routes/oracle/pyth/pythRoutes.js';
 import { agentRoutes } from './routes/agent/agentRoutes.js';
 import { reputationRoutes } from './routes/reputation/reputationRoutes.js';
 import { authRoutes } from './routes/auth/authRoutes.js';
+import { crossChainRoutes } from './routes/cross-chain/crossChainMappingRoutes.js';
 import { transactionRoutes } from './routes/transactions/transactionRoutes.js';
 import { healthRoutes } from './routes/health/healthRoutes.js';
-
-import { initScanDaoEventsDevnetJob, initScanDaoEventsJob, initScanDaoEventsTestnetJob } from './routes/dao/events/eventScheduler.js';
 import { printDaoConfig, setDaoConfigOnStart } from './lib/config_dao.js';
-import { initExchangeRatesJob, initRefreshDaoOverviewJob } from './routes/rates/ratesScheduler.js';
-import { initCreateMarketsJobBitcoin, initCreateMarketsJobEthereum, initCreateMarketsJobStacks, initCreateMarketsJobSui, initCreateMarketsJobTon, initResolveMarketsJob, initResolveUndisputedMarketsJob } from './routes/agent/agentScheduler.js';
-import { imageRoutes } from './routes/image-proxy/imageRoutes.js';
-import { startUICacheWarming } from './routes/cache/cache_utils.js';
-import { runBatchClaimSweepJob } from './routes/reputation/reputation-helper.js';
-import type { ErrorRequestHandler } from 'express';
 import cookieParser from 'cookie-parser';
+import { initScanDaoEventsDevnetJob, initScanDaoEventsJob, initScanDaoEventsTestnetJob } from './routes/dao/events/eventScheduler.js';
+import { initExchangeRatesJob, initRefreshDaoOverviewJob } from './routes/rates/ratesScheduler.js';
+import { initResolveMarketsJob, initResolveUndisputedMarketsJob } from './routes/agent/agentScheduler.js';
+import { runBatchClaimSweepJob } from './routes/reputation/reputation-helper.js';
+import { startUICacheWarming } from './routes/cache/cache_utils.js';
 import { initWebsocket } from './lib/websockets/init.js';
 
 if (process.env.NODE_ENV === 'development') {
@@ -95,7 +93,8 @@ app.use('/bigmarket-api/agent', agentRoutes);
 app.use('/bigmarket-api/reputation', reputationRoutes);
 // app.use('/bigmarket-api/clarity-bitcoin', clarityBitcoinRoutes);
 app.use('/bigmarket-api/auth', authRoutes);
-app.use('/bigmarket-api/images', imageRoutes);
+app.use('/bigmarket-api/cross-chain', crossChainRoutes);
+
 app.use('/bigmarket-api/disputes', disputeRoutes);
 app.use('/bigmarket-api/transactions', transactionRoutes);
 app.use('/health', healthRoutes);

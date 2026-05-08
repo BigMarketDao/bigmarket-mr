@@ -1,20 +1,48 @@
 import { get, writable } from "svelte/store";
-import type { WalletAccount, WalletState } from "@bigmarket/bm-types";
+import type { Chain, WalletAccount, WalletState } from "@bigmarket/bm-types";
 import { wallet } from "@bigmarket/sdk";
 import { userWalletStore } from "./ui/userWalletStore.js";
+import { persisted } from "svelte-local-storage-store";
+import { createStacksWallet } from "@bigmarket/sdk/dist/chains/stacks/createStacksWallet.js";
 
 const browser = typeof (globalThis as any).window !== "undefined";
 
-async function getWalletSession() {
+async function getWalletSession(bmApiUrl?: string) {
+  const current: WalletState = get(walletState);
   const session = await wallet.getSession();
-
   if (!session?.connected) return null;
 
+  let mappedAddress: string | undefined = current.activeAccount?.mappedAddress;
+  if (current.chain === "solana" && !current.activeAccount?.mappedAddress) {
+    const session = await wallet.getSession();
+    const solanaAddress = session.addresses?.solana;
+
+    if (solanaAddress && bmApiUrl) {
+      const result = await getCreateMappedStacksAddress(
+        bmApiUrl,
+        "solana",
+        solanaAddress,
+      );
+      mappedAddress = result.mappedAddress;
+    }
+  }
+
+  const sol = session.addresses?.solana ?? null;
   const stx = session.addresses?.stacks ?? null;
   const btc = session.addresses?.bitcoin ?? null;
   const ord = session.addresses?.ordinal ?? null;
 
   const accounts: WalletAccount[] = [
+    ...(sol
+      ? [
+          {
+            chain: "solana" as const,
+            address: sol,
+            type: "sol",
+            mappedAddress,
+          },
+        ]
+      : []),
     ...(stx ? [{ chain: "stacks" as const, address: stx, type: "stx" }] : []),
     ...(btc ? [{ chain: "stacks" as const, address: btc, type: "btc" }] : []),
     ...(ord
@@ -25,20 +53,43 @@ async function getWalletSession() {
     connected: true as const,
     accounts,
     activeAccount: accounts.find((a) => a.type === "stx") ?? accounts[0],
-    raw: session.raw,
+    //raw: session.raw,
   };
 }
 
 // ---- STATE ----
-const initial: WalletState = { status: "unknown" };
-export const walletState = writable<WalletState>(initial);
+const initial: WalletState = {
+  status: "unknown",
+  chain: "stacks",
+  accounts: [],
+};
+export const walletState = persisted<WalletState>("walletState", initial);
 
-async function refreshWalletState(): Promise<void> {
-  const session = await getWalletSession();
+function setWalletChain(chain: Chain) {
+  wallet.setChain(chain);
+
+  walletState.update((s) => ({
+    ...s,
+    chain,
+  }));
+}
+
+async function refreshWalletState(bmApiUrl?: string): Promise<void> {
+  const current = get(walletState);
+  const session = await getWalletSession(bmApiUrl);
+
   if (session?.connected) {
-    walletState.set({ status: "connected", ...session });
+    walletState.set({
+      status: "connected",
+      chain: current.chain,
+      ...session,
+    });
   } else {
-    walletState.set({ status: "disconnected" });
+    walletState.set({
+      status: "disconnected",
+      chain: current.chain,
+      accounts: current.accounts,
+    });
   }
 }
 
@@ -47,25 +98,46 @@ async function refreshWalletState(): Promise<void> {
 // so UI can gate rendering on this promise without racing the store.
 let initPromise: Promise<void> | null = null;
 
-export function initWallet(): Promise<void> {
-  if (!browser) return Promise.resolve();
-  if (!initPromise) {
-    initPromise = refreshWalletState();
-  }
-  return initPromise;
+export async function initWallet(bmApiUrl?: string): Promise<void> {
+  if (!browser) return;
+
+  // if (!initPromise) {
+  wallet.setChain(get(walletState).chain);
+  await refreshWalletState(bmApiUrl);
+  // }
+
+  return;
+}
+
+export async function getCreateMappedStacksAddress(
+  bmApiUrl: string,
+  sourceChain: string,
+  sourceAddress: string,
+): Promise<{ mappedAddress: string }> {
+  const path = `${bmApiUrl}/cross-chain/mappings/${sourceChain}/${sourceAddress}`;
+  const response = await fetch(path);
+  const mappedAddress = await response.json();
+  return mappedAddress;
 }
 
 // ---- ACTIONS ----
-export async function connectWallet(opts?: any) {
+export async function connectWallet(
+  bmApiUrl?: string,
+  chain?: Chain,
+  opts?: any,
+) {
   if (!browser) return;
+  if (chain) {
+    setWalletChain(chain);
+  }
   await wallet.connect(opts);
-  await refreshWalletState();
+  await refreshWalletState(bmApiUrl);
 }
 
 export async function disconnectWallet() {
   if (!browser) return;
   await wallet.disconnect();
-  walletState.set({ status: "disconnected" });
+  walletState.set({ status: "disconnected", chain: "stacks", accounts: [] });
 }
 
 // ---- ON-CHAIN DATA ----
@@ -115,7 +187,10 @@ export function isLoggedIn(): boolean {
 
 export function getStxAddress(): string {
   const s = get(walletState);
-  if (s.status !== "connected") return "??";
+  if (s.status !== "connected") return "unknown";
+  if (s.chain === "solana") {
+    return s.activeAccount?.mappedAddress ?? "?";
+  }
   return (
     s.accounts.find((a: WalletAccount) => a.type === "stx")?.address ?? "?"
   );

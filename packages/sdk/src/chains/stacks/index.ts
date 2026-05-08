@@ -6,3 +6,4 @@ export * from "./adapter.js";
 export * from "./contractViewData.js";
 export * from "./reputation.js";
 export * from "./markets.js";
+export * from "./createStacksWallet.js";

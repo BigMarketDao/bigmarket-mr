@@ -65,7 +65,7 @@ export function createDaoGovernanceClient(daoConfig: DaoConfig) {
     construct() {
       const bootstrap = Cl.contractPrincipal(
         daoConfig.VITE_DAO_DEPLOYER,
-        "bdp000-bootstrap",
+        "bdp000-2-bootstrap",
       );
 
       return call(daoConfig.VITE_DAO, "construct", [bootstrap]);

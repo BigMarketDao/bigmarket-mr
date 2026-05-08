@@ -91,7 +91,11 @@
 		if (!browser) return;
 		console.log('data', data);
 		initAppShell(data?.appConfig?.VITE_STACKS_API);
-		await Promise.all([loadSystemData(data), initWallet().then(loadWalletData)]);
+		await loadSystemData(data)
+		await initWallet(data?.appConfig?.VITE_BIGMARKET_API)
+		await loadWalletData()
+
+		// await Promise.all([loadSystemData(data), initWallet(data?.appConfig?.VITE_BIGMARKET_API).then(loadWalletData)]);
 
 		ready = true;
 		checkNetwork();

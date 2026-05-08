@@ -428,7 +428,7 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(uintCV(nftTokenId))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return result.value?.value || ""; // ? cvToValue(result.value) : "";
+      return result?.value?.value || ""; // ? cvToValue(result.value) : "";
     },
   };
 }

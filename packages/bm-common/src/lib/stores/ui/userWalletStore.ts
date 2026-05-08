@@ -1,4 +1,4 @@
-import { AddressObject, UserWalletType } from "@bigmarket/bm-types";
+import { AddressObject } from "@bigmarket/bm-types";
 import { persisted } from "svelte-local-storage-store";
 
 export const userWalletStore = persisted(
