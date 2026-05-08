@@ -81,9 +81,6 @@ Custody, market state, settlement, resolution. Key contracts: `bigmarket-dao.cla
 **TypeScript SDK** (`packages/sdk/`)  
 Typed wrappers around Stacks.js for contract calls. Structured as `chains/`, `wallet/`, `internal/`. All contract interaction goes through here.
 
-**Express API** (`apps/api-v1/src/`)  
-Order book (CLOB), matching engine, indexing, price discovery. MongoDB-backed. Routes: dao events, prediction markets, JWT auth, polling, gating (merkle proofs), reputation.
-
 **SvelteKit frontend** (`apps/frontend-c1/`)  
 Svelte 5 runes mode. Routes in `src/routes/`, business logic in `src/lib/core/`, global state in `src/lib/stores/` (local-storage backed).
 
@@ -98,10 +95,6 @@ Svelte 5 runes mode. Routes in `src/routes/`, business logic in `src/lib/core/`,
 ### Vault Model
 
 The vault contract custodies all user funds. Users deposit SIP-010 tokens; balances are tracked as `total = available + reserved`. Funds move to "reserved" when allocated to markets, "available" when withdrawable. **Never bypass the vault for fund movement.**
-
-### Hybrid Execution
-
-Routing: try CLOB first (if matching limit orders exist), otherwise fall back to FPMM. FPMM provides continuous liquidity for long-tail markets; CLOB serves active markets with tighter spreads.
 
 ## Development Rules
 

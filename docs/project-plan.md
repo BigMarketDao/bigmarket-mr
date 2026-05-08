@@ -45,17 +45,10 @@ The project will be delivered over an accelerated timeline from mid-April to ear
   - Vault / deposit contracts for asset custody
   - Commitment mechanisms for trade intent
   - Settlement contracts for matched trade execution (initial version)
-- Retain existing CPMM contracts as a legacy (v1) system
+- Retain existing CPMM contracts
 - ## Separate DAO and market logic where required
 
-  ### **Off-Chain / Protocol Work**
-
-- Introduce shared types and SDK foundations
-- Design execution model beyond CPMM (FPMM-style \+ off-chain matching)
-- Define order lifecycle and matching flow
-- ## Document full protocol architecture
-
-  ### **Deliverables**
+### **Deliverables**
 
 - Clarity contracts (vault, commitment, settlement — testnet ready)
 - Protocol specification and architecture documentation
