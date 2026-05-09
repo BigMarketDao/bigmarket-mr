@@ -1,50 +1,77 @@
 <script lang="ts">
-  import { Banner } from '@bigmarket/bm-ui';
-  import { aiMarket, bitcoinMode, daoOverviewStore } from '@bigmarket/bm-common';
-  import { isLoggedIn, allowedTokenStore } from '@bigmarket/bm-common';
-  import { onMount } from 'svelte';
+  import { Banner } from "@bigmarket/bm-ui";
+  import {
+    aiMarket,
+    bitcoinMode,
+    daoOverviewStore,
+  } from "@bigmarket/bm-common";
+  import { isLoggedIn, allowedTokenStore } from "@bigmarket/bm-common";
+  import { onMount } from "svelte";
 
-  import CategorySelection from './CategorySelection.svelte';
-  import LiquiditySelection from './LiquiditySelection.svelte';
-  import MarketTypeSelection from './MarketTypeSelection.svelte';
-  import TokenSelection from './TokenSelection.svelte';
-  import CriteriaSelectionDays from './CriteriaSelectionDays.svelte';
-  import CriteriaSelectionSources from './CriteriaSelectionSources.svelte';
-  import { confirmPoll, getSignature } from './app/market_creation';
-  import { validatePoll, type ValidationResult } from './app/validation';
-  import { showTxModal, requireAppConfig, requireDaoConfig, appConfigStore, daoConfigStore } from '@bigmarket/bm-common';
+  import CategorySelection from "./CategorySelection.svelte";
+  import LiquiditySelection from "./LiquiditySelection.svelte";
+  import MarketTypeSelection from "./MarketTypeSelection.svelte";
+  import TokenSelection from "./TokenSelection.svelte";
+  import CriteriaSelectionDays from "./CriteriaSelectionDays.svelte";
+  import CriteriaSelectionSources from "./CriteriaSelectionSources.svelte";
+  import { confirmPoll, getSignature } from "./app/market_creation";
+  import { validatePoll, type ValidationResult } from "./app/validation";
+  import {
+    showTxModal,
+    requireAppConfig,
+    requireDaoConfig,
+    appConfigStore,
+    daoConfigStore,
+  } from "@bigmarket/bm-common";
   import type {
     StoredOpinionPoll,
     CriterionSources,
     MarketCategoricalOption,
     ScalarMarketDataItem,
-  } from '@bigmarket/bm-types';
-  import type { MarketTypeContainer } from '@bigmarket/bm-types';
-  import MainInformation from './MainInformation.svelte';
+  } from "@bigmarket/bm-types";
+  import type { MarketTypeContainer } from "@bigmarket/bm-types";
+  import MainInformation from "./MainInformation.svelte";
 
   const { examplePoll, onPollSubmit, onRegenerate, forceStep } = $props<{
     examplePoll: StoredOpinionPoll;
     onPollSubmit: (data: any) => void;
-		onRegenerate: (data: any) => void;
+    onRegenerate: (data: any) => void;
     forceStep: number;
-	}>();
+  }>();
 
   const appConfig = $derived(requireAppConfig($appConfigStore));
-	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
+  const daoConfig = $derived(requireDaoConfig($daoConfigStore));
+
+  function draftFromExample(src: StoredOpinionPoll): StoredOpinionPoll {
+    const t = { ...src };
+    if (!src.marketTypeDataCategorical) {
+      t.marketTypeDataCategorical = [] as MarketCategoricalOption[];
+    }
+    if (!src.marketTypeDataScalar) {
+      t.marketTypeDataScalar = [] as ScalarMarketDataItem[];
+    }
+    return t;
+  }
+
+  /** When parent replaces `examplePoll` (regeneration etc.), reload draft; skip on nested in-place edits (same reference). */
+  let syncedExampleRef: StoredOpinionPoll = examplePoll;
 
   let validation: ValidationResult = $state({ isValid: true, errors: {} });
-  let template: StoredOpinionPoll = $derived({ ...examplePoll }) ;
-  let errorMessage = $state('');
+  let template = $state<StoredOpinionPoll>(draftFromExample(examplePoll));
+
+  let errorMessage = $state("");
   let isSubmitting = $state(false);
   let isWaitingForTransaction = $state(false);
   let currentStep = $state(0);
 
   let inited = $state(false);
   let isBitcoinMarket = $derived($bitcoinMode);
-  let sessionStoreReady = $derived(Boolean(
-    $daoOverviewStore.contractData?.marketInitialLiquidity !== undefined &&
+  let sessionStoreReady = $derived(
+    Boolean(
+      $daoOverviewStore.contractData?.marketInitialLiquidity !== undefined &&
       $daoOverviewStore.contractData?.marketFeeBipsMax !== undefined,
-  ));
+    ),
+  );
 
   // run validation reactively
   //$: validation = validatePoll(template);
@@ -70,37 +97,51 @@
 
   const steps = [
     {
-      title: 'Main',
-      description: 'Title, description, and image',
-      fields: ['title', 'description', 'logo', 'treasury', 'marketFee'],
+      title: "Main",
+      description: "Title, description, and image",
+      fields: ["title", "description", "logo", "treasury", "marketFee"],
     },
     {
-      title: 'Resolution',
-      description: 'When and how the market resolves',
-      fields: ['criteria', 'sources'],
+      title: "Resolution",
+      description: "When and how the market resolves",
+      fields: ["criteria", "sources"],
     },
     {
-      title: 'Market',
-      description: 'Binary, categorical, or scalar market',
-      fields: ['marketType', 'options', 'priceFeed', 'ranges', 'liquidity', 'category', 'token'],
+      title: "Market",
+      description: "Binary, categorical, or scalar market",
+      fields: [
+        "marketType",
+        "options",
+        "priceFeed",
+        "ranges",
+        "liquidity",
+        "category",
+        "token",
+      ],
     },
     {
-      title: 'Create',
-      description: 'Sign the data and submit transaction',
+      title: "Create",
+      description: "Sign the data and submit transaction",
       fields: [],
     },
   ];
   const totalSteps = steps.length;
 
   function isValid(): boolean {
-    const result = validatePoll(template, $daoOverviewStore.contractData?.marketFeeBipsMax || 1000);
+    const result = validatePoll(
+      template,
+      $daoOverviewStore.contractData?.marketFeeBipsMax || 1000,
+    );
     //   const stepFields = steps[stepIndex].fields;
     //   const stepErrors = stepFields.filter((f) => result.errors[f]);
     return result.isValid;
   }
 
   const nextStep = async () => {
-    const all = validatePoll(template, $daoOverviewStore.contractData?.marketFeeBipsMax || 1000);
+    const all = validatePoll(
+      template,
+      $daoOverviewStore.contractData?.marketFeeBipsMax || 1000,
+    );
     const stepFields = steps[currentStep].fields;
 
     const stepHasErrors = stepFields.some((f) => all.errors[f]);
@@ -110,7 +151,7 @@
     if (!stepHasErrors && currentStep < totalSteps - 1) {
       currentStep++;
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const prevStep = () => {
@@ -118,15 +159,21 @@
   };
 
   const handleMarketTypeUpdate = async (update: MarketTypeContainer) => {
-    if (update.marketType !== undefined) template.marketType = update.marketType;
+    if (update.marketType !== undefined)
+      template.marketType = update.marketType;
     if (update.marketTypeDataCategorical !== undefined)
       template.marketTypeDataCategorical = update.marketTypeDataCategorical;
     if (update.marketTypeDataScalar !== undefined)
       template.marketTypeDataScalar = update.marketTypeDataScalar;
-    if (update.priceFeedId !== undefined) template.priceFeedId = update.priceFeedId;
+    if (update.priceFeedId !== undefined)
+      template.priceFeedId = update.priceFeedId;
   };
 
-  const handleCriterionUpdate = (duration: number, coolDown: number, startHeight: number) => {
+  const handleCriterionUpdate = (
+    duration: number,
+    coolDown: number,
+    startHeight: number,
+  ) => {
     template.criterionDays = { duration, coolDown, startHeight };
     if (template.marketType === 2) onRegenerate(template, 1);
     //currentStep = 1;
@@ -142,7 +189,8 @@
   function handleTokenChange() {
     if (template.marketType === 2) onRegenerate(template, 2);
     template.liquidity =
-      $allowedTokenStore.find((o) => o.token === template.token)?.minLiquidity || 0;
+      $allowedTokenStore.find((o) => o.token === template.token)
+        ?.minLiquidity || 0;
     //currentStep = 2;
     //nextStep();
   }
@@ -169,29 +217,44 @@
 
   const openSigRequest = async () => {
     if (!isLoggedIn()) {
-      errorMessage = 'Wallet not connected. Please connect your wallet and try again.';
+      errorMessage =
+        "Wallet not connected. Please connect your wallet and try again.";
       return;
     }
     isSubmitting = true;
 
     try {
-      const { dataHash, poll } = await getSignature(appConfig, daoConfig, template, $daoOverviewStore);
+      const { dataHash, poll } = await getSignature(
+        appConfig,
+        daoConfig,
+        template,
+        $daoOverviewStore,
+      );
       aiMarket.set(poll);
       if (!dataHash) {
-        errorMessage = 'Data hash is required but not available';
+        errorMessage = "Data hash is required but not available";
         return;
       }
-      const tokenEvent = $allowedTokenStore.find((o) => o.token === template.token);
+      const tokenEvent = $allowedTokenStore.find(
+        (o) => o.token === template.token,
+      );
       if (!tokenEvent) {
-        errorMessage = 'Token not found';
+        errorMessage = "Token not found";
         return;
       }
-      const response = await confirmPoll(appConfig, daoConfig, dataHash, template, $daoOverviewStore, tokenEvent);
+      const response = await confirmPoll(
+        appConfig,
+        daoConfig,
+        dataHash,
+        template,
+        $daoOverviewStore,
+        tokenEvent,
+      );
       if (response!.success) {
-        showTxModal(response!.txid || 'Unable to process right now');
-        onPollSubmit(response!.txid || '');
+        showTxModal(response!.txid || "Unable to process right now");
+        onPollSubmit(response!.txid || "");
       } else {
-        errorMessage = response!.error || 'Unable to process right now';
+        errorMessage = response!.error || "Unable to process right now";
       }
     } catch (err: any) {
       errorMessage = err;
@@ -200,16 +263,18 @@
     isWaitingForTransaction = false;
   };
 
+  $effect(() => {
+    const incoming = examplePoll;
+    if (incoming !== syncedExampleRef) {
+      syncedExampleRef = incoming;
+      template = draftFromExample(incoming);
+    }
+  });
+
   onMount(async () => {
-    template = { ...examplePoll };
-    if (!examplePoll.marketTypeDataCategorical) {
-      template.marketTypeDataCategorical = [] as MarketCategoricalOption[];
-    }
-    if (!examplePoll.marketTypeDataScalar) {
-      template.marketTypeDataScalar = [] as ScalarMarketDataItem[];
-    }
     template.liquidity =
-      $allowedTokenStore.find((o) => o.token === template.token)?.minLiquidity || 0;
+      $allowedTokenStore.find((o) => o.token === template.token)
+        ?.minLiquidity || 0;
     currentStep = forceStep || 0;
     inited = true;
   });
@@ -228,12 +293,17 @@
     {/if}
 
     <!-- Tabs -->
-    <div class="mb-6 border-b border-gray-200 dark:border-gray-700" data-testid="market-mgt:steps">
-      <nav class="scrollbar-hide -mb-px flex space-x-4 overflow-x-auto sm:space-x-8">
+    <div
+      class="mb-6 border-b border-gray-200 dark:border-gray-700"
+      data-testid="market-mgt:steps"
+    >
+      <nav
+        class="scrollbar-hide -mb-px flex space-x-4 overflow-x-auto sm:space-x-8"
+      >
         {#each steps as step, i}
           <button
             data-testid={`market-mgt:step-tab:${step.title.toLowerCase()}`}
-            aria-current={i === currentStep ? 'step' : undefined}
+            aria-current={i === currentStep ? "step" : undefined}
             class="flex items-center gap-2 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap transition-colors sm:px-4 {i ===
             currentStep
               ? 'border-orange-500 text-orange-600 dark:border-orange-500 dark:text-orange-500'
@@ -258,7 +328,7 @@
           {handleInput}
           {showValidationSummary}
           {allFieldsValid}
-          testIdPrefix={'market-mgt:main'}
+          testIdPrefix={"market-mgt:main"}
         />
       {:else if currentStep === 1}
         <CriteriaSelectionDays
@@ -266,31 +336,41 @@
           marketType={template.marketType}
           onCriteriaUpdate={handleCriterionUpdate}
           criteriaDays={template.criterionDays}
-          testIdPrefix={'market-mgt:critdayssel'}
+          testIdPrefix={"market-mgt:critdayssel"}
         />
         <CriteriaSelectionSources
           {validation}
           onCriteriaSourcesUpdate={handleCriterionSourcesUpdate}
           criteriaSources={template.criterionSources}
-          testIdPrefix={'market-mgt:critsourcesel'}
+          testIdPrefix={"market-mgt:critsourcesel"}
         />
       {:else if currentStep === 2}
         <MarketTypeSelection
           {validation}
           {template}
           onFeedChange={regenerate}
-          testIdPrefix={'market-mgt:martypesel'}
+          testIdPrefix={"market-mgt:martypesel"}
         />
-        <CategorySelection onCriteriaUpdate={handleCriterionUpdate} {validation} {template} testIdPrefix={'market-mgt:catsel'} />
+        <CategorySelection
+          onCriteriaUpdate={handleCriterionUpdate}
+          {validation}
+          {template}
+          testIdPrefix={"market-mgt:catsel"}
+        />
         {#if !isBitcoinMarket}
           <TokenSelection
             onTokenChange={handleTokenChange}
             {validation}
             {template}
-            testIdPrefix={'market-mgt:toksel'}
+            testIdPrefix={"market-mgt:toksel"}
+            tokens={$allowedTokenStore}
           />
         {/if}
-        <LiquiditySelection {validation} {template} testIdPrefix={'market-mgt:liqsel'} />
+        <LiquiditySelection
+          {validation}
+          {template}
+          testIdPrefix={"market-mgt:liqsel"}
+        />
       {:else if currentStep === 3}
         <div
           class="rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800"
@@ -301,21 +381,29 @@
           <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">
             You'll need to approve two transactions:
           </p>
-          <ul class="list-inside list-disc space-y-2 text-sm text-gray-600 dark:text-gray-400">
+          <ul
+            class="list-inside list-disc space-y-2 text-sm text-gray-600 dark:text-gray-400"
+          >
             <li>Sign content to authorize with server</li>
             <li>Sign transaction to set up the market in the smart contract</li>
           </ul>
           <p class="my-3 text-sm text-gray-600 dark:text-gray-400">
-            Allow <span class="font-extrabold">around 5 minutes</span> for the market to appear on the
-            public site.
+            Allow <span class="font-extrabold">around 5 minutes</span> for the market
+            to appear on the public site.
           </p>
         </div>
       {/if}
     </div>
 
     <!-- Nav buttons -->
-    <div class="flex justify-between border-t border-gray-200 pt-6 dark:border-gray-700">
-      <button data-testid="market-mgt:prev" onclick={prevStep} disabled={currentStep === 0}>
+    <div
+      class="flex justify-between border-t border-gray-200 pt-6 dark:border-gray-700"
+    >
+      <button
+        data-testid="market-mgt:prev"
+        onclick={prevStep}
+        disabled={currentStep === 0}
+      >
         Previous
       </button>
 
@@ -340,11 +428,12 @@
       {/if}
     </div>
     {#if !isValid()}
-    <div>{#each Object.values(validation.errors) as error}
-        <div class="text-red-500">{error}</div>
-      {/each}
-      <div data-testid="market-mgt:fix-validation">Fix validation errors</div>
-    </div>
-  {/if}
-</div>
+      <div>
+        {#each Object.values(validation.errors) as error}
+          <div class="text-red-500">{error}</div>
+        {/each}
+        <div data-testid="market-mgt:fix-validation">Fix validation errors</div>
+      </div>
+    {/if}
+  </div>
 {/if}

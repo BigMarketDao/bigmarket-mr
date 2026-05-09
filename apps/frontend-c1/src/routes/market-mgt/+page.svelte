@@ -193,9 +193,7 @@
 				if (examplePoll.criterionDays.coolDown < 15) {
 					examplePoll.criterionDays.coolDown = 15;
 				}
-				const index = $allowedTokenStore.findIndex((o) => {
-					o.token = examplePoll.token;
-				});
+				const index = $allowedTokenStore.findIndex((o) => o.token === examplePoll.token);
 				if (index < 0) {
 					examplePoll.token = $allowedTokenStore[0].token;
 				}

@@ -1,32 +1,41 @@
 <script lang="ts">
-  import type { StoredOpinionPoll, TokenPermissionEvent } from '@bigmarket/bm-types';
-  import { Coins } from 'lucide-svelte';
-  import type { ValidationResult } from './app/validation';
-  import { allowedTokenStore } from '@bigmarket/bm-common';
+  import type {
+    StoredOpinionPoll,
+    TokenPermissionEvent,
+  } from "@bigmarket/bm-types";
+  import { Coins } from "lucide-svelte";
+  import type { ValidationResult } from "./app/validation";
+  import { allowedTokenStore } from "@bigmarket/bm-common";
 
-  // export let template: StoredOpinionPoll;
-  // export let allowedTokens: Array<TokenPermissionEvent> = [];
-  // export let validation: ValidationResult;
-  // export let onTokenChange: (step?: number) => void;
-  // export let testIdPrefix: string = 'market-mgt:toksel';
-
-  const { template, validation, onTokenChange, testIdPrefix = 'market-mgt:toksel' } = $props<{
-		template: StoredOpinionPoll;
-		validation: ValidationResult;
+  const {
+    template,
+    validation,
+    onTokenChange,
+    testIdPrefix = "market-mgt:toksel",
+    tokens,
+  } = $props<{
+    template: StoredOpinionPoll;
+    validation: ValidationResult;
     onTokenChange: (step?: number) => void;
     testIdPrefix: string;
- }>();
+    tokens: TokenPermissionEvent[];
+  }>();
 
   type SelectToken = { value: string; label: string; disabled?: boolean };
 
   // --- Fix: react to allowedTokens changing (was only set onMount)
-  let displayTokens = $derived(toSelectOptions($allowedTokenStore));
+  let displayTokens = $derived(toSelectOptions(tokens));
 
   function toSelectOptions(tokens: TokenPermissionEvent[]): SelectToken[] {
-    const allowed = (tokens ?? []).filter((o) => o.allowed);
+    // const allowed = (tokens ?? []).filter((o) => o.allowed);
+    const allowed = [
+      ...new Map(
+        (tokens ?? []).filter((t) => t.allowed).map((t) => [t.token, t]),
+      ).values(),
+    ];
     return allowed.map((t) => ({
       value: t.token,
-      label: t.sip10Data?.symbol?.toUpperCase() || t.token || '???',
+      label: t.sip10Data?.symbol?.toUpperCase() || t.token || "???",
       disabled: false,
     }));
   }
@@ -41,14 +50,20 @@
 <div data-testid={testIdPrefix} class="space-y-2">
   <div data-testid={`${testIdPrefix}:ready`} class="hidden"></div>
 
-  <label for="token" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+  <label
+    for="token"
+    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+  >
     <div class="flex items-center gap-2">
       <Coins class="h-4 w-4 text-gray-500" />
       Market Token
     </div>
   </label>
 
-  <p class="mb-2 text-sm text-gray-500 dark:text-gray-400" data-testid={`${testIdPrefix}:help`}>
+  <p
+    class="mb-2 text-sm text-gray-500 dark:text-gray-400"
+    data-testid={`${testIdPrefix}:help`}
+  >
     Users will transact in this market using this token
   </p>
 
@@ -64,7 +79,9 @@
   >
     <!-- Fix: don't use `selected` with bind:value; let Svelte control selection -->
     {#each displayTokens as token (token.value)}
-      <option value={token.value} disabled={token.disabled}>{token.label}</option>
+      <option value={token.value} disabled={token.disabled}
+        >{token.label}</option
+      >
     {/each}
   </select>
 
@@ -78,7 +95,10 @@
   {/if}
 
   <!-- Tiny debug/computed marker for tests -->
-  <div data-testid={`${testIdPrefix}:selected`} class="text-xs text-gray-500 dark:text-gray-400">
-    Selected: {template.token || '(none)'}
+  <div
+    data-testid={`${testIdPrefix}:selected`}
+    class="text-xs text-gray-500 dark:text-gray-400"
+  >
+    Selected: {template.token || "(none)"}
   </div>
 </div>
