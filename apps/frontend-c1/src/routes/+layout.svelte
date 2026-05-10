@@ -13,7 +13,7 @@
 	import { daoConfigStore } from '@bigmarket/bm-common';
 	import type { AppConfig, DaoConfig } from '@bigmarket/bm-types';
 	import { onMount, type Snippet } from 'svelte';
-	import HeaderMenuDaisy from '$lib/components/template/HeaderMenuDaisy.svelte';
+	import HeaderMenuTailwind from '$lib/components/template/HeaderMenuTailwind.svelte';
 	import ReputationCommunityBanner from '$lib/components/template/ReputationCommunityBanner.svelte';
 	import Footer from '$lib/components/template/Footer.svelte';
 	import { browser } from '$app/environment';
@@ -114,7 +114,7 @@
 		{#if browser}
 			<div class="shrink-0">
 				<AlphaBanner />
-				<HeaderMenuDaisy />
+				<HeaderMenuTailwind />
 				<ReputationCommunityBanner />
 			</div>
 		{/if}
