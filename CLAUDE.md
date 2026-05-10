@@ -92,7 +92,7 @@ Svelte 5 runes mode. Routes in `src/routes/`, business logic in `src/lib/core/`,
 - `bm-ui` — presentation-only Svelte components; no logic, no API calls, no stores
 - `bm-types` — shared TypeScript types
 - `bm-common` — shared utilities and stores
-- `bm-design` — design tokens consumed by Tailwind
+- `bm-design` — design tokens consumed by Tailwind (`theme.css` + `tokens.ts`; keep in sync)
 - `bm-config` — configuration helpers
 
 ### Vault Model
@@ -103,6 +103,45 @@ The vault contract custodies all user funds. Users deposit SIP-010 tokens; balan
 
 Routing: try CLOB first (if matching limit orders exist), otherwise fall back to FPMM. FPMM provides continuous liquidity for long-tail markets; CLOB serves active markets with tighter spreads.
 
+## Documentation & external references
+
+### In-repo design / UI docs
+
+| Doc | Role |
+|-----|------|
+| [`docs/design/styling-contract.md`](docs/design/styling-contract.md) | **Contract** for how we add styles (semantic tokens first, token sync, rollout order). |
+| [`docs/design/bm-semantic-tokens-proposal.md`](docs/design/bm-semantic-tokens-proposal.md) | Proposed semantic token names (extend `bm-design`). |
+| [`docs/design/polymarket-ui-audit.md`](docs/design/polymarket-ui-audit.md) | Prompt + workflow to audit reference UI (screenshots + DevTools CSS); paste AI output there. |
+| [`docs/ui-system.md`](docs/ui-system.md) | UI architecture (`bm-ui`, Tailwind, layering). |
+| [`docs/technical/08_ui_element_analysis.md`](docs/technical/08_ui_element_analysis.md) | Page-by-page checklist for token cleanup; **verify stack table** when deps change (e.g. Skeleton in `bm-ui`). |
+
+### Framework versions (frontend-c1 — check `package.json` if upgrading)
+
+| Tool | Typical constraint |
+|------|---------------------|
+| **SvelteKit** | `^2.57.x` — [SvelteKit docs](https://kit.svelte.dev/docs) |
+| **Svelte** | `^5.55.x` (runes) — [Svelte 5 docs](https://svelte.dev/docs/svelte/overview) |
+| **Tailwind CSS** | `^4.2.x` — [Tailwind v4 docs](https://tailwindcss.com/docs) |
+| **Vite** | `^8.x` |
+
+### Official docs (bookmark)
+
+- Tailwind CSS: https://tailwindcss.com/docs  
+- SvelteKit: https://kit.svelte.dev/docs  
+- Svelte: https://svelte.dev/docs  
+
+## Design-system rollout (for Claude / contributors)
+
+When doing a **visual / token** pass:
+
+1. **Analyze** — Follow [`docs/design/polymarket-ui-audit.md`](docs/design/polymarket-ui-audit.md) (or equivalent audit): screenshots + browser **computed styles** / `:root` CSS variables where possible; produce structured Markdown.
+2. **Groundwork** — Update [`packages/bm-design/src/theme.css`](packages/bm-design/src/theme.css) (`@theme`) and [`packages/bm-design/src/tokens.ts`](packages/bm-design/src/tokens.ts) **together**; align names with [`docs/design/bm-semantic-tokens-proposal.md`](docs/design/bm-semantic-tokens-proposal.md).
+3. **Contract** — Obey [`docs/design/styling-contract.md`](docs/design/styling-contract.md) so future changes stay consistent.
+4. **Proof** — Land **one vertical UI slice** (e.g. **app shell / header**) using the new semantics end-to-end to validate the pipeline.
+5. **Cleanup** — Migrate **one component or route area at a time**; track progress in [`docs/technical/08_ui_element_analysis.md`](docs/technical/08_ui_element_analysis.md) where helpful.
+
+**Legacy / to migrate:** `packages/sip18-forum` was cleaned of Daisy-only utilities; it may still use ad-hoc Tailwind colors — treat as a **separate pass** to align with `bm-design`. Do not reintroduce DaisyUI.
+
 ## Development Rules
 
 1. **Start from use cases** — every feature traces to `/docs/use-cases/`. Do not build contracts or components without a corresponding use case.
@@ -110,6 +149,7 @@ Routing: try CLOB first (if matching limit orders exist), otherwise fall back to
 3. **Push complexity off-chain** — keep contracts minimal; matching logic lives in the API.
 4. **`bm-ui` is presentation-only** — no business logic, no API calls, no stores. Pass everything via props.
 5. **Keep logic out of routes** — use `/lib` for business logic in both frontend and API.
+6. **Styling** — follow [`docs/design/styling-contract.md`](docs/design/styling-contract.md); prefer semantic tokens from `bm-design` over raw palette classes in product UI.
 
 ## Critical Invariants
 
