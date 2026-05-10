@@ -20,7 +20,10 @@ function getPhantom(): PhantomSolanaProvider {
 export const solanaAdapter: WalletAdapter = {
   async connect(opts?: { onlyIfTrusted?: boolean }) {
     const phantom = getPhantom();
-
+    phantom?.on("accountChanged", async (publicKey) => {
+      console.log("accountChanged", publicKey);
+      await solanaAdapter.disconnect();
+    });
     // For button-driven wallet flow:
     await phantom.connect(opts);
   },

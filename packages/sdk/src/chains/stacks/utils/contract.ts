@@ -26,14 +26,14 @@ export async function callContractReadOnly(
     });
     if (!response.ok) {
       console.error(
-        "callContractReadOnly4: response not ok: for data: ",
-        response,
+        "callContractReadOnly4: response not ok: status: ",
+        response.status + " " + response.statusText,
       );
       console.error(
-        "callContractReadOnly4: response not ok: for data: ",
+        "callContractReadOnly4: response not ok: message: ",
         await response.text(),
       );
-      console.error("callContractReadOnly4: response not ok: for data: ", data);
+      console.error("callContractReadOnly4: response not ok: data: ", data);
       return null;
     }
     val = await response.json();

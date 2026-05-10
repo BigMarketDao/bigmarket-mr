@@ -10,7 +10,10 @@
 		getBtcAddress,
 		getStxAddress,
 		allowedTokenStore,
-		chainStore
+		chainStore,
+
+		walletState
+
 	} from '@bigmarket/bm-common';
 	import { resolve } from '$app/paths';
 	import { daoLink } from '$lib/core/tools/site';
@@ -134,6 +137,8 @@
 				</div>
 
 				<div class="flex flex-col items-start">
+					{#if $walletState.chain === 'stacks'}
+
 					<div class="flex items-center space-x-2">
 						<span class="text-sm font-semibold dark:text-gray-100">
 							{truncate(showStacksAddress ? stxAddress : (getBtcAddress()?.toUpperCase() ?? ''))}
@@ -144,6 +149,20 @@
 							{showStacksAddress ? 'STX' : 'BTC'}
 						</span>
 					</div>
+					{:else if $walletState.chain === 'solana'}
+					<div class="flex items-center space-x-2">
+						<span class="text-sm font-semibold dark:text-gray-100">
+							{truncate($walletState.activeAccount?.address)}
+						</span>
+						<span
+							class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+						>
+							SOL
+						</span>
+					</div>
+					{:else}
+					unknown wallet
+					{/if}
 				</div>
 			</div>
 		</button>
@@ -157,12 +176,23 @@
 						<div class="space-y-1">
 							<div class="text-xs text-gray-500 dark:text-gray-400">Connected wallet</div>
 							<div class="flex items-center justify-between">
+							{#if $walletState.chain === 'stacks'}
 								<div
 									class="max-w-[14rem] font-mono text-[10px] text-gray-900 dark:text-gray-100"
 									title={showStacksAddress ? stxAddress : (btcAddress?.toUpperCase() ?? '')}
 								>
 									{showStacksAddress ? stxAddress : (btcAddress?.toUpperCase() ?? '')}
 								</div>
+							{:else if $walletState.chain === 'solana'}
+								<div
+									class="max-w-[14rem] font-mono text-[10px] text-gray-900 dark:text-gray-100"
+									title={$walletState.activeAccount?.address}
+								>
+									{$walletState.activeAccount?.address}
+								</div>
+								{:else}
+								unknown wallet
+								{/if}
 							</div>
 						</div>
 

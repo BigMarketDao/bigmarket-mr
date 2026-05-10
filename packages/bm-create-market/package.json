@@ -45,7 +45,6 @@
     "@bigmarket/sdk": "workspace:*",
     "@bigmarket/sip18-forum": "workspace:*",
     "@bigmarket/sip18-forum-types": "workspace:*",
-    "isomorphic-dompurify": "^3.10.0",
     "lucide-svelte": "^1.0.1",
     "luxon": "^3.7.2"
   }

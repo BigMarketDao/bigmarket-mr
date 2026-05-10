@@ -52,7 +52,6 @@ import {
   getSellCategoryPostConditions,
   getSip10PostConditions,
 } from "./utils/postConditions.js";
-import { getStxAddress } from "@stacks/connect";
 import { hexToBytes } from "@stacks/common";
 import {
   generateMerkleProof,

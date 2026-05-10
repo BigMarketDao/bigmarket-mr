@@ -1,6 +1,5 @@
 import { getStxAddress } from "@bigmarket/bm-common";
 import {} from "@bigmarket/bm-types";
-import DOMPurify from "isomorphic-dompurify";
 export function validatePoll(poll, marketFeeBipsMax) {
     const errors = {};
     // Title
@@ -179,18 +178,27 @@ export function validateMarketFee(fee, marketFeeBipsMax) {
         return { isValid: true, message: "" };
     }
 }
-// Enhanced input sanitization with comprehensive XSS prevention
-// SECURITY: Uses DOMPurify to prevent XSS attacks and malicious code injection
-// Protects against HTML injection, JavaScript injection, and other attack vectors
+/** Strip tags and decode a few entities — pure TS so SSR never loads jsdom (isomorphic-dompurify). */
+function stripHtmlToPlainText(raw) {
+    let s = raw;
+    let prev = "";
+    while (s !== prev) {
+        prev = s;
+        s = s.replace(/<[^>]*>/g, "");
+    }
+    return s
+        .replace(/&nbsp;/g, " ")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/g, "&");
+}
+// Enhanced input sanitization (no browser DOM / no jsdom on SSR)
 export function sanitizeInput(input) {
     if (!input || typeof input !== "string")
         return "";
-    // Use DOMPurify for comprehensive XSS protection
-    const sanitized = DOMPurify.sanitize(input, {
-        ALLOWED_TAGS: [], // No HTML tags allowed
-        ALLOWED_ATTR: [],
-        KEEP_CONTENT: true,
-    });
+    const sanitized = stripHtmlToPlainText(input);
     return sanitized
         .trim()
         .replace(/javascript:/gi, "")
