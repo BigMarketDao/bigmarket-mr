@@ -183,22 +183,22 @@
 
     <!-- Vote Metadata Table (optional toggle) -->
     {#if showTable}
-      <table class="border-base-300 mt-4 table w-full border text-sm">
+      <table class="mt-4 w-full border-collapse border border-zinc-200 text-sm dark:border-zinc-700">
         <thead>
           <tr>
-            <th class="bg-base-300">Label</th>
-            <th class="bg-base-300">Value</th>
+            <th class="bg-zinc-100 px-3 py-2 text-left font-semibold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">Label</th>
+            <th class="bg-zinc-100 px-3 py-2 text-left font-semibold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">Value</th>
           </tr>
         </thead>
-        <tbody>
-          <tr><td>Proposer</td><td>{resolutionVote.proposer}</td></tr>
-          <tr><td>End Height</td><td>{resolutionVote.endBurnHeight}</td></tr>
-          <tr><td>Concluded</td><td>{resolutionVote.concluded.toString()}</td></tr>
+        <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
+          <tr><td class="px-3 py-2">Proposer</td><td class="px-3 py-2">{resolutionVote.proposer}</td></tr>
+          <tr><td class="px-3 py-2">End Height</td><td class="px-3 py-2">{resolutionVote.endBurnHeight}</td></tr>
+          <tr><td class="px-3 py-2">Concluded</td><td class="px-3 py-2">{resolutionVote.concluded.toString()}</td></tr>
           {#if resolutionVote.concluded}
-            <tr><td>Winner</td><td>{resolutionVote.winningCategory}</td></tr>
+            <tr><td class="px-3 py-2">Winner</td><td class="px-3 py-2">{resolutionVote.winningCategory}</td></tr>
           {/if}
-          <tr><td>Votes For</td><td>{resolutionVote.votes[1]}</td></tr>
-          <tr><td>Votes Against</td><td>{resolutionVote.votes[0]}</td></tr>
+          <tr><td class="px-3 py-2">Votes For</td><td class="px-3 py-2">{resolutionVote.votes[1]}</td></tr>
+          <tr><td class="px-3 py-2">Votes Against</td><td class="px-3 py-2">{resolutionVote.votes[0]}</td></tr>
         </tbody>
       </table>
     {/if}
@@ -209,7 +209,7 @@
         <p>You have no governance tokens available.</p>
         <p class="mt-2">
           They may be locked in another vote. Visit the
-          <a href="/dao?tab=token-sale" class="link link-primary">mint page</a> to mint or unlock tokens.
+          <a href="/dao?tab=token-sale" class="text-orange-600 underline hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300">mint page</a> to mint or unlock tokens.
         </p>
       </div>
     {:else if resolutionVote.endBurnHeight >= currentBurnHeight && sip10Data}
@@ -279,7 +279,7 @@
           errorMessage = undefined;
           concludeVote();
         }}
-        class="btn btn-success mt-2 w-full sm:w-auto"
+        class="mt-2 inline-flex w-full items-center justify-center rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 sm:w-auto dark:focus:ring-offset-gray-900"
       >
         Conclude Vote
       </button>

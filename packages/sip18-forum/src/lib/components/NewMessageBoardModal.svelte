@@ -82,7 +82,11 @@
 
 <!-- Button to open modal -->
 <div class="flex justify-center">
-  <button class="btn variant-filled bg-primary-500" onclick={() => (modalOpen = true)}>
+  <button
+    type="button"
+    class="rounded-md bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600"
+    onclick={() => (modalOpen = true)}
+  >
     New Board
   </button>
 </div>
@@ -90,42 +94,42 @@
 <!-- Modal -->
 {#if modalOpen}
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/100">
-    <div class="bg-base-100 w-full max-w-lg space-y-4 rounded-lg p-6 shadow-lg">
+    <div class="w-full max-w-lg space-y-4 rounded-lg border border-zinc-200 bg-white p-6 shadow-lg dark:border-zinc-700 dark:bg-zinc-950">
       <h2 class="text-xl font-bold">Create a New Message Board</h2>
 
       {#if template}
         <input
           type="text"
-          class="input input-bordered w-full"
+          class="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
           bind:value={template.title}
           placeholder="This message board title"
         />
 
         <!-- Markdown Input -->
         <div class="space-y-2">
-          <label for="content-entry" class="label font-semibold">Board Content</label>
+          <label for="content-entry" class="block text-sm font-semibold text-zinc-800 dark:text-zinc-200">Board Content</label>
           {#if !showPreview}
             <textarea
               id="content-entry"
-              class="textarea textarea-bordered min-h-[120px] w-full"
+              class="min-h-[120px] w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
               bind:value={template.content}
               placeholder="About this message board in Markdown…"
             ></textarea>
           {:else}
-            <div class="prose bg-base-100 border-base-300 max-w-none rounded border p-4">
+            <div class="prose max-w-none rounded border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
               {@html marked(template.content)}
             </div>
           {/if}
           <button
             type="button"
-            class="btn btn-sm btn-ghost mt-1"
+            class="mt-1 rounded-md px-2 py-1 text-xs font-semibold text-zinc-600 underline-offset-4 hover:bg-zinc-100 hover:underline dark:text-zinc-400 dark:hover:bg-zinc-800"
             onclick={() => (showPreview = !showPreview)}
           >
             {showPreview ? 'Edit Markdown' : 'Preview Markdown'}
           </button>
         </div>
       {:else}
-        <p class="text-sm text-base-content/70">Loading form…</p>
+        <p class="text-sm text-zinc-500 dark:text-zinc-400">Loading form…</p>
       {/if}
 
       {#if error}
@@ -133,17 +137,32 @@
       {/if}
 
       <div class="flex justify-end gap-2">
-        <button class="btn" onclick={() => (modalOpen = false)} disabled={loading}>
+        <button
+          type="button"
+          class="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          onclick={() => (modalOpen = false)}
+          disabled={loading}
+        >
           Cancel
         </button>
 
         {#key componentKey}
           {#if isConnected}
-            <button class="btn btn-primary" onclick={handleSubmit} disabled={loading}>
+            <button
+              type="button"
+              class="rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 disabled:opacity-50 dark:bg-orange-500 dark:hover:bg-orange-600"
+              onclick={handleSubmit}
+              disabled={loading}
+            >
               {loading ? 'Posting…' : 'Create'}
             </button>
           {:else}
-            <button class="btn btn-primary" onclick={handleConnect} disabled={loading}>
+            <button
+              type="button"
+              class="rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 disabled:opacity-50 dark:bg-orange-500 dark:hover:bg-orange-600"
+              onclick={handleConnect}
+              disabled={loading}
+            >
               Connect Wallet
             </button>
           {/if}

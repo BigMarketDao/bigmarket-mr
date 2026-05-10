@@ -34,8 +34,11 @@
 
 {#key componentKey}
 	{#if connected}
-		<button onclick={toggleAuth} class="btn bg-primary-800"
-			><CircleUser class="mr-1 inline-block" size={20} /> {$storedBnsData}</button
+		<button
+			type="button"
+			onclick={toggleAuth}
+			class="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+			><CircleUser class="inline-block" size={20} /> {$storedBnsData}</button
 		>
 	{:else}
 		<button onclick={toggleAuth}><Wallet size={20} /></button>

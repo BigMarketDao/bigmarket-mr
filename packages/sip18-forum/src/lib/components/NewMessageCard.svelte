@@ -29,12 +29,15 @@
 
 
   const defaultContainer = 'p-5 m-5 border rounded-xl p-4 shadow-sm';
-  const defaultTitleInput = 'input w-full border-gray-300';
+  const defaultTitleInput =
+    'block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white';
   const defaultContentEditor = 'textarea w-full min-h-[120px] border-gray-300';
   const defaultContentPreview = 'prose max-w-none bg-gray-100 p-4 rounded';
   const defaultError = 'text-sm text-red-600 mt-2';
-  const defaultButtonCancel = 'btn btn-outline';
-  const defaultButtonPost = 'btn btn-primary';
+  const defaultButtonCancel =
+    'rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900';
+  const defaultButtonPost =
+    'rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600';
   const defaultReplyLink = 'text-tertiary text-sm underline';
 
   type MessageTemplate = ReturnType<typeof getNewMessageTemplate>;
@@ -145,14 +148,14 @@
         {/if}
         <button
           type="button"
-          class="btn btn-sm btn-ghost"
+          class="rounded-md px-2 py-1 text-xs font-semibold text-zinc-600 underline-offset-4 hover:bg-zinc-100 hover:underline dark:text-zinc-400 dark:hover:bg-zinc-800"
           onclick={(e) => {e.preventDefault(); (showPreview = !showPreview)}}
         >
           {showPreview ? 'Edit Markdown' : 'Preview Markdown'}
         </button>
       </div>
     {:else}
-      <p class="text-sm text-base-content/70">Loading form…</p>
+      <p class="text-sm text-zinc-500 dark:text-zinc-400">Loading form…</p>
     {/if}
 
     {#if error}

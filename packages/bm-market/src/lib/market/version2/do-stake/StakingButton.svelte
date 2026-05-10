@@ -68,7 +68,7 @@
 <div>
   <button
     on:click={() => setCurrentIndex(index)}
-    class={`btn w-full min-w-[120px] justify-center rounded-full px-4 py-2 text-lg font-semibold transition-colors duration-200
+    class={`inline-flex w-full min-w-[120px] cursor-pointer items-center justify-center rounded-full border px-4 py-2 text-lg font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2
       ${currentIndex === index ? 'border-secondary-600 bg-secondary-100 text-secondary-800 hover:bg-primary border hover:text-white' : 'border-primary bg-primary hover:bg-primary-700 border text-white'}`}
   >
     <span>BUY {@html getlabel()}</span>

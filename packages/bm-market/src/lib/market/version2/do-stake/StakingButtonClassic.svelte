@@ -41,7 +41,7 @@
   <!-- Stake Button -->
   <button
     onclick={() => !purchaseInfoResponse.willFail && marketActive && doPrediction(index)}
-    class={`btn w-full min-w-[120px] justify-center rounded px-4 py-2 text-lg font-semibold transition
+    class={`inline-flex w-full min-w-[120px] cursor-pointer items-center justify-center rounded border px-4 py-2 text-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2
 		${purchaseInfoResponse.willFail || !marketActive ? 'cursor-not-allowed border border-gray-300 bg-gray-800 ' : 'bg-primary-600 hover:bg-primary-700 focus:ring-primary-400  focus:ring-2 focus:ring-offset-2 focus:outline-none'}`}
     disabled={purchaseInfoResponse.willFail || !marketActive}
   >
@@ -49,7 +49,7 @@
   </button>
 
   <!-- Trade Details -->
-  <div class="card bg-base-200 px-4 py-3 text-sm">
+  <div class="rounded-lg bg-zinc-100 px-4 py-3 text-sm dark:bg-zinc-800/80">
     {#if purchaseInfoResponse.willFail}
       <div class="font-semibold text-red-500">❌ {purchaseInfoResponse.reason}</div>
     {:else if marketActive}

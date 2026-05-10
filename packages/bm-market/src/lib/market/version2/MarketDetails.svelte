@@ -19,7 +19,9 @@
 		<p class="text-primary flex-1 text-sm leading-relaxed">
 			{@html market.unhashedData.description}
 		</p>
-		<span class="badge badge-success px-4 py-2 text-sm whitespace-nowrap">
+		<span
+			class="inline-flex shrink-0 rounded-full bg-emerald-100 px-4 py-2 text-sm font-medium whitespace-nowrap text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200"
+		>
 			{@html getMarketStatus($chainStore.stacks.burn_block_height, market)}
 		</span>
 	</div>

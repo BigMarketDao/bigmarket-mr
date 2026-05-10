@@ -376,7 +376,7 @@
         </label>
         <input
           id="lp-add-amount"
-          class="input input-bordered w-full border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+          class="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
           inputmode="decimal"
           placeholder="0.00"
           bind:value={addAmountHuman}
@@ -388,7 +388,7 @@
         <SlippageSlider slippage={slipAdd} setSlippage={(s) => (slipAdd = s)} />
         <button
           type="button"
-          class="btn btn-primary btn-block w-full border-0 bg-emerald-600 text-white hover:bg-emerald-700"
+          class="inline-flex w-full items-center justify-center rounded-md border-0 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
           onclick={doAddLiquidity}
         >
           Add liquidity
@@ -401,7 +401,7 @@
         </label>
         <input
           id="lp-remove-amt"
-          class="input input-bordered w-full border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+          class="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
           inputmode="numeric"
           placeholder="0"
           bind:value={removeAmountHuman}
@@ -410,14 +410,14 @@
           Total pool stakes: <strong>{totalPoolStakes}</strong>. Your request must stay below that. Est. refund ~
           {fmtMicroToStx(estimatedRefundRemove, sip10Data.decimals)} {sip10Data.symbol}; min refund {minRefundRemove} µ
         </p>
-        <div class="form-control w-full">
+        <div class="w-full">
           <label class="mb-2 flex items-center justify-between" for="lp-remove-slip">
             <span class="text-sm font-medium text-gray-800 dark:text-gray-100">Refund slippage</span>
             <span class="text-sm text-gray-600 dark:text-gray-300">{(slipRemove * 100).toFixed(2)}%</span>
           </label>
           <input
             id="lp-remove-slip"
-            class="range range-primary w-full"
+            class="h-2 w-full cursor-pointer appearance-none rounded-lg bg-zinc-200 accent-orange-600 dark:bg-zinc-700 dark:accent-orange-500"
             type="range"
             min="0.001"
             max="0.05"
@@ -427,7 +427,7 @@
         </div>
         <button
           type="button"
-          class="btn btn-primary btn-block w-full border-0 bg-emerald-600 text-white hover:bg-emerald-700"
+          class="inline-flex w-full items-center justify-center rounded-md border-0 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
           onclick={doRemoveLiquidity}
         >
           Remove liquidity
@@ -441,7 +441,7 @@
       />
       <button
         type="button"
-        class="mt-5 btn btn-primary btn-block w-full border-0 bg-amber-600 text-white hover:bg-amber-700"
+        class="mt-5 inline-flex w-full items-center justify-center rounded-md border-0 bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900"
         onclick={doClaimLpFees}
         disabled={lpSharesRaw <= 0}
       >

@@ -13,10 +13,6 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
-@plugin 'daisyui' {
-	/* https://daisyui.com/docs/config/ — only listed themes are emitted */
-	themes: synthwave --default;
-}
 
 @layer base {
 	html {

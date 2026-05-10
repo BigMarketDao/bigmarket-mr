@@ -2,7 +2,7 @@
 	import ConnectMenuDropdown from './ConnectMenuDropdown.svelte';
 	import { onDestroy, onMount } from 'svelte';
 	import SlotModal from './SlotModal.svelte';
-	import { showOnRampModal, userReputationStore } from '@bigmarket/bm-common';
+	import { showOnRampModal } from '@bigmarket/bm-common';
 	import {
 		Menu,
 		X,
@@ -21,7 +21,7 @@
 	import { disconnectWallet } from '@bigmarket/bm-common';
 	import { resolve } from '$app/paths';
 	import { mainNavLinks } from '$lib/core/tools/site';
-	import { HeaderButton, HeaderButtonReputation } from '@bigmarket/bm-ui';
+	import { HeaderButton } from '@bigmarket/bm-ui';
 	import { isCoordinator } from '$lib/core/tools/security';
 	import { page } from '$app/state';
 	import { afterNavigate } from '$app/navigation';
@@ -134,17 +134,18 @@
 					{/each}
 					{#if isLoggedIn()}
 						{#if isCoordinator(getStxAddress())}<HeaderButton
-								href="/market-mgt"
-								label="Create"
+								href={resolve('/market-mgt')}
+								label="Start a Market"
 								active={currentPath.startsWith('/market-mgt')}
 							/>{/if}
 						<HeaderButton
-							href={`/my-markets/${getStxAddress()}`}
-							label="My Markets"
+							href={resolve(`/my-markets/${getStxAddress()}`)}
+							label="My Bets"
 							active={currentPath.startsWith('/my-markets')}
 						/>
-						<HeaderButtonReputation
-							weightedReputation={$userReputationStore.userReputationData?.weightedReputation || 0}
+						<HeaderButton
+							href={resolve('/reputation')}
+							label="Reputation Hub"
 							active={currentPath.startsWith('/reputation')}
 						/>
 					{/if}
@@ -261,7 +262,7 @@
 								</div>
 								<div class="flex-1">
 									<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-										My Markets
+										My Bets
 									</div>
 									<div class="text-xs text-gray-500 dark:text-gray-400">View your positions</div>
 								</div>

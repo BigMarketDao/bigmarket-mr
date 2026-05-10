@@ -15,8 +15,8 @@
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-1">
   <!-- Total Staked Chart -->
   {#if showStake}
-    <div class="card bg-base-200 w-full border border-purple-600/20 p-5 shadow-sm">
-      <div class="card-body space-y-2">
+    <div class="w-full rounded-lg border border-purple-600/20 bg-zinc-100 p-5 shadow-sm dark:bg-zinc-800/80">
+      <div class="space-y-2">
         {#if typeof window !== 'undefined'}
           <StakeChart height={300} simplified={false} {market} title={'Stake History'} />
         {/if}
@@ -27,9 +27,9 @@
   <!-- TVL Chart -->
   {#if showTvl}
     <div
-      class="card bg-base-200 border border-purple-600/20 p-5 text-gray-900 shadow-sm dark:text-gray-100"
+      class="w-full rounded-lg border border-purple-600/20 bg-zinc-100 p-5 text-gray-900 shadow-sm dark:bg-zinc-800/80 dark:text-gray-100"
     >
-      <div class="card-body space-y-2">
+      <div class="space-y-2">
         {#if typeof window !== 'undefined'}
           <TVLChart height={300} {market} title={'TVL'} />
         {/if}

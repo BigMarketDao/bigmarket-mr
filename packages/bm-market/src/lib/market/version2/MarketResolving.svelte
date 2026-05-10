@@ -105,10 +105,10 @@
 
       <ul class="mt-2 list-inside list-disc space-y-1">
         <li>
-          <a href="/dao?tab=token-sale" class="link link-primary">Get voting tokens</a>
+          <a href="/dao?tab=token-sale" class="text-orange-600 underline hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300">Get voting tokens</a>
         </li>
         <li>
-          <a href="/docs" class="link link-primary">Read the docs</a> for full details.
+          <a href="/docs" class="text-orange-600 underline hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300">Read the docs</a> for full details.
         </li>
       </ul>
     </div>
@@ -152,7 +152,7 @@
       <FinaliseMarket {market} />
     {:else}
       <button
-        class="btn btn-primary w-full sm:w-auto"
+        class="inline-flex w-full items-center justify-center rounded-md bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 sm:w-auto dark:focus:ring-offset-gray-900"
         on:click={() => {
           errorMessage = '';
           login();

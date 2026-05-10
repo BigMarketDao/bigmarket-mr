@@ -353,7 +353,7 @@
 
 {#if typeof window !== 'undefined' && options}
   {#if title}
-    <h2 class="card-title mb-6 text-2xl text-gray-900 dark:text-gray-100">{title}</h2>
+    <h2 class="mb-6 text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">{title}</h2>
   {/if}
   {#if chart}
   <div

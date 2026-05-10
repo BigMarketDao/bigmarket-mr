@@ -57,7 +57,7 @@
   });
 </script>
 
-<div class="form-control w-full space-y-3 rounded-lg py-4">
+<div class="w-full space-y-3 rounded-lg py-4">
   <label for="Contribution" class="label">
     <span class="label-text font-semibold">Voting Power</span>
   </label>
