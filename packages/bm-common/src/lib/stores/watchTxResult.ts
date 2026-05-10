@@ -1,5 +1,6 @@
 // src/lib/utils/transactionWatcher.ts
 import { writable } from "svelte/store";
+import { errorCodes } from "./contractErrors.js";
 
 export interface TxStatus {
   txid: string;
@@ -48,11 +49,22 @@ export async function watchTransaction(
 }
 
 export function lookupError(txStatus: TxStatus) {
-  if ((txStatus.txResult?.tx_result?.repr as string).indexOf("u10039") > -1) {
-    return "oracle failed to lookup price";
-  }
-  return txStatus.txResult?.tx_result?.repr;
+  // if ((txStatus.txResult?.tx_result?.repr as string).indexOf("u10039") > -1) {
+  //   return "oracle failed to lookup price";
+  // }
+  return getErrorMessage(txStatus);
 }
+const getErrorMessage = (txStatus: any): string => {
+  const repr = txStatus.txResult?.tx_result?.repr;
+  if (typeof repr !== "string") {
+    return "unknown error";
+  }
+  const match = repr.match(/^\(?err\s+(u\d+)\)?$/);
+  if (!match) {
+    return "unknown error";
+  }
+  return errorCodes[match[1]] ?? "unknown error";
+};
 
 export async function readBaseDaoEvents(
   bmApi: string,

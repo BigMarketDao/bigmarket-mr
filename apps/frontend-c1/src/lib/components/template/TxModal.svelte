@@ -47,6 +47,7 @@
 	});
 </script>
 
+/* eslint-disable svelte/no-at-html-tags */ /* eslint-disable svelte/no-at-html-tags */
 {#if modal.open && modal.txId}
 	{@const txId = modal.txId}
 	<SlotModal onClose={closeTxModal}>
@@ -58,7 +59,7 @@
 					<h2 class="mb-3 text-lg font-bold">Transaction Submitted</h2>
 
 					<p class="mb-2 text-base font-medium text-gray-800 dark:text-gray-100">
-						{txMessage}
+						{@html txMessage}
 					</p>
 
 					<!-- Spinner visible only while pending -->
