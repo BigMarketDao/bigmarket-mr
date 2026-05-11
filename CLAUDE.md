@@ -76,7 +76,7 @@ pnpm --filter @bigmarket/bm-ui typecheck
 ### Layers
 
 **Clarity contracts** (`contracts/stacks/bigmarket-dao/contracts/`)  
-Custody, market state, settlement, resolution. Key contracts: `bigmarket-dao.clar`, `bme024-0-market-predicting` (CPMM curve), `bme030-0-reputation-token`.
+Custody, market state, settlement, resolution. Key contracts: `bigmarket-dao.clar`, `bme024-0-market-predicting/bme024-0-market-scalar-pyth` (CPMM curve), `bme030-0-reputation-token`.
 
 **TypeScript SDK** (`packages/sdk/`)  
 Typed wrappers around Stacks.js for contract calls. Structured as `chains/`, `wallet/`, `internal/`. All contract interaction goes through here.
@@ -92,13 +92,9 @@ Svelte 5 runes mode. Routes in `src/routes/`, business logic in `src/lib/core/`,
 - `bm-design` — design tokens consumed by Tailwind
 - `bm-config` — configuration helpers
 
-### Vault Model
-
-The vault contract custodies all user funds. Users deposit SIP-010 tokens; balances are tracked as `total = available + reserved`. Funds move to "reserved" when allocated to markets, "available" when withdrawable. **Never bypass the vault for fund movement.**
-
 ## Development Rules
 
-1. **Start from use cases** — every feature traces to `/docs/use-cases/`. Do not build contracts or components without a corresponding use case.
+1. **Start from use cases** — new features trace to `/docs/use-cases/`. Do not build contracts or components without a corresponding use case.
 2. **Build vertical slices** — each slice includes minimal frontend + API + contract, is deployable and testable before expanding.
 3. **Push complexity off-chain** — keep contracts minimal; matching logic lives in the API.
 4. **`bm-ui` is presentation-only** — no business logic, no API calls, no stores. Pass everything via props.
