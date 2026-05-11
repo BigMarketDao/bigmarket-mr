@@ -1,254 +1,51 @@
-# BigMarket UI Design System
+# BigMarket UI System (Architecture Scope)
 
-## Overview
+This document defines **layer boundaries** only.
 
-BigMarket uses a **monorepo-based design system** built on:
+For styling and token rules, use canonical design docs:
 
-- **SvelteKit (Svelte 5)**
-- **Tailwind CSS**
-- A shared component library: `@bigmarket/bm-ui`
+- `docs/design/styling-contract.md`
+- `docs/design/bm-semantic-tokens-proposal.md`
+- `docs/design/skeleton-theme-nouveau.md`
+- `docs/design/polymarket-ui-audit.md`
 
-The goal is to maintain:
+## 1) Layer boundaries
 
-- consistency across apps
-- fast iteration
-- low coupling between UI and business logic
+### `packages/bm-ui` (presentation-only)
 
----
+- Reusable visual primitives and composed UI blocks.
+- No API calls.
+- No DAO/business logic.
+- No direct app-store coupling.
+- Inputs via props/events/slots only.
 
-## Architecture
+### `apps/frontend-c1` (composition + behavior)
 
-### 1. UI Package (`packages/bm-ui`)
+- Composes `bm-ui` components into feature flows.
+- Owns route-level behavior, stores, SDK/API orchestration, and domain logic.
 
-This is the **design system layer**.
+## 2) Component rules
 
-Location:
+- Prefer small composable primitives.
+- Keep variants explicit and shallow.
+- Use slots for composition instead of hardcoded domain copy/layout.
+- Keep naming generic in `bm-ui`; domain-specific naming belongs in app code.
 
-```
-packages/bm-ui/src/lib/components/
-```
+## 3) Reactivity rules
 
-Structure:
+- Use Svelte 5 runes in app and packages where relevant.
+- UI components accept state via props; they should not own global product state.
 
-```
-ui/
-  accordion/
-  badge/
-  button/
-  card/
-  input/
-  modal/
-  select/
-  ...
-```
+## 4) Canonical styling ownership
 
-### Rules
+Do not duplicate token/styling contracts in this file.
 
-- Components are **presentation only**
-- No business logic (no DAO, API, or app state)
-- No direct store access
-- No network calls
-- Components are reusable and generic
+- Source of truth for theme/token values:
+  - `packages/bm-design/src/theme.css`
+  - `packages/bm-design/src/tokens.ts`
+- Contract and migration rules:
+  - `docs/design/styling-contract.md`
 
----
+## 5) Guiding principle
 
-### 2. Application Layer (`apps/frontend-c1`)
-
-This is where:
-
-- UI components are composed
-- business logic lives
-- stores are used
-- SDK/client calls are made
-
-Example:
-
-```
-apps/frontend-c1/src/lib/components/dao/DepositForm.svelte
-```
-
----
-
-## Styling
-
-### Tailwind CSS
-
-- Tailwind is configured **only in the app**
-- Location:
-
-```
-apps/frontend-c1/tailwind.config.ts
-```
-
-### Content paths MUST include:
-
-```
-./src/**/*.{html,js,svelte,ts}
-../../packages/bm-ui/src/**/*.{html,js,svelte,ts}
-```
-
-This ensures Tailwind picks up classes from `bm-ui`.
-
----
-
-### Styling Rules
-
-- Use Tailwind utility classes
-- Prefer simple, composable styles
-- Avoid inline styles
-- Avoid complex CSS unless necessary
-
----
-
-## Component Design Principles
-
-### 1. Composability
-
-Components should be:
-
-- small
-- reusable
-- composable
-
-Example:
-
-- `Button`
-- `Input`
-- `Card`
-- `Badge`
-
----
-
-### 2. Variants via props
-
-Use simple props for styling variations:
-
-```ts
-variant: "primary" | "secondary" | "ghost";
-```
-
-Avoid:
-
-- deeply nested variants
-- complex style logic
-
----
-
-### 3. Slots for flexibility
-
-Use slots to allow composition:
-
-```svelte
-<Card>
-  <h2>Title</h2>
-  <p>Content</p>
-</Card>
-```
-
----
-
-### 4. No domain knowledge
-
-❌ Avoid:
-
-- `DepositButton`
-- `VotePanel`
-- `DaoCard`
-
-✅ Instead:
-
-- `Button`
-- `Card`
-- `Dialog`
-
-Domain-specific components belong in the app.
-
----
-
-## State & Reactivity
-
-- Use **Svelte 5 runes**
-  - `$state`
-  - `$props`
-  - `$effect`
-
-- UI components should:
-  - accept props
-  - emit events (if needed)
-  - not manage global state
-
----
-
-## Naming Conventions
-
-- PascalCase for components:
-  - `Button.svelte`
-  - `FormField.svelte`
-
-- Folder per component:
-
-```
-ui/button/Button.svelte
-```
-
----
-
-## Example Usage
-
-```svelte
-<script lang="ts">
-  import { Button } from '@bigmarket/bm-ui';
-</script>
-
-<Button variant="primary">
-  Deposit
-</Button>
-```
-
----
-
-## Do's and Don'ts
-
-### ✅ Do
-
-- Keep components simple
-- Reuse primitives
-- Use Tailwind classes
-- Build UI in layers
-
----
-
-### ❌ Don’t
-
-- Put business logic in `bm-ui`
-- Access stores inside `bm-ui`
-- Hardcode API or DAO logic
-- Create tightly coupled components
-
----
-
-## Future Extensions
-
-The system may expand to include:
-
-- design tokens (colors, spacing)
-- theming (dark/light mode)
-- shared layout primitives
-- animation patterns
-
----
-
-## Guiding Principle
-
-> If a component knows about DAO, API, or business logic — it does NOT belong in `bm-ui`.
-
----
-
-## Summary
-
-- `bm-ui` = reusable UI primitives
-- `frontend-c1` = composition + logic
-- Tailwind = built at app level
-- Components = simple, composable, stateless
-
-This system prioritizes **speed, clarity, and scalability** over rigid frameworks.
+If a component knows about DAO, wallet, market settlement, or API orchestration, it belongs in app/features, not in `bm-ui`.
