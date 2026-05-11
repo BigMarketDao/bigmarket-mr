@@ -1,9 +1,14 @@
 /**
- * Tailwind v4 @theme — full default palette from Tailwind v4 theme.css, plus BigMarket semantic tokens at the end.
- * Semantic colors / spacing names: keep hex values aligned with ./tokens.ts (used by TypeScript, charts, non-CSS code).
+ * Tailwind v4 @theme — default palette + BigMarket semantics.
+ * Brand primitives (OKLCH scales, contrast tables, typography/radius base): ./vendor/skeleton-nouveau.css (Skeleton "nouveau").
+ * Keep ./tokens.ts aligned with semantic aliases for TypeScript / charts.
  */
+@import './vendor/skeleton-nouveau.css';
+
 @theme {
-	--font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+	/* Match Skeleton nouveau: body + headings (Bahnschrift stack is optional system fonts). */
+	--font-sans: var(--base-font-family);
+	--font-heading: var(--heading-font-family);
 	--font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 	--font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 	--color-red-50: oklch(97.1% 0.013 17.38);
@@ -437,19 +442,60 @@
 	  }
 	}
 
-	/* BigMarket semantic palette — mirrors packages/bm-design/src/tokens.ts (update both together). */
-	--font-sans: Inter, sans-serif;
-	--color-primary: #0f172a;
-	--color-primary-foreground: #ffffff;
-	--color-secondary: #f1f5f9;
-	--color-secondary-foreground: #0f172a;
-	--color-muted: #e2e8f0;
-	--color-muted-foreground: #64748b;
-	--color-border: #e5e7eb;
-	--color-background: #ffffff;
+	/* BigMarket semantic palette → Skeleton nouveau primitives (light defaults; .dark overrides below). */
+	--color-background: var(--color-surface-50);
+	--color-foreground: var(--color-surface-950);
+	--color-primary: var(--color-primary-500);
+	--color-primary-foreground: var(--color-primary-contrast-500);
+	/* Subtle secondary surface (not Skeleton’s cobalt family — use bg-secondary-* / accent for cobalt). */
+	--color-secondary: var(--color-surface-200);
+	--color-secondary-foreground: var(--color-surface-900);
+	--color-muted: var(--color-surface-100);
+	--color-muted-foreground: var(--color-surface-700);
+	--color-border: var(--color-surface-200);
+	--color-accent: var(--color-secondary-500);
+	--color-accent-foreground: var(--color-secondary-contrast-500);
+	--color-destructive: var(--color-error-500);
+	--color-destructive-foreground: var(--color-error-contrast-500);
+	--color-ring: var(--color-secondary-400);
+	--radius-md: var(--radius-base);
+	--radius-lg: var(--radius-container);
 	--spacing-xs: 4px;
 	--spacing-sm: 8px;
 	--spacing-md: 16px;
 	--spacing-lg: 24px;
 	--spacing-xl: 32px;
+}
+
+@layer base {
+	/* Skeleton nouveau: global type scale (1rem reference). */
+	html {
+		font-size: calc(100% * var(--text-scaling));
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-family: var(--font-heading);
+	}
+
+	.dark {
+		--color-background: var(--color-surface-950);
+		--color-foreground: var(--color-surface-50);
+		--color-primary: var(--color-primary-400);
+		--color-primary-foreground: var(--color-primary-contrast-400);
+		--color-secondary: var(--color-surface-800);
+		--color-secondary-foreground: var(--color-surface-50);
+		--color-muted: var(--color-surface-900);
+		--color-muted-foreground: var(--color-surface-300);
+		--color-border: var(--color-surface-800);
+		--color-accent: var(--color-secondary-400);
+		--color-accent-foreground: var(--color-secondary-contrast-400);
+		--color-destructive: var(--color-error-400);
+		--color-destructive-foreground: var(--color-error-contrast-400);
+		--color-ring: var(--color-secondary-300);
+	}
 }
