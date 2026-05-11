@@ -1,288 +1,149 @@
-# BigMarket Rebuild Plan (FPMM + CLOB Hybrid)
+# AGENT_CONTEXT.md
 
-## Overview
+Purpose-built context for AI coding agents and human coders working on BigMarket.
 
-BigMarket is being rebuilt from a CPMM-based prediction market into a hybrid system combining:
+## Mission
 
-- FPMM (Fixed Product Market Maker) for baseline liquidity
-- CLOB (Central Limit Order Book) for price precision and professional trading
+BigMarket is a DAO-governed prediction market on Stacks using Clarity contracts, a TypeScript SDK, an API service, and a SvelteKit frontend.
 
-This architecture is inspired by systems like Polymarket, but adapted for:
+Agents should optimise for:
 
-- Stacks / Clarity constraints
-- DAO-governed markets
-- Reputation-based participation (future BIGR system)
+1. correctness and safety of funds
+2. small vertical slices
+3. clear separation between contracts, SDK, API, frontend logic, and UI
+4. minimal on-chain complexity
+5. tests before broad refactors
 
----
+## Read First
 
-## Core Development Philosophy
+Before editing code, read:
 
-### 1. Use Case Driven Development
+- `CLAUDE.md`
+- relevant `/docs/specifications/` files
+- relevant `/docs/use-cases/` files
+- affected contract, SDK wrapper, API service, and frontend route/store
+- existing tests for the same feature area
 
-We do NOT build contracts or systems in isolation.
+Do not implement features that are not grounded in a use case.
 
-We start from **concrete user actions**, e.g.:
+## Repository Mental Model
 
-- "User places a market order"
-- "User posts a limit order"
-- "Market resolves and settles positions"
-- "User creates a new market"
+### Contracts
 
-Each use case defines:
+Location: `contracts/stacks/bigmarket-dao/contracts/`
 
-- required contracts
-- required backend logic
-- required frontend components
+Contracts own custody, market state, settlement, resolution, DAO permissions, governance, and reputation.
 
----
+Important contracts:
 
-### 2. Thin Vertical Slices
+- `bigmarket-dao.clar` — DAO core and extension registry
+- `bme024-0-market-predicting.clar` — CPMM prediction market logic
+- `bme024-0-market-scalar-pyth.clar` — scalar/Pyth market logic
+- `bme030-0-reputation-token.clar` — BIGR reputation system
+- treasury, governance, voting, liquidity, and gating extensions
 
-We build **end-to-end slices**, not layers.
+Contract work must preserve:
 
-Each slice includes:
+- funds are conserved
+- no double settlement
+- orders cannot execute twice
+- resolution is final after lock
+- state transitions are explicit and tested
 
-- minimal frontend
-- minimal backend / matcher logic
-- minimal smart contract functionality
+### SDK
 
-Example:
+Location: `packages/sdk/`
 
-Use Case: Place Market Order
-
-Includes:
-
-- UI button
-- API route
-- matching engine logic
-- contract call
-
-Each slice should be:
-
-- deployable
-- testable
-- incrementally extensible
-
----
-
-### 3. AI-Assisted Development (Cursor + ChatGPT)
-
-This project is designed to be built collaboratively with AI agents.
-
-Key principles:
-
-- Keep files small and modular
-- Use clear naming and folder structure
-- Maintain strong documentation in `/docs`
-- Each use case should be independently understandable
-
-Agents should be able to:
-
-- pick up any use case
-- understand state + invariants
-- extend safely
-
----
-
-## System Architecture (Target)
-
-### On-chain (Clarity)
-
-Responsible for:
-
-- custody of funds
-- market state
-- settlement
-- resolution logic
-
-Core contracts:
-
-- market
-- positions
-- settlement
-- governance (DAO)
-
-(see token + governance spec) :contentReference[oaicite:0]{index=0}
-
----
-
-### Off-chain
-
-Responsible for:
-
-- order book (CLOB)
-- matching engine
-- price discovery
-- indexing
-
-Components:
-
-- matcher service
-- API layer
-- indexer
-
----
+All contract interaction should go through the SDK. Do not duplicate Stacks.js call construction in frontend routes or components.
 
 ### Frontend
 
-Responsible for:
+Location: `apps/frontend-c1/`
 
-- user interaction
-- order placement
-- market display
+SvelteKit with Svelte 5 runes mode.
 
----
+Keep:
 
-## Trading Model
+- route files thin
+- business logic in `src/lib/core/`
+- state in `src/lib/stores/`
+- contract calls routed through `packages/sdk`
 
-### 1. FPMM Layer
+### API
 
-Used for:
+Location: `apps/api-v1/`
 
-- initial liquidity
-- fallback pricing
-- long-tail markets
+The API handles off-chain matching, indexing, cached market state, and any complexity that does not strictly need to live in Clarity.
 
-Characteristics:
+Do not push matching or heavy computation on-chain.
 
-- continuous liquidity
-- predictable pricing curve
+### Shared Packages
 
----
+- `bm-ui` — presentation only. No stores, no API calls, no business logic.
+- `bm-types` — shared types.
+- `bm-common` — shared utilities and stores.
+- `bm-design` — design tokens.
+- `bm-config` — config helpers.
 
-### 2. CLOB Layer
+## Agent Working Rules
 
-Used for:
+1. Start from the use case.
+2. Identify the smallest vertical slice.
+3. Check whether the change touches funds, settlement, resolution, permissions, or market state.
+4. Add or update tests before expanding scope.
+5. Prefer explicit state machines over implicit boolean combinations.
+6. Keep contracts minimal and auditable.
+7. Keep UI components dumb; pass data and callbacks via props.
+8. Never bypass the SDK for contract calls.
+9. Do not introduce hidden global state in routes or UI components.
+10. Do not “fix” unrelated code during a task unless it blocks the requested change.
 
-- active markets
-- tighter spreads
-- professional traders
+## Security Guidance for Clarity Agents
 
-Characteristics:
+Be especially cautious with:
 
-- limit orders
-- order matching
-- price-time priority
+- `tx-sender` versus `contract-caller`
+- `as-contract`
+- `contract-call?`
+- external trait arguments
+- proposal execution
+- market resolution
+- treasury transfers
+- minting, burning, locking, unlocking
+- fee calculation
+- list indexing and category matching
+- replayable signed messages
+- transitions from open → disputed → resolved → settled
 
----
+Use `contract-caller` for direct caller authorisation unless there is a deliberate reason not to.
 
-### 3. Hybrid Execution
+Any public function that changes state should have:
 
-Routing logic:
+- authorisation checks
+- input bounds
+- state-transition checks
+- replay/double-execution protection where relevant
+- tests for invalid callers and invalid states
 
-- If order matches existing limit orders → use CLOB
-- Else → fallback to FPMM
+## Known Historical Audit Themes
 
----
+Previous review material flagged recurring risk areas:
 
-## Initial Use Cases (Build Order)
+- proposal execution accepting arbitrary proposal contracts
+- `is-dao-or-extension` patterns using `tx-sender`
+- treasury transfers without sufficient bounds
+- market voting and resolution functions lacking authorisation or validation
+- external market/trait contracts not being allowlisted
+- stake/accounting updates not always tied to confirmed token movement
 
-### UC1: Market Creation
+Treat these as high-priority checks when editing related code.
 
-- DAO approves market
-- creator seeds liquidity
-- market contract initialized
+## Testing Expectations
 
----
+For contract changes run:
 
-### UC2: Market Order (FPMM)
-
-- user submits buy/sell
-- price calculated via FPMM
-- contract executes trade
-
----
-
-### UC3: Limit Order (CLOB)
-
-- user posts order
-- stored off-chain
-- matcher updates book
-
----
-
-### UC4: Order Matching
-
-- matcher pairs orders
-- generates settlement instructions
-- submits to chain
-
----
-
-### UC5: Market Resolution
-
-- oracle / DAO resolves outcome
-- positions settled
-
----
-
-### UC6: Claim Winnings
-
-- users withdraw payouts
-
----
-
-## Folder Structure Convention
-
-```tree
-/docs
-/use-cases
-/flows
-/invariants
-
-/apps
-/frontend-c1
-/backend-api
-
-/contracts
-/stacks
-
-/packages
-/sdk
+```bash
+cd contracts/stacks/bigmarket-dao
+clarinet check
+npm run test
 ```
-
----
-
-## Invariants (Critical)
-
-- Funds must always be conserved
-- No double settlement
-- Orders cannot execute twice
-- Resolution is final after lock
-
----
-
-## Development Rules
-
-1. NEVER start with contracts alone
-2. ALWAYS start with a use case
-3. BUILD end-to-end before expanding
-4. KEEP contracts minimal early
-5. PUSH complexity off-chain where possible
-
----
-
-## Key Design Insight
-
-CPMM failed because:
-
-- poor pricing efficiency
-- no expressive orders
-- weak for governance markets
-
-Hybrid FPMM + CLOB fixes this by:
-
-- enabling real price discovery
-- supporting serious traders
-- preserving long-tail liquidity
-
----
-
-## Next Step for Agents
-
-Start with:
-
-👉 `/docs/use-cases/uc2-market-order.md`
-
-Goal:
-Implement the simplest possible FPMM trade end-to-end.
