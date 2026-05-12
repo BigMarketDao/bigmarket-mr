@@ -1,4 +1,4 @@
-export type Chain = "stacks" | "solana" | "sui";
+export type Chain = "stacks" | "solana" | "sui" | "ethereum";
 
 export type WalletAccount = {
   chain: Chain;

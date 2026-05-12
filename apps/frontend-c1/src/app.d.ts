@@ -1,5 +1,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
+import type { PhantomWindow } from "@bigmarket/bm-types";
+
 declare global {
 	namespace App {
 		// interface Error {}
@@ -9,9 +11,7 @@ declare global {
 		// interface Platform {}
 	}
 	interface Window {
-		phantom?: {
-			solana?: PhantomSolanaProvider;
-		};
+		phantom?: PhantomWindow;
 	}
 
 	// interface Window {

@@ -1,13 +1,13 @@
-import { PhantomSolanaProvider } from "@bigmarket/bm-types";
+import { type PhantomProvider, type PhantomWindow } from "@bigmarket/bm-types";
 import type { WalletAdapter, WalletSession } from "../../wallet/types.js";
 
 declare global {
   interface Window {
-    phantom?: { solana?: PhantomSolanaProvider };
+    phantom?: PhantomWindow;
   }
 }
 
-function getPhantom(): PhantomSolanaProvider {
+function getPhantom(): PhantomProvider {
   const provider = window.phantom?.solana;
 
   if (!provider?.isPhantom) {
