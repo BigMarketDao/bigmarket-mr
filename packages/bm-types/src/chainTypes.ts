@@ -16,7 +16,7 @@ export type Contract = {
 
 export type PhantomEvent = "connect" | "disconnect" | "accountChanged";
 
-export type PhantomSolanaProvider = {
+export type PhantomProvider = {
   isPhantom?: boolean;
   isConnected: boolean;
   publicKey?: { toString(): string };
@@ -29,6 +29,12 @@ export type PhantomSolanaProvider = {
 
   on(event: PhantomEvent, handler: (...args: any[]) => void): void;
   removeListener?(event: PhantomEvent, handler: (...args: any[]) => void): void;
+};
+
+/** `window.phantom` — Phantom exposes a provider per chain. */
+export type PhantomWindow = {
+  solana?: PhantomProvider;
+  ethereum?: PhantomProvider;
 };
 
 export type CreatedStacksWallet = {

@@ -9,6 +9,7 @@ export * from "./tokenSaleTypes.js";
 export * from "./userWalletTypes.js";
 export * from "./marketTypes.js";
 export * from "./chainTypes.js";
+export * from "./eip1193Types.js";
 export * from "./authTypes.js";
 export * from "./signatureTypes.js";
 export * from "./daoGovernanceTypes.js";

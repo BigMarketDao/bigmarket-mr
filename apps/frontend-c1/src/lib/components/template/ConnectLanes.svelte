@@ -11,6 +11,7 @@
 
 	let walletAddress = typeof window !== 'undefined' ? getStxAddress() : '???';
 	let isPhantomConnected = $state(false);
+	let isMetaMaskConnected = $state(false);
 
 	// async function checkPhantomConnected() {
 	// 	const phantom = window.phantom?.solana;
@@ -34,10 +35,19 @@
 			).publicKey.toString();
 			console.log('publicKey', publicKey);
 		}
+		const metaMask = window.phantom?.ethereum;
+		isMetaMaskConnected = false;
+		if (metaMask && isMetaMaskConnected) {
+			const response = await metaMask.connect();
+			const publicKey = (
+				response as { publicKey: { toString: () => string } }
+			).publicKey.toString();
+			console.log('publicKey', publicKey);
+		}
 	});
 
 	const connectStacks = async () => {
-		await connectWallet(appConfig.VITE_BIGMARKET_API,'stacks');
+		await connectWallet(appConfig.VITE_BIGMARKET_API, 'stacks');
 		window.location.reload();
 	};
 
@@ -56,6 +66,21 @@
 		window.location.reload();
 	};
 
+	const connectMetaMask = async () => {
+		// const phantom = window.phantom?.solana;
+		// if (!phantom) {
+		// 	window.open('https://phantom.app/', '_blank');
+		// 	return;
+		// }
+		// const response = await phantom.connect();
+		// const publicKey = (response as { publicKey: { toString: () => string } }).publicKey.toString();
+		// console.log('publicKey', publicKey);
+		// isPhantomConnected = true;
+		await connectWallet(appConfig.VITE_BIGMARKET_API, 'ethereum');
+
+		window.location.reload();
+	};
+
 	const disconnectPhantom = async () => {
 		const phantom = window.phantom?.solana;
 		if (!phantom) {
@@ -63,6 +88,17 @@
 			return;
 		}
 		await phantom.disconnect();
+		isPhantomConnected = false;
+		window.location.reload();
+	};
+
+	const disconnectMetaMask = async () => {
+		const mm = window.phantom?.ethereum;
+		if (!mm) {
+			window.open('https://metamask.io/', '_blank');
+			return;
+		}
+		await mm.disconnect();
 		isPhantomConnected = false;
 		window.location.reload();
 	};
@@ -103,6 +139,11 @@
 						<Button onclick={disconnectPhantom}>Disconnect Phantom</Button>
 					{:else}
 						<Button onclick={connectPhantom}>Connect Phantom</Button>
+					{/if}
+					{#if isMetaMaskConnected}
+						<Button onclick={disconnectMetaMask}>Disconnect Meta Mask</Button>
+					{:else}
+						<Button onclick={connectMetaMask}>Connect Meta Mask</Button>
 					{/if}
 				</div>
 			</div>
