@@ -11,6 +11,10 @@ const stacksConnectSsrStubPath = path.resolve(
 	__dirname,
 	'src/lib/server/stacks-connect-ssr-stub.ts'
 );
+const nobleHashesAssertDefaultPath = path.resolve(
+	__dirname,
+	'src/lib/shims/noble-hashes-assert-default.ts'
+);
 
 /** @see apps/frontend-c1/src/lib/server/stacks-connect-ssr-stub.ts */
 function stacksConnectSsrStub(): Plugin {
@@ -36,7 +40,17 @@ function stacksConnectSsrStub(): Plugin {
 }
 
 export default defineConfig({
+	define: {
+		// Bundled deps (e.g. web3) reference `global`; browser only has globalThis
+		global: 'globalThis'
+	},
 	plugins: [tailwindcss(), stacksConnectSsrStub(), sveltekit()],
+	resolve: {
+		alias: {
+			// rolldown + @noble/hashes: no default export on internal `_assert` path
+			'@noble/hashes/_assert': nobleHashesAssertDefaultPath
+		}
+	},
 	// SSR @stacks/connect stubbing: stacksConnectSsrStub() (Vite's EnvironmentResolveOptions typing
 	// does not include `alias`, so per-environment aliases are not used here.)
 	// Workspace TS packages: bundle for SSR so Node does not resolve bare/extensionless paths in source.

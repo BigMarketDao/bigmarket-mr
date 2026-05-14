@@ -187,6 +187,15 @@
 									</div>
 								{/if}
 							</div>
+							{#if $walletState.chain !== 'stacks'}
+								<div class="text-xs text-gray-500 dark:text-gray-400">Mapped wallet</div>
+								<div
+									class="max-w-[14rem] font-mono text-[10px] text-gray-900 dark:text-gray-100"
+									title={$walletState.activeAccount?.mappedAddress}
+								>
+									{$walletState.activeAccount?.mappedAddress}
+								</div>
+							{/if}
 						</div>
 
 						<div class="space-y-2">
