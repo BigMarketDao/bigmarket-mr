@@ -167,17 +167,17 @@
 					<Moon class="h-4 w-4" />
 				{/if}
 			</button>
-			<!-- {#if isLoggedIn()}
+			{#if isLoggedIn()}
 				<a
 					href={resolve('/vault/deposit')}
 					class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
 					onclick={closeMenu}
 				>
 					<div class="flex-1">
-						<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">Deposit</div>
+						<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">Deposits</div>
 					</div>
 				</a>
-			{/if} -->
+			{/if}
 
 			<!-- Connect dropdown (Desktop) -->
 			<div class="hidden md:block">
@@ -214,7 +214,7 @@
 				<!-- Main Actions (Top) -->
 				<div class="mb-4 space-y-1 border-b border-gray-200 pb-4 dark:border-gray-700">
 					{#if typeof window !== 'undefined'}
-						<!-- {#if isLoggedIn()}
+						{#if isLoggedIn()}
 							<a
 								href={resolve('/vault/deposit')}
 								class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -226,11 +226,11 @@
 									<BarChart3 class="h-4 w-4" />
 								</div>
 								<div class="flex-1">
-									<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">Deposit</div>
+									<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">Deposits</div>
 									<div class="text-xs text-gray-500 dark:text-gray-400">Deposit funds</div>
 								</div>
 							</a>
-						{/if} -->
+						{/if}
 						<a
 							href={resolve('/dao')}
 							class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"

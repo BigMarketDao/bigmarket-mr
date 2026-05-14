@@ -4,6 +4,24 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ethereum": {
+      "types": "./dist/ethereum.d.ts",
+      "default": "./dist/ethereum.js"
+    },
+    "./dist/chains/stacks": {
+      "types": "./dist/chains/stacks/index.d.ts",
+      "default": "./dist/chains/stacks/index.js"
+    },
+    "./src/chains/stacks/utils/signatures": {
+      "types": "./dist/chains/stacks/utils/signatures.d.ts",
+      "default": "./dist/chains/stacks/utils/signatures.js"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -12,14 +30,16 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@bigmarket/sip18-forum-types": "workspace:*",
+    "@allbridge/bridge-core-sdk": "^3.31.0",
     "@bigmarket/bm-types": "workspace:*",
     "@bigmarket/bm-utilities": "workspace:*",
+    "@bigmarket/sip18-forum-types": "workspace:*",
     "@stacks/common": "^7.3.1",
     "@stacks/connect": "^8.2.6",
     "@stacks/encryption": "^7.4.0",
     "@stacks/transactions": "^7.4.0",
     "c32check": "^2.0.0",
-    "merkletreejs": "^0.6.0"
+    "merkletreejs": "^0.6.0",
+    "web3": "^4.16.0"
   }
 }

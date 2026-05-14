@@ -29,6 +29,7 @@ export function setDaoConfigOnStart() {
 	CONFIG.VITE_DAO_REPUTATION_TOKEN = process.env[network + '_' + 'VITE_DAO_REPUTATION_TOKEN'] || 'bme030-0-reputation-token';
 	CONFIG.VITE_DAO_TOKEN_SALE = process.env[network + '_' + 'VITE_DAO_TOKEN_SALE'] || '';
 	CONFIG.VITE_DAO_LIQUIDITY_CONTRIBUTION = process.env[network + '_' + 'VITE_DAO_LIQUIDITY_CONTRIBUTION'] || 'bme010-0-liquidity-contribution';
+	CONFIG.VITE_DAO_VAULT = process.env[network + '_' + 'VITE_DAO_VITE_DAO_VAULT'] || 'bme050-0-vault';
 	CONFIG.VITE_DAO_SCALAR_HEDGE_STRATEGY = process.env[network + '_' + 'VITE_DAO_SCALAR_HEDGE_STRATEGY'] || 'bme032-0-scalar-strategy-hedge';
 	CONFIG.VITE_DAO_RESOLUTION_COORDINATOR = process.env[network + '_' + 'VITE_DAO_RESOLUTION_COORDINATOR'] || 'bme008-0-resolution-coordinator';
 
@@ -59,4 +60,5 @@ export function printDaoConfig() {
 	console.log('VITE_DAO_REPUTATION_TOKEN = ' + CONFIG.VITE_DAO_REPUTATION_TOKEN);
 	console.log('VITE_DAO_LIQUIDITY_CONTRIBUTION = ' + CONFIG.VITE_DAO_LIQUIDITY_CONTRIBUTION);
 	console.log('VITE_DAO_RESOLUTION_COORDINATOR = ' + CONFIG.VITE_DAO_RESOLUTION_COORDINATOR);
+	console.log('VITE_DAO_VAULT = ' + CONFIG.VITE_DAO_VAULT);
 }

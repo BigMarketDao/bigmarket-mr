@@ -17,6 +17,7 @@ import { cvToJSON, deserializeCV } from '@stacks/transactions';
 import { processReputationEvents } from './processors/process_reputation_events.js';
 import { processLiquidityContributionEvents } from './processors/process_liquidity_contribution_events.js';
 import { processHedgeStrategyEvents } from './processors/process_hedge_strategy_events.js';
+import { processVaultEvents } from './processors/process_vault_events.js';
 
 export async function readDaoExtensionEvents(genesis: boolean, daoContractId: string) {
 	const extensions = await fetchExtensions(daoContractId);
@@ -129,6 +130,8 @@ export async function handleContractOrTransactionEvent(daoContract: string, exte
 			event = await processMarketPredicitonScalarEvent(basicEvent, result);
 		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_LIQUIDITY_CONTRIBUTION) > -1) {
 			event = await processLiquidityContributionEvents(basicEvent, result);
+		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_VAULT) > -1) {
+			event = await processVaultEvents(basicEvent, result);
 		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_REPUTATION_TOKEN) > -1) {
 			event = await processReputationEvents(basicEvent, result);
 		} else if (extensionContract.indexOf(getDaoConfig().VITE_DAO_SCALAR_HEDGE_STRATEGY) > -1) {

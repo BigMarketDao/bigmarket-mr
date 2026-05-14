@@ -9,6 +9,12 @@
 		/>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<script>
+			// Web3 / ethereum-cryptography expect Node's `global` (browser has globalThis only)
+			if (typeof globalThis !== 'undefined' && typeof global === 'undefined') {
+				var global = globalThis;
+			}
+		</script>
+		<script>
 			// Apply Tailwind dark mode early to avoid FOUC
 			(function () {
 				try {
