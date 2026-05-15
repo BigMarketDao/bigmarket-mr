@@ -9,6 +9,8 @@ export function setDaoConfigOnStart() {
 	CONFIG.VITE_PEPE_FULL_CONTRACT = process.env[network + '_' + 'VITE_PEPE_FULL_CONTRACT'] || '';
 	CONFIG.VITE_USDH_FULL_CONTRACT = process.env[network + '_' + 'VITE_USDH_FULL_CONTRACT'] || '';
 	CONFIG.VITE_WRAPPED_STX_FULL_CONTRACT = process.env[network + '_' + 'VITE_WRAPPED_STX_FULL_CONTRACT'] || '';
+	CONFIG.VITE_USDCX_CONTRACT_ADDRESS = process.env[network + '_' + 'VITE_USDCX_CONTRACT_ADDRESS'] || '';
+	CONFIG.VITE_USDCX_CONTRACT_NAME = process.env[network + '_' + 'VITE_USDCX_CONTRACT_NAME'] || '';
 
 	CONFIG.VITE_DAO = process.env[network + '_' + 'VITE_DAO'] || '';
 	CONFIG.VITE_DAOS = 'ecosystem-dao,bigmarket-dao';

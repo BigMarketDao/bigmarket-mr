@@ -15,6 +15,7 @@ export let marketInterestCollection: Collection;
 export let marketCategoriesCollection: Collection;
 export let marketLlmLogsCollection: Collection;
 export let crossChainMappingCollection: Collection;
+export let crossChainIntentCollection: Collection;
 
 export let authUserCollection: Collection;
 export let authProviderAccountCollection: Collection;
@@ -61,6 +62,9 @@ export async function connect() {
 
 	crossChainMappingCollection = database.collection('crossChainMappingCollection');
 	await crossChainMappingCollection.createIndex({ address: 1, mappedAddress: 1 }, { unique: true });
+
+	crossChainIntentCollection = database.collection('crossChainIntentCollection');
+	await crossChainIntentCollection.createIndex({ sendAddress: 1, receiveAddress: 1 }, { unique: true });
 
 	marketLlmLogsCollection = database.collection('marketLlmLogsCollection');
 	await marketLlmLogsCollection.createIndex({ marketId: 1, marketType: 1, event: 1 }, { unique: true });

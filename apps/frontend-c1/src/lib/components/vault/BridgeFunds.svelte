@@ -3,6 +3,7 @@
 	import { Button } from '@bigmarket/bm-ui';
 	import { stacks } from '@bigmarket/sdk';
 	import { appConfigStore, requireAppConfig, walletState, initWallet } from '@bigmarket/bm-common';
+	import { registerDepositIntent } from '@bigmarket/bm-utilities';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
@@ -100,6 +101,8 @@
 				approveTxHash = approveResult.txHash;
 			}
 
+			const intentRes = await registerDepositIntent(appConfig.VITE_BIGMARKET_API, base);
+			if (!intentRes.ok) throw new Error(await intentRes.text());
 			const { txHash: hash } = await sendAllbridgeDeposit({
 				...base,
 				toAccountAddress: mappedStx

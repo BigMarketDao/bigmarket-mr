@@ -42,7 +42,6 @@ export type CreatedStacksWallet = {
   sourceAddress: string;
   mappedChain: string;
   mappedAddress: string;
-  privateKey: string;
   network: "mainnet" | "testnet" | "devnet";
   createdAt: Date;
 };

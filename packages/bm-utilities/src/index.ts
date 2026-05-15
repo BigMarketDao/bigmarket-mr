@@ -8,3 +8,4 @@ export * from "./lib/conversion.js";
 export * from "./lib/shares.js";
 export * from "./lib/tokens.js";
 export * from "./lib/loaders.js";
+export * from "./lib/cross-chain.js";

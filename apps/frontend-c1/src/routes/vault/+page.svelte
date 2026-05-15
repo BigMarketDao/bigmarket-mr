@@ -2,7 +2,7 @@
 	import { PageContainer } from '@bigmarket/bm-ui';
 	import { onMount } from 'svelte';
 	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
-	import Deposit from '$lib/components/vault/Deposit.svelte';
+	import BridgeFunds from '$lib/components/vault/BridgeFunds.svelte';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
@@ -36,7 +36,7 @@
 					</div>
 				</div>
 				<div class="">
-					<Deposit />
+					<BridgeFunds />
 				</div>
 			</div>
 		</div>
