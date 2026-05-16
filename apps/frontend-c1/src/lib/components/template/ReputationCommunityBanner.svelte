@@ -23,14 +23,14 @@
 {#if reputationData}
 	<a
 		href={resolve('/reputation')}
-		class="group border-b border-purple-500/15 bg-gradient-to-r from-purple-50/90 via-indigo-50/80 to-purple-50/90 transition-colors hover:border-purple-500/25 hover:from-purple-50 hover:via-indigo-50 hover:to-purple-50 dark:border-purple-400/10 dark:from-purple-950/40 dark:via-indigo-950/35 dark:to-purple-950/40 dark:hover:from-purple-950/55 dark:hover:via-indigo-950/50 dark:hover:to-purple-950/55"
+		class="group block border-b border-community-border bg-community-soft transition-colors hover:bg-community-soft/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ring"
 	>
 		<div
 			class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-2 sm:px-6 lg:px-8"
 		>
-			<div class="flex min-w-0 items-center gap-2 text-purple-900 dark:text-purple-100">
+			<div class="flex min-w-0 items-center gap-2 text-community">
 				<Sparkles
-					class="h-4 w-4 shrink-0 text-purple-600 opacity-80 group-hover:text-purple-700 dark:text-purple-400 dark:group-hover:text-purple-300"
+					class="h-4 w-4 shrink-0 text-community/70 group-hover:text-community"
 					aria-hidden="true"
 				/>
 				<span class="text-xs font-semibold tracking-wide sm:text-sm">
@@ -40,10 +40,10 @@
 			</div>
 
 			<dl
-				class="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[11px] text-purple-800/90 sm:text-xs dark:text-purple-200/85"
+				class="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-xs text-community/90"
 			>
 				<div class="flex gap-1">
-					<dt class="font-medium text-purple-600/80 dark:text-purple-400/90">Epoch</dt>
+					<dt class="font-medium text-community/70">Epoch</dt>
 					<dd class="font-mono tabular-nums">
 						{fmtNumber(reputationData.currentEpoch)} (epoch duration: {reputationData.epochDuration} blocks)
 					</dd>
@@ -51,7 +51,7 @@
 
 				{#if reputationData && reputationData.rewardPerEpoch}
 					<div class="hidden gap-1 sm:flex">
-						<dt class="font-medium text-purple-600/80 dark:text-purple-400/90">Reward / epoch</dt>
+						<dt class="font-medium text-community/70">Reward / epoch</dt>
 						<dd class="font-mono tabular-nums">
 							{fmtMicroToStx(reputationData.rewardPerEpoch, 6)} BIG
 						</dd>
@@ -59,7 +59,7 @@
 				{/if}
 
 				<div class="flex gap-1">
-					<dt class="font-medium text-purple-600/80 dark:text-purple-400/90">Weighted supply</dt>
+					<dt class="font-medium text-community/70">Weighted supply</dt>
 					<dd class="font-mono tabular-nums">{fmtNumber(reputationData.weightedSupply)}</dd>
 				</div>
 
@@ -79,8 +79,8 @@
 				{/if} -->
 
 				{#if personalRep}
-					<div class="flex gap-1 border-l border-purple-300/50 pl-4 dark:border-purple-600/40">
-						<dt class="font-medium text-purple-600/80 dark:text-purple-400/90">Yours</dt>
+					<div class="flex gap-1 border-l border-community-border pl-4">
+						<dt class="font-medium text-community/70">Yours</dt>
 						<dd class="font-mono font-semibold tabular-nums">
 							{fmtNumber(personalRep.weightedReputation)} weighted · {fmtNumber(
 								personalRep.overallBalance
@@ -89,7 +89,7 @@
 					</div>
 				{:else}
 					<div
-						class="hidden border-l border-purple-300/50 pl-4 text-purple-600 sm:block dark:border-purple-600/40 dark:text-purple-300/90"
+						class="hidden border-l border-community-border pl-4 text-community/80 sm:block"
 					>
 						Connect wallet to see your stats →
 					</div>
