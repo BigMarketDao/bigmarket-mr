@@ -1,64 +1,109 @@
 /**
- * TypeScript design tokens — use from **`.ts` / `.svelte` `<script>`** when you need values in JS (charts, inline styles, API payloads).
- *
- * **Tailwind class names** (`bg-primary`, `text-muted-foreground`, …) come from **`./theme.css`** (`@theme`). Visual source for brand scales: **`./vendor/skeleton-nouveau.css`** (Skeleton `nouveau`). When you change a semantic mapping, update **`theme.css`** and this file together.
+ * TypeScript design tokens — mirror of `theme.css`. Runtime truth is `theme.css`.
+ * Update both together. See `docs-v2/tokens-and-rules.lock.md`.
  */
 export const tokens = {
-  colors: {
-    /** Light theme semantics — match `theme.css` (:root / @theme). */
-    primary: {
-      DEFAULT: "oklch(83.44% 0.16 97deg)",
-      foreground: "oklch(45.41% 0.09 96.95deg)",
+  light: {
+    colors: {
+      background: 'var(--color-surface-50)',
+      foreground: 'var(--color-surface-950)',
+      card: 'var(--color-surface-50)',
+      cardForeground: 'var(--color-surface-950)',
+      popover: '#fff',
+      popoverForeground: 'var(--color-surface-950)',
+      muted: 'var(--color-surface-100)',
+      mutedForeground: 'var(--color-surface-700)',
+      border: 'var(--color-surface-200)',
+      /** Input BORDER color (shadcn convention). */
+      input: 'var(--color-surface-200)',
+      overlay: 'rgba(0, 0, 0, 0.4)',
+      primary: 'var(--color-primary-500)',
+      primaryForeground: 'var(--color-primary-contrast-500)',
+      secondary: 'var(--color-surface-200)',
+      secondaryForeground: 'var(--color-surface-900)',
+      accent: 'var(--color-secondary-500)',
+      accentForeground: 'var(--color-secondary-contrast-500)',
+      destructive: 'var(--color-error-500)',
+      destructiveForeground: 'var(--color-error-contrast-500)',
+      success: 'var(--color-success-500)',
+      warning: 'var(--color-warning-500)',
+      info: 'var(--color-secondary-500)',
+      community: 'var(--color-tertiary-500)',
+      priceUp: 'var(--color-success-500)',
+      priceDown: 'var(--color-error-500)',
+      priceNeutral: 'var(--color-muted-foreground)',
+      liveIndicator: 'var(--color-error-500)',
+      selected: 'var(--color-secondary-500)',
+      outcome1: 'var(--color-warning-500)',
+      outcome2: 'var(--color-success-500)',
+      outcome3: 'var(--color-secondary-500)',
+      outcome4: 'var(--color-tertiary-500)',
+      ring: 'var(--color-secondary-400)',
     },
-    secondary: {
-      DEFAULT: "oklch(90.72% 0.03 307.1deg)",
-      foreground: "oklch(16.6% 0.03 308.28deg)",
-    },
-    muted: {
-      DEFAULT: "oklch(95.48% 0.01 306.17deg)",
-      foreground: "oklch(32.09% 0.08 303.77deg)",
-    },
-    accent: {
-      DEFAULT: "oklch(56.7% 0.19 256.45deg)",
-      foreground: "oklch(93.03% 0.03 249.76deg)",
-    },
-    destructive: {
-      DEFAULT: "oklch(41.76% 0.16 21.54deg)",
-      foreground: "oklch(90.76% 0.02 6.73deg)",
-    },
-    border: "oklch(90.72% 0.03 307.1deg)",
-    background: "oklch(98.18% 0.01 308.72deg)",
-    foreground: "oklch(10.09% 0.05 307.48deg)",
-    ring: "oklch(62.85% 0.17 253.13deg)",
   },
-
+  dark: {
+    colors: {
+      background: 'var(--color-surface-950)',
+      foreground: 'var(--color-surface-50)',
+      card: 'var(--color-surface-900)',
+      cardForeground: 'var(--color-surface-50)',
+      popover: 'var(--color-surface-900)',
+      popoverForeground: 'var(--color-surface-50)',
+      muted: 'var(--color-surface-900)',
+      mutedForeground: 'var(--color-surface-300)',
+      border: 'var(--color-surface-800)',
+      /** Input BORDER color (shadcn convention). */
+      input: 'var(--color-surface-800)',
+      overlay: 'rgba(0, 0, 0, 0.65)',
+      primary: 'var(--color-primary-400)',
+      primaryForeground: 'var(--color-primary-contrast-400)',
+      secondary: 'var(--color-surface-800)',
+      secondaryForeground: 'var(--color-surface-50)',
+      accent: 'var(--color-secondary-400)',
+      accentForeground: 'var(--color-secondary-contrast-400)',
+      destructive: 'var(--color-error-400)',
+      destructiveForeground: 'var(--color-error-contrast-400)',
+      success: 'var(--color-success-400)',
+      warning: 'var(--color-warning-400)',
+      info: 'var(--color-secondary-400)',
+      community: 'var(--color-tertiary-400)',
+      priceUp: 'var(--color-success-400)',
+      priceDown: 'var(--color-error-400)',
+      priceNeutral: 'var(--color-muted-foreground)',
+      liveIndicator: 'var(--color-error-400)',
+      selected: 'var(--color-secondary-400)',
+      outcome1: 'var(--color-warning-400)',
+      outcome2: 'var(--color-success-400)',
+      outcome3: 'var(--color-secondary-400)',
+      outcome4: 'var(--color-tertiary-400)',
+      ring: 'var(--color-secondary-300)',
+    },
+  },
   radius: {
-    sm: "6px",
-    md: "6px",
-    lg: "12px",
-    xl: "20px",
+    sm: 'var(--radius-base)',
+    md: 'var(--radius-md)',
+    lg: 'var(--radius-lg)',
+    xl: 'var(--radius-container)',
   },
-
   spacing: {
-    xs: "4px",
-    sm: "8px",
-    md: "16px",
-    lg: "24px",
-    xl: "32px",
+    xs: '4px',
+    sm: '8px',
+    md: '16px',
+    lg: '24px',
+    xl: '32px',
   },
-
   typography: {
-    /** Skeleton nouveau uses `system-ui` body; headings use condensed stack (see `theme.css` --font-heading). */
     fontFamily: {
       sans: 'system-ui, sans-serif',
       heading:
         "Bahnschrift, 'DIN Alternate', 'Franklin Gothic Medium', 'Nimbus Sans Narrow', sans-serif-condensed, sans-serif",
     },
     fontSize: {
-      sm: "14px",
-      base: "16px",
-      lg: "18px",
-      xl: "24px",
+      xs: '12px',
+      sm: '14px',
+      base: '16px',
+      lg: '18px',
+      xl: '24px',
     },
   },
 } as const;
