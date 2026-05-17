@@ -2,7 +2,7 @@
 	import ConnectMenuDropdown from './ConnectMenuDropdown.svelte';
 	import { onDestroy, onMount } from 'svelte';
 	import SlotModal from './SlotModal.svelte';
-	import { showOnRampModal, userReputationStore } from '@bigmarket/bm-common';
+	import { showOnRampModal } from '@bigmarket/bm-common';
 	import {
 		Menu,
 		X,
@@ -21,7 +21,7 @@
 	import { disconnectWallet } from '@bigmarket/bm-common';
 	import { resolve } from '$app/paths';
 	import { mainNavLinks } from '$lib/core/tools/site';
-	import { HeaderButton, HeaderButtonReputation } from '@bigmarket/bm-ui';
+	import { HeaderButton } from '@bigmarket/bm-ui';
 	import { isCoordinator } from '$lib/core/tools/security';
 	import { page } from '$app/state';
 	import { afterNavigate } from '$app/navigation';
@@ -135,17 +135,13 @@
 					{#if isLoggedIn()}
 						{#if isCoordinator(getStxAddress())}<HeaderButton
 								href="/market-mgt"
-								label="Create"
+								label="Start a Market"
 								active={currentPath.startsWith('/market-mgt')}
 							/>{/if}
 						<HeaderButton
 							href={`/my-markets/${getStxAddress()}`}
-							label="My Markets"
+							label="My Bets"
 							active={currentPath.startsWith('/my-markets')}
-						/>
-						<HeaderButtonReputation
-							weightedReputation={$userReputationStore.userReputationData?.weightedReputation || 0}
-							active={currentPath.startsWith('/reputation')}
 						/>
 					{/if}
 				</div>
@@ -174,7 +170,7 @@
 					onclick={closeMenu}
 				>
 					<div class="flex-1">
-						<div class="text-sm font-semibold text-foreground">Deposits</div>
+						<div class="text-sm font-semibold text-foreground">Deposit</div>
 					</div>
 				</a>
 			{/if}
@@ -226,7 +222,7 @@
 									<BarChart3 class="h-4 w-4" />
 								</div>
 								<div class="flex-1">
-									<div class="text-sm font-semibold text-foreground">Deposits</div>
+									<div class="text-sm font-semibold text-foreground">Deposit</div>
 									<div class="text-xs text-muted-foreground">Deposit funds</div>
 								</div>
 							</a>
@@ -261,7 +257,7 @@
 								</div>
 								<div class="flex-1">
 									<div class="text-sm font-semibold text-foreground">
-										My Markets
+										My Bets
 									</div>
 									<div class="text-xs text-muted-foreground">View your positions</div>
 								</div>
@@ -287,7 +283,7 @@
 							<div class="text-sm font-semibold text-foreground">
 								Reputation Hub
 							</div>
-							<div class="text-xs text-muted-foreground">Build your track record</div>
+							<div class="text-xs text-muted-foreground">Your reputation score & rewards</div>
 						</div>
 					</a>
 				</div>
@@ -320,7 +316,7 @@
 						<div class="rounded-md border border-border bg-card p-3 text-card-foreground shadow-sm">
 							<div class="flex items-center justify-between">
 								<div class="min-w-0 flex-1">
-									<div class="text-xs text-muted-foreground">Connected wallet</div>
+									<div class="text-xs text-muted-foreground">Your wallet</div>
 									<div class="truncate font-mono text-sm text-foreground">
 										{truncate(getStxAddress())}
 									</div>
