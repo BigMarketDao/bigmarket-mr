@@ -6,17 +6,29 @@
     type PredictionMarketStakeEvent,
     type Sip10Data,
   } from '@bigmarket/bm-types';
-  import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
-  import { bitcoinMode, chainStore, daoOverviewStore, allowedTokenStore, requireDaoConfig, daoConfigStore} from '@bigmarket/bm-common';
+  import {
+    appConfigStore,
+    requireAppConfig,
+    bitcoinMode,
+    chainStore,
+    daoOverviewStore,
+    allowedTokenStore,
+    requireDaoConfig,
+    daoConfigStore,
+    exchangeRatesStore,
+    selectedCurrency,
+  } from '@bigmarket/bm-common';
   import {
     dateOfResolution,
-    fmtNumber,
+    formatFiat,
     getMarketToken,
+    getRate,
     isCooling,
     isDisputable,
     isDisputeRunning,
     isResolving,
     isRunning,
+    toFiat,
   } from '@bigmarket/bm-utilities';
 
   import { getStxAddress } from '@bigmarket/bm-common';
@@ -26,38 +38,91 @@
   const appConfig = $derived(requireAppConfig($appConfigStore));
   const daoConfig = $derived(requireDaoConfig($daoConfigStore));
   const { market, marketStakes } = $props<{
-		market: PredictionMarketCreateEvent;
-		marketStakes: PredictionMarketStakeEvent[];
-	}>();
+    market: PredictionMarketCreateEvent;
+    marketStakes: PredictionMarketStakeEvent[];
+  }>();
+
+  const cardClass =
+    'flex h-full flex-col rounded-lg border border-border border-t-2 border-t-orange-500/40 bg-card p-5';
+  const labelClass = 'text-xs font-medium uppercase tracking-wide text-foreground/50';
+  const labelClassSoft = 'text-xs font-medium tracking-wide text-foreground/50';
+  const valueClass = 'mt-2 text-3xl font-bold tabular-nums text-foreground';
+  const subClass = 'mt-1 text-sm font-normal text-foreground/40';
+  const iconWrapClass =
+    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-info-soft';
+  const countdownValueClass = 'font-semibold text-foreground';
+  const countdownSuffixClass = 'font-normal text-foreground/40';
 
   let blocksTillClose = $derived(
     (market.marketData?.marketStart || 0) +
-    (market.marketData?.marketDuration || 0) -
-    $chainStore.stacks.burn_block_height);
+      (market.marketData?.marketDuration || 0) -
+      $chainStore.stacks.burn_block_height,
+  );
   let preselectIndex: number | null = $state(null);
   let message: string | undefined = $state(undefined);
   let currentBurnHeight = $derived($chainStore.stacks.burn_block_height);
   let sip10Data: Sip10Data = $derived(getMarketToken(market.marketData.token, $allowedTokenStore));
   let endOfCooling = $derived(
     (market.marketData?.marketStart || 0) +
-    (market.marketData?.marketDuration || 0) +
-    (market.marketData?.coolDownPeriod || 0));
+      (market.marketData?.marketDuration || 0) +
+      (market.marketData?.coolDownPeriod || 0),
+  );
   let endOfResolving = $derived(
-    (endOfCooling || 0) + ($daoOverviewStore.contractData?.disputeWindowLength || 0));
+    (endOfCooling || 0) + ($daoOverviewStore.contractData?.disputeWindowLength || 0),
+  );
   let endOfVoting = $derived(
     (market.marketData?.resolutionBurnHeight || 0) +
-    ($daoOverviewStore.contractData?.marketVotingDuration || 0));
+      ($daoOverviewStore.contractData?.marketVotingDuration || 0),
+  );
   let endOfMarket = $derived(
-    (market.marketData?.marketStart || 0) + (market.marketData?.marketDuration || 0));
+    (market.marketData?.marketStart || 0) + (market.marketData?.marketDuration || 0),
+  );
 
-  // Calculate current price and change
-  let currentPrice = $derived(market?.marketData?.stakes
-    ? (
-        (Number(market.marketData.stakes[0]) /
-          market.marketData.stakes.reduce((sum: number, stake: number) => sum + Number(stake), 0)) *
-        100
-      ).toFixed(1)
-    : '0.00');
+  let currentPrice = $derived(
+    market?.marketData?.stakes
+      ? (
+          (Number(market.marketData.stakes[0]) /
+            market.marketData.stakes.reduce((sum: number, stake: number) => sum + Number(stake), 0)) *
+          100
+        ).toFixed(1)
+      : '0.0',
+  );
+
+  const totalStakeMicro = $derived(
+    market.marketData.stakeTokens?.reduce((sum: number, stake: number) => sum + Number(stake), 0) || 0,
+  );
+
+  const totalStakedDisplay = $derived(
+    Number((totalStakeMicro / Math.pow(10, sip10Data.decimals ?? 6)).toFixed(2)),
+  );
+
+  const totalStakedFiatLine = $derived.by(() => {
+    try {
+      const rate = getRate($exchangeRatesStore, $selectedCurrency.code);
+      const fiatAmount = Number(toFiat(rate, totalStakeMicro, sip10Data, undefined, 2));
+      if (!Number.isFinite(fiatAmount) || fiatAmount <= 0) return null;
+      const bare = formatFiat($selectedCurrency, fiatAmount, true);
+      return `≈ $${bare} ${$selectedCurrency.code}`;
+    } catch {
+      return null;
+    }
+  });
+
+  const isBinaryMarket = $derived(
+    market.marketType !== 2 && market.marketData.categories.length === 2,
+  );
+
+  const marketKindLabel = $derived(
+    market.marketType === 2
+      ? 'Scalar market'
+      : isBinaryMarket
+        ? 'Yes or No market'
+        : 'Multi-choice market',
+  );
+
+  const closeDateLine = $derived(
+    dateOfResolution(currentBurnHeight, market)?.closeOffChain.split(',')[0]?.trim() ?? '',
+  );
 
   const handleResolution = async (data: any) => {
     message = undefined;
@@ -73,21 +138,13 @@
   onMount(async () => {
     bitcoinMode.set(market.marketType === 3);
 
-    blocksTillClose =
-      (market.marketData?.marketStart || 0) +
-      (market.marketData?.marketDuration || 0) -
-      currentBurnHeight;
-
-    // Read query param for deep-link preselect (client-only)
     try {
       const url = new URL(window.location.href);
       const p = url.searchParams.get('option');
       preselectIndex = p !== null && !Number.isNaN(Number(p)) ? Number(p) : null;
     } catch {}
 
-    // Performance optimization: Clear unused data after initial load
     setTimeout(() => {
-      // Clear any unused market data to free memory
       if (
         typeof window !== 'undefined' &&
         window.performance &&
@@ -107,23 +164,35 @@
   <meta name="description" content="View prediction market details and participate" />
 </svelte:head>
 
+{#snippet infoTip(text: string)}
+  <span class="group relative ml-1 inline-flex align-middle">
+    <button
+      type="button"
+      class="inline-flex size-3.5 items-center justify-center text-[14px] leading-none text-foreground/30 transition-colors hover:text-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      aria-label="More information"
+    >
+      ⓘ
+    </button>
+    <span
+      role="tooltip"
+      class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-xs -translate-x-1/2 rounded-lg bg-zinc-800 p-3 text-xs text-white/80 opacity-0 shadow-lg transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+    >
+      {text}
+      <span
+        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-800"
+        aria-hidden="true"
+      ></span>
+    </span>
+  </span>
+{/snippet}
+
 <!-- Market Overview Cards -->
-<div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" data-market-stats>
-  <!-- Current Price Card -->
-  <div
-    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-    data-volume-display
-  >
-    <div class="mb-2 flex items-center gap-3">
-      <div
-        class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30"
-      >
-        <svg
-          class="h-4 w-4 text-green-600 dark:text-green-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
+<div class="mb-8 grid grid-cols-2 items-stretch gap-4 lg:grid-cols-4" data-market-stats>
+  <!-- Card 1 — Crowd says -->
+  <div class={cardClass} data-volume-display>
+    <div class="flex items-center gap-3">
+      <div class={iconWrapClass}>
+        <svg class="h-5 w-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -132,39 +201,24 @@
           />
         </svg>
       </div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">Current Probability</div>
+      <span class={labelClassSoft}>Crowd says</span>
     </div>
-    <div class="text-lg font-semibold text-gray-900 dark:text-white">
-      {currentPrice}%
-    </div>
-    <div
-      class="flex justify-between w-full text-left text-[11px] font-bold text-gray-600 tabular-nums dark:text-gray-400"
-    >
-      <span class="">
-        {market.marketType === 2
-          ? 'Scalar Market'
-          : market.marketData.categories.length === 2
-            ? 'Binary Market'
-            : 'Multi-choice Market'}
-      </span>
+    <div class={valueClass}>{currentPrice}%</div>
+    <div class="{subClass} flex flex-wrap items-center gap-1">
+      <span>{marketKindLabel}</span>
+      {#if isBinaryMarket}
+        {@render infoTip(
+          'This market has two possible outcomes — Yes or No. The percentage shows where most of the money is sitting right now.',
+        )}
+      {/if}
     </div>
   </div>
 
-  <!-- Total Volume Card -->
-  <div
-    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-    data-volume-display
-  >
-    <div class="mb-2 flex items-center gap-3">
-      <div
-        class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30"
-      >
-        <svg
-          class="h-4 w-4 text-blue-600 dark:text-blue-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
+  <!-- Card 2 — Total staked -->
+  <div class={cardClass} data-volume-display>
+    <div class="flex items-center gap-3">
+      <div class={iconWrapClass}>
+        <svg class="h-5 w-5 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -173,123 +227,110 @@
           />
         </svg>
       </div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">Total Volume</div>
+      <span class={labelClass}>Total staked</span>
     </div>
-    <div class="text-lg font-semibold text-gray-900 dark:text-white">
-      {(
-        (market.marketData.stakeTokens?.reduce((sum: number, stake: number) => sum + Number(stake), 0) || 0) /
-        1000000
-      ).toFixed(2)}
-      <span class="text-sm">{sip10Data.symbol}</span>
+    <div class={valueClass}>
+      {totalStakedDisplay.toFixed(2)}
+      <span class="text-xl font-bold">{sip10Data.symbol}</span>
     </div>
-    <div
-      class="flex justify-between w-full text-left text-[11px] font-bold text-gray-600 tabular-nums dark:text-gray-400"
-    >
-      {marketStakes?.length ?? 0} traders
-    </div>
+    {#if totalStakedFiatLine}
+      <p class="text-sm font-normal text-foreground/50 tabular-nums">{totalStakedFiatLine}</p>
+    {/if}
+    <p class={subClass}>{marketStakes?.length ?? 0} people betting</p>
   </div>
 
-  <!-- Market Fee Card -->
-  <div
-    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-    data-volume-display
-  >
-    <div class="mb-2 flex items-center gap-3">
-      <div
-        class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30"
-      >
-        <svg
-          class="h-4 w-4 text-purple-600 dark:text-purple-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-          />
-        </svg>
+  <!-- Card 3 — Fee if you win -->
+  <div class={cardClass} data-volume-display>
+    <div class="flex flex-wrap items-center gap-1">
+      <div class="flex items-center gap-3">
+        <div class={iconWrapClass}>
+          <svg class="h-5 w-5 text-community" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+            />
+          </svg>
+        </div>
+        <span class={labelClass}>Fee if you win</span>
       </div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">Market Fee</div>
+      {@render infoTip(
+        "This fee is only taken from your winnings if you predict correctly. If you're wrong, you pay nothing extra.",
+      )}
     </div>
-    <div class="text-lg font-semibold text-gray-900 dark:text-white">
-      {(market.marketData.marketFeeBips / 100).toFixed(1)}%
-    </div>
-    <div
-      class="flex justify-between w-full text-left text-[11px] font-bold text-gray-600 tabular-nums dark:text-gray-400"
-    >
-      Paid by winners only
-    </div>
+    <div class={valueClass}>{(market.marketData.marketFeeBips / 100).toFixed(1)}%</div>
+    <p class={subClass}>Only charged if you win</p>
   </div>
 
-  <!-- Market Closes Card -->
-  <div
-    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-    data-volume-display
-  >
-    <div class="mb-2 flex items-center gap-3">
-      <div
-        class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30"
-      >
-        <svg
-          class="h-4 w-4 text-orange-600 dark:text-orange-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
+  <!-- Card 4 — Betting closes -->
+  <div class={cardClass} data-volume-display>
+    <div class="flex flex-wrap items-center gap-1">
+      <div class="flex items-center gap-3">
+        <div class={iconWrapClass}>
+          <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </div>
+        <span class={labelClass}>
+          {#if blocksTillClose <= 0}Betting closed{:else}Betting closes{/if}
+        </span>
       </div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">
-        {#if blocksTillClose <= 0}Closed{:else}Closes{/if}
-      </div>
+      {@render infoTip(
+        'After this time, no new bets can be placed. The market moves into a resolution window where the outcome is verified.',
+      )}
     </div>
-    <div class="text-base font-medium text-gray-900 dark:text-white">
-      ~ {dateOfResolution(currentBurnHeight, market)?.closeOffChain.split(',')[0]}
-      {#if appConfig.VITE_NETWORK === 'devnet'}<br /><span
-          class="mt-1 text-xs text-gray-500 dark:text-gray-400"
-          >dates on testnet are unreliable</span
-        >{/if}
-      <div
-        class="flex justify-between w-full text-left text-[11px] font-bold text-gray-600 tabular-nums dark:text-gray-400"
-      >
-        <div class="order-2">
-          {#if isRunning(currentBurnHeight, market)}
-            <!-- {estimateBitcoinBlockTime(endOfMarket, currentBurnHeight)} -->
-            ~ <Countdown endBlock={endOfMarket - currentBurnHeight} />
-          {:else if isResolving(market)}
-            <!-- {estimateBitcoinBlockTime(endOfMarket, currentBurnHeight)} -->
-            ~ <Countdown endBlock={endOfResolving - currentBurnHeight} />
-          {:else if isDisputeRunning(market)}
-            <!-- {estimateBitcoinBlockTime(endOfMarket, currentBurnHeight)} -->
-            ~ <Countdown endBlock={endOfVoting - currentBurnHeight} />
-          {/if}
-        </div>
-        <div class="order-1">
-          <!-- {getResolutionMessage(market)} -->
-          {#if blocksTillClose <= 0}
-            {#if market.marketData.resolutionState === ResolutionState.RESOLUTION_OPEN}
-              {#if isCooling(currentBurnHeight, market)}Market Cooling
-              {:else if isDisputable(currentBurnHeight, $daoOverviewStore.contractData?.disputeWindowLength || 0, market)}Dispute window open
-              {:else if getStxAddress() === daoConfig.VITE_DAO_RESOLUTION_COORDINATOR}
-                <AgentResolveMarket {market} onResolved={handleResolution} />
-                {message ? message : ''}
-              {/if}
-            {:else}{/if}
-            {#if market.marketType === 2}Feed Id: {market.marketData.priceOutcome}{/if}
-          {:else}
-            {fmtNumber(blocksTillClose)} btc blocks
-          {/if}
-          <!-- {dateOfResolution(market).closeOffChain.split(', ')[1] || '00:00'} blocks -->
-        </div>
-      </div>
+    <p class="mt-2 text-base font-medium text-foreground tabular-nums">
+      {closeDateLine}
+      {#if appConfig.VITE_NETWORK === 'devnet'}
+        <br /><span class="mt-1 text-xs text-foreground/40">dates on testnet are unreliable</span>
+      {/if}
+    </p>
+    <div class="mt-1 text-sm">
+      {#if blocksTillClose > 0}
+        {#if isRunning(currentBurnHeight, market)}
+          <Countdown
+            endBlock={endOfMarket - currentBurnHeight}
+            showTilde={false}
+            suffix="left"
+            valueClass={countdownValueClass}
+            suffixClass={countdownSuffixClass}
+          />
+        {:else if isResolving(market)}
+          <Countdown
+            endBlock={endOfResolving - currentBurnHeight}
+            showTilde={false}
+            suffix="left"
+            valueClass={countdownValueClass}
+            suffixClass={countdownSuffixClass}
+          />
+        {:else if isDisputeRunning(market)}
+          <Countdown
+            endBlock={endOfVoting - currentBurnHeight}
+            showTilde={false}
+            suffix="left"
+            valueClass={countdownValueClass}
+            suffixClass={countdownSuffixClass}
+          />
+        {/if}
+      {:else if market.marketData.resolutionState === ResolutionState.RESOLUTION_OPEN}
+        {#if isCooling(currentBurnHeight, market)}
+          <span class={subClass}>Market Cooling</span>
+        {:else if isDisputable(currentBurnHeight, $daoOverviewStore.contractData?.disputeWindowLength || 0, market)}
+          <span class={subClass}>Dispute window open</span>
+        {:else if getStxAddress() === daoConfig.VITE_DAO_RESOLUTION_COORDINATOR}
+          <AgentResolveMarket {market} onResolved={handleResolution} />
+          {#if message}<span class={subClass}>{message}</span>{/if}
+        {/if}
+        {#if market.marketType === 2}
+          <span class="{subClass} block">Feed Id: {market.marketData.priceOutcome}</span>
+        {/if}
+      {/if}
     </div>
   </div>
 </div>
