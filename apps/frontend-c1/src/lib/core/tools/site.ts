@@ -11,7 +11,7 @@ export type NavSection = {
 
 export const daoLink = '/dao';
 
-export const mainNavLinks: Array<NavLink> = [{ href: '/dao', label: 'DAO' }];
+export const mainNavLinks: Array<NavLink> = [{ href: '/dao', label: 'Community' }];
 
 export const footerNavSections: Array<NavSection> = [
 	{

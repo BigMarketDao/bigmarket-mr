@@ -6,6 +6,7 @@
 		disconnectWallet,
 		isLoggedIn,
 		showOnRampModal,
+		userReputationStore,
 		userWalletStore,
 		getBtcAddress,
 		getStxAddress,
@@ -169,7 +170,7 @@
 				<div class="max-h-80 space-y-3 overflow-y-auto p-4">
 					<div class="space-y-3 p-4">
 						<div class="space-y-1">
-							<div class="text-xs text-gray-500 dark:text-gray-400">Connected wallet</div>
+							<div class="text-xs text-gray-500 dark:text-gray-400">Your wallet</div>
 							<div class="flex items-center justify-between">
 								{#if $walletState.chain === 'stacks'}
 									<div
@@ -198,9 +199,20 @@
 							{/if}
 						</div>
 
+						<p class="text-xs text-gray-500 dark:text-gray-400">
+							🏅 <span class="font-medium text-orange-500 dark:text-orange-300">
+								{$userReputationStore.userReputationData?.weightedReputation || 0}
+							</span> Reputation pts
+						</p>
+
 						<div class="space-y-2">
 							<div class="flex items-center justify-between">
-								<span class="text-xs text-gray-500 dark:text-gray-400">STX</span>
+								<div class="flex flex-col">
+									<span class="text-xs text-gray-500 dark:text-gray-400">STX</span>
+									<span class="text-[10px] text-gray-400 dark:text-gray-500"
+										>for transactions & fees</span
+									>
+								</div>
 								<div class="flex items-center gap-1.5">
 									<CreditCard class="h-3 w-3 text-gray-400 dark:text-gray-500" />
 									<span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -214,7 +226,12 @@
 						{#if !bigAllowed}
 							<div class="space-y-2">
 								<div class="flex items-center justify-between">
-									<span class="text-xs text-gray-500 dark:text-gray-400">BIG</span>
+									<div class="flex flex-col">
+										<span class="text-xs text-gray-500 dark:text-gray-400">BIG</span>
+										<span class="text-[10px] text-gray-400 dark:text-gray-500"
+											>your platform token</span
+										>
+									</div>
 									<div class="flex items-center gap-1.5">
 										<CreditCard class="h-3 w-3 text-gray-400 dark:text-gray-500" />
 										<span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -225,12 +242,19 @@
 							</div>
 						{/if}
 						{#each allowedTokens as token (token.token)}
-							{#if token.sip10Data?.symbol !== 'STX'}
+							{#if token.sip10Data?.symbol !== 'STX' && token.sip10Data?.symbol !== 'BIG'}
 								<div class="space-y-1">
 									<div class="flex items-center justify-between">
-										<span class="text-xs text-gray-500 dark:text-gray-400"
-											>{token.sip10Data?.symbol}</span
-										>
+										<div class="flex flex-col">
+											<span class="text-xs text-gray-500 dark:text-gray-400"
+												>{token.sip10Data?.symbol}</span
+											>
+											{#if token.sip10Data?.symbol === 'sBTC'}
+												<span class="text-[10px] text-gray-400 dark:text-gray-500"
+													>Bitcoin on Stacks</span
+												>
+											{/if}
+										</div>
 										<div class="flex items-center gap-1.5">
 											<CreditCard class="h-3 w-3 text-gray-400 dark:text-gray-500" />
 											<span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -275,7 +299,9 @@
 							</div>
 							<div class="flex-1">
 								<div class="font-medium text-gray-900 dark:text-gray-100">Reputation Hub</div>
-								<div class="text-xs text-gray-500 dark:text-gray-400">Build your track record</div>
+								<div class="text-xs text-gray-500 dark:text-gray-400">
+									Your reputation score & rewards
+								</div>
 							</div>
 						</a>
 						<a
@@ -329,7 +355,7 @@
 								<Blocks class="h-4 w-4" />
 							</div>
 							<div class="flex-1">
-								<div class="font-medium text-gray-900 dark:text-gray-100">Block height</div>
+								<div class="font-medium text-gray-900 dark:text-gray-100">Bitcoin block</div>
 								<div class="text-xs text-gray-500 dark:text-gray-400">{fmtNumber(blockHeight)}</div>
 							</div>
 						</span>
