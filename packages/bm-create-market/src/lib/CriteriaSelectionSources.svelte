@@ -97,16 +97,16 @@
   {/if}
 
   <div>
-    <label for="criteria" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <label for="criteria" class="block text-sm font-medium text-foreground">
       Resolution Criteria
     </label>
     <textarea
       id="criteria"
       data-testid={`${testIdPrefix}:criteria`}
       rows="4"
-      class="mt-1 block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm
-             focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 focus:outline-none
-             dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+      class="mt-1 block w-full rounded border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm
+             placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring
+             focus-visible:outline-none"
       placeholder="Describe how this market should be resolved..."
       bind:value={localCriterion.criteria}
       oninput={changeCriteria}
@@ -115,7 +115,8 @@
     {#if validation.errors.criteria}
       <p
         data-testid={`${testIdPrefix}:error:criteria`}
-        class="mt-1 text-sm text-red-600 dark:text-red-400"
+        role="alert"
+        class="mt-1 text-sm text-destructive"
       >
         {validation.errors.criteria}
       </p>
@@ -123,9 +124,9 @@
   </div>
 
   <div>
-    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <label class="block text-sm font-medium text-foreground">
       <div class="flex items-center gap-2">
-        <ExternalLink class="h-4 w-4 text-gray-500" />
+        <ExternalLink class="h-4 w-4 text-muted-foreground" />
         Resolution Sources
       </div>
     </label>
@@ -135,9 +136,9 @@
         <input
           type="text"
           data-testid={`${testIdPrefix}:source-input`}
-          class="block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm
-                 text-gray-900 shadow-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20
-                 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+          class="block w-full rounded border border-border bg-background px-3 py-2 text-sm
+                 text-foreground placeholder:text-muted-foreground shadow-sm focus-visible:border-ring
+                 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           placeholder="https://example.com"
           bind:value={currentSource}
           onkeydown={onSourceKeydown}
@@ -145,9 +146,9 @@
         <button
           type="button"
           data-testid={`${testIdPrefix}:source-add`}
-          class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium
-                 text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-orange-500/50 focus:outline-none
-                 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          class="inline-flex items-center rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium
+                 text-foreground shadow-sm hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring
+                 focus-visible:outline-none"
           onclick={addSource}
           disabled={!currentSource.trim()}
           aria-disabled={!currentSource.trim()}
@@ -159,7 +160,8 @@
       {#if validation.errors.sources}
         <p
           data-testid={`${testIdPrefix}:error:sources`}
-          class="mt-1 text-sm text-red-600 dark:text-red-400"
+          role="alert"
+          class="mt-1 text-sm text-destructive"
         >
           {validation.errors.sources}
         </p>
@@ -175,18 +177,17 @@
               <input
                 type="text"
                 data-testid={`${testIdPrefix}:source:${index}`}
-                class="block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm
-                       focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 focus:outline-none
-                       dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+                class="block w-full rounded border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm
+                       placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2
+                       focus-visible:ring-ring focus-visible:outline-none"
                 value={source}
                 oninput={(e) => updateSource(index, (e.target as HTMLInputElement).value)}
               />
               <button
                 type="button"
                 data-testid={`${testIdPrefix}:source-remove:${index}`}
-                class="inline-flex items-center rounded-lg border border-gray-300 bg-white p-2 text-sm text-gray-500 shadow-sm
-                       hover:bg-gray-50 focus:ring-2 focus:ring-orange-500/50 focus:outline-none
-                       dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                class="inline-flex items-center rounded-lg border border-border bg-background p-2 text-sm text-muted-foreground shadow-sm
+                       hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 onclick={() => removeSource(index)}
                 aria-label="Remove source"
               >

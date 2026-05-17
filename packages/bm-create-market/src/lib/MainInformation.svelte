@@ -40,25 +40,25 @@
 <div class="space-y-6">
   <!-- Title & Description -->
   <div
-    class="rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800"
+    class="rounded-lg border border-border bg-muted p-6"
   >
-    <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+    <h3 class="mb-4 text-lg font-medium text-foreground">
       Market Title & Description
     </h3>
     <div class="space-y-5">
       <div>
-        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        <label for="title" class="block text-sm font-medium text-foreground"
           >Market Title</label
         >
         <input
           id="title"
           data-testid={`${testIdPrefix}:title`}
-          class="mt-2 block w-full rounded border px-3 py-2 text-sm text-gray-900
-                 placeholder-gray-500 shadow-sm focus:ring-1 focus:ring-orange-500/20 focus:outline-none
-                 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400
+          class="mt-2 block w-full rounded border bg-background px-3 py-2 text-sm text-foreground
+                 placeholder:text-muted-foreground shadow-sm focus-visible:border-ring
+                 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
                  {validation.errors.title
-            ? 'border-red-300 focus:border-red-500 dark:border-red-600'
-            : 'border-gray-300 focus:border-orange-500 dark:border-gray-700'}"
+            ? 'border-destructive-border focus-visible:border-destructive'
+            : 'border-border'}"
           placeholder="Enter a clear, concise title"
           bind:value={template.name}
           onfocus={() => (userHasInteracted.title = true)}
@@ -67,7 +67,8 @@
         {#if validation.errors.title}
           <p
             data-testid={`${testIdPrefix}:error:title`}
-            class="mt-1 text-sm text-red-600 dark:text-red-400"
+            role="alert"
+            class="mt-1 text-sm text-destructive"
           >
             {validation.errors.title}
           </p>
@@ -75,19 +76,19 @@
       </div>
 
       <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        <label for="description" class="block text-sm font-medium text-foreground"
           >Market Description</label
         >
         <textarea
           id="description"
           data-testid={`${testIdPrefix}:description`}
           rows="4"
-          class="mt-2 block w-full rounded border px-3 py-2 text-sm text-gray-900
-                 placeholder-gray-500 shadow-sm focus:ring-1 focus:ring-orange-500/20 focus:outline-none
-                 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400
+          class="mt-2 block w-full rounded border bg-background px-3 py-2 text-sm text-foreground
+                 placeholder:text-muted-foreground shadow-sm focus-visible:border-ring
+                 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
                  {validation.errors.description
-            ? 'border-red-300 focus:border-red-500 dark:border-red-600'
-            : 'border-gray-300 focus:border-orange-500 dark:border-gray-700'}"
+            ? 'border-destructive-border focus-visible:border-destructive'
+            : 'border-border'}"
           placeholder="Describe what this market predicts and why it matters..."
           bind:value={template.description}
           onfocus={() => (userHasInteracted.description = true)}
@@ -97,7 +98,8 @@
         {#if validation.errors.description}
           <p
             data-testid={`${testIdPrefix}:error:description`}
-            class="mt-1 text-sm text-red-600 dark:text-red-400"
+            role="alert"
+            class="mt-1 text-sm text-destructive"
           >
             {validation.errors.description}
           </p>
@@ -108,26 +110,26 @@
 
   <!-- Logo, Treasury, Fee -->
   <div
-    class="rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800"
+    class="rounded-lg border border-border bg-muted p-6"
   >
-    <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+    <h3 class="mb-4 text-lg font-medium text-foreground">
       Market Branding & Treasury
     </h3>
     <div class="space-y-5">
       <!-- Logo -->
       <div>
-        <label for="logo" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        <label for="logo" class="block text-sm font-medium text-foreground"
           >Market Image URL</label
         >
         <input
           id="logo"
           data-testid={`${testIdPrefix}:logo`}
-          class="mt-2 block w-full rounded border px-3 py-2 text-sm text-gray-900
-                 placeholder-gray-500 shadow-sm focus:ring-1 focus:ring-orange-500/20 focus:outline-none
-                 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400
+          class="mt-2 block w-full rounded border bg-background px-3 py-2 text-sm text-foreground
+                 placeholder:text-muted-foreground shadow-sm focus-visible:border-ring
+                 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
                  {validation.errors.logo
-            ? 'border-red-300 focus:border-red-500 dark:border-red-600'
-            : 'border-gray-300 focus:border-orange-500 dark:border-gray-700'}"
+            ? 'border-destructive-border focus-visible:border-destructive'
+            : 'border-border'}"
           placeholder="https://example.com/image.jpg"
           bind:value={template.logo}
           onfocus={() => (userHasInteracted.logo = true)}
@@ -135,7 +137,7 @@
           oninput={() => validateOnInteraction('logo', template.logo, userHasInteracted)}
         />
         {#if validation.errors.logo}
-          <p class="mt-1 text-sm text-red-600 dark:text-red-400">{validation.errors.logo}</p>
+          <p role="alert" class="mt-1 text-sm text-destructive">{validation.errors.logo}</p>
         {/if}
         {#key componentKey}
           <div class="mt-3" data-testid={`${testIdPrefix}:logo-preview`}>
@@ -146,7 +148,7 @@
 
       <!-- Treasury -->
       <div>
-        <label for="treasury" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label for="treasury" class="block text-sm font-medium text-foreground">
           Market Creator Treasury Address
         </label>
         <div class="mt-2 space-y-2">
@@ -154,13 +156,13 @@
             <input
               id="treasury"
               data-testid={`${testIdPrefix}:treasury`}
-              class="block w-full rounded border px-3 py-2 text-sm text-gray-900
-                     placeholder-gray-500 shadow-sm focus:ring-1 focus:ring-orange-500/20 focus:outline-none
-                     dark:bg-gray-800 dark:text-white dark:placeholder-gray-400
+              class="block w-full rounded border bg-background px-3 py-2 text-sm text-foreground
+                     placeholder:text-muted-foreground shadow-sm focus-visible:border-ring
+                     focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
                      {validation.errors.treasury
-                ? 'border-red-300 focus:border-red-500 dark:border-red-600'
-                : 'border-gray-300 focus:border-orange-500 dark:border-gray-700'}
-                     {!treasuryEditable ? 'cursor-not-allowed bg-gray-100 text-gray-500' : ''}"
+                ? 'border-destructive-border focus-visible:border-destructive'
+                : 'border-border'}
+                     {!treasuryEditable ? 'cursor-not-allowed bg-muted text-muted-foreground' : ''}"
               placeholder="Enter treasury address"
               bind:value={template.treasury}
               disabled={!treasuryEditable}
@@ -172,9 +174,10 @@
               type="button"
               data-testid={`${testIdPrefix}:treasury-toggle`}
               class="rounded border px-3 py-2 text-xs font-medium transition-colors
+                     focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
                      {treasuryEditable
-                ? 'border-orange-300 bg-orange-100 text-orange-700 hover:bg-orange-200'
-                : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200'}"
+                ? 'border-primary bg-primary/10 text-primary hover:bg-primary/20'
+                : 'border-border bg-muted text-muted-foreground hover:bg-muted/80'}"
               onclick={toggleTreasuryEditable}
             >
               {treasuryEditable ? 'Lock' : 'Edit'}
@@ -183,7 +186,8 @@
           {#if validation.errors.treasury}
             <p
               data-testid={`${testIdPrefix}:error:treasury`}
-              class="mt-1 text-sm text-red-600 dark:text-red-400"
+              role="alert"
+              class="mt-1 text-sm text-destructive"
             >
               {validation.errors.treasury}
             </p>
@@ -193,7 +197,7 @@
 
       <!-- Fee -->
       <div>
-        <label for="market-fee" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label for="market-fee" class="block text-sm font-medium text-foreground">
           Market Fee (max {($daoOverviewStore.contractData?.marketFeeBipsMax || 1000) /
             100}%)
         </label>
@@ -201,10 +205,9 @@
           type="number"
           id="market-fee"
           data-testid={`${testIdPrefix}:fee`}
-          class="mt-2 block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm
-                 text-gray-900 placeholder-gray-500 shadow-sm focus:border-orange-500
-                 focus:ring-1 focus:ring-orange-500/20 focus:outline-none
-                 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+          class="mt-2 block w-full rounded border border-border bg-background px-3 py-2 text-sm
+                 text-foreground placeholder:text-muted-foreground shadow-sm focus-visible:border-ring
+                 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           placeholder="2"
           bind:value={template.marketFee}
           oninput={handleInput}
@@ -212,7 +215,8 @@
         {#if validation.errors.marketFee}
           <p
             data-testid={`${testIdPrefix}:error:marketFee`}
-            class="mt-1 text-sm text-red-600 dark:text-red-400"
+            role="alert"
+            class="mt-1 text-sm text-destructive"
           >
             {validation.errors.marketFee}
           </p>

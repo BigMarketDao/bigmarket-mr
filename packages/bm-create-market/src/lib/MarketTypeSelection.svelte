@@ -136,16 +136,15 @@
 
 <div class="space-y-6">
   <div class="space-y-6">
-    <label for="market-type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <label for="market-type" class="block text-sm font-medium text-foreground">
       Market Type
     </label>
     <div class="mt-1">
       <select
         id="market-type"
-        class="block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900
-               shadow-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20
-               focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white
-               dark:placeholder-gray-400"
+        class="block w-full rounded border border-border bg-background px-3 py-2 text-sm text-foreground
+               shadow-sm placeholder:text-muted-foreground focus-visible:border-ring
+               focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         bind:value={marketTypeInternal}
         onchange={changeMarketType}
       >
@@ -155,20 +154,20 @@
       </select>
     </div>
     {#if validation.errors.marketType}
-      <p class="mt-1 text-sm text-red-600 dark:text-red-400">{validation.errors.marketType}</p>
+      <p role="alert" class="mt-1 text-sm text-destructive">{validation.errors.marketType}</p>
     {/if}
     {#if validation.errors.options}
-      <p class="mt-1 text-sm text-red-600 dark:text-red-400">{validation.errors.options}</p>
+      <p role="alert" class="mt-1 text-sm text-destructive">{validation.errors.options}</p>
     {/if}
   </div>
 
   {#if marketTypeInternal === 'scalars'}
     <div class="space-y-6">
       <div class="space-y-6">
-        <p class="text-sm text-gray-500 dark:text-gray-400">
+        <p class="text-sm text-muted-foreground">
           The price ranges are determined in the contract during market creation:
         </p>
-        <ul class="text-sm text-gray-500 dark:text-gray-400">
+        <ul class="text-sm text-muted-foreground">
           <li>1. The contract reads the current price from the Pyth oracle</li>
           <li>2. For each feed the contract has a set of price-band-widths (set by DAO)</li>
           <li>
@@ -176,24 +175,24 @@
             price
           </li>
         </ul>
-        <label for="price-feed" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label for="price-feed" class="block text-sm font-medium text-foreground">
           Price Feed
         </label>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
+        <p class="text-sm text-muted-foreground">
           See
           <a
             href="https://www.pyth.network/price-feeds"
             target="_blank"
-            class="text-orange-500 hover:text-orange-600">pyth-oracle</a
+            class="text-primary hover:text-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >pyth-oracle</a
           >
           for supported pairs
         </p>
         <select
           id="price-feed"
-          class="mt-1 block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm
-	               text-gray-900 shadow-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20
-	               focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white
-	               dark:placeholder-gray-400"
+          class="mt-1 block w-full rounded border border-border bg-background px-3 py-2 text-sm
+	               text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:border-ring
+	               focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           bind:value={template.priceFeedId}
           onchange={changePriceFeedId}
         >
@@ -202,7 +201,7 @@
           {/each}
         </select>
         {#if validation.errors.priceFeed}
-          <p class="mt-1 text-sm text-red-600 dark:text-red-400">{validation.errors.priceFeed}</p>
+          <p role="alert" class="mt-1 text-sm text-destructive">{validation.errors.priceFeed}</p>
         {/if}
       </div>
 
@@ -271,10 +270,10 @@
     </div>
   {:else if marketTypeInternal === 'categories'}
     <div>
-      <h3 id="choices-label" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+      <h3 id="choices-label" class="block text-sm font-medium text-foreground">
         Define Choices
       </h3>
-      <p class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+      <p class="mb-2 text-sm text-muted-foreground">
         Add multiple choices for users to select from - minimum three
       </p>
 
@@ -283,10 +282,9 @@
           <div class="flex items-center gap-2">
             <input
               type="text"
-              class="block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm
-                     text-gray-900 shadow-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20
-                     focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white
-                     dark:placeholder-gray-400"
+              class="block w-full rounded border border-border bg-background px-3 py-2 text-sm
+                     text-foreground placeholder:text-muted-foreground shadow-sm focus-visible:border-ring
+                     focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               placeholder="Option text..."
               value={option.label}
               oninput={(e) => changeCategoryLabel(index, (e.target as HTMLInputElement).value)}
@@ -294,10 +292,9 @@
             />
             <button
               type="button"
-              class="inline-flex items-center rounded-lg border border-gray-300 bg-white p-2 text-sm
-                     text-gray-500 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-orange-500/50
-                     focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800
-                     dark:text-gray-400 dark:hover:bg-gray-700"
+              class="inline-flex items-center rounded-lg border border-border bg-background p-2 text-sm
+                     text-muted-foreground shadow-sm hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring
+                     focus-visible:outline-none disabled:opacity-50"
               onclick={() => removeOption(index)}
               disabled={template.marketTypeDataCategorical!.length <= 3}
               aria-label="Remove option"
@@ -309,10 +306,9 @@
 
         <button
           type="button"
-          class="mt-2 inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm
-                 font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-orange-500/50
-                 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300
-                 dark:hover:bg-gray-700"
+          class="mt-2 inline-flex items-center rounded-lg border border-border bg-background px-3 py-2 text-sm
+                 font-medium text-foreground shadow-sm hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring
+                 focus-visible:outline-none"
           onclick={addOption}
         >
           <Plus class="mr-2 -ml-1 h-4 w-4" />
