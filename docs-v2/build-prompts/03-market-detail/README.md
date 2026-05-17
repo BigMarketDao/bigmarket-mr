@@ -11,7 +11,8 @@
 |---|------------------------|-----------|------|
 | C-01 | *(pending)* | `MarketHeader` | `packages/bm-market/src/lib/market/version2/MarketHeader.svelte` |
 | C-02 | *(pending)* | `MarketStatsBar` | `packages/bm-market/src/lib/market/version2/MarketStatsBar.svelte` |
-| C-03 | *(pending)* | `MarketDetails` | `packages/bm-market/src/lib/market/version2/MarketDetails.svelte` |
+| C-03 | *(pending)* | `MarketDetails` | `packages/bm-market/src/lib/market/version2/MarketDetails.svelte` — **not on live route** |
+| C-21 | *(pending)* | `MarketResolutionCriteria` | `packages/bm-market/src/lib/market/MarketResolutionCriteria.svelte` — **live resolution criteria box** |
 | C-04 | *(pending)* | `MarketStaking` | `packages/bm-market/src/lib/market/version2/MarketStaking.svelte` |
 | C-05 | *(pending)* | `StakingButton` | `packages/bm-market/src/lib/market/version2/do-stake/StakingButton.svelte` |
 | C-06 | *(pending)* | `SlippageSlider` | `packages/bm-market/src/lib/market/version2/do-stake/SlippageSlider.svelte` |

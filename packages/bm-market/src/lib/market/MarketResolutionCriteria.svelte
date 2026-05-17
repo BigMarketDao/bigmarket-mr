@@ -17,13 +17,13 @@
 {#if market}
   <div class="mt-8">
     <details
-      class="group rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 [&_summary::-webkit-details-marker]:hidden"
+      class="group rounded-lg border border-border bg-card [&_summary::-webkit-details-marker]:hidden"
     >
       <summary
-        class="flex cursor-pointer items-center justify-between gap-2 p-4 text-gray-900 dark:text-white"
+        class="flex cursor-pointer items-center justify-between gap-2 rounded-lg p-4 text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <div class="flex items-center gap-2">
-          <svg class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-5 w-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -34,7 +34,7 @@
           <span class="text-sm font-medium">Resolution Criteria</span>
         </div>
         <svg
-          class="h-5 w-5 text-gray-500 transition duration-300 group-open:rotate-180"
+          class="h-5 w-5 text-muted-foreground transition duration-300 group-open:rotate-180"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -48,8 +48,8 @@
         </svg>
       </summary>
 
-      <div class="border-t border-gray-200 p-4 dark:border-gray-700">
-        <div class="prose prose-sm max-w-none text-gray-600 dark:text-gray-400">
+      <div class="border-t border-border p-4">
+        <div class="max-w-none text-sm text-muted-foreground">
           {#if market.unhashedData.criterionSources?.criteria}
             {@html market.unhashedData.criterionSources?.criteria}
           {:else}
@@ -57,13 +57,13 @@
           {/if}
 
           <!-- Resolution Timeline -->
-          <div class="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
-            <h3 class="mb-4 text-sm font-medium text-gray-900 dark:text-white">
+          <div class="mt-4 border-t border-border pt-4">
+            <h3 class="mb-4 text-sm font-medium text-foreground">
               Resolution Timeline
             </h3>
             <div class="relative">
               <!-- Timeline Line -->
-              <div class="absolute top-4 left-0 h-0.5 w-full bg-gray-200 dark:bg-gray-700"></div>
+              <div class="absolute top-4 left-0 h-0.5 w-full bg-muted"></div>
 
               <!-- Timeline Steps -->
               <div class="relative grid grid-cols-3 gap-4">
@@ -71,10 +71,10 @@
                 <div class="text-center">
                   <div class="flex flex-col items-center">
                     <div
-                      class="relative z-10 mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30"
+                      class="relative z-10 mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-success-soft"
                     >
                       <svg
-                        class="h-5 w-5 text-green-600"
+                        class="h-5 w-5 text-success"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -87,10 +87,10 @@
                         />
                       </svg>
                     </div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                    <div class="text-sm font-medium text-foreground">
                       Market Started
                     </div>
-                    <div class="mt-1 text-xs text-gray-500">
+                    <div class="mt-1 tabular-nums text-xs text-muted-foreground">
                       {dateOfResolution($chainStore.stacks.burn_block_height, market)?.startOffChain}
                     </div>
                   </div>
@@ -100,10 +100,10 @@
                 <div class="text-center">
                   <div class="flex flex-col items-center">
                     <div
-                      class="relative z-10 mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30"
+                      class="relative z-10 mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-info-soft"
                     >
                       <svg
-                        class="h-5 w-5 text-blue-600"
+                        class="h-5 w-5 text-info"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -116,10 +116,10 @@
                         />
                       </svg>
                     </div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                    <div class="text-sm font-medium text-foreground">
                       Trading Closes
                     </div>
-                    <div class="mt-1 text-xs text-gray-500">
+                    <div class="mt-1 tabular-nums text-xs text-muted-foreground">
                       {dateOfResolution($chainStore.stacks.burn_block_height, market)?.closeOffChain}
                     </div>
                   </div>
@@ -129,10 +129,10 @@
                 <div class="text-center">
                   <div class="flex flex-col items-center">
                     <div
-                      class="relative z-10 mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30"
+                      class="relative z-10 mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-warning-soft"
                     >
                       <svg
-                        class="h-5 w-5 text-orange-600"
+                        class="h-5 w-5 text-warning"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -145,8 +145,8 @@
                         />
                       </svg>
                     </div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">Resolution</div>
-                    <div class="mt-1 text-xs text-gray-500">
+                    <div class="text-sm font-medium text-foreground">Resolution</div>
+                    <div class="mt-1 tabular-nums text-xs text-muted-foreground">
                       {dateOfResolution($chainStore.stacks.burn_block_height, market)?.resolvesOffChain}
                     </div>
                   </div>
@@ -156,19 +156,19 @@
           </div>
 
           <!-- Resolution Sources -->
-          <div class="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
-            <h3 class="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+          <div class="mt-4 border-t border-border pt-4">
+            <h3 class="mb-3 text-sm font-medium text-foreground">
               Resolution Sources
             </h3>
             <div class="space-y-3">
               <!-- Oracle Info -->
               {#if market.marketType === 2}
-                <div class="flex items-start gap-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-900/50">
+                <div class="flex items-start gap-3 rounded-lg bg-muted p-3">
                   <div
-                    class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30"
+                    class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-community-soft"
                   >
                     <svg
-                      class="h-4 w-4 text-purple-600"
+                      class="h-4 w-4 text-community"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -182,10 +182,10 @@
                     </svg>
                   </div>
                   <div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                    <div class="text-sm font-medium text-foreground">
                       Oracle Resolution
                     </div>
-                    <div class="mt-1 text-xs text-gray-500">
+                    <div class="mt-1 text-xs text-muted-foreground">
                       This market will be resolved using verified oracle data.
                     </div>
                   </div>
@@ -194,12 +194,12 @@
 
               <!-- Resolution Agent -->
               <!-- Resolution Method -->
-              <div class="flex items-start gap-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-900/50">
+              <div class="flex items-start gap-3 rounded-lg bg-muted p-3">
                 <div
-                  class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30"
+                  class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-info-soft"
                 >
                   <svg
-                    class="h-4 w-4 text-blue-600"
+                    class="h-4 w-4 text-info"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -213,10 +213,10 @@
                   </svg>
                 </div>
                 <div>
-                  <div class="text-sm font-medium text-gray-900 dark:text-white">
+                  <div class="text-sm font-medium text-foreground">
                     Resolution Method
                   </div>
-                  <div class="mt-1 text-xs text-gray-500">
+                  <div class="mt-1 text-xs text-muted-foreground">
                     {#if market.marketType === 2}
                       This market will be resolved using oracle data.
                     {:else}
@@ -228,12 +228,12 @@
 
               <!-- External Sources -->
               {#if market.unhashedData.criterionSources?.sources}
-                <div class="flex items-start gap-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-900/50">
+                <div class="flex items-start gap-3 rounded-lg bg-muted p-3">
                   <div
-                    class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30"
+                    class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-success-soft"
                   >
                     <svg
-                      class="h-4 w-4 text-green-600"
+                      class="h-4 w-4 text-success"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -247,10 +247,10 @@
                     </svg>
                   </div>
                   <div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                    <div class="text-sm font-medium text-foreground">
                       External Sources
                     </div>
-                    <div class="mt-1 text-xs text-gray-500">
+                    <div class="mt-1 text-xs text-muted-foreground">
                       {@html market.unhashedData.criterionSources?.sources}
                     </div>
                   </div>
@@ -263,5 +263,5 @@
     </details>
   </div>
 {:else}
-  <div>Loading</div>
+  <div class="text-muted-foreground">Loading</div>
 {/if}
