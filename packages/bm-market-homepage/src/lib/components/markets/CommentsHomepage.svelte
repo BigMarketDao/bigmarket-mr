@@ -23,16 +23,14 @@
 	});
 </script>
 
-<section class="w-full text-[12px] font-bold">
+<section class="w-full text-xs font-bold">
 	<div class="flex gap-2 font-medium">
 		{#if thread}
-			<div
-				class=" max:h-3 relative overflow-hidden font-mono text-[10px] font-medium text-purple-600 tabular-nums dark:text-gray-400"
-			>
+			<div class="relative max-h-3 overflow-hidden font-mono text-xs font-medium text-community tabular-nums">
 				<div class="ticker overflow-hidden whitespace-nowrap">
 					<a
 						href={`/market/${market.marketId}/${market.marketType}#comments`}
-						class="min-w-0 flex-1 truncate"
+						class="min-w-0 flex-1 truncate text-community hover:text-community/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 						title={thread.forumContent.content}
 					>
 						{stripHtml(thread.forumContent.content)}
@@ -41,7 +39,7 @@
 			</div>
 		{:else}
 			<div
-				class="flex h-full items-center justify-between font-mono text-[10px] font-medium text-gray-600 tabular-nums dark:text-gray-400"
+				class="flex h-full items-center justify-between font-mono text-xs font-medium text-muted-foreground tabular-nums"
 			>
 				breaking news on predicitons
 			</div>

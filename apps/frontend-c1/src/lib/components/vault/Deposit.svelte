@@ -149,7 +149,7 @@
 </script>
 
 <div
-	class="w-full max-w-lg space-y-5 rounded-lg border border-neutral-200 bg-neutral-50/80 p-5 dark:border-neutral-700 dark:bg-neutral-900/40"
+	class="w-full space-y-5 rounded-lg border border-neutral-200 bg-neutral-50/80 p-5 dark:border-neutral-700 dark:bg-neutral-900/40"
 >
 	<h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Vault bridge</h2>
 

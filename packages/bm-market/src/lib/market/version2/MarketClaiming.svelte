@@ -68,14 +68,14 @@
 </script>
 
 <div id="claiming"> 
-  <Panel interactive={true} accent="emerald" as="section" ariaLabel="Claim Winnings" clazz="bg-white/90 backdrop-blur shadow-lg ring-1 ring-black/5 focus-within:outline-none focus-within:ring-2 focus-within:ring-emerald-500 dark:border-gray-700/70 dark:bg-gray-800/90 dark:ring-white/10 text-gray-900 dark:text-white" forceTheme="auto">
+  <Panel interactive={true} accent="emerald" as="section" ariaLabel="Claim Winnings">
   {#snippet children()}
     
     <!-- Claim Winnings if Eligible -->
     {#if userStake && canUserClaim(market.marketData.outcome!, userStake.stakes)}
       <ClaimWinnings {market} {userStake} />
     {:else}
-      <div class="text-gray-900 dark:text-gray-100">
+      <div class="text-foreground">
         <div class="flex flex-col gap-y-4">
           <h2 class="text-lg font-semibold">Claim Winnings</h2>
           <p class="font-semibold">{@html getOutcomeMessage($chainStore.stacks.burn_block_height, $selectedCurrency, market)}</p>
@@ -99,13 +99,13 @@
 
     <!-- Optional Debug Info -->
     <!--
-		<p class="text-sm text-gray-500">
-			Staked: {staked}<br />
-			Total Pool: {totalPool}<br />
-			Winning Pool: {winningPool}<br />
-			User Net Share: {fmtMicroToStx(userShareNet, sip10Data.decimals)}<br />
-			DAO Fee: {fmtMicroToStx(daoFee, sip10Data.decimals)}<br />
-			Dev Fee: {fmtMicroToStx(devFee, sip10Data.decimals)}
+		<p class="text-sm text-muted-foreground">
+			Staked: <span class="tabular-nums">{staked}</span><br />
+			Total Pool: <span class="tabular-nums">{totalPool}</span><br />
+			Winning Pool: <span class="tabular-nums">{winningPool}</span><br />
+			User Net Share: <span class="tabular-nums">{fmtMicroToStx(userShareNet, sip10Data.decimals)}</span><br />
+			DAO Fee: <span class="tabular-nums">{fmtMicroToStx(daoFee, sip10Data.decimals)}</span><br />
+			Dev Fee: <span class="tabular-nums">{fmtMicroToStx(devFee, sip10Data.decimals)}</span>
 		</p>
 		-->
     {/snippet}

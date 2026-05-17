@@ -2,33 +2,33 @@
 	import type { Snippet } from 'svelte';
 
 	const {
-		active,
-		label,
+		selected = false,
 		onChangeCategory,
+		label,
 		body
 	}: {
-		active: string;
+		selected?: boolean;
 		label: string;
 		onChangeCategory: (label: string) => void;
 		body: Snippet;
 	} = $props();
+
 	const handleClick = () => {
 		onChangeCategory(label);
 	};
 </script>
 
-<!-- Filter Section with improved spacing -->
 <button
 	type="button"
+	aria-pressed={selected}
 	onclick={handleClick}
-	class={`cursor-pointer relative w-[300px] text-xs font-medium transition-colors md:text-sm
-    ${
-			label === active
-				? 'text-orange-600 after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:bg-orange-600 dark:text-orange-400 dark:after:bg-orange-400'
-				: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-		}`}
+	class={[
+		'relative shrink-0 cursor-pointer whitespace-nowrap rounded-sm px-2 py-1.5 text-xs font-medium transition-colors md:text-sm',
+		'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+		selected ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+	].join(' ')}
 >
-	<span class="cursor-pointer capitalize">
+	<span class="capitalize">
 		{@render body()}
 	</span>
 </button>

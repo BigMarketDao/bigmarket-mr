@@ -1,0 +1,24 @@
+--animate-accordionSlideDown:accordionSlideDown .2s cubic-bezier(.26, .08, .25, 1) forwards
+--animate-accordionSlideUp:accordionSlideUp .2s cubic-bezier(.26, .08, .25, 1) forwards
+--animate-aurora:aurora 60s linear infinite
+--animate-collapsibleSlideDown:collapsibleSlideDown .2s cubic-bezier(.26, .08, .25, 1) forwards
+--animate-collapsibleSlideUp:collapsibleSlideUp .2s cubic-bezier(.26, .08, .25, 1) forwards
+--animate-fadeIn:fadeIn .8s ease-in-out
+--animate-like:like .3s ease-in-out forwards
+--animate-maskShimmer:maskShimmer 3s linear infinite
+--animate-ping:ping 1.5s cubic-bezier(0, 0, .2, 1) infinite
+--animate-popoverSlideDownAndFadeIn:popoverSlideDownAndFadeIn .2s cubic-bezier(.16, 1, .3, 1) forwards
+--animate-popoverSlideDownAndFadeOut:popoverSlideDownAndFadeOut .2s cubic-bezier(.16, 1, .3, 1) forwards
+--animate-popoverSlideLeftAndFadeIn:popoverSlideLeftAndFadeIn .2s cubic-bezier(.16, 1, .3, 1) forwards
+--animate-popoverSlideLeftAndFadeOut:popoverSlideLeftAndFadeOut .2s cubic-bezier(.16, 1, .3, 1) forwards
+--animate-popoverSlideRightAndFadeIn:popoverSlideRightAndFadeIn .2s cubic-bezier(.16, 1, .3, 1) forwards
+--animate-popoverSlideRightAndFadeOut:popoverSlideRightAndFadeOut .2s cubic-bezier(.16, 1, .3, 1) forwards
+--animate-popoverSlideUpAndFadeIn:popoverSlideUpAndFadeIn .2s cubic-bezier(.16, 1, .3, 1) forwards
+--animate-popoverSlideUpAndFadeOut:popoverSlideUpAndFadeOut .2s cubic-bezier(.16, 1, .3, 1) forwards
+--animate-pulse:pulse 2s cubic-bezier(.4, 0, .6, 1) infinite
+--animate-rotateOnce:rotateOnce .3s ease-out both
+--animate-scaleHorizontal:scaleHorizontal 2s ease-in-out infinite
+--animate-slightBounce:slightBounce 2s ease-in-out infinite
+--animate-spin:spin 1s linear infinite
+--animate-unlike:unlike .17s ease-in-out reverse forwards
+--animate-verticalSlide:verticalSlide 2s linear infinite
