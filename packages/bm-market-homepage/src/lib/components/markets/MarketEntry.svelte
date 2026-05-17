@@ -1,18 +1,25 @@
 <script lang="ts">
-	import type { Currency, PredictionMarketCreateEvent } from '@bigmarket/bm-types';
+	import type {
+		Currency,
+		ExchangeRate,
+		PredictionMarketCreateEvent,
+		TokenPermissionEvent
+	} from '@bigmarket/bm-types';
 	import { Card, Countdown, LogoContainer } from '@bigmarket/bm-ui';
 	import {
 		fmtProbability,
 		getCategoryLabel,
+		getMarketToken,
 		getOutcomeMessageOneWord,
 		isDisputeRunning,
 		isResolving,
 		isRunning,
 		isRunningAtBlock
 	} from '@bigmarket/bm-utilities';
+	import { TrendingUp } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import Gauge from './Gauge.svelte';
-	import CommentsHomepage from './CommentsHomepage.svelte';
+	import LatestTradesHomepage from './LatestTradesHomepage.svelte';
 	import MarketResolutionData from './MarketResolutionData.svelte';
 
 	const {
@@ -21,7 +28,9 @@
 		currentBurnHeight,
 		disputeWindowLength,
 		marketVotingDuration,
-		forumApi,
+		bmApi,
+		tokens = [],
+		exchangeRates = [],
 		isCoordinator
 	} = $props<{
 		market: PredictionMarketCreateEvent;
@@ -29,12 +38,20 @@
 		currentBurnHeight: number;
 		disputeWindowLength: number;
 		marketVotingDuration: number;
-		forumApi: string;
+		bmApi: string;
+		tokens?: TokenPermissionEvent[];
+		exchangeRates?: ExchangeRate[];
 		isCoordinator: boolean;
 	}>();
 
+	const marketTokenSymbol = $derived(
+		getMarketToken(market.marketData?.token ?? '', tokens).symbol
+	);
+
 	let inited = $state(false);
+	let predictionCount = $state(0);
 	let yesPercentage = $state(0);
+	const isTrending = $derived(predictionCount > 5);
 	let totalStakesAll = $state(
 		(market?.marketData?.stakes || []).reduce((acc: number, v: number) => acc + v, 0) || 0
 	);
@@ -76,12 +93,15 @@
 </script>
 
 {#if inited && market.marketData}
-	<Card class="gap-3 p-3 hover:shadow-md" data-testId="market-card">
+	<Card
+		class="flex h-full min-h-[13.5rem] flex-col gap-0 p-3 hover:shadow-md"
+		data-testId="market-card"
+	>
 		<!-- Header -->
-		<div class="flex min-w-0 items-start justify-between gap-2">
+		<div class="flex min-h-[3.25rem] shrink-0 items-start justify-between gap-2 pb-2">
 			<div class="flex min-w-0 flex-1 items-start gap-2.5">
 				<div
-					class="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-border bg-muted"
+					class="h-11 w-11 shrink-0 overflow-hidden rounded-[8px] border border-border bg-muted"
 				>
 					<LogoContainer logo={market.unhashedData.logo} />
 				</div>
@@ -107,20 +127,23 @@
 			{/if}
 		</div>
 
-		<!-- Trading body -->
-		<div class="flex w-full flex-col justify-center" data-testid="trading-row">
+		<!-- Trading body — vertically centered in remaining card space -->
+		<div
+			class="flex min-h-[4.5rem] flex-1 flex-col items-center justify-center py-1"
+			data-testid="trading-row"
+		>
 			{#if isRunning(currentBurnHeight, market)}
 				{#if isBinaryMarket}
 					<section class="flex w-full items-stretch gap-2">
 						<a
 							href={`/market/${market.marketId}/${market.marketType}?option=1`}
-							class="flex min-h-11 flex-1 items-center justify-center rounded-lg border border-success-border bg-price-up-soft px-3 py-2.5 text-xs font-semibold text-price-up transition-colors hover:bg-price-up-soft/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+							class="flex min-h-[2.2rem] flex-1 items-center justify-center rounded-[8px] border border-success-border bg-price-up-soft px-2.5 py-2 text-xs font-semibold text-price-up transition-colors hover:bg-price-up-soft/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 						>
 							Yes
 						</a>
 						<a
 							href={`/market/${market.marketId}/${market.marketType}?option=0`}
-							class="flex min-h-11 flex-1 items-center justify-center rounded-lg border border-destructive-border bg-price-down-soft px-3 py-2.5 text-xs font-semibold text-price-down transition-colors hover:bg-price-down-soft/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+							class="flex min-h-[2.2rem] flex-1 items-center justify-center rounded-[8px] border border-destructive-border bg-price-down-soft px-2.5 py-2 text-xs font-semibold text-price-down transition-colors hover:bg-price-down-soft/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 						>
 							No
 						</a>
@@ -145,13 +168,13 @@
 									<div class="flex items-center gap-1">
 										<a
 											href={`/market/${market.marketId}/${market.marketType}?option=${i}`}
-											class="rounded-md border border-success-border bg-price-up-soft px-2 py-0.5 text-xs font-semibold text-price-up transition-colors hover:bg-price-up-soft/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+											class="rounded-[8px] border border-success-border bg-price-up-soft px-1.5 py-0.5 text-[10px] font-semibold text-price-up transition-colors hover:bg-price-up-soft/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 										>
 											Yes
 										</a>
 										<a
 											href={`/market/${market.marketId}/${market.marketType}?option=${i}`}
-											class="rounded-md border border-destructive-border bg-price-down-soft px-2 py-0.5 text-xs font-semibold text-price-down transition-colors hover:bg-price-down-soft/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+											class="rounded-[8px] border border-destructive-border bg-price-down-soft px-1.5 py-0.5 text-[10px] font-semibold text-price-down transition-colors hover:bg-price-down-soft/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 										>
 											No
 										</a>
@@ -175,33 +198,51 @@
 			{/if}
 		</div>
 
-		{#if market}
-			<CommentsHomepage {market} {forumApi} />
-		{/if}
+		<div class="mt-auto w-full shrink-0">
+			{#if market && bmApi}
+				<div class="pb-2.5 pt-1.5">
+					<LatestTradesHomepage
+						{market}
+						{bmApi}
+						{tokens}
+						{selectedCurrency}
+						{exchangeRates}
+						onTradesLoaded={(info) => (predictionCount = info.count)}
+					/>
+				</div>
+			{/if}
 
-		<div
-			class="flex items-center justify-between gap-2 border-t border-border pt-2 text-xs text-muted-foreground"
-		>
-			<div class="min-w-0 tabular-nums">
+			<div class="border-t border-border" aria-hidden="true"></div>
+
+			<div
+				class="flex min-h-4 items-center justify-between gap-2 pt-2 font-mono text-[13px] leading-none text-muted-foreground"
+			>
+				<div class="flex min-w-0 items-center gap-1.5 tabular-nums tracking-tight">
 				{#if running}
 					<Countdown
+						compact
 						endBlock={market.marketData?.marketStart +
 							market.marketData?.marketDuration -
 							currentBurnHeight}
+						valueClass="text-[13px] leading-none"
 					/>
 				{:else if resolving}
 					<Countdown
+						compact
 						endBlock={market.marketData?.marketStart +
 							market.marketData?.marketDuration +
 							market.marketData?.coolDownPeriod +
 							disputeWindowLength -
 							currentBurnHeight}
+						valueClass="text-[13px] leading-none"
 					/>
 				{:else if disputeRunning}
 					<Countdown
+						compact
 						endBlock={market.marketData?.resolutionBurnHeight +
 							marketVotingDuration -
 							currentBurnHeight}
+						valueClass="text-[13px] leading-none"
 					/>
 				{:else}
 					{getOutcomeMessageOneWord(
@@ -211,17 +252,53 @@
 						market
 					)}
 				{/if}
-			</div>
-			<div class="shrink-0">
-				<MarketResolutionData
-					{market}
-					{selectedCurrency}
-					{currentBurnHeight}
-					{disputeWindowLength}
-					{marketVotingDuration}
-					{isCoordinator}
-				/>
+				</div>
+				<div class="flex shrink-0 items-center gap-3">
+					{#if isTrending}
+						<span
+							class="market-card-trending inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide text-warning"
+						>
+							<TrendingUp class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+							Trending
+						</span>
+					{/if}
+					<span
+						class="font-mono text-[13px] font-medium leading-none text-muted-foreground tabular-nums"
+					>
+						{marketTokenSymbol}
+					</span>
+					<MarketResolutionData
+						{market}
+						{selectedCurrency}
+						{currentBurnHeight}
+						{disputeWindowLength}
+						{marketVotingDuration}
+						{isCoordinator}
+					/>
+				</div>
 			</div>
 		</div>
 	</Card>
 {/if}
+
+<style>
+	.market-card-trending {
+		animation: market-trending-pulse 1.4s ease-in-out infinite;
+	}
+
+	@keyframes market-trending-pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.55;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.market-card-trending {
+			animation: none;
+		}
+	}
+</style>

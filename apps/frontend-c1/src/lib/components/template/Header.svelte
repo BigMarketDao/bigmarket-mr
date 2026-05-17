@@ -137,7 +137,7 @@
 					<HeaderButton
 						href={howItWorksLink.href}
 						label={howItWorksLink.label}
-						active={false}
+						active={currentPath.startsWith('/docs')}
 						external={howItWorksLink.external}
 					/>
 				</div>
@@ -208,7 +208,7 @@
 						<HeaderButton
 							href={howItWorksLink.href}
 							label={howItWorksLink.label}
-							active={false}
+							active={currentPath.startsWith('/docs')}
 							external={howItWorksLink.external}
 						/>
 						{#if isLoggedIn()}

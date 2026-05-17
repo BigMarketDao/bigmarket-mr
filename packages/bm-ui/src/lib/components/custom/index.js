@@ -16,4 +16,10 @@ export { default as LogoContainerXSmall } from "./LogoContainerXSmall.svelte";
 export { default as SlotModal } from "./SlotModal.svelte";
 export { default as BlockHeightProgressBar } from "./BlockHeightProgressBar.svelte";
 export { default as Panel } from "./Panel.svelte";
+export { default as DocsSidebar } from "./DocsSidebar.svelte";
+export { default as DocsSectionCard } from "./DocsSectionCard.svelte";
+export { default as DocsBreadcrumb } from "./DocsBreadcrumb.svelte";
+export { default as DocsPrevNext } from "./DocsPrevNext.svelte";
+export { default as DocsOnThisPage } from "./DocsOnThisPage.svelte";
+export { default as DocsProse } from "./DocsProse.svelte";
 //# sourceMappingURL=index.js.map

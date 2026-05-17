@@ -14,9 +14,9 @@ export const daoLink = '/dao';
 export const controlRoomLink: NavLink = { href: '/dao', label: 'CONTROL ROOM' };
 
 export const howItWorksLink: NavLink = {
-	href: 'https://big-market-dao.gitbook.io/big-market-dao-docs/',
+	href: '/docs',
 	label: 'HOW IT WORKS',
-	external: true
+	external: false
 };
 
 export const footerNavSections: Array<NavSection> = [
@@ -25,7 +25,7 @@ export const footerNavSections: Array<NavSection> = [
 		links: [
 			{ href: '/dao', label: 'DAO Information' },
 			{ href: '/market-mgt', label: 'Create Market' },
-			{ href: 'https://big-market-dao.gitbook.io/big-market-dao-docs/', label: 'Docs' }
+			{ href: '/docs', label: 'Docs' }
 		]
 	},
 	{

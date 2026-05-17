@@ -1,5 +1,11 @@
 <script lang="ts">
-	import type { Currency, MarketCategory, PredictionMarketCreateEvent } from '@bigmarket/bm-types';
+	import type {
+		Currency,
+		ExchangeRate,
+		MarketCategory,
+		PredictionMarketCreateEvent,
+		TokenPermissionEvent
+	} from '@bigmarket/bm-types';
 	import { onMount } from 'svelte';
 	import { fromStore } from 'svelte/store';
 	import CategoryButton from './markets/CategoryButton.svelte';
@@ -29,7 +35,9 @@
 		currentBurnHeight,
 		disputeWindowLength,
 		marketVotingDuration,
-		forumApi,
+		bmApi,
+		tokens = [],
+		exchangeRates = [],
 		isCoordinator
 	} = $props<{
 		markets: Array<PredictionMarketCreateEvent>;
@@ -38,7 +46,9 @@
 		currentBurnHeight: number;
 		disputeWindowLength: number;
 		marketVotingDuration: number;
-		forumApi: string;
+		bmApi: string;
+		tokens?: TokenPermissionEvent[];
+		exchangeRates?: ExchangeRate[];
 		isCoordinator: boolean;
 	}>();
 
@@ -48,6 +58,7 @@
 	let debouncedSearchTerm = $state('');
 	let componentKey = $state(0);
 	let sortBy: string = $state('ending-soon');
+	let categoryNavWidth = $state(0);
 
 	const searchStateLabels: Record<SearchState, string> = {
 		[SearchState.All]: 'All Markets',
@@ -224,71 +235,75 @@
 	});
 </script>
 
-<!-- Discovery: row 1 boxed controls · row 2 category filters · rule -->
-<div class="-mt-8 space-y-5 md:-mt-10">
+<!-- Category nav width drives toolbar; controls row matches (right edge = Culture) -->
+<div class="-mt-8 w-full md:-mt-10">
 	<div
-		class="flex flex-wrap items-center gap-3 md:flex-nowrap"
+		class="max-w-full"
+		style:width={categoryNavWidth > 0 ? `min(100%, ${categoryNavWidth}px)` : undefined}
 		role="toolbar"
-		aria-label="Search and refine markets"
+		aria-label="Search and filter markets"
 	>
-		<div
-			class="relative h-8 w-full min-w-[13rem] flex-[1_1_20rem] sm:min-w-[17rem] md:min-w-[22rem] md:flex-[2_1_28rem] lg:min-w-[28rem] xl:min-w-[32rem]"
-		>
-			<label for="searchTerm" class="sr-only">Search markets</label>
-			<Search
-				class="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-				aria-hidden="true"
+		<div class="flex w-full min-w-0 items-center gap-3">
+			<div class="relative h-8 min-w-0 flex-1">
+				<label for="searchTerm" class="sr-only">Search markets</label>
+				<Search
+					class="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+					aria-hidden="true"
+				/>
+				<input
+					id="searchTerm"
+					type="search"
+					bind:value={searchTerm}
+					placeholder="Search markets..."
+					class="h-full w-full rounded-[4px] border border-border bg-background py-0 pr-7 pl-8 text-xs font-medium text-foreground placeholder:text-muted-foreground transition-colors hover:border-muted-foreground/40 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+				/>
+				{#if searchTerm}
+					<button
+						type="button"
+						aria-label="Clear search"
+						onclick={() => (searchTerm = '')}
+						class="absolute top-1/2 right-2 -translate-y-1/2 rounded-[4px] p-0.5 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+					>
+						<XIcon class="h-3.5 w-3.5" />
+					</button>
+				{/if}
+			</div>
+
+			<FilterSelect
+				id="filter-sort"
+				label="Sort by"
+				class="w-[6.75rem] shrink-0"
+				bind:value={sortBy}
+				options={sortOptions}
+				onchange={() => updateSortState(sortBy)}
 			/>
-			<input
-				id="searchTerm"
-				type="search"
-				bind:value={searchTerm}
-				placeholder="Search markets..."
-				class="h-full w-full rounded-[4px] border border-border bg-background py-0 pr-7 pl-8 text-xs font-medium text-foreground placeholder:text-muted-foreground transition-colors hover:border-muted-foreground/40 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+			<FilterSelect
+				id="filter-status"
+				label="Market status"
+				class="w-[7.5rem] shrink-0"
+				bind:value={localMarketStatus}
+				options={statusOptions}
+				onchange={updateMarketStatus}
 			/>
-			{#if searchTerm}
-				<button
-					type="button"
-					aria-label="Clear search"
-					onclick={() => (searchTerm = '')}
-					class="absolute top-1/2 right-2 -translate-y-1/2 rounded-[4px] p-0.5 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
-				>
-					<XIcon class="h-3.5 w-3.5" />
-				</button>
-			{/if}
+			<FilterSelect
+				id="filter-type"
+				label="Market type"
+				class="w-[6.75rem] shrink-0"
+				bind:value={localMarketType}
+				options={marketTypes.map((t) => ({ value: t.value, label: t.name }))}
+				onchange={() => updateMarketType(localMarketType)}
+			/>
 		</div>
 
-		<FilterSelect
-			id="filter-sort"
-			label="Sort by"
-			class="w-[6.75rem] shrink-0"
-			bind:value={sortBy}
-			options={sortOptions}
-			onchange={() => updateSortState(sortBy)}
-		/>
-		<FilterSelect
-			id="filter-status"
-			label="Market status"
-			class="w-[7.5rem] shrink-0"
-			bind:value={localMarketStatus}
-			options={statusOptions}
-			onchange={updateMarketStatus}
-		/>
-		<FilterSelect
-			id="filter-type"
-			label="Market type"
-			class="w-[6.75rem] shrink-0"
-			bind:value={localMarketType}
-			options={marketTypes.map((t) => ({ value: t.value, label: t.name }))}
-			onchange={() => updateMarketType(localMarketType)}
-		/>
-	</div>
-
-	<div class="scrollbar-hide overflow-x-auto pb-0.5">
-		<nav class="flex min-w-max items-center gap-2.5 py-0.5" aria-label="Market categories">
-			{#key componentKey}
-				<CategoryButton
-					label="tvl"
+		<div class="scrollbar-hide mt-4 max-w-full overflow-x-auto">
+			<nav
+				bind:clientWidth={categoryNavWidth}
+				class="flex h-8 w-max items-center gap-2"
+				aria-label="Market categories"
+			>
+				{#key componentKey}
+					<CategoryButton
+						label="tvl"
 					selected={navSelection === 'sort:tvl'}
 					onChangeCategory={selectTrending}
 				>
@@ -308,7 +323,7 @@
 					{#snippet body()}New{/snippet}
 				</CategoryButton>
 
-				<div class="bg-border mx-1 h-4 w-px shrink-0" aria-hidden="true"></div>
+				<div class="bg-border h-4 w-px shrink-0" aria-hidden="true"></div>
 
 				<CategoryButton
 					label="all"
@@ -333,18 +348,20 @@
 						</CategoryButton>
 					{/if}
 				{/each}
-			{/key}
-		</nav>
+				{/key}
+			</nav>
+		</div>
 	</div>
 
-	<div class="bg-border h-px w-full" aria-hidden="true"></div>
+	<div class="mt-4 h-px w-full bg-border" aria-hidden="true"></div>
 </div>
 
 <!-- Market Grid with enhanced spacing -->
 {#key componentKey}
 	{#if filteredMarkets && filteredMarkets.length > 0}
 		<div
-			class="mt-5 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
+			class="market-cards-grid mt-5 grid items-stretch gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
+			style="--market-ticker-duration: 48s"
 		>
 			{#each filteredMarkets as market (market.marketId + '-' + market.marketType)}
 				<MarketEntry
@@ -353,7 +370,9 @@
 					{currentBurnHeight}
 					{disputeWindowLength}
 					{marketVotingDuration}
-					{forumApi}
+					{bmApi}
+					{tokens}
+					{exchangeRates}
 					{isCoordinator}
 				/>
 			{/each}

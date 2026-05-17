@@ -1,8 +1,10 @@
 <script lang="ts">
 	import type { PredictionMarketCreateEvent } from '@bigmarket/bm-types';
 	import {
+		allowedTokenStore,
 		chainStore,
 		daoOverviewStore,
+		exchangeRatesStore,
 		getStxAddress,
 		marketSystemCategoriesStore,
 		selectedCurrency
@@ -26,7 +28,9 @@
 			currentBurnHeight={$chainStore.stacks.burn_block_height}
 			disputeWindowLength={$daoOverviewStore.contractData.disputeWindowLength}
 			marketVotingDuration={$daoOverviewStore.contractData.marketVotingDuration}
-			forumApi={appConfig.VITE_FORUM_API}
+			bmApi={appConfig.VITE_BIGMARKET_API}
+			tokens={$allowedTokenStore ?? []}
+			exchangeRates={$exchangeRatesStore ?? []}
 			isCoordinator={isCoordinator(getStxAddress())}
 		/>
 	</section>

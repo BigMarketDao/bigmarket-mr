@@ -90,7 +90,7 @@
 				<!-- {market.unhashedData.category}
         {#if isCategoricalMarket()}Category{:else if isBinaryMarket()}Binary{:else if isScalarMarket()}Scalar{/if}
         Market  -->
-				<Eye class="inline h-4 w-4 text-muted-foreground" /></a
+				<Eye class="inline h-3 w-3 text-muted-foreground" /></a
 			>
 		</div>
 	</div>
