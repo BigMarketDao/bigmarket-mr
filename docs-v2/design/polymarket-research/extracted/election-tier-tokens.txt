@@ -1,0 +1,13 @@
+--tier-lean-d:#85a0ff
+--tier-lean-d:#a8bbff
+--tier-lean-r:#f98183
+--tier-lean-r:#ffa8aa
+--tier-likely-d:#3059e8
+--tier-likely-d:#5c7fff
+--tier-likely-r:#d10a0f
+--tier-likely-r:#f5474a
+--tier-safe-d:#0034eb
+--tier-safe-d:#1231a0
+--tier-safe-r:#83070a
+--tier-safe-r:#a80004
+--tier-tossup:#9445d9
