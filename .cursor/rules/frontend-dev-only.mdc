@@ -1,0 +1,13 @@
+---
+description: Local dev — frontend only; never start API, contracts, or other services
+alwaysApply: true
+---
+
+# Local dev: frontend only
+
+When the user asks to run localhost, start the dev server, or test UI changes:
+
+- **Only** run `pnpm dev` (frontend at http://localhost:8081/).
+- **Do not** run `pnpm dev-api`, MongoDB, Clarinet devnet, contract tests, or any other backend/local services unless the user explicitly asks for them.
+
+If the frontend is already running, leave it running and tell the user the URL instead of starting a second instance.
