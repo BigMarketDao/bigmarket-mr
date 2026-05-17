@@ -139,7 +139,7 @@
 			{/if}
 		</main>
 
-		<div class="shrink-0 border-t border-border">
+		<div class="shrink-0">
 			<Footer />
 		</div>
 	</div>
