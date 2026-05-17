@@ -23,6 +23,12 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.test
+!.env.testnet.example
+
+# Agent skill — canonical files live in agents/bigmarket/ only
+agents/SKILL.md
+agents/bigmarket.ts
+agents/.env.testnet
 
 # Vite
 vite.config.js.timestamp-*

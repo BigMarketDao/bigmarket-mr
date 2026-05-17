@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "skills": {
+    "bigmarket": {
+      "source": "./agents/bigmarket",
+      "sourceType": "local",
+      "computedHash": "2e3a4dd1cff49d52df7ebf692f2ea67eaa6eb7ecbfc025b72f67b692fa0aab6e"
+    },
+    "wallet": {
+      "source": "aibtcdev/skills",
+      "sourceType": "github",
+      "skillPath": "wallet/SKILL.md",
+      "computedHash": "f774b3faa8bf1e743455f2dff4b1210f9197e93f224c19832594f79edf3e3c16"
+    }
+  }
+}
