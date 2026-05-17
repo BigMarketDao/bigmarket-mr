@@ -36,7 +36,7 @@
 
             // Simple format: ADDRESS, TIME_AGO
             el.innerHTML = `${formattedAddress}, ${timestamp}`;
-            el.className = 'text-blue-400 dark:text-blue-400 font-mono text-sm mb-2';
+            el.className = 'text-info font-mono text-sm mb-2 tabular-nums';
           }
         });
       }, 100);
@@ -54,30 +54,30 @@
   let threadClasses = {
     root: 'space-y-0',
     messageCard: {
-      container: 'border-b border-gray-200 dark:border-gray-700 pb-3 mb-3 last:border-b-0',
+      container: 'border-b border-border pb-3 mb-3 last:border-b-0',
       title: 'hidden',
-      author: 'text-sm text-blue-400 dark:text-blue-400 font-mono mb-2',
+      author: 'text-sm text-info font-mono mb-2 tabular-nums',
       iconSuccess: 'hidden',
       iconError: 'hidden',
-      body: 'text-sm text-gray-900 dark:text-white leading-relaxed',
+      body: 'text-sm text-foreground leading-relaxed',
     },
     newMessageCard: {
       container: 'mb-4 space-y-3',
       titleInput: 'hidden',
       contentLabel: 'hidden',
       contentEditor:
-        'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 resize-none min-h-[70px] text-sm',
+        'w-full p-3 border border-input rounded-lg bg-card text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:border-ring resize-none min-h-[70px] text-sm',
       contentPreview:
-        'prose prose-gray dark:prose-invert max-w-none bg-gray-50 dark:bg-gray-800 p-3 rounded text-sm',
-      error: 'text-sm text-red-600 dark:text-red-400 mt-1',
+        'prose prose-sm max-w-none bg-muted p-3 rounded text-sm text-foreground',
+      error: 'text-sm text-destructive mt-1',
       buttonCancel:
-        'px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors border border-gray-300 dark:border-gray-600 rounded-md',
+        'px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border border-border rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
       buttonPost:
-        'px-4 py-1.5 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-colors focus:ring-2 focus:ring-orange-500/20 focus:outline-none disabled:opacity-50',
+        'px-4 py-1.5 h-11 md:h-10 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50',
       replyLink:
-        'text-xs text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors',
+        'text-xs text-info hover:text-info/80 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-sm',
       previewButton:
-        'text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors',
+        'text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-sm',
       replyContainer: 'flex justify-end items-center gap-2 mt-2',
     },
   };
@@ -85,13 +85,13 @@
 
 <div
   id="comments"
-  class="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+  class="rounded-xl border border-border bg-card shadow-sm"
 >
-  <div class="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-    <h2 class="text-center text-lg font-medium text-gray-900 dark:text-white">Discussion</h2>
+  <div class="border-b border-border px-4 py-3">
+    <h2 class="text-center text-lg font-medium text-foreground">Discussion</h2>
   </div>
 
-  <div class="bg-white p-4 dark:bg-gray-900">
+  <div class="p-4">
     {#if thread}
       <div class="thread-wrapper">
         <!-- threadId={thread.forumContent.messageId} -->
@@ -100,8 +100,8 @@
 
     {:else}
       <div class="py-8 text-center">
-        <div class="mb-3 text-gray-400 dark:text-gray-500">
-          <svg class="mx-auto h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="mb-3 text-muted-foreground">
+          <svg class="mx-auto h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -110,24 +110,20 @@
             />
           </svg>
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+        <p class="text-sm text-muted-foreground">
           No discussion available for this market.
         </p>
-        <p class="mt-1 text-xs text-gray-500">Be the first to share your thoughts!</p>
+        <p class="mt-1 text-xs text-muted-foreground tabular-nums">Be the first to share your thoughts!</p>
       </div>
     {/if}
   </div>
 </div>
 
 <style>
-  /* EXACTLY AS REQUESTED - Clean forum styling */
+  /* Clean forum styling — semantic tokens only */
   :global(.thread-wrapper) {
     font-family: inherit;
-    color: rgb(17, 24, 39);
-  }
-
-  :global(.dark .thread-wrapper) {
-    color: white;
+    color: var(--color-foreground);
   }
 
   /* CRITICAL: Input box FIRST - move to top */
@@ -148,7 +144,7 @@
   /* NO VERTICAL LINES - clean indentation only */
   :global(.thread-wrapper ul) {
     margin-left: 2rem !important;
-    border-left: none !important; /* NO VERTICAL LINES */
+    border-left: none !important;
     padding-left: 0 !important;
     list-style-type: none !important;
     margin-top: 0.5rem !important;
@@ -165,7 +161,7 @@
     display: none !important;
   }
 
-  /* PROPER BUTTON STYLING - as requested */
+  /* Button base */
   :global(.thread-wrapper button) {
     cursor: pointer !important;
     transition: all 0.2s ease !important;
@@ -175,43 +171,54 @@
     border-radius: 0.5rem !important;
   }
 
-  /* COMMENT button (main) - orange */
-  :global(.thread-wrapper button[type='submit']) {
-    background-color: rgb(249, 115, 22) !important; /* orange-500 */
-    color: white !important;
-    border: none !important;
-  }
-
-  :global(.thread-wrapper button[type='submit']:hover) {
-    background-color: rgb(234, 88, 12) !important; /* orange-600 */
-  }
-
-  /* POST REPLY button - orange */
+  /* Submit / post buttons — primary accent */
+  :global(.thread-wrapper button[type='submit']),
   :global(.thread-wrapper button:not([type='submit']):not(.cancel-btn):not(.preview-btn)) {
-    background-color: rgb(249, 115, 22) !important; /* orange-500 */
-    color: white !important;
+    background-color: var(--color-primary) !important;
+    color: var(--color-primary-foreground) !important;
     border: none !important;
+    min-height: 2.75rem !important;
   }
 
+  :global(.thread-wrapper button[type='submit']:hover),
   :global(.thread-wrapper button:not([type='submit']):not(.cancel-btn):not(.preview-btn):hover) {
-    background-color: rgb(234, 88, 12) !important; /* orange-600 */
+    background-color: color-mix(in oklab, var(--color-primary) 90%, transparent) !important;
   }
 
-  /* CANCEL button - gray with border */
+  :global(.thread-wrapper button[type='submit']:focus-visible),
+  :global(.thread-wrapper button:not([type='submit']):not(.cancel-btn):not(.preview-btn):focus-visible) {
+    outline: none !important;
+    box-shadow: 0 0 0 2px var(--color-ring) !important;
+  }
+
+  @media (min-width: 768px) {
+    :global(.thread-wrapper button[type='submit']),
+    :global(.thread-wrapper button:not([type='submit']):not(.cancel-btn):not(.preview-btn)) {
+      min-height: 2.5rem !important;
+    }
+  }
+
+  /* Cancel button */
   :global(.thread-wrapper .cancel-btn),
   :global(.thread-wrapper button[class*='cancel']) {
     background-color: transparent !important;
-    color: rgb(107, 114, 128) !important; /* gray-500 */
-    border: 1px solid rgb(209, 213, 219) !important; /* gray-300 */
+    color: var(--color-muted-foreground) !important;
+    border: 1px solid var(--color-border) !important;
+    min-height: auto !important;
   }
 
-  :global(.dark .thread-wrapper .cancel-btn),
-  :global(.dark .thread-wrapper button[class*='cancel']) {
-    color: rgb(156, 163, 175) !important; /* gray-400 */
-    border-color: rgb(75, 85, 99) !important; /* gray-600 */
+  :global(.thread-wrapper .cancel-btn:hover),
+  :global(.thread-wrapper button[class*='cancel']:hover) {
+    color: var(--color-foreground) !important;
   }
 
-  /* Form actions container - more compact */
+  :global(.thread-wrapper .cancel-btn:focus-visible),
+  :global(.thread-wrapper button[class*='cancel']:focus-visible) {
+    outline: none !important;
+    box-shadow: 0 0 0 2px var(--color-ring) !important;
+  }
+
+  /* Form actions container */
   :global(.thread-wrapper .form-actions),
   :global(.thread-wrapper div[class*='flex justify-end']) {
     display: flex !important;
@@ -222,71 +229,60 @@
     padding: 0 !important;
   }
 
-  /* ADDRESS, TIME_AGO format - exactly as requested */
+  /* Author line: address + timestamp */
   :global(.thread-wrapper h3) {
-    font-family:
-      ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace !important;
-    font-size: 14px !important;
+    font-family: var(--font-mono) !important;
+    font-size: 0.875rem !important;
     font-weight: 400 !important;
-    color: rgb(96, 165, 250) !important; /* blue-400 */
+    font-variant-numeric: tabular-nums !important;
+    color: var(--color-info) !important;
     margin-bottom: 0.5rem !important;
     display: block !important;
   }
 
-  /* Text content */
+  /* Comment body */
   :global(.thread-wrapper .prose) {
     max-width: none !important;
     font-size: 0.875rem !important;
-    color: rgb(17, 24, 39) !important;
+    color: var(--color-foreground) !important;
     line-height: 1.5 !important;
     margin-top: 0 !important;
     margin-bottom: 1rem !important;
   }
 
-  :global(.dark .thread-wrapper .prose) {
-    color: white !important;
-  }
-
-  /* THIN LINE SEPARATORS - between main comments */
+  /* Separators between top-level comments */
   :global(.thread-wrapper > div > div) {
-    border-bottom: 1px solid rgb(229, 231, 235) !important;
+    border-bottom: 1px solid var(--color-border) !important;
     padding-bottom: 0.75rem !important;
     margin-bottom: 0.75rem !important;
   }
 
-  :global(.dark .thread-wrapper > div > div) {
-    border-bottom-color: rgb(75, 85, 99) !important;
-  }
-
-  /* Last comment no border */
   :global(.thread-wrapper > div > div:last-child) {
     border-bottom: none !important;
   }
 
-  /* Textarea styling - more compact */
+  /* Textarea */
   :global(.thread-wrapper textarea) {
     width: 100% !important;
     padding: 0.75rem !important;
-    border: 1px solid rgb(209, 213, 219) !important;
+    border: 1px solid var(--color-input) !important;
     border-radius: 0.5rem !important;
-    background-color: white !important;
-    color: rgb(17, 24, 39) !important;
+    background-color: var(--color-card) !important;
+    color: var(--color-foreground) !important;
     font-size: 0.875rem !important;
     resize: vertical !important;
     min-height: 70px !important;
     line-height: 1.4 !important;
   }
 
-  :global(.dark .thread-wrapper textarea) {
-    background-color: rgb(31, 41, 55) !important; /* gray-800 */
-    border-color: rgb(75, 85, 99) !important; /* gray-600 */
-    color: white !important;
+  :global(.thread-wrapper textarea::placeholder) {
+    color: var(--color-muted-foreground) !important;
   }
 
-  :global(.thread-wrapper textarea:focus) {
+  :global(.thread-wrapper textarea:focus-visible) {
     outline: none !important;
-    border-color: rgb(249, 115, 22) !important; /* orange-500 */
-    box-shadow: 0 0 0 3px rgb(249, 115, 22, 0.1) !important;
+    border-color: var(--color-ring) !important;
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-ring) 25%, transparent) !important;
   }
 
   /* Reply links */
@@ -300,22 +296,26 @@
   }
 
   :global(.thread-wrapper a) {
-    color: rgb(96, 165, 250) !important;
+    color: var(--color-info) !important;
     text-decoration: none !important;
     font-size: 0.75rem !important;
   }
 
   :global(.thread-wrapper a:hover) {
-    color: rgb(147, 197, 253) !important;
+    color: color-mix(in oklab, var(--color-info) 80%, transparent) !important;
     text-decoration: underline !important;
   }
 
-  /* Force proper sizing */
+  :global(.thread-wrapper a:focus-visible) {
+    outline: none !important;
+    box-shadow: 0 0 0 2px var(--color-ring) !important;
+    border-radius: 0.125rem !important;
+  }
+
   :global(.thread-wrapper *) {
     box-sizing: border-box !important;
   }
 
-  /* Mobile responsiveness */
   @media (max-width: 640px) {
     :global(.thread-wrapper) {
       font-size: 0.875rem;
@@ -326,7 +326,7 @@
     }
 
     :global(.thread-wrapper h3) {
-      font-size: 12px !important;
+      font-size: 0.75rem !important;
     }
 
     :global(.thread-wrapper button) {
