@@ -1,12 +1,12 @@
 import crypto from 'crypto';
-import { broadcastTransaction, makeContractCall, noneCV, principalCV, uintCV, PostConditionMode, FungibleConditionCode, contractPrincipalCV, createAsset, standardPrincipalCV, bufferCV } from '@stacks/transactions';
+import { broadcastTransaction, makeContractCall, uintCV, PostConditionMode, contractPrincipalCV, bufferCV, standardPrincipalCV, Pc, principalCV, createAsset, FungibleConditionCode } from '@stacks/transactions';
 import { STACKS_DEVNET, STACKS_MAINNET, STACKS_TESTNET } from '@stacks/network';
 import { crossChainIntentCollection, crossChainMappingCollection } from '../../lib/data/db_models.js';
 import { getConfig } from '../../lib/config.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { getOrCreateMappedAddress } from './crossChainMappingHelpers.js';
 import { stacks } from '@bigmarket/sdk';
-import { CreatedStacksWallet } from '@bigmarket/bm-types';
+import { CreatedStacksWallet, VaultUserChain } from '@bigmarket/bm-types';
 
 export type CrossChainIntentStatus = 'created' | 'submitted' | 'sweeping' | 'swept' | 'failed';
 
@@ -38,6 +38,7 @@ function getStacksNetwork() {
 }
 
 export async function registerBridgeIntent(params: { sourceChain: string; sourceAddress: string; amount?: string; tokenContractAddress?: string; tokenContractName?: string; destinationVaultAddress?: string }) {
+	console.log('registerBridgeIntent: params = ', params);
 	const mappedAddress = await getOrCreateMappedAddress(params.sourceChain, params.sourceAddress);
 
 	const now = new Date();
@@ -277,4 +278,68 @@ export async function sweepIntentToVault(intentId: string) {
 
 		throw err;
 	}
+}
+
+function normalizeVaultSourceChain(sourceChain: string): VaultUserChain {
+	const s = sourceChain.toLowerCase();
+	if (s === 'eth' || s === 'ethereum') return 'ethereum';
+	if (s === 'sol' || s === 'solana') return 'solana';
+	if (s === 'stx' || s === 'stacks') return 'stacks';
+	throw new Error(`Unsupported source chain: ${sourceChain}`);
+}
+
+/**
+ * Sweep USDCx from the mapped Stacks custody address into the vault via `deposit`,
+ * crediting the cross-chain identity (source chain + address).
+ */
+export async function depositMappedBalanceToVault(sourceChain: string, sourceAddress: string) {
+	const chain = normalizeVaultSourceChain(sourceChain);
+	const mappedAddress = await getOrCreateMappedAddress(chain, sourceAddress);
+	const dao = getDaoConfig();
+
+	const balance = await getSip010Balance({
+		owner: mappedAddress,
+		contractAddress: dao.VITE_USDCX_CONTRACT_ADDRESS,
+		contractName: dao.VITE_USDCX_CONTRACT_NAME
+	});
+
+	if (balance <= 0n) {
+		throw new Error(`No USDCx balance on mapped address ${mappedAddress}`);
+	}
+
+	const nonce = await getAccountNonce(mappedAddress);
+	const privateKey = stacks.deriveStacksPrivateKey(getConfig().walletKey, sourceAddress);
+
+	const tokenContract = contractPrincipalCV(dao.VITE_USDCX_CONTRACT_ADDRESS, dao.VITE_USDCX_CONTRACT_NAME);
+	const asset = createAsset(dao.VITE_USDCX_CONTRACT_ADDRESS, dao.VITE_USDCX_CONTRACT_NAME, 'usdcx');
+	//const postCondition = makeStandardFungiblePostCondition(mappedAddress, FungibleConditionCode.LessEqual, balance, asset);
+
+	const tx = await makeContractCall({
+		contractAddress: dao.VITE_DAO_DEPLOYER,
+		contractName: dao.VITE_DAO_VAULT,
+		functionName: 'deposit',
+		//functionArgs: [tokenContract, uintCV(balance), bufferCV(stacks.vaultChainIdBuffer(chain)), bufferCV(vaultUserAddress32(chain, sourceAddress))],
+		functionArgs: [tokenContract, uintCV(balance), bufferCV(stacks.vaultChainIdBuffer(chain)), principalCV(sourceAddress)],
+		senderKey: privateKey,
+		network: getStacksNetwork(),
+		fee: RELAYER_STX_FEE,
+		nonce,
+		postConditionMode: PostConditionMode.Deny,
+		postConditions: []
+	});
+
+	const broadcast = await broadcastTransaction({
+		transaction: tx,
+		network: getStacksNetwork()
+	});
+
+	if ('error' in broadcast) {
+		throw new Error(JSON.stringify(broadcast));
+	}
+
+	return {
+		mappedAddress,
+		amount: balance.toString(),
+		txid: broadcast.txid
+	};
 }

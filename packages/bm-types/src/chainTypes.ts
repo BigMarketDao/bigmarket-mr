@@ -2,6 +2,8 @@ export type ChainInfo = {
   stacks: StacksInfo;
 };
 
+export type VaultUserChain = "ethereum" | "stacks" | "solana";
+
 export type StacksInfo = {
   burn_block_height: number;
   stacks_tip_height?: number;

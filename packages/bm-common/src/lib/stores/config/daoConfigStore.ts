@@ -9,7 +9,7 @@ export function requireDaoConfig(config: DaoConfig | null): DaoConfig {
   return config;
 }
 export function requireVaultClient(config: DaoConfig | null) {
-  return stacks.createVaultClient(requireDaoConfig(config));
+  return stacks.createStacksPlayClient(requireDaoConfig(config));
 }
 export function requireContractViewDataClient() {
   return stacks.createContractViewDataClient();

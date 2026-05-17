@@ -49,10 +49,11 @@
 	const ethRecipientOk = $derived(/^0x[a-fA-F0-9]{40}$/.test(ethRecipient.trim()));
 
 	const readyDeposit = $derived(
-		$walletState.status === 'connected' &&
+		($walletState.status === 'connected' &&
 			$walletState.chain === 'ethereum' &&
 			mappedStx.length > 0 &&
-			ethAddress.length > 0
+			ethAddress.length > 0) ||
+			$walletState.chain === 'stacks'
 	);
 
 	const readyWithdraw = $derived(
@@ -87,8 +88,10 @@
 			const { approveAllbridgeDepositIfNeeded, sendAllbridgeDeposit, ChainSymbol } =
 				await import('@bigmarket/sdk/ethereum');
 
+			const sourceAddress = $walletState.activeAccount?.mappedAddress || stxAddress;
 			const base = {
 				amount: amount.trim(),
+				sourceAddress: sourceAddress,
 				sourceChain: ChainSymbol.ETH,
 				destinationChain: ChainSymbol.STX,
 				tokenSymbol,
@@ -319,7 +322,7 @@
 	</div>
 
 	{#if errorMsg}
-		<p class="text-sm text-red-700 dark:text-red-300">{errorMsg}</p>
+		<p class="text-sm text-red-700 dark:text-red-300">{@html errorMsg}</p>
 	{/if}
 
 	{#if flow === 'deposit' && explorerEthApproveUrl}

@@ -1,13 +1,14 @@
 import express from 'express';
 import { getOrCreateMappedAddress } from './crossChainMappingHelpers.js';
-import { getBridgeIntent, markIntentSubmitted, registerBridgeIntent, sweepIntentToVault } from './intentRegistryHelper.js';
+import {
+	depositMappedBalanceToVault,
+	getBridgeIntent,
+	markIntentSubmitted,
+	registerBridgeIntent,
+	sweepIntentToVault
+} from './intentRegistryHelper.js';
 
 const router = express.Router();
-
-router.get('/mappings/:sourceChain/:sourceAddress', async (req, res) => {
-	const mappedAddress = await getOrCreateMappedAddress(req.params.sourceChain, req.params.sourceAddress);
-	res.json({ mappedAddress });
-});
 
 router.get('/mappings/:sourceChain/:sourceAddress', async (req, res) => {
 	try {
@@ -65,6 +66,16 @@ router.post('/intents/:intentId/sweep', async (req, res) => {
 	} catch (err: any) {
 		console.error('POST /intents/:intentId/sweep failed', err);
 		res.status(500).json({ error: err.message ?? 'Failed to sweep intent' });
+	}
+});
+
+router.post('/mappings/:sourceChain/:sourceAddress/deposit-to-vault', async (req, res) => {
+	try {
+		const result = await depositMappedBalanceToVault(req.params.sourceChain, req.params.sourceAddress);
+		res.json(result);
+	} catch (err: any) {
+		console.error('POST /mappings/.../deposit-to-vault failed', err);
+		res.status(500).json({ error: err.message ?? 'Failed to deposit to vault' });
 	}
 });
 

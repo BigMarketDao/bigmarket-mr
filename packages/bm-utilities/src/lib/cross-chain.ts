@@ -41,22 +41,21 @@ export async function registerDepositIntent(
   params: {
     amount: string;
     sourceChain?: string;
+    sourceAddress?: string;
     destinationChain: string;
     stxIsTestnet?: boolean;
     provider?: any;
   },
 ) {
   // 1. Ask backend for mapped Stacks deposit address
-  const intentRes = await fetch(`${bmApiUrl}/cross-chain/deposit-intent`, {
+  const intentRes = await fetch(`${bmApiUrl}/cross-chain/intents`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      amount: params.amount,
-      sourceChain: params.sourceChain ?? "eth",
-      destinationChain: params.destinationChain,
-      stxIsTestnet: params.stxIsTestnet ?? false,
-    }),
+    body: JSON.stringify(params),
   });
+
+  export async function registerBridgeIntent() {
+
   return intentRes;
 
   // if (!intentRes.ok) throw new Error(await intentRes.text());
