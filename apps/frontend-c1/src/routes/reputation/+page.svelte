@@ -175,8 +175,6 @@
 			})
 		);
 
-		console.log(mergedRepData);
-
 		userReputationStore.update((conf: UserReputation) => {
 			conf.userReputationData = userReputationData;
 			return conf;
@@ -193,37 +191,37 @@
 </svelte:head>
 
 <PageContainer>
-	<!-- Page Header -->
-	<div class="bg-white dark:bg-gray-900">
-		<div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-			<div class="md:flex md:items-center md:justify-between">
-				<div class="min-w-0 flex-1">
-					<h1 class="text-xl leading-7 font-semibold text-gray-900 sm:text-2xl dark:text-white">
-						Reputation Hub
-					</h1>
-					<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-						Build your reputation, claim BIG, and view tier weights
-					</p>
-				</div>
-			</div>
+	<div class="mb-8 md:flex md:items-center md:justify-between">
+		<div class="min-w-0 flex-1">
+			<h1 class="text-xl leading-7 font-semibold text-foreground sm:text-2xl">
+				Reputation Hub
+			</h1>
+			<p class="mt-1 text-sm text-muted-foreground">
+				Build your reputation, claim BIG, and view tier weights
+			</p>
+		</div>
+		<div class="mt-4 flex md:mt-0 md:ml-4">
+			<a
+				href="/reputation/leader-board"
+				class="inline-flex h-11 items-center rounded-md border border-border bg-muted px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:h-10"
+			>
+				Leaderboard
+			</a>
 		</div>
 	</div>
 
-	<!-- Main Content -->
-	<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-		<div class="grid gap-8 lg:grid-cols-1">
-			<!-- Stats -->
-			<div class="space-y-6">
+	<div class="grid gap-8 lg:grid-cols-1">
+		<div class="space-y-6">
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 					<!-- Current Epoch -->
 					<div
-						class="overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900"
+						class="overflow-hidden rounded border border-border bg-card shadow-sm"
 					>
 						<div class="p-4">
 							<div class="flex items-center">
 								<div class="flex-shrink-0">
 									<svg
-										class="h-5 w-5 text-gray-400"
+										class="h-5 w-5 text-muted-foreground"
 										fill="none"
 										viewBox="0 0 24 24"
 										stroke="currentColor"
@@ -238,17 +236,17 @@
 								</div>
 								<div class="ml-4 w-0 flex-1">
 									<dl>
-										<dt class="truncate text-xs font-medium text-gray-500 dark:text-gray-400">
+										<dt class="truncate text-xs font-medium text-muted-foreground">
 											Current Epoch
 										</dt>
-										<dd class="text-xl font-semibold text-gray-900 dark:text-white">
+										<dd class="text-xl font-semibold text-foreground">
 											{reputationData?.currentEpoch ?? '-'}
 										</dd>
 									</dl>
 								</div>
 							</div>
 						</div>
-						<p class="px-4 pb-4 text-xs text-gray-500 dark:text-gray-400">
+						<p class="px-4 pb-4 text-xs text-muted-foreground">
 							Epochs are 4000 bitcoin blocks - roughly monthly. Current epoch is bitcoin block
 							height divided by this number.
 						</p>
@@ -256,13 +254,13 @@
 
 					<!-- Rewards per Epoch -->
 					<div
-						class="overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900"
+						class="overflow-hidden rounded border border-border bg-card shadow-sm"
 					>
 						<div class="p-4">
 							<div class="flex items-center">
 								<div class="flex-shrink-0">
 									<svg
-										class="h-5 w-5 text-green-400"
+										class="h-5 w-5 text-success"
 										fill="none"
 										viewBox="0 0 24 24"
 										stroke="currentColor"
@@ -277,10 +275,10 @@
 								</div>
 								<div class="ml-4 w-0 flex-1">
 									<dl>
-										<dt class="truncate text-xs font-medium text-gray-500 dark:text-gray-400">
+										<dt class="truncate text-xs font-medium text-muted-foreground">
 											Total Reward per Epoch
 										</dt>
-										<dd class="text-xl font-semibold text-gray-900 dark:text-white">
+										<dd class="text-xl font-semibold text-foreground">
 											{fmtNumber(
 												Number(fmtMicroToStxNumber(reputationData?.rewardPerEpoch || 0).toFixed(2))
 											)} BIG
@@ -289,20 +287,20 @@
 								</div>
 							</div>
 						</div>
-						<p class="px-4 pb-4 text-xs text-gray-500 dark:text-gray-400">
+						<p class="px-4 pb-4 text-xs text-muted-foreground">
 							The total $BIG awarded per epoch.
 						</p>
 					</div>
 
 					<!-- Weighted Supply -->
 					<div
-						class="overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900"
+						class="overflow-hidden rounded border border-border bg-card shadow-sm"
 					>
 						<div class="p-4">
 							<div class="flex items-center">
 								<div class="flex-shrink-0">
 									<svg
-										class="h-5 w-5 text-blue-400"
+										class="h-5 w-5 text-info"
 										fill="none"
 										viewBox="0 0 24 24"
 										stroke="currentColor"
@@ -317,30 +315,30 @@
 								</div>
 								<div class="ml-4 w-0 flex-1">
 									<dl>
-										<dt class="truncate text-xs font-medium text-gray-500 dark:text-gray-400">
+										<dt class="truncate text-xs font-medium text-muted-foreground">
 											Weighted Supply
 										</dt>
-										<dd class="text-xl font-semibold text-gray-900 dark:text-white">
+										<dd class="text-xl font-semibold text-foreground">
 											{fmtAmount(reputationData?.weightedSupply || 0, 'stx') || '?'}
 										</dd>
 									</dl>
 								</div>
 							</div>
 						</div>
-						<p class="px-4 pb-4 text-xs text-gray-500 dark:text-gray-400">
+						<p class="px-4 pb-4 text-xs text-muted-foreground">
 							Sum of everyones weighted reputation score at each tier.
 						</p>
 					</div>
 
 					<!-- Your Weighted Reputation -->
 					<div
-						class="overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900"
+						class="overflow-hidden rounded border border-border bg-card shadow-sm"
 					>
 						<div class="p-4">
 							<div class="flex items-center">
 								<div class="flex-shrink-0">
 									<svg
-										class="h-5 w-5 text-orange-400"
+										class="h-5 w-5 text-primary"
 										fill="none"
 										viewBox="0 0 24 24"
 										stroke="currentColor"
@@ -355,21 +353,21 @@
 								</div>
 								<div class="ml-4 w-0 flex-1">
 									<dl>
-										<dt class="truncate text-xs font-medium text-gray-500 dark:text-gray-400">
+										<dt class="truncate text-xs font-medium text-muted-foreground">
 											Your Weighted Reputation
 										</dt>
 										{#if typeof window !== 'undefined' && isLoggedIn() && userReputationData}
-											<dd class="text-xl font-semibold text-orange-900 dark:text-orange-100">
+											<dd class="text-xl font-semibold tabular-nums text-primary">
 												{fmtAmount(userReputationData?.weightedReputation, 'stx')}
 											</dd>
 										{:else}
-											Connect wallet
+											<span class="text-sm text-muted-foreground">Connect wallet</span>
 										{/if}
 									</dl>
 								</div>
 							</div>
 						</div>
-						<p class="px-4 pb-4 text-xs text-gray-500 dark:text-gray-400">
+						<p class="px-4 pb-4 text-xs text-muted-foreground">
 							Your weighted reputation - the weighted sum of your scores at each tier determines
 							your $BIG share.
 						</p>
@@ -380,7 +378,7 @@
 			<!-- Claims Card (moved above tiers) -->
 			<div class="grid grid-cols-1 gap-4">
 				<div
-					class="rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900"
+					class="rounded border border-border bg-card shadow-sm"
 				>
 					<div class="px-4 py-4">
 						{#if userReputationData && reputationData}
@@ -393,13 +391,13 @@
 			<!-- Tiers Table -->
 			<div class="grid grid-cols-1 gap-4">
 				<div
-					class="rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900"
+					class="rounded border border-border bg-card shadow-sm"
 				>
 					<div class="px-4 py-3">
 						<div class="flex items-center justify-between">
 							<h2
 								id="reputation-breakdown"
-								class="text-base font-semibold text-gray-900 dark:text-white"
+								class="text-base font-semibold text-foreground"
 							>
 								Reputation Breakdown
 							</h2>
@@ -412,36 +410,31 @@
 					<div>
 						{#if reputationData}
 							<div class="overflow-x-auto">
-								<table
-									class="w-full text-xs md:table-fixed"
-									border="1"
-									cellpadding="6"
-									cellspacing="0"
-								>
-									<thead class="border-b border-gray-100 text-left dark:border-gray-800">
+								<table class="w-full text-xs md:table-fixed">
+									<thead class="border-b border-border text-left">
 										<tr>
 											<th
-												class="px-4 py-2 text-[11px] font-medium tracking-wider text-gray-500 dark:text-gray-400"
+												class="px-4 py-2 text-[11px] font-medium tracking-wider text-muted-foreground"
 												>Token Id</th
 											>
 											<th
-												class="px-4 py-2 text-[11px] font-medium tracking-wider text-gray-500 dark:text-gray-400"
+												class="px-4 py-2 text-[11px] font-medium tracking-wider text-muted-foreground"
 												>Points Earned</th
 											>
 											<th
-												class="px-4 py-2 text-[11px] font-medium tracking-wider text-gray-500 dark:text-gray-400"
+												class="px-4 py-2 text-[11px] font-medium tracking-wider text-muted-foreground"
 												>Tier Weight</th
 											>
 											<th
-												class="px-4 py-2 text-[11px] font-medium tracking-wider text-gray-500 dark:text-gray-400"
+												class="px-4 py-2 text-[11px] font-medium tracking-wider text-muted-foreground"
 												>Action</th
 											>
 											<th
-												class="px-4 py-2 text-[11px] font-medium tracking-wider text-gray-500 dark:text-gray-400"
+												class="px-4 py-2 text-[11px] font-medium tracking-wider text-muted-foreground"
 												>Reward</th
 											>
 											<th
-												class="px-4 py-2 text-[11px] font-medium tracking-wider text-gray-500 dark:text-gray-400"
+												class="px-4 py-2 text-[11px] font-medium tracking-wider text-muted-foreground"
 												>Description</th
 											>
 										</tr>
@@ -449,33 +442,33 @@
 									<tbody>
 										{#each mergedRepData as item (item.id)}
 											<tr
-												class="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900/40"
+												class="border-b border-border transition-colors hover:bg-muted/50"
 											>
-												<td>{item.id}</td>
-												<td class="font-extrabold text-orange-900 dark:text-orange-100"
+												<td class="px-4 py-3 text-foreground">{item.id}</td>
+												<td class="px-4 py-3 font-semibold tabular-nums text-primary"
 													>{item.balance}</td
 												>
-												<td>{1}</td>
-												<td>{item.name}</td>
-												<td>{item.weight}</td>
-												<td>{item.desc}</td>
+												<td class="px-4 py-3 text-foreground">{1}</td>
+												<td class="px-4 py-3 text-foreground">{item.name}</td>
+												<td class="px-4 py-3 text-foreground">{item.weight}</td>
+												<td class="px-4 py-3 text-muted-foreground">{item.desc}</td>
 											</tr>
 										{/each}
 									</tbody>
 								</table>
 
 								<!-- <table class="w-full text-xs md:table-fixed">
-                                      <thead class="border-b border-gray-100 text-left dark:border-gray-800">
+                                      <thead class="border-b border-border text-left">
                                           <tr>
-                                              <th class="px-4 py-2 text-[11px] font-medium tracking-wider text-gray-500 dark:text-gray-400">Tier</th>
-                                              <th class="px-4 py-2 text-right text-[11px] font-medium tracking-wider text-gray-500 dark:text-gray-400">Tier Weight</th>
-                                              <th class="px-4 py-2 text-right text-[11px] font-medium tracking-wider text-gray-500 dark:text-gray-400">Total Supply</th>
-                                              {#if typeof window !== 'undefined' && isLoggedIn()}<th class="px-4 py-2 text-right text-[11px] font-medium tracking-wider text-gray-500 dark:text-gray-400">Your Balance</th>{/if}
+                                              <th class="px-4 py-2 text-[11px] font-medium tracking-wider text-muted-foreground">Tier</th>
+                                              <th class="px-4 py-2 text-right text-[11px] font-medium tracking-wider text-muted-foreground">Tier Weight</th>
+                                              <th class="px-4 py-2 text-right text-[11px] font-medium tracking-wider text-muted-foreground">Total Supply</th>
+                                              {#if typeof window !== 'undefined' && isLoggedIn()}<th class="px-4 py-2 text-right text-[11px] font-medium tracking-wider text-muted-foreground">Your Balance</th>{/if}
                                           </tr>
                                       </thead>
                                       <tbody>
                                           {#each reputationData.totalSupplies! as supply, index}
-                                              <tr class="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900/40">
+                                              <tr class="border-b border-border transition-colors hover:bg-muted/50">
                                                   <td class="px-4 py-3 align-middle text-[13px] font-semibold text-gray-900 dark:text-gray-100">
                                                       {reputationData.tierMetaData[(index + 1) as BigRepTier].label}
                                                   </td>
@@ -496,13 +489,5 @@
 				</div>
 			</div>
 
-			<!-- Claims Card moved above -->
-		</div>
 	</div>
 </PageContainer>
-
-<style>
-	td {
-		padding-left: 20px;
-	}
-</style>
