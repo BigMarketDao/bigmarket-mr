@@ -18,26 +18,22 @@ export const buttonVariants = tv({
 			default: [
 				'bg-primary text-primary-foreground',
 				'border border-primary/40',
-				'shadow-[0_6px_18px_rgba(0,0,0,0.08)]',
+				'shadow-sm',
 				'hover:bg-primary/90 hover:border-primary/60',
-				'dark:shadow-[0_10px_26px_rgba(0,0,0,0.45)]',
 				'[a&]:no-underline'
 			].join(' '),
 
 			secondary: [
 				'bg-secondary text-secondary-foreground',
 				'border border-secondary/30',
-				'shadow-[0_6px_18px_rgba(0,0,0,0.08)]',
-				'hover:bg-secondary/90 hover:border-secondary/50',
-				'dark:shadow-[0_10px_26px_rgba(0,0,0,0.45)]'
+				'shadow-sm',
+				'hover:bg-secondary/90 hover:border-secondary/50'
 			].join(' '),
 
 			outline: [
-				'bg-transparent text-gray-300',
+				'bg-transparent text-muted-foreground',
 				'border border-border',
-				'hover:bg-transparent hover:text-gray-100',
-				'dark:border-input dark:text-gray-300',
-				'dark:hover:bg-transparent dark:hover:text-gray-100'
+				'hover:bg-transparent hover:text-foreground'
 			].join(' '),
 
 			ghost: [
@@ -52,7 +48,7 @@ export const buttonVariants = tv({
 			destructive: [
 				'bg-destructive text-white',
 				'border border-destructive/40',
-				'shadow-[0_6px_18px_rgba(0,0,0,0.10)]',
+				'shadow-sm',
 				'hover:bg-destructive/90 hover:border-destructive/60',
 				'focus-visible:ring-destructive/30',
 				'dark:focus-visible:ring-destructive/40'

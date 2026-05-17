@@ -107,14 +107,14 @@
 	<!-- Splash screen -->
 	<div
 		id="splash-screen"
-		class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-900"
+		class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background"
 	>
 		<img src="/splash.png" alt="BigMarket loading..." class="h-full w-full opacity-80" />
-		<p class="mt-4 font-sans text-sm text-gray-500">Loading BigMarket...</p>
+		<p class="mt-4 font-sans text-sm text-muted-foreground">Loading BigMarket...</p>
 	</div>
 {:else}
 	<!-- App: column fills viewport; main grows between chrome and footer -->
-	<div class="flex min-h-dvh flex-col bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+	<div class="flex min-h-dvh flex-col bg-background text-foreground">
 		{#if browser}
 			<div class="shrink-0">
 				<AlphaBanner />
@@ -128,7 +128,7 @@
 				<div class="flex flex-1 flex-col p-8 sm:p-12 lg:p-20">
 					<div class="max-w-3xl grow">
 						Incorrect network detected — this is
-						<span class="text-orange-800 dark:text-orange-300">
+						<span class="text-warning">
 							{requireAppConfig($appConfigStore).VITE_NETWORK}
 						</span>
 						Please switch wallet to this network.
@@ -141,7 +141,7 @@
 			{/if}
 		</main>
 
-		<div class="shrink-0 border-t border-purple-600/20 dark:border-purple-500/25">
+		<div class="shrink-0 border-t border-border">
 			<Footer />
 		</div>
 	</div>
