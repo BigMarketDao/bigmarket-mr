@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { Banner, Panel } from '@bigmarket/bm-ui';
+  import { Banner } from '@bigmarket/bm-ui';
   import { ConnectButton } from '@bigmarket/bm-ui';
   import { appConfigStore, requireAppConfig, daoConfigStore, requireDaoConfig, daoOverviewStore, chainStore, selectedCurrency, stakeAmount, getStxAddress, userWalletStore, bitcoinMode } from '@bigmarket/bm-common';
   import { onMount } from 'svelte';
-  import { slide } from 'svelte/transition';
   import AgentResolveMarket from './do-resolve/AgentResolveMarket.svelte';
   import SlippageSlider from './do-stake/SlippageSlider.svelte';
   import StakingCoolDown from './do-stake/StakingCoolDown.svelte';
@@ -186,6 +185,35 @@
 
   };
 
+  const PANEL_SHELL =
+    'rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-card)] p-5 text-[var(--color-card-foreground)]';
+
+  let isBinary = $derived(market.marketData.categories.length === 2);
+
+  let balanceHuman = $derived(
+    fmtMicroToStxNumber(totalBalanceUToken, sip10Data.decimals).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }),
+  );
+
+  let balanceFiat = $derived(
+    toFiat(getRate($exchangeRatesStore, $selectedCurrency.code), totalBalanceUToken, sip10Data),
+  );
+
+  function getProbability(index: number): number {
+    const totalStakes = market.marketData.stakes.reduce(
+      (sum: number, stake: number) => sum + Number(stake),
+      0,
+    );
+    return totalStakes > 0 ? (Number(market.marketData.stakes[index]) / totalStakes) * 100 : 0;
+  }
+
+  function outcomeSide(index: number): 'yes' | 'no' | 'other' {
+    if (!isBinary) return 'other';
+    return index === 1 ? 'yes' : 'no';
+  }
+
   const handleResolution = async (data: any) => {
     errorMessage = undefined;
     if (data.error) {
@@ -235,7 +263,7 @@
       showInput = true;
       // Focus stake input as soon as it exists in DOM
       setTimeout(() => {
-        const input = document.getElementById('stake-input') as HTMLInputElement | null;
+        const input = document.getElementById(`stake-input-${preselectIndex}`) as HTMLInputElement | null;
         if (input) {
           input.focus();
           input.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -246,49 +274,43 @@
 </script>
 
 {#if isCooling($chainStore.stacks.burn_block_height, market) && userStake}
-  <Panel>
+  <section class={PANEL_SHELL} aria-label="Trade panel">
     <StakingCoolDown userShares={userStake!.stakes} {market} />
-  </Panel>
+  </section>
 {:else if isPostCooling($chainStore.stacks.burn_block_height, market)}
-  <Panel>
-    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Market Closed</h3>
-    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Market resolution is in progress.</p>
+  <section class={PANEL_SHELL} aria-label="Trade panel">
+    <h3 class="text-xl font-bold" style="font-family: var(--font-heading)">Market Closed</h3>
+    <p class="mt-1 text-sm text-[var(--color-muted-foreground)]">Market resolution is in progress.</p>
     {#if isLoggedIn()}
       {#if isResolvable($chainStore.stacks.burn_block_height, market) && getStxAddress() === $daoOverviewStore.contractData?.resolutionAgent}
         <AgentResolveMarket {market} onResolved={handleResolution} />
         {errorMessage ? errorMessage : ''}
       {/if}
     {/if}
-  </Panel>
+  </section>
 {:else}
-  <Panel>
-    <!-- Header -->
-    <div class="mb-1">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Trade Shares</h3>
+  <section class={PANEL_SHELL} aria-label="Trade panel">
+    <div class="mb-4">
+      <h3 class="text-xl font-bold" style="font-family: var(--font-heading)">Place your bet</h3>
     </div>
     {#if !connected}
       <div class="my-3 flex flex-col items-center gap-4 text-center">
-        <p class="text-gray-500 dark:text-gray-400">Web2 friendly version coming soon.</p>
-        <p class="text-gray-500 dark:text-gray-400">Want to participate now - with crypto?</p>
+        <p class="text-[var(--color-muted-foreground)]">Web2 friendly version coming soon.</p>
+        <p class="text-[var(--color-muted-foreground)]">Want to participate now - with crypto?</p>
         <ConnectButton label={'CONNECT WALLET'} onConnectWallet={handleConnect} />
       </div>
     {/if}
 
-    <!-- Stats Bar -->
-    <div class="mb-4 grid grid-cols-1 gap-1">
-      <div class="rounded">
-        <span class="text-xs">{sip10Data.symbol} Balance</span>
-        <span class="text-xs font-medium text-gray-900 dark:text-white">
-          {fmtMicroToStx(totalBalanceUToken, sip10Data.decimals)}
-        </span>
-        <span class="text-xs">
-          ≈ {toFiat(getRate($exchangeRatesStore, $selectedCurrency.code), totalBalanceUToken, sip10Data)}
-          {$selectedCurrency.code}
-        </span>
-      </div>
-      <div class="mt-0 text-xs">
-        <Countdown endBlock={endOfMarket - currentBurnHeight} /> left to buy ...
-      </div>
+    <div class="mb-4 space-y-1">
+      <p class="text-sm text-[var(--color-muted-foreground)]">
+        Your balance:
+        <span class="tabular-nums text-[var(--color-card-foreground)]">{balanceHuman}</span>
+        {sip10Data.symbol} ≈ {balanceFiat}
+        {$selectedCurrency.code === 'USD' ? '' : ` ${$selectedCurrency.code}`}
+      </p>
+      <p class="text-sm text-[var(--color-muted-foreground)]">
+        Closes in <Countdown endBlock={endOfMarket - currentBurnHeight} showTilde={false} suffix="" />
+      </p>
     </div>
 
     <!-- Transaction Messages -->
@@ -297,102 +319,177 @@
     {#key componentKey}
       {#if $shareCosts.costs?.length === market.marketData.categories.length && userStake}
         <div class="space-y-3">
-          {#each market.marketData.categories as category, index}
-            {@const totalStakes = market.marketData.stakes.reduce(
-              (sum: number, stake: number) => sum + Number(stake),
-              0,
-            )}
-            {@const probability =
-              totalStakes > 0 ? (Number(market.marketData.stakes[index]) / totalStakes) * 100 : 0}
-            {@const isSelected = currentIndex === index}
-            {@const isBinary = market.marketData.categories.length === 2}
-            {@const isYes = isBinary && index === 1}
-            {@const isNo = isBinary && index === 0}
+          {#if isBinary && currentIndex >= 0}
+            {@const selectedIndex = currentIndex}
+            {@const otherIndex = selectedIndex === 0 ? 1 : 0}
+            {@const selectedProb = getProbability(selectedIndex)}
+            {@const otherProb = getProbability(otherIndex)}
+            {@const selectedYes = selectedIndex === 1}
 
-            <!-- Simple Button Design -->
-            <div class={`
-              min-w-0 max-w-full rounded-lg border p-3
-              ${
-                isYes
-                  ? 'border-green-200 bg-green-50 hover:bg-green-100 dark:border-green-700 dark:bg-green-900/20 dark:hover:bg-green-900/30'
-                  : isNo
-                    ? 'border-red-200 bg-red-50 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:hover:bg-red-900/30'
-                    : 'border-orange-200 bg-orange-50 hover:bg-orange-100 dark:border-orange-700 dark:bg-orange-900/20 dark:hover:bg-orange-900/30'
-              }
-              ${!connected ? 'cursor-not-allowed opacity-50' : ''}
-            `}>
-              <div                 class={`
-                text-right text-sm font-bold
-                ${isYes ? 'text-green-600 dark:text-green-400' : isNo ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}
-              `}
-          >
-
-                <div>            
-                  {#if hasPosition(index)}
-                    <div class="mt-1 inline-flex items-center rounded-full border border-green-200 bg-green-100/70 px-2.5 py-1 text-xs font-medium text-green-800 dark:border-green-900/70 dark:bg-green-900/30 dark:text-green-300">
-                      You own {fmtMicroToStx(getUserStakeAtIndex(index), sip10Data.decimals)} shares
-                    </div>
-                  {/if}
+            {#if hasPosition(selectedIndex)}
+              <div class="text-right">
+                <div
+                  class="inline-flex items-center rounded-full border border-[var(--color-success-border)] bg-[var(--color-success-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-success)]"
+                >
+                  You own <span class="tabular-nums"
+                    >{fmtMicroToStx(getUserStakeAtIndex(selectedIndex), sip10Data.decimals)}</span
+                  > shares
                 </div>
               </div>
+            {/if}
 
             <button
-            class={`
-              flex w-full cursor-pointer items-center justify-between p-3 uppercase transition-all
-              ${!connected ? 'cursor-not-allowed opacity-50' : ''}
-            `}
               type="button"
               disabled={!connected}
-              onclick={() => connected && setCurrentIndex(isSelected ? -1 : index)}
+              class="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-md)] border-2 p-4 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] {selectedYes
+                ? 'border-[var(--color-success-border)] bg-[var(--color-price-up-soft)]'
+                : 'border-[var(--color-destructive-border)] bg-[var(--color-price-down-soft)]'} {!connected
+                ? 'cursor-not-allowed opacity-50'
+                : ''}"
+              onclick={() => connected && setCurrentIndex(-1)}
             >
               <div class="flex items-center gap-3">
-                <div
-                  class={`
-                      flex h-5 w-5 items-center justify-center rounded text-xs font-bold text-white
-                      ${isYes ? 'bg-green-500' : isNo ? 'bg-red-500' : 'bg-orange-500'}
-                    `}
+                <span
+                  class="text-lg font-bold {selectedYes
+                    ? 'text-[var(--color-success)]'
+                    : 'text-[var(--color-destructive)]'}"
                 >
-                  {isYes ? '↑' : isNo ? '↓' : index + 1}
-                </div>
-                <div class="text-left">
-                  <div
-                    class={`
-                        text-sm font-medium
-                        ${isYes ? 'text-green-700  dark:text-green-300' : isNo ? 'text-red-700 dark:text-red-300' : 'text-orange-700 dark:text-orange-300'}
-                      `}
-                  >
-                    {#if isBinary}
-                    <span class="text-white">{@html getCategoryLabel($selectedCurrency, index, market.marketData)}</span>
-                    {:else}
-                      <span class="text-white"
-                        >{@html getCategoryLabel($selectedCurrency, index, market.marketData)}</span
-                      >
-                    {/if}
-                    <!-- {isBinary ? (isYes ? 'Yes' : 'No') : getCategoryLabel(index, market.marketData)} -->
-                  </div>
-                  <!-- <div class="text-xs text-gray-500 dark:text-gray-400">
-										${outcomeVolume.toFixed(2)} volume
-									</div> -->
-                </div>
+                  {selectedYes ? '↑' : '↓'}
+                </span>
+                <span
+                  class="font-bold {selectedYes
+                    ? 'text-[var(--color-success)]'
+                    : 'text-[var(--color-destructive)]'}"
+                >
+                  {selectedYes ? 'Yes' : 'No'}
+                </span>
               </div>
-
-              <div
-                class={`
-                    text-right text-sm font-bold
-                    ${isYes ? 'text-green-600 dark:text-green-400' : isNo ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}
-                  `}
+              <span
+                class="text-sm font-semibold tabular-nums {selectedYes
+                  ? 'text-[var(--color-success)]'
+                  : 'text-[var(--color-destructive)]'}"
               >
-                {probability.toFixed(1)}%
-                <div class="text-xs font-normal text-gray-500 dark:text-gray-400">chance</div>
-              </div>
+                {Math.round(selectedProb)}% think {selectedYes ? 'Yes' : 'No'}
+              </span>
             </button>
 
-            <!-- Purchase Panel - Slides Open -->
-            {#if isSelected && showInput && connected}
-              <MarketStakingPurchaseAmount marketData={market.marketData} probability={probability} index={index} connected={connected} totalBalanceUToken={totalBalanceUToken} userStakeAtIndex={getUserStakeAtIndex(index)} doBuy={doBuy} doSell={doSell} />
+            {#if showInput && connected}
+              <MarketStakingPurchaseAmount
+                marketData={market.marketData}
+                probability={selectedProb}
+                index={selectedIndex}
+                {connected}
+                {totalBalanceUToken}
+                userStakeAtIndex={getUserStakeAtIndex(selectedIndex)}
+                outcomeSide={outcomeSide(selectedIndex)}
+                doBuy={doBuy}
+                doSell={doSell}
+              />
             {/if}
-          </div>
-          {/each}
+
+            <p class="text-xs text-[var(--color-muted-foreground)]">Or switch to:</p>
+            <button
+              type="button"
+              disabled={!connected}
+              class="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-secondary)] px-3 py-2 transition-colors duration-150 hover:bg-[var(--color-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] {!connected
+                ? 'cursor-not-allowed opacity-50'
+                : ''}"
+              onclick={() => connected && setCurrentIndex(otherIndex)}
+            >
+              <span class="text-sm font-semibold text-[var(--color-card-foreground)]">
+                {otherIndex === 1 ? 'Yes' : 'No'}
+              </span>
+              <span class="text-xs tabular-nums text-[var(--color-muted-foreground)]">
+                {Math.round(otherProb)}% think {otherIndex === 1 ? 'Yes' : 'No'}
+              </span>
+            </button>
+          {:else if isBinary}
+            {#each [0, 1] as index}
+              {@const probability = getProbability(index)}
+              {@const isYes = index === 1}
+              {@const label = isYes ? 'Yes' : 'No'}
+              <button
+                type="button"
+                disabled={!connected}
+                class="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-secondary)] p-4 transition-colors duration-150 hover:bg-[var(--color-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] {!connected
+                  ? 'cursor-not-allowed opacity-50'
+                  : ''}"
+                onclick={() => connected && setCurrentIndex(index)}
+              >
+                <div class="flex items-center gap-3">
+                  <span class="text-lg text-[var(--color-card-foreground)]">{isYes ? '↑' : '↓'}</span>
+                  <span class="font-semibold text-[var(--color-card-foreground)]">{label}</span>
+                </div>
+                <span class="text-sm tabular-nums text-[var(--color-muted-foreground)]">
+                  {Math.round(probability)}% think {label}
+                </span>
+              </button>
+              {#if hasPosition(index)}
+                <div class="text-right">
+                  <div
+                    class="inline-flex items-center rounded-full border border-[var(--color-success-border)] bg-[var(--color-success-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-success)]"
+                  >
+                    You own <span class="tabular-nums"
+                      >{fmtMicroToStx(getUserStakeAtIndex(index), sip10Data.decimals)}</span
+                    > shares
+                  </div>
+                </div>
+              {/if}
+            {/each}
+          {:else}
+            {#each market.marketData.categories as category, index}
+              {@const probability = getProbability(index)}
+              {@const isSelected = currentIndex === index}
+              <div class="space-y-2">
+                {#if hasPosition(index)}
+                  <div class="text-right">
+                    <div
+                      class="inline-flex items-center rounded-full border border-[var(--color-success-border)] bg-[var(--color-success-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-success)]"
+                    >
+                      You own <span class="tabular-nums"
+                        >{fmtMicroToStx(getUserStakeAtIndex(index), sip10Data.decimals)}</span
+                      > shares
+                    </div>
+                  </div>
+                {/if}
+                <button
+                  type="button"
+                  disabled={!connected}
+                  class="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-md)] border p-4 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] {isSelected
+                    ? 'border-2 border-[var(--color-warning-border)] bg-[var(--color-warning-soft)]'
+                    : 'border-[var(--color-border)] bg-[var(--color-secondary)] hover:bg-[var(--color-muted)]'} {!connected
+                    ? 'cursor-not-allowed opacity-50'
+                    : ''}"
+                  onclick={() => connected && setCurrentIndex(isSelected ? -1 : index)}
+                >
+                  <span class="font-semibold text-[var(--color-card-foreground)]">
+                    {@html getCategoryLabel($selectedCurrency, index, market.marketData)}
+                  </span>
+                  <span
+                    class="text-sm tabular-nums {isSelected
+                      ? 'font-semibold text-[var(--color-warning)]'
+                      : 'text-[var(--color-muted-foreground)]'}"
+                  >
+                    {Math.round(probability)}%
+                  </span>
+                </button>
+                {#if isSelected && showInput && connected}
+                  <MarketStakingPurchaseAmount
+                    marketData={market.marketData}
+                    {probability}
+                    {index}
+                    {connected}
+                    {totalBalanceUToken}
+                    userStakeAtIndex={getUserStakeAtIndex(index)}
+                    outcomeSide="other"
+                    doBuy={doBuy}
+                    doSell={doSell}
+                  />
+                {/if}
+              </div>
+            {/each}
+          {/if}
+
           {#if $bitcoinMode && txId}
             <div class="mb-4 text-white">
               <Banner
@@ -419,29 +516,30 @@
 
     <!-- Slippage Settings -->
     {#if showSlippage}
-      <div class="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
+      <div class="mt-4 border-t border-[var(--color-border)] pt-3">
         <SlippageSlider slippage={$shareCosts.slippage} setSlippage={handleSetSlippage} />
       </div>
     {/if}
 
-    <!-- Footer Links -->
-    <div class="mt-4 border-t border-gray-200 pt-3 text-center dark:border-gray-700">
+    <div
+      class="mt-4 flex items-center justify-between border-t border-[var(--color-border)] pt-4"
+    >
       <button
         onclick={() => (showSlippage = !showSlippage)}
-        class="mr-3 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+        class="text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-card-foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
       >
-        ⚙️ Settings
+        ⚙ Advanced
       </button>
-      <a href="/docs" class="text-xs text-orange-500 hover:text-orange-600">
-        How does prediction work?
-      </a>
+      <p class="text-sm text-[var(--color-muted-foreground)]">
+        New to this?
+        <a href="/docs" class="font-medium text-[var(--color-accent)]">Start here →</a>
+      </p>
     </div>
 
-    <!-- Keep existing Agent Resolution section exactly as is -->
     {#if resolutionAgent && (market.marketType === 1 || isPostCooling($chainStore.stacks.burn_block_height, market))}
       <div class="mt-4">
         <AgentResolveMarket {market} onResolved={handleResolution} />
       </div>
     {/if}
-  </Panel>
+  </section>
 {/if}

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Banner, Panel } from '@bigmarket/bm-ui';
+  import { Banner } from '@bigmarket/bm-ui';
+  import { CircleHelp, TriangleAlert } from 'lucide-svelte';
   import { ConnectButton } from '@bigmarket/bm-ui';
   import {
     appConfigStore,
@@ -26,6 +27,7 @@
     ADD_LIQUIDITY_TIER,
     REMOVE_LIQUIDITY_TIER,
     fmtMicroToStx,
+    fmtMicroToStxNumber,
     getMarketToken,
     getTierBalance,
     getTokenBalanceMicro,
@@ -277,47 +279,92 @@
     }
   };
 
+  const PANEL_SHELL =
+    'rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-card)] p-5 text-[var(--color-card-foreground)]';
+
+  const INPUT_CLASS =
+    'w-full rounded-[var(--radius-sm)] border border-[var(--color-input)] bg-[var(--color-card)] px-3 py-2 font-mono text-[var(--color-card-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]';
+
+  const PRIMARY_BTN =
+    'w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] py-3 text-base font-semibold text-[var(--color-primary-foreground)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] disabled:cursor-not-allowed disabled:opacity-50';
+
+  const PRICE_TOLERANCE_TIP =
+    'Prices can shift slightly while your transaction processes. 0.3% is the standard setting — leave it unless you know what you\'re doing.';
+
+  function formatBalance2(micro: number): string {
+    return fmtMicroToStxNumber(micro, sip10Data.decimals).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
   onMount(() => {
     connected = isLoggedIn();
     refreshBalances();
   });
 </script>
 
-<Panel>
-  <div class="mb-4 flex flex-col gap-1">
-    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Liquidity</h3>
-    <p class="text-xs text-gray-500 dark:text-gray-400">
-      Add or remove proportional pool liquidity (AMM markets). Claim LP fees exits your LP position and pays accrued fees.
+<section class={PANEL_SHELL} aria-label="Liquidity panel">
+  <div class="mb-4 flex flex-col gap-2">
+    <div class="flex items-center gap-2">
+      <h3 class="text-xl font-bold" style="font-family: var(--font-heading)">Add liquidity</h3>
+      <span
+        title="Liquidity providers fund the market so others can trade. In return, you earn a small cut of every trade made — no need to pick a side."
+        aria-label="Liquidity providers fund the market so others can trade. In return, you earn a small cut of every trade made — no need to pick a side."
+      >
+        <CircleHelp class="h-4 w-4 text-[var(--color-muted-foreground)]" />
+      </span>
+    </div>
+    <p class="text-sm text-[var(--color-muted-foreground)]">
+      Fund this market and earn a share of every trade — regardless of who wins.
     </p>
   </div>
 
   {#if !connected}
     <div class="my-3 flex flex-col items-center gap-4 text-center">
-      <p class="text-gray-500 dark:text-gray-400">Connect a wallet to manage liquidity.</p>
+      <p class="text-[var(--color-muted-foreground)]">Connect a wallet to manage liquidity.</p>
       <ConnectButton label={'CONNECT WALLET'} onConnectWallet={handleConnect} />
     </div>
   {:else}
-    <div class="mb-4 grid grid-cols-1 gap-2 rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs dark:border-gray-700 dark:bg-gray-900/40">
-      <div class="flex justify-between gap-2">
-        <span class="text-gray-500 dark:text-gray-400">{sip10Data.symbol} balance</span>
-        <span class="font-medium text-gray-900 dark:text-white">
-          {fmtMicroToStx(totalBalanceUToken, sip10Data.decimals)}
+    <div
+      class="mb-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-secondary)] p-4"
+    >
+      <div class="flex items-center justify-between border-b border-[var(--color-border)] py-2">
+        <span class="text-sm text-[var(--color-muted-foreground)]">Your {sip10Data.symbol} balance</span>
+        <span class="font-mono text-sm tabular-nums text-[var(--color-card-foreground)]">
+          {formatBalance2(totalBalanceUToken)}
         </span>
       </div>
-      <div class="flex justify-between gap-2">
-        <span class="text-gray-500 dark:text-gray-400">Your LP shares</span>
-        <span class="font-medium text-gray-900 dark:text-white">{lpSharesRaw}</span>
+      <div class="flex items-center justify-between border-b border-[var(--color-border)] py-2">
+        <span class="flex items-center gap-1 text-sm text-[var(--color-muted-foreground)]">
+          Your pool share
+          <span
+            title="How much of the total liquidity pool you own. Bigger share = bigger cut of trading fees."
+            aria-label="How much of the total liquidity pool you own. Bigger share = bigger cut of trading fees."
+          >
+            <CircleHelp class="h-3.5 w-3.5" />
+          </span>
+        </span>
+        <span class="font-mono text-sm tabular-nums text-[var(--color-card-foreground)]">{lpSharesRaw}</span>
       </div>
-      <div class="flex justify-between gap-2">
-        <span class="text-gray-500 dark:text-gray-400">Pool accumulated LP fees</span>
-        <span class="font-medium text-gray-900 dark:text-white">
+      <div class="flex items-center justify-between py-2">
+        <span class="flex items-center gap-1 text-sm text-[var(--color-muted-foreground)]">
+          Fees earned so far
+          <span
+            title="Every trade in this market earns you a tiny cut. Click 'Claim earnings' to withdraw it."
+            aria-label="Every trade in this market earns you a tiny cut. Click Claim earnings to withdraw it."
+          >
+            <CircleHelp class="h-3.5 w-3.5" />
+          </span>
+        </span>
+        <span class="font-mono text-sm tabular-nums text-[var(--color-card-foreground)]">
           {fmtMicroToStx(accumulatedFees, sip10Data.decimals)}
         </span>
       </div>
     </div>
 
     <div
-      class="mb-4 flex rounded-xl border border-gray-200 bg-gray-100 p-1 dark:border-gray-600 dark:bg-gray-800"
+      class="mb-4 flex gap-1 rounded-[var(--radius-md)] bg-[var(--color-secondary)] p-1"
       role="tablist"
       aria-label="Liquidity actions"
     >
@@ -325,43 +372,46 @@
         type="button"
         role="tab"
         aria-selected={liquiditySection === 'add'}
-        class="flex-1 rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 {liquiditySection === 'add'
-          ? 'bg-white text-emerald-700 shadow-sm dark:bg-gray-700 dark:text-emerald-300'
-          : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}"
+        class="flex-1 rounded-[var(--radius-sm)] px-4 py-2 text-center text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] {liquiditySection ===
+        'add'
+          ? 'bg-[var(--color-card)] font-medium text-[var(--color-card-foreground)] shadow-sm'
+          : 'text-[var(--color-muted-foreground)]'}"
         onclick={() => {
           liquiditySection = 'add';
           errorMessage = undefined;
         }}
       >
-        Add
+        Add funds
       </button>
       <button
         type="button"
         role="tab"
         aria-selected={liquiditySection === 'remove'}
-        class="flex-1 rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 {liquiditySection === 'remove'
-          ? 'bg-white text-emerald-700 shadow-sm dark:bg-gray-700 dark:text-emerald-300'
-          : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}"
+        class="flex-1 rounded-[var(--radius-sm)] px-4 py-2 text-center text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] {liquiditySection ===
+        'remove'
+          ? 'bg-[var(--color-card)] font-medium text-[var(--color-card-foreground)] shadow-sm'
+          : 'text-[var(--color-muted-foreground)]'}"
         onclick={() => {
           liquiditySection = 'remove';
           errorMessage = undefined;
         }}
       >
-        Remove
+        Withdraw
       </button>
       <button
         type="button"
         role="tab"
         aria-selected={liquiditySection === 'claim'}
-        class="flex-1 rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 {liquiditySection === 'claim'
-          ? 'bg-white text-emerald-700 shadow-sm dark:bg-gray-700 dark:text-emerald-300'
-          : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}"
+        class="flex-1 rounded-[var(--radius-sm)] px-4 py-2 text-center text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] {liquiditySection ===
+        'claim'
+          ? 'bg-[var(--color-card)] font-medium text-[var(--color-card-foreground)] shadow-sm'
+          : 'text-[var(--color-muted-foreground)]'}"
         onclick={() => {
           liquiditySection = 'claim';
           errorMessage = undefined;
         }}
       >
-        Claim fees
+        Claim earnings
       </button>
     </div>
 
@@ -371,82 +421,97 @@
 
     {#if liquiditySection === 'add'}
       <div class="space-y-3">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200" for="lp-add-amount">
-          Deposit ({sip10Data.symbol})
+        <label class="block text-sm font-medium text-[var(--color-muted-foreground)]" for="lp-add-amount">
+          Amount to add ({sip10Data.symbol})
         </label>
         <input
           id="lp-add-amount"
-          class="input input-bordered w-full border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+          class={INPUT_CLASS}
           inputmode="decimal"
-          placeholder="0.00"
+          placeholder="Enter amount..."
           bind:value={addAmountHuman}
         />
-        <p class="text-xs text-gray-500 dark:text-gray-400">
-          Expected pool stakes (anti-sandwich): <strong>{expectedTotalStakes}</strong>. Max deviation:
-          {(slipAdd * 100).toFixed(2)}% ({maxDeviationBipsAdd} bips)
-        </p>
-        <SlippageSlider slippage={slipAdd} setSlippage={(s) => (slipAdd = s)} />
-        <button
-          type="button"
-          class="btn btn-primary btn-block w-full border-0 bg-emerald-600 text-white hover:bg-emerald-700"
-          onclick={doAddLiquidity}
-        >
-          Add liquidity
-        </button>
+        <div class="relative">
+          <SlippageSlider
+            slippage={slipAdd}
+            setSlippage={(s) => (slipAdd = s)}
+            label="Price tolerance"
+            inputId="lp-add-slip"
+          />
+          <span
+            title={PRICE_TOLERANCE_TIP}
+            aria-label={PRICE_TOLERANCE_TIP}
+            class="absolute top-0 right-0"
+          >
+            <CircleHelp class="h-4 w-4 text-[var(--color-muted-foreground)]" />
+          </span>
+        </div>
+        <button type="button" class={PRIMARY_BTN} onclick={doAddLiquidity}>Add to pool</button>
       </div>
     {:else if liquiditySection === 'remove'}
       <div class="space-y-3">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200" for="lp-remove-amt">
-          Withdraw (pool stake units)
+        <label class="block text-sm font-medium text-[var(--color-muted-foreground)]" for="lp-remove-amt">
+          How much to withdraw?
         </label>
         <input
           id="lp-remove-amt"
-          class="input input-bordered w-full border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+          class={INPUT_CLASS}
           inputmode="numeric"
-          placeholder="0"
+          placeholder="Enter amount..."
           bind:value={removeAmountHuman}
         />
-        <p class="text-xs text-gray-500 dark:text-gray-400">
-          Total pool stakes: <strong>{totalPoolStakes}</strong>. Your request must stay below that. Est. refund ~
-          {fmtMicroToStx(estimatedRefundRemove, sip10Data.decimals)} {sip10Data.symbol}; min refund {minRefundRemove} µ
+        <p class="text-xs text-[var(--color-muted-foreground)]">
+          Maximum you can withdraw: {lpSharesRaw} pool shares
         </p>
-        <div class="form-control w-full">
-          <label class="mb-2 flex items-center justify-between" for="lp-remove-slip">
-            <span class="text-sm font-medium text-gray-800 dark:text-gray-100">Refund slippage</span>
-            <span class="text-sm text-gray-600 dark:text-gray-300">{(slipRemove * 100).toFixed(2)}%</span>
-          </label>
-          <input
-            id="lp-remove-slip"
-            class="range range-primary w-full"
-            type="range"
-            min="0.001"
-            max="0.05"
-            step="0.001"
-            bind:value={slipRemove}
+        <div class="relative">
+          <SlippageSlider
+            slippage={slipRemove}
+            setSlippage={(s) => (slipRemove = s)}
+            label="Price tolerance"
+            inputId="lp-remove-slip"
+            min={0.001}
+            max={0.05}
+            step={0.001}
           />
+          <span
+            title={PRICE_TOLERANCE_TIP}
+            aria-label={PRICE_TOLERANCE_TIP}
+            class="absolute top-0 right-0"
+          >
+            <CircleHelp class="h-4 w-4 text-[var(--color-muted-foreground)]" />
+          </span>
         </div>
         <button
           type="button"
-          class="btn btn-primary btn-block w-full border-0 bg-emerald-600 text-white hover:bg-emerald-700"
+          class="w-full rounded-[var(--radius-md)] bg-[var(--color-destructive)] py-3 text-base font-semibold text-[var(--color-destructive-foreground)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] disabled:cursor-not-allowed disabled:opacity-50"
           onclick={doRemoveLiquidity}
         >
-          Remove liquidity
+          Withdraw from pool
         </button>
       </div>
     {:else}
-      <Banner
-        bannerType="warning"
-        message="Claiming pays your share of accumulated LP fees and <strong>removes your entire LP position</strong> for this market. Only use when you intend to exit."
-        clazz="pb-5 mb-3"
-      />
+      <div
+        class="mb-4 rounded-[var(--radius-md)] border border-[var(--color-warning-border)] bg-[var(--color-warning-soft)] p-4"
+      >
+        <div class="flex gap-3">
+          <TriangleAlert class="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-warning)]" />
+          <p class="text-sm text-[var(--color-card-foreground)]">
+            <span class="font-semibold"
+              >This will pay out your trading fees AND close your liquidity position.</span
+            >
+            Only do this when you're ready to fully exit this market.
+          </p>
+        </div>
+      </div>
       <button
         type="button"
-        class="mt-5 btn btn-primary btn-block w-full border-0 bg-amber-600 text-white hover:bg-amber-700"
+        class={PRIMARY_BTN}
         onclick={doClaimLpFees}
         disabled={lpSharesRaw <= 0}
       >
-        Claim LP fees &amp; exit position
+        Claim earnings &amp; exit
       </button>
     {/if}
   {/if}
-</Panel>
+</section>
+
