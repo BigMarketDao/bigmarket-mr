@@ -101,7 +101,7 @@
   <meta name="description" content="View prediction market details and participate" />
 </svelte:head>
 
-<div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+<div class="py-4 sm:py-6">
   {#if market}
     <!-- Market Title Section -->
     <MarketHeader
