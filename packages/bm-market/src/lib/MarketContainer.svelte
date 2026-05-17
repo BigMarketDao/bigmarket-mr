@@ -112,13 +112,11 @@
     <!-- Market Overview Cards -->
     <MarketSummary market={market} {marketStakes} />
 
-    <!-- Main Content Grid -->
-    <div class="flex flex-col gap-6 md:flex-row">
-      <!-- Main / chart -->
-      <div class="w-full space-y-3 md:w-1/3">
+    <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
+      <aside class="space-y-4 lg:sticky lg:top-16 lg:col-start-2 lg:row-start-1 lg:self-start">
         {#if market.marketData.resolutionState === ResolutionState.RESOLUTION_OPEN}
           <div
-            class="flex rounded-xl border border-gray-200 bg-gray-100 p-1 shadow-inner dark:border-gray-600 dark:bg-gray-800"
+            class="flex rounded-md border border-border bg-muted p-1"
             role="tablist"
             aria-label="Market actions"
           >
@@ -126,9 +124,10 @@
               type="button"
               role="tab"
               aria-selected={sidePanelTab === 'trade'}
-              class="flex-1 rounded-lg px-3 py-2.5 text-center text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 {sidePanelTab === 'trade'
-                ? 'bg-white text-emerald-800 shadow-sm dark:bg-gray-700 dark:text-emerald-200'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'}"
+              class="flex-1 rounded px-3 py-2.5 text-center text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring {sidePanelTab ===
+              'trade'
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'}"
               onclick={() => {
                 sidePanelTab = 'trade';
               }}
@@ -139,9 +138,10 @@
               type="button"
               role="tab"
               aria-selected={sidePanelTab === 'liquidity'}
-              class="flex-1 rounded-lg px-3 py-2.5 text-center text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 {sidePanelTab === 'liquidity'
-                ? 'bg-white text-emerald-800 shadow-sm dark:bg-gray-700 dark:text-emerald-200'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'}"
+              class="flex-1 rounded px-3 py-2.5 text-center text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring {sidePanelTab ===
+              'liquidity'
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'}"
               onclick={() => {
                 sidePanelTab = 'liquidity';
               }}
@@ -162,20 +162,15 @@
         {:else}
           <MarketStakingContainer market={market} {userStake} {preselectIndex} />
         {/if}
-      </div>
-      <div class="w-full md:w-2/3 space-y-6">
-        <!-- Chart Section -->
-        <div
-          class="overflow-hidden rounded-lg border border-gray-200 bg-white p-4 sm:p-6 dark:border-gray-700 dark:bg-gray-800"
-        >
+      </aside>
+
+      <main class="min-w-0 space-y-6 lg:col-start-1 lg:row-start-1">
+        <div class="overflow-hidden rounded-md border border-border bg-card p-4 sm:p-6">
           <MarketCharts market={market} showTvl={false} showStake={true} />
         </div>
- 
-        <!-- Discussion Section -->
         <MarketComments {thread} market={market} {userStake} />
-      </div>
+      </main>
 
-      <!-- Right Column (4 cols) -->
     </div>
 
     <!-- Collapsible Resolution Criteria -->
