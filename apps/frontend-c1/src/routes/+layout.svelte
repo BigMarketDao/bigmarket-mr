@@ -17,7 +17,6 @@
 	import ReputationCommunityBanner from '$lib/components/template/ReputationCommunityBanner.svelte';
 	import Footer from '$lib/components/template/Footer.svelte';
 	import { browser } from '$app/environment';
-	import AlphaBanner from '$lib/components/template/AlphaBanner.svelte';
 	import {
 		closeTxModal,
 		getStxAddress,
@@ -117,9 +116,8 @@
 	<div class="flex min-h-dvh flex-col bg-background text-foreground">
 		{#if browser}
 			<div class="shrink-0">
-				<AlphaBanner />
-				<Header />
 				<ReputationCommunityBanner />
+				<Header />
 			</div>
 		{/if}
 
