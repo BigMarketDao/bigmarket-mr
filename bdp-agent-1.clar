@@ -4,7 +4,8 @@
 ;; After deploy: ST105HCS....bdp-agent-1 → submit via DAO core-propose
 ;; Agent wallet added: ST3DHHFQC5K7SYAZHC02RQFAZ4MQQFJYTZW50VAWV
 
-(impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.proposal-trait.proposal-trait)
+;; Testnet proposal-trait (SP3JP0... is mainnet mapping — not deployed on testnet)
+(impl-trait 'ST31A25YBK50KFJ2QS0EQK9FNXEQJD4PR0828789R.proposal-trait.proposal-trait)
 
 (define-public (execute (sender principal))
 	(begin
