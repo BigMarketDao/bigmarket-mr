@@ -253,7 +253,7 @@
 					</CategoryButton>
 				</div>
 
-				<div class="h-4 w-px shrink-0 bg-border" aria-hidden="true"></div>
+				<div class="bg-border h-4 w-px shrink-0" aria-hidden="true"></div>
 
 				<div class="flex min-w-0 items-center gap-4">
 					<CategoryButton
@@ -284,16 +284,16 @@
 		</nav>
 	</div>
 	<!-- Divider -->
-	<div class="h-px w-full bg-border"></div>
+	<div class="bg-border h-px w-full"></div>
 
 	<!-- Row 2: search + filters (single line from md up) -->
 	<div class="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:gap-3">
 		<div
-			class="relative h-10 w-full min-w-0 rounded-lg border border-border bg-background shadow-xs md:min-w-52 md:max-w-sm md:flex-1 dark:bg-input/30"
+			class="border-border bg-background dark:bg-input/30 relative h-10 w-full min-w-0 rounded-lg border shadow-xs md:max-w-sm md:min-w-52 md:flex-1"
 		>
 			<label for="searchTerm" class="sr-only">Search markets</label>
 			<Search
-				class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+				class="text-muted-foreground pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
 				aria-hidden="true"
 			/>
 			<input
@@ -301,14 +301,14 @@
 				type="search"
 				bind:value={searchTerm}
 				placeholder="Search markets..."
-				class="h-full w-full rounded-lg border-0 bg-transparent py-0 pr-10 pl-10 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+				class="text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring h-full w-full rounded-lg border-0 bg-transparent py-0 pr-10 pl-10 text-sm focus-visible:ring-2 focus-visible:outline-none"
 			/>
 			{#if searchTerm}
 				<button
 					type="button"
 					aria-label="Clear search"
 					onclick={() => (searchTerm = '')}
-					class="absolute top-1/2 right-3 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+					class="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 rounded-sm p-0.5 focus-visible:ring-2 focus-visible:outline-none"
 				>
 					<XIcon class="size-3.5" />
 				</button>
@@ -342,7 +342,7 @@
 			/>
 		</div>
 
-		<p class="shrink-0 text-sm font-medium whitespace-nowrap tabular-nums text-muted-foreground">
+		<p class="text-muted-foreground shrink-0 text-sm font-medium whitespace-nowrap tabular-nums">
 			{filteredMarkets.length} of {markets.length} Markets
 		</p>
 	</div>
@@ -367,12 +367,10 @@
 			{/each}
 		</div>
 	{:else}
-		<div
-			class="mt-4 rounded-xl border border-border bg-muted p-8 text-center shadow-sm"
-		>
-			<div class="mx-auto max-w-sm">
-				<h3 class="text-lg font-medium text-foreground">No markets found</h3>
-				<p class="mt-2 text-sm text-muted-foreground">
+		<div class="border-border bg-muted mt-4 w-full rounded-xl border p-8 text-center shadow-sm">
+			<div class="mx-auto">
+				<h3 class="text-foreground text-lg font-medium">No markets found</h3>
+				<p class="text-muted-foreground mt-2 text-sm">
 					Try adjusting your filters or search terms to find more markets.
 				</p>
 				<button
@@ -385,7 +383,7 @@
 						categoryStateStore.set('all');
 						sortStateStore.set('tvl');
 					}}
-					class="mt-4 inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+					class="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring focus-visible:ring-offset-background mt-4 inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 				>
 					Clear all filters
 				</button>
