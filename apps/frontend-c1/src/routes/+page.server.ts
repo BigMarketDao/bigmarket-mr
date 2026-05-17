@@ -1,8 +1,8 @@
-import { fetchMarketsServer, getLeaderBoard } from '$lib/core/server/loaders/marketLoaders';
+import { fetchMarketsServer } from '$lib/core/server/loaders/marketLoaders';
 import { getAppConfig, getNetworkFromUrl } from '@bigmarket/bm-config';
 import type { PageServerLoad } from './$types';
 import { getCached, setCached } from '$lib/core/server/cache/cache';
-import type { LeaderBoard, PredictionMarketCreateEvent } from '@bigmarket/bm-types';
+import type { PredictionMarketCreateEvent } from '@bigmarket/bm-types';
 
 export const load: PageServerLoad = async ({ url }) => {
 	try {
@@ -13,21 +13,17 @@ export const load: PageServerLoad = async ({ url }) => {
 		if (cached) {
 			return cached as {
 				markets: PredictionMarketCreateEvent[];
-				leaderBoard: LeaderBoard;
 				network: string;
 			};
 		}
 
 		const markets = await fetchMarketsServer(appConfig.VITE_BIGMARKET_API);
-		const leaderBoard = await getLeaderBoard(appConfig.VITE_BIGMARKET_API);
-		//console.log('fetching data: ', JSON.stringify({ network, markets, leaderBoard }, null, 2));
-		const result = { network, markets, leaderBoard };
+		const result = { network, markets };
 		setCached(key, result, 1000 * 60 * 1); // 30 secs
 		return result;
 	} catch {
 		return {
 			markets: [],
-			leaderBoard: [],
 			network: 'devnet'
 		};
 	}
