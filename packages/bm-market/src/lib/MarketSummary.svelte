@@ -43,11 +43,11 @@
   }>();
 
   const cardClass =
-    'flex h-full flex-col rounded-lg border border-border border-t-2 border-t-orange-500/40 bg-card p-5';
+    'flex h-full flex-col rounded-lg border border-border border-t-2 border-t-primary/40 bg-card p-5';
   const labelClass = 'text-xs font-medium uppercase tracking-wide text-foreground/50';
   const labelClassSoft = 'text-xs font-medium tracking-wide text-foreground/50';
   const valueClass = 'mt-2 text-3xl font-bold tabular-nums text-foreground';
-  const subClass = 'mt-1 text-sm font-normal text-foreground/40';
+  const subClass = 'mt-1 text-sm font-normal tabular-nums text-foreground/40';
   const iconWrapClass =
     'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-info-soft';
   const countdownValueClass = 'font-semibold text-foreground';
@@ -168,18 +168,18 @@
   <span class="group relative ml-1 inline-flex align-middle">
     <button
       type="button"
-      class="inline-flex size-3.5 items-center justify-center text-[14px] leading-none text-foreground/30 transition-colors hover:text-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      class="inline-flex size-3.5 items-center justify-center text-sm leading-none text-foreground/30 transition-colors hover:text-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       aria-label="More information"
     >
       ⓘ
     </button>
     <span
       role="tooltip"
-      class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-xs -translate-x-1/2 rounded-lg bg-zinc-800 p-3 text-xs text-white/80 opacity-0 shadow-lg transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+      class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-xs -translate-x-1/2 rounded-lg border border-border bg-popover p-3 text-xs text-popover-foreground opacity-0 shadow-lg transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
     >
       {text}
       <span
-        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-800"
+        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-popover"
         aria-hidden="true"
       ></span>
     </span>
