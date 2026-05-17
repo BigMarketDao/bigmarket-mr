@@ -18,7 +18,7 @@
 </script>
 
 <div class="mx-auto w-full max-w-7xl space-y-10">
-	<section>
+	<section class="-mt-4 md:-mt-6">
 		<FilteredMarketView
 			{markets}
 			marketCategories={$marketSystemCategoriesStore}
