@@ -64,22 +64,22 @@
 
 <div class="my-1 w-full">
 	<div
-		class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900"
+		class="rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-sm"
 	>
 		<!-- header -->
 		<div class="flex items-center justify-between">
 			<TypoHeader>
 				<a
-					class="text-primary-600 text-lg font-semibold hover:underline"
+					class="text-lg font-semibold text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 					href={`${base}/dao/proposals/${proposal.proposal}`}
 				>
 					{#if proposal.proposalData.concluded}
-						<BadgeCheck class="inline h-5 w-5 text-green-600" />
+						<BadgeCheck class="inline h-5 w-5 text-success" />
 					{/if}
 					{proposal.proposal.split('.')[1]}
 				</a>
 			</TypoHeader>
-			<span class="text-sm text-gray-400">
+			<span class="text-sm text-muted-foreground">
 				{isConcluded(proposal) ? 'Concluded' : isPostVoting(proposal) ? 'Voting finished' : 'Open'}
 			</span>
 		</div>
@@ -87,7 +87,7 @@
 		<!-- actions -->
 		<div class="mt-4 flex flex-wrap gap-4 text-sm">
 			<button
-				class="flex items-center gap-1 rounded-md px-3 py-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800"
+				class="flex items-center gap-1 rounded-md px-3 py-1 text-info hover:bg-info-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 				onclick={(e) => {
 					e.preventDefault();
 					openSesame();
@@ -97,7 +97,7 @@
 			</button>
 
 			<a
-				class="flex items-center gap-1 rounded-md px-3 py-1 text-purple-600 hover:bg-purple-50 dark:hover:bg-gray-800"
+				class="flex items-center gap-1 rounded-md px-3 py-1 text-community hover:bg-community-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 				href={stacks.explorerAddressUrl(
 					appConfig.VITE_NETWORK,
 					appConfig.VITE_STACKS_EXPLORER,
@@ -109,7 +109,7 @@
 			</a>
 
 			<button
-				class="flex items-center gap-1 rounded-md px-3 py-1 text-green-600 hover:bg-green-50 dark:hover:bg-gray-800"
+				class="flex items-center gap-1 rounded-md px-3 py-1 text-success hover:bg-success-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 				onclick={(e) => {
 					openResults();
 					e.preventDefault();
@@ -124,7 +124,7 @@
 					<span slot="title" class="text-sm font-medium hover:underline">
 						<!-- <Icon src={AlertCircle} mini class="ml-2 inline-flex " /> -->
 						<button
-							class="flex cursor-pointer items-center gap-1 rounded-md px-3 py-1 text-orange-600 hover:bg-orange-50 dark:hover:bg-gray-800"
+							class="flex cursor-pointer items-center gap-1 rounded-md px-3 py-1 text-warning hover:bg-warning-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 							onclick={(e) => {
 								e.preventDefault();
 								reclaimVotingTokens();
@@ -139,13 +139,13 @@
 
 		<!-- error message -->
 		{#if errorMessage}
-			<p class="mt-2 text-sm text-red-500">{errorMessage}</p>
+			<p class="mt-2 text-sm text-destructive">{errorMessage}</p>
 		{/if}
 
 		<!-- source modal -->
 		{#if showSource}
 			<div
-				class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
+				class="mt-4 rounded-lg border border-border bg-muted p-4"
 			>
 				<ClaritySytaxHighlighter sourceCode={contract?.source_code || ''} />
 			</div>
