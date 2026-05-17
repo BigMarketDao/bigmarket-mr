@@ -212,7 +212,7 @@
 <div class="relative flex items-center gap-3" bind:this={dropdownRef}>
 	{#if isLoggedIn()}
 		<button
-			class="inline-flex h-10 min-w-[160px] items-center justify-between rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:focus-visible:ring-offset-gray-900"
+			class="inline-flex h-10 min-w-[160px] items-center justify-between rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-offset-background"
 			onclick={() => (isOpen = !isOpen)}
 		>
 			<div class="flex items-center space-x-3">
@@ -223,22 +223,22 @@
 				<div class="flex flex-col items-start">
 					{#if $walletState.chain === 'stacks'}
 						<div class="flex items-center space-x-2">
-							<span class="text-sm font-semibold dark:text-gray-100">
+							<span class="text-sm font-semibold text-foreground">
 								{truncate(showStacksAddress ? stxAddress : (getBtcAddress()?.toUpperCase() ?? ''))}
 							</span>
 							<span
-								class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+								class="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground"
 							>
 								{showStacksAddress ? 'STX' : 'BTC'}
 							</span>
 						</div>
 					{:else}
 						<div class="flex items-center space-x-2">
-							<span class="text-sm font-semibold dark:text-gray-100">
+							<span class="text-sm font-semibold text-foreground">
 								{truncate($walletState.activeAccount?.address)}
 							</span>
 							<span
-								class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+								class="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground"
 							>
 								{#if $walletState.chain === 'solana'}SOL{:else if $walletState.chain === 'ethereum'}ETH{:else}???{/if}
 							</span>
