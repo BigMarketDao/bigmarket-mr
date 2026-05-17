@@ -24,14 +24,9 @@
 		tokens: Array<number>;
 	}>();
 
-	//let stakes: Array<number> | undefined;
-	// let error: string | undefined = $state(undefined);
-	// let message: string | undefined = $state(undefined);
-	// let txId: string | undefined = $state(undefined);
 	let isLoading: boolean = $state(true);
 	let showBreakdown: boolean = $state(false);
 	let outcomeIndex: number = $state(0);
-	// let componentKey: number = $state(0);
 	let detailedData: Array<{
 		marketId: number;
 		extension: string;
@@ -41,15 +36,13 @@
 	}> = [];
 
 	const getClazz = (outcome: number | null | undefined, index: number, align?: string) => {
-		console.log('index: ' + index);
-		console.log('outcome: ' + outcome);
-		console.log('align: ' + align);
+		const base = `pb-2 pl-2 font-mono tabular-nums text-foreground ${align ?? ''}`;
 		if (outcome === null) {
-			return 'text-gray-500 pb-2 pl-2 font-mono text-gray-900  dark:text-gray-100 ' + align;
+			return `${base} text-muted-foreground`;
 		} else if (typeof outcome === 'number' && index === outcome) {
-			return 'text-green-500 pb-2 pl-2 font-mono text-gray-900  dark:text-gray-100 ' + align;
+			return `${base} text-success`;
 		} else {
-			return 'text-red-500 pb-2 pl-2 font-mono text-gray-900  dark:text-gray-100 ' + align;
+			return `${base} text-destructive`;
 		}
 	};
 
@@ -95,34 +88,24 @@
 
 	const claimWinningsInt = async (extension: string, marketData: MarketData, marketId: number) => {
 		try {
-			console.log('claimWinningsInt' + marketId + ' ' + extension + ' ' + marketData.token);
 			goto(`/market/${market.marketId}/${market.marketType}#claiming`);
 			return;
-			// isLoading = true;
-			// const sip10Data = getMarketToken(marketData.token);
-			// txId = await claimWinnings(extension, marketData, marketId, sip10Data, { stakes: stakes! });
 		} catch {
 			// ignore
-		} finally {
-			// isLoading = false;
 		}
 	};
 
 	onMount(async () => {
 		outcomeIndex = market.marketData.outcome!;
-		console.log(outcomeIndex + ' tokens -> ', tokens);
-		console.log(outcomeIndex + ' shares -> ', stakes);
 		isLoading = false;
 	});
 </script>
 
-<tr
-	class="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900/40"
->
+<tr class="border-b border-border transition-colors hover:bg-muted/50">
 	<td class="px-4 py-3 align-middle">
 		<a
 			href={`/market/${market.marketId}/${market.marketType}`}
-			class="line-clamp-2 text-[13px] leading-4 font-semibold text-gray-900 transition-colors hover:text-orange-600 dark:text-gray-100 dark:hover:text-orange-400"
+			class="line-clamp-2 text-[13px] leading-4 font-semibold text-foreground transition-colors hover:text-primary"
 		>
 			{market.marketMeta.name}
 		</a>
@@ -130,7 +113,7 @@
 	<td class="px-4 py-3 align-middle">
 		{#if market.marketData.concluded}
 			<span
-				class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400"
+				class="inline-flex items-center rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-medium text-success"
 			>
 				<svg class="mr-1 h-1.5 w-1.5 fill-current" viewBox="0 0 6 6"
 					><circle cx="3" cy="3" r="3" /></svg
@@ -139,7 +122,7 @@
 			</span>
 		{:else}
 			<span
-				class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+				class="inline-flex items-center rounded-full bg-info-soft px-2 py-0.5 text-[11px] font-medium text-info"
 			>
 				<svg class="mr-1 h-1.5 w-1.5 fill-current" viewBox="0 0 6 6"
 					><circle cx="3" cy="3" r="3" /></svg
@@ -159,7 +142,7 @@
 							hideShares(market.extension, market.marketId);
 						}}
 					>
-						<span class="font-mono text-[11px] text-gray-900 tabular-nums dark:text-gray-100"
+						<span class="font-mono text-[11px] text-foreground tabular-nums"
 							>{fmtMicroToStx(
 								market.stakeTotal,
 								getMarketToken(market.marketData.token, $allowedTokenStore).decimals
@@ -178,7 +161,7 @@
 							getShares(market.extension, market.marketId);
 						}}
 					>
-						<span class="font-mono text-[11px] text-gray-900 tabular-nums dark:text-gray-100"
+						<span class="font-mono text-[11px] text-foreground tabular-nums"
 							>{fmtMicroToStx(
 								market.stakeTotal,
 								getMarketToken(market.marketData.token, $allowedTokenStore).decimals
@@ -188,7 +171,7 @@
 				</span>
 			</Bulletin>
 		{:else}
-			<span class="font-mono text-[11px] text-gray-900 tabular-nums dark:text-gray-100"
+			<span class="font-mono text-[11px] text-foreground tabular-nums"
 				>{fmtMicroToStx(
 					market.stakeTotal,
 					getMarketToken(market.marketData.token, $allowedTokenStore).decimals
@@ -197,16 +180,16 @@
 		{/if}
 	</td>
 	<td
-		class="px-4 py-3 text-right align-middle font-mono text-[11px] text-gray-900 tabular-nums dark:text-gray-100"
+		class="px-4 py-3 text-right align-middle font-mono text-[11px] text-foreground tabular-nums"
 	>
 		{fmtMicroToStx(
 			market.marketData.stakes.reduce((acc: number, val: number) => acc + val, 0),
 			getMarketToken(market.marketData.token, $allowedTokenStore).decimals
 		)}
 	</td>
-	<td class="px-4 py-3 align-middle text-[11px] font-medium text-gray-900 dark:text-gray-100">
+	<td class="px-4 py-3 align-middle text-[11px] font-medium text-foreground">
 		<span
-			class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+			class="inline-flex items-center rounded-md bg-muted px-2 py-1 text-[10px] font-medium text-muted-foreground"
 		>
 			{getMarketToken(market.marketData.token, $allowedTokenStore).symbol}
 		</span>
@@ -216,17 +199,17 @@
 			{#if !stakes || stakes.length === 0}
 				<a
 					href={`/market/${market.marketId}/${market.marketType}`}
-					class="text-[11px] font-medium text-gray-600 underline hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+					class="text-[11px] font-medium text-muted-foreground underline hover:text-foreground"
 					>View</a
 				>
 			{:else if market.marketData.concluded && canUserClaim(market.marketData.outcome!, stakes!)}
 				<button
 					onclick={() => claimWinningsInt(market.extension, market.marketData, market.marketId)}
-					class="inline-flex cursor-pointer items-center rounded-md bg-orange-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50 dark:bg-orange-500 dark:hover:bg-orange-600"
+					class="inline-flex h-11 cursor-pointer items-center rounded-md bg-primary px-3 text-[11px] font-medium text-primary-foreground transition-opacity hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50 md:h-10"
 					disabled={isLoading}
 				>
 					{#if isLoading}
-						<svg class="mr-1 -ml-1 h-3 w-3 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+						<svg class="mr-1 -ml-1 h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
 							<circle
 								class="opacity-25"
 								cx="12"
@@ -254,7 +237,7 @@
 								market.claim.txId
 							)}
 							target="_blank"
-							class="text-[11px] font-medium text-orange-600 underline hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
+							class="text-[11px] font-medium text-primary underline hover:text-primary/80"
 						>
 							View Claim
 						</a>
@@ -263,46 +246,45 @@
 			{:else}
 				<a
 					href={`/market/${market.marketId}/${market.marketType}`}
-					class="text-[11px] font-medium text-gray-600 underline hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+					class="text-[11px] font-medium text-muted-foreground underline hover:text-foreground"
 					>View</a
 				>
 			{/if}
 		{:else}
-			<div>awaiting..</div>
+			<div class="text-muted-foreground">awaiting..</div>
 		{/if}
 	</td>
 	<td>
 		<a
 			href="/"
 			onclick={(e) => {
-				{
-					e.preventDefault();
-					showBreakdown = !showBreakdown;
-				}
+				e.preventDefault();
+				showBreakdown = !showBreakdown;
 			}}
+			class="text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 			>{#if !showBreakdown}<ArrowBigDown />{:else}<ArrowBigUp />{/if}</a
 		>
 	</td>
 </tr>
 
 {#if !isLoading && showBreakdown}
-	<tr class="bg-gray-50 text-gray-900 tabular-nums dark:bg-gray-900/40 dark:text-gray-100">
-		<td colspan="6" class="rounded border border-gray-100 p-3 dark:border-gray-800">
+	<tr class="bg-muted/50 text-foreground">
+		<td colspan="6" class="rounded border border-border p-3">
 			<table class="w-full border-collapse text-[11px]">
 				<thead class="mb-5">
 					<tr>
-						<th class="p-5 text-left font-medium text-gray-500 dark:text-gray-400">Category</th>
-						<th class="p-5 text-right font-medium text-gray-500 dark:text-gray-400">Shares</th>
-						<th class="p-5 text-right font-medium text-gray-500 dark:text-gray-400">Tokens</th>
-						<th class="p-5 text-right font-medium text-gray-500 dark:text-gray-400">Payout</th>
+						<th class="p-5 text-left font-medium text-muted-foreground">Category</th>
+						<th class="p-5 text-right font-medium text-muted-foreground">Shares</th>
+						<th class="p-5 text-right font-medium text-muted-foreground">Tokens</th>
+						<th class="p-5 text-right font-medium text-muted-foreground">Payout</th>
 					</tr>
 				</thead>
 				<tbody>
 					{#each market.marketData.categories, index (index)}
 						<tr
 							class={outcomeIndex === index
-								? 'border-b border-red-100 bg-green-800'
-								: 'border-b border-green-600 bg-gray-800'}
+								? 'border-b border-success/20 bg-success/5'
+								: 'border-b border-border'}
 						>
 							<td class={getClazz(market.marketData.outcome, index, 'p-5 text-left ')}
 								>{@html getCategoryLabel($selectedCurrency, index, market.marketData)}</td
@@ -332,9 +314,3 @@
 		</td>
 	</tr>
 {/if}
-
-<style>
-	/* tr {
-    border: 1pt solid green;
-  } */
-</style>
