@@ -91,3 +91,9 @@ export function fmtMicroToStxNumber(amount: number, decimals?: number): number {
 export function trimTrailingZeros(value: number | string): string {
   return parseFloat(value.toString()).toString();
 }
+
+export function fmtProbability(value: number): string {
+  if (!Number.isFinite(value) || value <= 0) return "<1% chance";
+  if (value >= 99.5) return ">99% chance";
+  return `${Math.round(value)}% chance`;
+}
