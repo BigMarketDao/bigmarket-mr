@@ -19,7 +19,7 @@
 </svelte:head>
 
 <div class="mb-8 flex items-start gap-6">
-	<div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+	<div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg bg-muted">
 		{#if logo}
 			<img
 				src={logo}
@@ -28,14 +28,14 @@
 				onerror={(e) => getImage(e)}
 			/>
 		{:else}
-			<div class="h-12 w-12 rounded bg-gray-200 dark:bg-gray-700"></div>
+			<div class="h-12 w-12 rounded bg-card"></div>
 		{/if}
 	</div>
 	<div class="flex-1 space-y-4">
-		<h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
+		<h1 class="text-2xl font-semibold text-foreground">
 			{@html name}
 		</h1>
-		<p class="text-base text-gray-600 dark:text-gray-400">
+		<p class="text-base text-muted-foreground">
 			{@html description}
 		</p>
 	</div>
