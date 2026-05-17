@@ -23,6 +23,15 @@ export type CreateMarketLLMResponse = {
 	sources: Array<string>;
 };
 
+function normalizeUrlKey(url: string): string | null {
+	try {
+		const u = new URL(url.trim().match(/^https?:\/\//i) ? url.trim() : `https://${url.trim()}`);
+		return `${u.hostname.replace(/^www\./i, '')}${u.pathname.replace(/\/$/, '')}`.toLowerCase();
+	} catch {
+		return null;
+	}
+}
+
 // send user input to python server - await new market response
 export async function createMarketByDiscovery(proposer: string, source: string): Promise<StoredOpinionPoll> {
 	const response = await axios.post(`${getConfig().llmServer}/discover-markets`, {
@@ -34,7 +43,15 @@ export async function createMarketByDiscovery(proposer: string, source: string):
 	// 	await marketLlmLogsCollection.insertOne(llmResponse);
 	// 	await createMarketOnChain(proposer, llmResponse);
 	// }
-	return convertMarketToLocalFormat(proposer, markets[0]);
+	const poll = await convertMarketToLocalFormat(proposer, markets[0]);
+	const discoveryKey = normalizeUrlKey(source);
+	if (discoveryKey && poll.criterionSources?.sources) {
+		poll.criterionSources.sources = poll.criterionSources.sources.filter((s) => {
+			if (!/^https?:\/\//i.test(s.trim())) return true;
+			return normalizeUrlKey(s) !== discoveryKey;
+		});
+	}
+	return poll;
 }
 
 export async function createMarketBySuggestion(proposer: string, userIdea: string): Promise<StoredOpinionPoll> {
