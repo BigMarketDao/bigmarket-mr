@@ -443,21 +443,21 @@
 	}
 
 	/* BigMarket semantic palette → Skeleton nouveau primitives (light defaults; .dark overrides below). */
-	--color-background: var(--color-surface-50);
+	--color-background: var(--color-surface-100);
 	--color-foreground: var(--color-surface-950);
-	--color-primary: var(--color-primary-500);
-	--color-primary-foreground: var(--color-primary-contrast-500);
+	--color-primary: var(--color-primary-700);
+	--color-primary-foreground: var(--color-primary-contrast-700);
 	/* Subtle secondary surface (not Skeleton’s cobalt family — use bg-secondary-* / accent for cobalt). */
 	--color-secondary: var(--color-surface-200);
 	--color-secondary-foreground: var(--color-surface-900);
-	--color-muted: var(--color-surface-100);
-	--color-muted-foreground: var(--color-surface-700);
-	--color-border: var(--color-surface-200);
+	--color-muted: var(--color-surface-200);
+	--color-muted-foreground: var(--color-surface-600);
+	--color-border: var(--color-surface-300);
 	--color-accent: var(--color-secondary-500);
 	--color-accent-foreground: var(--color-secondary-contrast-500);
 	--color-destructive: var(--color-error-500);
 	--color-destructive-foreground: var(--color-error-contrast-500);
-	--color-ring: var(--color-secondary-400);
+	--color-ring: var(--color-secondary-500);
 	--radius-md: var(--radius-base);
 	--radius-lg: var(--radius-container);
 	--spacing-xs: 4px;
@@ -467,54 +467,54 @@
 	--spacing-xl: 32px;
 
 	/* Surfaces (Wave 1) */
-	--color-card: var(--color-surface-50);
+	--color-card: #fff;
 	--color-card-foreground: var(--color-surface-950);
 	--color-popover: #fff;
 	--color-popover-foreground: var(--color-surface-950);
 	/* `--color-input` is the BORDER color (shadcn convention; bm-ui already uses `border-input`). */
-	--color-input: var(--color-surface-200);
+	--color-input: var(--color-surface-300);
 	--color-overlay: rgba(0, 0, 0, 0.4);
 
 	/* Status quad — additions to existing pairs */
-	--color-success: var(--color-success-500);
-	--color-success-foreground: var(--color-success-contrast-500);
-	--color-success-soft: color-mix(in oklab, var(--color-success-500) 12%, transparent);
-	--color-success-border: var(--color-success-300);
-	--color-warning: var(--color-warning-500);
-	--color-warning-foreground: var(--color-warning-contrast-500);
-	--color-warning-soft: color-mix(in oklab, var(--color-warning-500) 12%, transparent);
-	--color-warning-border: var(--color-warning-300);
-	--color-info: var(--color-secondary-500);
-	--color-info-foreground: var(--color-secondary-contrast-500);
-	--color-info-soft: color-mix(in oklab, var(--color-secondary-500) 12%, transparent);
-	--color-info-border: var(--color-secondary-300);
-	--color-destructive-soft: color-mix(in oklab, var(--color-error-500) 12%, transparent);
-	--color-destructive-border: var(--color-error-300);
-	--color-accent-soft: color-mix(in oklab, var(--color-secondary-500) 12%, transparent);
-	--color-accent-border: var(--color-secondary-300);
+	--color-success: var(--color-success-600);
+	--color-success-foreground: var(--color-success-contrast-600);
+	--color-success-soft: color-mix(in oklab, var(--color-success-500) 18%, transparent);
+	--color-success-border: var(--color-success-400);
+	--color-warning: var(--color-warning-700);
+	--color-warning-foreground: var(--color-warning-contrast-700);
+	--color-warning-soft: color-mix(in oklab, var(--color-warning-500) 18%, transparent);
+	--color-warning-border: var(--color-warning-400);
+	--color-info: var(--color-secondary-600);
+	--color-info-foreground: var(--color-secondary-contrast-600);
+	--color-info-soft: color-mix(in oklab, var(--color-secondary-500) 18%, transparent);
+	--color-info-border: var(--color-secondary-400);
+	--color-destructive-soft: color-mix(in oklab, var(--color-error-500) 18%, transparent);
+	--color-destructive-border: var(--color-error-400);
+	--color-accent-soft: color-mix(in oklab, var(--color-secondary-500) 18%, transparent);
+	--color-accent-border: var(--color-secondary-400);
 
 	/* Community (Skeleton tertiary = violet) */
-	--color-community: var(--color-tertiary-500);
-	--color-community-foreground: var(--color-tertiary-contrast-500);
-	--color-community-soft: color-mix(in oklab, var(--color-tertiary-500) 12%, transparent);
-	--color-community-border: var(--color-tertiary-300);
+	--color-community: var(--color-tertiary-600);
+	--color-community-foreground: var(--color-tertiary-contrast-600);
+	--color-community-soft: color-mix(in oklab, var(--color-tertiary-500) 18%, transparent);
+	--color-community-border: var(--color-tertiary-400);
 
 	/* Prediction domain */
-	--color-price-up: var(--color-success-500);
-	--color-price-up-foreground: var(--color-success-contrast-500);
-	--color-price-up-soft: color-mix(in oklab, var(--color-success-500) 12%, transparent);
-	--color-price-down: var(--color-error-500);
-	--color-price-down-foreground: var(--color-error-contrast-500);
-	--color-price-down-soft: color-mix(in oklab, var(--color-error-500) 12%, transparent);
+	--color-price-up: var(--color-success-600);
+	--color-price-up-foreground: var(--color-success-contrast-600);
+	--color-price-up-soft: color-mix(in oklab, var(--color-success-500) 18%, transparent);
+	--color-price-down: var(--color-error-600);
+	--color-price-down-foreground: var(--color-error-contrast-600);
+	--color-price-down-soft: color-mix(in oklab, var(--color-error-500) 18%, transparent);
 	--color-price-neutral: var(--color-muted-foreground);
 	--color-live-indicator: var(--color-error-500);
 	--color-selected: var(--color-secondary-500);
 
 	/* Outcome starter 1..4 */
-	--color-outcome-1: var(--color-warning-500);
-	--color-outcome-2: var(--color-success-500);
-	--color-outcome-3: var(--color-secondary-500);
-	--color-outcome-4: var(--color-tertiary-500);
+	--color-outcome-1: var(--color-warning-700);
+	--color-outcome-2: var(--color-success-600);
+	--color-outcome-3: var(--color-secondary-600);
+	--color-outcome-4: var(--color-tertiary-600);
 }
 
 @layer base {
@@ -535,64 +535,64 @@
 	.dark {
 		--color-background: var(--color-surface-950);
 		--color-foreground: var(--color-surface-50);
-		--color-primary: var(--color-primary-400);
-		--color-primary-foreground: var(--color-primary-contrast-400);
+		--color-primary: var(--color-primary-300);
+		--color-primary-foreground: var(--color-primary-contrast-300);
 		--color-secondary: var(--color-surface-800);
 		--color-secondary-foreground: var(--color-surface-50);
 		--color-muted: var(--color-surface-900);
-		--color-muted-foreground: var(--color-surface-300);
-		--color-border: var(--color-surface-800);
+		--color-muted-foreground: var(--color-surface-400);
+		--color-border: var(--color-surface-700);
 		--color-accent: var(--color-secondary-400);
 		--color-accent-foreground: var(--color-secondary-contrast-400);
 		--color-destructive: var(--color-error-400);
 		--color-destructive-foreground: var(--color-error-contrast-400);
-		--color-ring: var(--color-secondary-300);
+		--color-ring: var(--color-primary-400);
 
 		/* Surfaces (Wave 1) — dark */
 		--color-card: var(--color-surface-900);
 		--color-card-foreground: var(--color-surface-50);
 		--color-popover: var(--color-surface-900);
 		--color-popover-foreground: var(--color-surface-50);
-		--color-input: var(--color-surface-800);
+		--color-input: var(--color-surface-700);
 		--color-overlay: rgba(0, 0, 0, 0.65);
 
 		/* Status quad — dark */
 		--color-success: var(--color-success-400);
 		--color-success-foreground: var(--color-success-contrast-400);
-		--color-success-soft: color-mix(in oklab, var(--color-success-400) 18%, transparent);
-		--color-success-border: var(--color-success-700);
-		--color-warning: var(--color-warning-400);
-		--color-warning-foreground: var(--color-warning-contrast-400);
-		--color-warning-soft: color-mix(in oklab, var(--color-warning-400) 18%, transparent);
-		--color-warning-border: var(--color-warning-700);
+		--color-success-soft: color-mix(in oklab, var(--color-success-400) 22%, transparent);
+		--color-success-border: var(--color-success-600);
+		--color-warning: var(--color-warning-300);
+		--color-warning-foreground: var(--color-warning-contrast-300);
+		--color-warning-soft: color-mix(in oklab, var(--color-warning-400) 22%, transparent);
+		--color-warning-border: var(--color-warning-600);
 		--color-info: var(--color-secondary-400);
 		--color-info-foreground: var(--color-secondary-contrast-400);
-		--color-info-soft: color-mix(in oklab, var(--color-secondary-400) 18%, transparent);
-		--color-info-border: var(--color-secondary-700);
-		--color-destructive-soft: color-mix(in oklab, var(--color-error-400) 18%, transparent);
-		--color-destructive-border: var(--color-error-700);
-		--color-accent-soft: color-mix(in oklab, var(--color-secondary-400) 18%, transparent);
-		--color-accent-border: var(--color-secondary-700);
+		--color-info-soft: color-mix(in oklab, var(--color-secondary-400) 22%, transparent);
+		--color-info-border: var(--color-secondary-600);
+		--color-destructive-soft: color-mix(in oklab, var(--color-error-400) 22%, transparent);
+		--color-destructive-border: var(--color-error-600);
+		--color-accent-soft: color-mix(in oklab, var(--color-secondary-400) 22%, transparent);
+		--color-accent-border: var(--color-secondary-600);
 
 		/* Community — dark */
 		--color-community: var(--color-tertiary-400);
 		--color-community-foreground: var(--color-tertiary-contrast-400);
-		--color-community-soft: color-mix(in oklab, var(--color-tertiary-400) 18%, transparent);
-		--color-community-border: var(--color-tertiary-700);
+		--color-community-soft: color-mix(in oklab, var(--color-tertiary-400) 22%, transparent);
+		--color-community-border: var(--color-tertiary-600);
 
 		/* Prediction domain — dark */
 		--color-price-up: var(--color-success-400);
 		--color-price-up-foreground: var(--color-success-contrast-400);
-		--color-price-up-soft: color-mix(in oklab, var(--color-success-400) 18%, transparent);
+		--color-price-up-soft: color-mix(in oklab, var(--color-success-400) 22%, transparent);
 		--color-price-down: var(--color-error-400);
 		--color-price-down-foreground: var(--color-error-contrast-400);
-		--color-price-down-soft: color-mix(in oklab, var(--color-error-400) 18%, transparent);
+		--color-price-down-soft: color-mix(in oklab, var(--color-error-400) 22%, transparent);
 		--color-price-neutral: var(--color-muted-foreground);
 		--color-live-indicator: var(--color-error-400);
 		--color-selected: var(--color-secondary-400);
 
 		/* Outcome starter 1..4 — dark */
-		--color-outcome-1: var(--color-warning-400);
+		--color-outcome-1: var(--color-warning-300);
 		--color-outcome-2: var(--color-success-400);
 		--color-outcome-3: var(--color-secondary-400);
 		--color-outcome-4: var(--color-tertiary-400);
