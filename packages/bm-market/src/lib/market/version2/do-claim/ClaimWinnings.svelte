@@ -78,7 +78,7 @@
 </script>
 
 <div>
-  <div class="text-gray-900 dark:text-gray-100">
+  <div class="text-foreground">
     <div class="flex flex-col gap-y-4">
       <h2 class="text-lg font-semibold">Claim Winnings</h2>
       <p class="font-semibold">{@html getOutcomeMessage($chainStore.stacks.burn_block_height, $selectedCurrency, market)}</p>
@@ -88,7 +88,9 @@
             Market Fee: {fmtMicroToStx(Number(winnings.marketFee), 6)} ({market.marketData
               .marketFeeBips / 100}%)
           </p>
-          <p class="font-semibold">Winnings: {fmtMicroToStx(Number(winnings.netAmount), 6)}</p>
+          <p class="font-semibold text-success tabular-nums">
+            Winnings: {fmtMicroToStx(Number(winnings.netAmount), 6)}
+          </p>
         {/if}
       </div>
 
@@ -99,7 +101,7 @@
               errorMessage = undefined;
               claimWinningsInt();
             }}
-            class="mt-4 cursor-pointer rounded bg-green-700 px-4 py-2 text-white hover:bg-green-600"
+            class="mt-4 h-11 cursor-pointer rounded-md bg-success px-4 text-sm font-semibold text-success-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-10"
           >
             CLAIM WINNINGS
           </button>
@@ -121,47 +123,47 @@
         </div>
       {/if}
       {#if sip10Data}
-        <!-- <table class="w-full table-auto border-collapse border border-gray-300">
+        <!-- <table class="w-full table-auto border-collapse border border-border">
 					<thead>
-						<tr class="bg-gray-400">
-							<th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">Label</th>
-							<th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">Value</th>
+						<tr class="bg-muted">
+							<th class="border border-border px-4 py-2 text-left text-sm font-medium text-muted-foreground">Label</th>
+							<th class="border border-border px-4 py-2 text-left text-sm font-medium text-muted-foreground">Value</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr class="bg-gray-400">
-							<td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">Total Pool</td>
-							<td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">
+						<tr class="bg-muted">
+							<td class="border border-border px-4 py-2 text-sm text-foreground">Total Pool</td>
+							<td class="border border-border px-4 py-2 text-sm text-foreground">
 								{fmtMicroToStx(totalPool, sip10Data.decimals)}
 							</td>
 						</tr>
-						<tr class="bg-gray-400">
-							<td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">Winning Pool</td>
-							<td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">
+						<tr class="bg-muted">
+							<td class="border border-border px-4 py-2 text-sm text-foreground">Winning Pool</td>
+							<td class="border border-border px-4 py-2 text-sm text-foreground">
 								{fmtMicroToStx(winningPool, sip10Data.decimals)}
 							</td>
 						</tr>
-						<tr class="bg-gray-400">
-							<td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">Dev Fee</td>
-							<td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">
+						<tr class="bg-muted">
+							<td class="border border-border px-4 py-2 text-sm text-foreground">Dev Fee</td>
+							<td class="border border-border px-4 py-2 text-sm text-foreground">
 								{fmtMicroToStx(devFee, sip10Data.decimals)}
 							</td>
 						</tr>
-						<tr class="bg-gray-400">
-							<td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">Dao Fee</td>
-							<td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">
+						<tr class="bg-muted">
+							<td class="border border-border px-4 py-2 text-sm text-foreground">Dao Fee</td>
+							<td class="border border-border px-4 py-2 text-sm text-foreground">
 								{fmtMicroToStx(daoFee, sip10Data.decimals)}
 							</td>
 						</tr>
-						<tr class="bg-gray-400">
-							<td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">Staked</td>
-							<td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">
+						<tr class="bg-muted">
+							<td class="border border-border px-4 py-2 text-sm text-foreground">Staked</td>
+							<td class="border border-border px-4 py-2 text-sm text-foreground">
 								{fmtMicroToStx(staked, sip10Data.decimals)}
 							</td>
 						</tr>
-						<tr class="bg-gray-400">
-							<td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">Net Share</td>
-							<td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">
+						<tr class="bg-muted">
+							<td class="border border-border px-4 py-2 text-sm text-foreground">Net Share</td>
+							<td class="border border-border px-4 py-2 text-sm text-foreground">
 								{fmtMicroToStx(userShareNet, sip10Data.decimals)}
 							</td>
 						</tr>
