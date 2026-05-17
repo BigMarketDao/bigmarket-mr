@@ -116,7 +116,7 @@
       <aside class="space-y-4 lg:sticky lg:top-16 lg:col-start-2 lg:row-start-1 lg:self-start">
         {#if market.marketData.resolutionState === ResolutionState.RESOLUTION_OPEN}
           <div
-            class="flex rounded-md border border-border bg-muted p-1"
+            class="flex rounded-[var(--radius-md)] bg-[var(--color-secondary)] p-1"
             role="tablist"
             aria-label="Market actions"
           >
@@ -124,10 +124,10 @@
               type="button"
               role="tab"
               aria-selected={sidePanelTab === 'trade'}
-              class="flex-1 rounded px-3 py-2.5 text-center text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring {sidePanelTab ===
+              class="flex-1 rounded-[var(--radius-sm)] py-2 text-center text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] {sidePanelTab ===
               'trade'
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'}"
+                ? 'bg-[var(--color-card)] font-semibold text-[var(--color-card-foreground)] shadow-sm'
+                : 'font-normal text-[var(--color-muted-foreground)] hover:text-[var(--color-card-foreground)]'}"
               onclick={() => {
                 sidePanelTab = 'trade';
               }}
@@ -138,10 +138,10 @@
               type="button"
               role="tab"
               aria-selected={sidePanelTab === 'liquidity'}
-              class="flex-1 rounded px-3 py-2.5 text-center text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring {sidePanelTab ===
+              class="flex-1 rounded-[var(--radius-sm)] py-2 text-center text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] {sidePanelTab ===
               'liquidity'
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'}"
+                ? 'bg-[var(--color-card)] font-semibold text-[var(--color-card-foreground)] shadow-sm'
+                : 'font-normal text-[var(--color-muted-foreground)] hover:text-[var(--color-card-foreground)]'}"
               onclick={() => {
                 sidePanelTab = 'liquidity';
               }}
