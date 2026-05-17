@@ -27,35 +27,35 @@
 {#if reputationData}
 	<a
 		href={resolve('/reputation')}
-		class="group block border-b border-white/10 bg-background transition-colors hover:bg-background/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ring"
+		class="group block border-b border-border bg-background transition-colors hover:bg-muted/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ring"
 	>
 		<div
 			class="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-1.5 sm:px-6 lg:px-8"
 		>
 			<div
-				class="flex min-w-0 flex-1 items-center gap-x-0 overflow-x-auto text-xs font-normal whitespace-nowrap text-white/50 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+				class="flex min-w-0 flex-1 items-center gap-x-0 overflow-x-auto text-xs font-normal whitespace-nowrap text-muted-foreground [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 			>
-				<span class="shrink-0 font-medium text-white/70">Earn rewards just for playing</span>
+				<span class="shrink-0 font-medium text-foreground">Earn rewards just for playing</span>
 
-				<span class="shrink-0 text-white/30" aria-hidden="true"> · </span>
+				<span class="shrink-0 text-muted-foreground/50" aria-hidden="true"> · </span>
 
 				<span class="shrink-0">Round {fmtNumber(reputationData.currentEpoch)}</span>
 
 				{#if reputationData.rewardPerEpoch}
-					<span class="shrink-0 text-white/30" aria-hidden="true"> · </span>
+					<span class="shrink-0 text-muted-foreground/50" aria-hidden="true"> · </span>
 
 					<span class="shrink-0">
-						Prize pool: <span class="font-semibold text-white"
+						Prize pool: <span class="font-semibold text-foreground"
 							>{fmtNumberStacksFloor(reputationData.rewardPerEpoch)} BIG</span
 						>
 					</span>
 				{/if}
 
 				{#if loggedIn}
-					<span class="shrink-0 text-white/30" aria-hidden="true"> · </span>
+					<span class="shrink-0 text-muted-foreground/50" aria-hidden="true"> · </span>
 
 					<span class="shrink-0">
-						Your score: <span class="font-semibold text-white"
+						Your score: <span class="font-semibold text-foreground"
 							>{fmtNumber(personalRep?.weightedReputation)} pts</span
 						>
 					</span>

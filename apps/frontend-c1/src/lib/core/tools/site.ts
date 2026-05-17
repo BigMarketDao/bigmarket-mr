@@ -11,7 +11,13 @@ export type NavSection = {
 
 export const daoLink = '/dao';
 
-export const mainNavLinks: Array<NavLink> = [{ href: '/dao', label: 'Community' }];
+export const controlRoomLink: NavLink = { href: '/dao', label: 'CONTROL ROOM' };
+
+export const howItWorksLink: NavLink = {
+	href: 'https://big-market-dao.gitbook.io/big-market-dao-docs/',
+	label: 'HOW IT WORKS',
+	external: true
+};
 
 export const footerNavSections: Array<NavSection> = [
 	{

@@ -19,7 +19,19 @@
 	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import { daoConfigStore, requireDaoConfig } from '@bigmarket/bm-common';
 	import { ConnectButton } from '@bigmarket/bm-ui';
-	import { Crown, Power, Trophy, Vote, Settings, Copy, Check } from 'lucide-svelte';
+	import {
+		Crown,
+		Power,
+		Trophy,
+		Vote,
+		Settings,
+		Copy,
+		Check,
+		Wallet,
+		Sun,
+		Moon,
+		ChevronDown
+	} from 'lucide-svelte';
 	import type { Icon } from 'lucide-svelte';
 	import { scale } from 'svelte/transition';
 
@@ -28,6 +40,14 @@
 		BIG: 'Earn it by participating. Use it to vote.',
 		sBTC: 'Bitcoin that works inside apps like BigMarket'
 	};
+
+	let {
+		isDarkMode = false,
+		onToggleDarkMode
+	}: {
+		isDarkMode?: boolean;
+		onToggleDarkMode?: () => void;
+	} = $props();
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
@@ -212,40 +232,28 @@
 <div class="relative flex items-center gap-3" bind:this={dropdownRef}>
 	{#if isLoggedIn()}
 		<button
-			class="inline-flex h-10 min-w-[160px] items-center justify-between rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-offset-background"
+			type="button"
+			class="inline-flex max-w-[10.5rem] cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-2 text-xs font-semibold tracking-wide text-foreground uppercase transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-offset-background {isOpen
+				? 'border-primary/40 bg-primary/15 shadow-sm'
+				: 'border-border bg-background hover:border-muted-foreground/30 hover:bg-muted/50'}"
 			onclick={() => (isOpen = !isOpen)}
+			aria-expanded={isOpen}
+			aria-haspopup="true"
+			aria-label="Wallet menu"
 		>
-			<div class="flex items-center space-x-3">
-				<div class="relative">
-					<div class="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-500"></div>
-				</div>
-
-				<div class="flex flex-col items-start">
-					{#if $walletState.chain === 'stacks'}
-						<div class="flex items-center space-x-2">
-							<span class="text-sm font-semibold text-foreground">
-								{truncate(showStacksAddress ? stxAddress : (getBtcAddress()?.toUpperCase() ?? ''))}
-							</span>
-							<span
-								class="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground"
-							>
-								{showStacksAddress ? 'STX' : 'BTC'}
-							</span>
-						</div>
-					{:else}
-						<div class="flex items-center space-x-2">
-							<span class="text-sm font-semibold text-foreground">
-								{truncate($walletState.activeAccount?.address)}
-							</span>
-							<span
-								class="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground"
-							>
-								{#if $walletState.chain === 'solana'}SOL{:else if $walletState.chain === 'ethereum'}ETH{:else}???{/if}
-							</span>
-						</div>
-					{/if}
-				</div>
-			</div>
+			<Wallet class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+			<span class="min-w-0 flex-1 truncate">
+				{#if $walletState.chain === 'stacks'}
+					{truncate(showStacksAddress ? stxAddress : (getBtcAddress()?.toUpperCase() ?? ''))}
+				{:else}
+					{truncate($walletState.activeAccount?.address ?? '')}
+				{/if}
+			</span>
+			<ChevronDown
+				class="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 {isOpen
+					? 'rotate-180'
+					: ''}"
+			/>
 		</button>
 
 		{#if isOpen}
@@ -377,6 +385,28 @@
 						{@render navItem(Vote, resolve(daoLink as '/'), 'Governance', 'Vote on proposals')}
 						{@render navItem(Settings, resolve('/settings'), 'Settings', 'Customize experience')}
 
+						{#if onToggleDarkMode}
+							<button
+								type="button"
+								onclick={() => {
+									onToggleDarkMode();
+								}}
+								class="group/nav flex w-full cursor-pointer items-start gap-3 rounded-md border-l-2 border-transparent px-3 py-2.5 text-left transition duration-150 ease-out hover:border-l-accent hover:bg-black/5 dark:hover:bg-white/5"
+							>
+								{#if isDarkMode}
+									<Sun class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+								{:else}
+									<Moon class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+								{/if}
+								<div class="min-w-0 flex-1">
+									<div class="text-sm font-semibold text-foreground">
+										{isDarkMode ? 'Light mode' : 'Dark mode'}
+									</div>
+									<div class="text-xs text-muted-foreground">Switch appearance</div>
+								</div>
+							</button>
+						{/if}
+
 						<div class="px-3 py-2 text-[11px] text-muted-foreground/70">
 							Bitcoin block
 							<span class="font-mono text-muted-foreground">{fmtNumber(blockHeight)}</span>
@@ -402,6 +432,6 @@
 			</div>
 		{/if}
 	{:else}
-		<ConnectButton label="CONNECT WALLET" onConnectWallet={handleConnect} />
+		<ConnectButton label="WALLET" onConnectWallet={handleConnect} />
 	{/if}
 </div>
