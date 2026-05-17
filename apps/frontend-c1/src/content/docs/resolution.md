@@ -6,6 +6,27 @@ How markets reach a final outcome, who's involved, and what happens if someone d
 
 ## How does a market resolve?
 
+```mermaid
+flowchart TB
+  subgraph agentPath [Most markets]
+    Agents[Agents signal outcome]
+    Threshold{Enough agree?}
+    Agents --> Threshold
+    Threshold -->|yes| DisputeWindow[Dispute window ~1 day]
+    Threshold -->|no| Agents
+  end
+  subgraph oraclePath [Scalar markets]
+    Feed[Public price feed]
+    Feed --> AutoResolved[Result applied automatically]
+  end
+  DisputeWindow -->|no challenge| Resolved[Resolved final]
+  DisputeWindow -->|dispute raised| Vote[Community vote ~2.5 days]
+  Vote --> Resolved
+  AutoResolved --> Resolved
+```
+
+*Diagram: how outcomes are decided, with optional dispute and vote.*
+
 **Who decides the outcome?**
 
 For most markets, a group of independent agents monitors the real-world event and signals the result once it's clear. These agents don't make a judgement call — they read publicly available information and report what happened. Think of them as referees reading the scoreboard, not picking the winner.

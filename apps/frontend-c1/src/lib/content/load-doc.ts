@@ -1,6 +1,6 @@
 import { docsNav } from './docs-nav';
 import { parseDoc, type ParsedDoc } from './parse-doc';
-import { renderMarkdown } from './render-markdown';
+import { splitBodyIntoBlocks, type DocContentBlock } from './split-content-blocks';
 
 const docModules = import.meta.glob('/src/content/docs/*.md', {
 	query: '?raw',
@@ -15,7 +15,7 @@ for (const [path, raw] of Object.entries(docModules)) {
 }
 
 export type LoadedDoc = ParsedDoc & {
-	html: string;
+	contentBlocks: DocContentBlock[];
 	file: string;
 	sectionSlug: string;
 	pageSlug: string;
@@ -33,10 +33,11 @@ export function loadDocByFile(
 	const raw = getRawDocByFile(file);
 	if (!raw) return undefined;
 	const parsed = parseDoc(raw);
-	const html = renderMarkdown(parsed.bodyMarkdown, { sectionSlug, pageSlug });
+	const ctx = { sectionSlug, pageSlug };
+	const contentBlocks = splitBodyIntoBlocks(parsed.bodyMarkdown, ctx);
 	return {
 		...parsed,
-		html,
+		contentBlocks,
 		file,
 		sectionSlug,
 		pageSlug
@@ -61,3 +62,5 @@ export function loadAllDocsInSection(sectionSlug: string): LoadedDoc[] {
 export function loadAllDocs(): LoadedDoc[] {
 	return docsNav.flatMap((section) => loadAllDocsInSection(section.slug));
 }
+
+export type { DocContentBlock };

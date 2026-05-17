@@ -22,3 +22,4 @@ export { default as DocsBreadcrumb } from "./DocsBreadcrumb.svelte";
 export { default as DocsPrevNext } from "./DocsPrevNext.svelte";
 export { default as DocsOnThisPage } from "./DocsOnThisPage.svelte";
 export { default as DocsProse } from "./DocsProse.svelte";
+export { default as DocsMermaid } from "./DocsMermaid.svelte";

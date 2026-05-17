@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import {
 		DocsBreadcrumb,
+		DocsMermaid,
 		DocsOnThisPage,
 		DocsPrevNext,
 		DocsProse
@@ -83,7 +84,15 @@
 			{/if}
 		</header>
 
-		<DocsProse html={data.doc.html} />
+		<div class="docs-article-body space-y-0 [&_.docs-prose+*]:mt-0">
+			{#each data.doc.contentBlocks as block, i (`${block.type}-${i}`)}
+				{#if block.type === 'html'}
+					<DocsProse html={block.value} />
+				{:else}
+					<DocsMermaid chart={block.chart} caption={block.caption} />
+				{/if}
+			{/each}
+		</div>
 
 		<DocsPrevNext prev={data.prev} next={data.next} />
 	</article>

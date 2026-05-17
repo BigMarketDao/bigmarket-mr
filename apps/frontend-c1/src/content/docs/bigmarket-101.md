@@ -28,6 +28,18 @@ Almost anything with a clear, verifiable outcome. Will a team win a match. Will 
 
 ## Where does my money go?
 
+```mermaid
+flowchart LR
+  Wallet[Your wallet]
+  Pool[Market pool on-chain]
+  UI[BigMarket UI]
+  Wallet -->|you trade| Pool
+  Pool -->|you claim| Wallet
+  UI -.->|never holds funds| Pool
+```
+
+*Diagram: funds stay in the market pool, not a BigMarket account.*
+
 **Does BigMarket hold my funds?**
 
 No. When you trade on BigMarket, your money goes directly into the market — a sealed pool that exists only for that question. BigMarket never touches it. There is no BigMarket account. There is no company wallet holding your funds.

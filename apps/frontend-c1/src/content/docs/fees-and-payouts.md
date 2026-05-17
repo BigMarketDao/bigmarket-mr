@@ -31,9 +31,33 @@ It splits two ways:
 
 Nothing goes to a private company. The treasury is governed by community vote.
 
+```mermaid
+flowchart TB
+  Trade[Each trade 1% protocol fee]
+  Trade --> LP[30% to LPs in that market]
+  Trade --> Treasury[70% to DAO treasury]
+  CreatorFee[Optional creator fee 0-10%]
+  CreatorFee --> Creator[Market creator]
+```
+
+*Diagram: where protocol and creator fees go.*
+
 ---
 
 ## How does my payout work?
+
+```mermaid
+flowchart LR
+  Pool[Total pool 1000 STX]
+  Winners[Winning side 400 STX]
+  You[Your shares 40 STX]
+  Claim[You claim 100 STX]
+  Pool --> Winners
+  Winners --> You
+  You --> Claim
+```
+
+*Diagram: example payout — 10% of the winning side earns 10% of the full pool.*
 
 **How is a winning payout calculated?**
 

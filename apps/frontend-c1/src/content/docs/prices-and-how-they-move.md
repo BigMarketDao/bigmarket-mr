@@ -6,6 +6,17 @@ Why outcome prices change, what they actually mean, and how to use that informat
 
 ## What does a price mean?
 
+```mermaid
+flowchart LR
+  YesPool[Yes pool 70%]
+  NoPool[No pool 30%]
+  Price[Yes price = 70%]
+  YesPool --> Price
+  NoPool --> Price
+```
+
+*Diagram: price reflects how much money sits behind each outcome.*
+
 **Is 70% just a number someone picked?**
 
 No. Nobody sets prices on BigMarket. Prices emerge from trading activity — they're a direct reflection of how much money is sitting behind each outcome relative to the total pool.
@@ -41,6 +52,22 @@ In a well-traded market, the price traces the crowd's evolving confidence. Early
 ---
 
 ## How do prices work in Knockout markets?
+
+```mermaid
+flowchart TB
+  subgraph amm [AMM markets]
+    A1[Continuous pricing]
+    A2[Sell anytime before close]
+    A3[Price moves with each trade]
+  end
+  subgraph ko [Knockout markets]
+    K1[Fixed pool ratio at entry]
+    K2[Hold until resolution]
+    K3[Winners split pool at end]
+  end
+```
+
+*Diagram: AMM versus Knockout — flexibility versus simplicity.*
 
 **If there's no continuous pricing, what am I buying?**
 

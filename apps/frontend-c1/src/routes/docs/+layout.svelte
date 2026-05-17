@@ -10,7 +10,9 @@
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
 	const isLegalPage = $derived(
-		page.url.pathname === '/docs/terms' || page.url.pathname === '/docs/privacy'
+		page.url.pathname === '/docs/terms' ||
+			page.url.pathname === '/docs/privacy' ||
+			page.url.pathname === '/docs/license'
 	);
 
 	const sidebarSections = $derived(

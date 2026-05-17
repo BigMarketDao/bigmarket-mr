@@ -27,6 +27,19 @@ No. Markets differ in two important ways: the type of question they ask, and the
 
 ## What types of markets are there?
 
+```mermaid
+flowchart TB
+  Market[Market question]
+  Market --> Binary[Binary yes or no]
+  Market --> Categorical[Categorical multiple outcomes]
+  Market --> Scalar[Scalar numeric range]
+  Scalar --> Oracle[Resolves from price feed]
+  Binary --> Human[Agents or community vote]
+  Categorical --> Human
+```
+
+*Diagram: the three market types and how each typically resolves.*
+
 **What's a binary market?**
 
 The simplest kind. One question, two possible answers: yes or no. "Will X happen before Y date?" Everyone picks a side. When the event resolves, the winning side splits the pool.
@@ -90,6 +103,19 @@ Neither is universally better. AMM gives you flexibility — you can change your
 **What are the stages?**
 
 Every market moves through the same sequence of states, in order. Understanding these helps you know what actions are available at each point.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Open
+  Open --> Cooling: trading closes
+  Cooling --> Resolving: agents or oracle
+  Resolving --> Disputed: challenge raised
+  Resolving --> Resolved: no dispute
+  Disputed --> Resolved: vote concludes
+  note right of Resolving: Scalar markets use oracle only
+```
+
+*Diagram: market states from open to resolved.*
 
 **Open** — The market is live. Participants can buy and sell positions freely (in AMM markets). This is where most of the trading happens.
 

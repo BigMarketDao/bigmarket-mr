@@ -37,6 +37,7 @@
     "date-fns": "^4.1.0",
     "date-picker-svelte": "^2.17.0",
     "lucide-svelte": "^1.0.1",
+    "mermaid": "^11.12.0",
     "luxon": "^3.7.2",
     "tailwind-merge": "^3.5.0",
     "tailwind-variants": "^3.2.2"

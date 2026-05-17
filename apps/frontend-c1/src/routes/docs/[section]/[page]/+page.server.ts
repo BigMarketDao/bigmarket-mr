@@ -25,7 +25,7 @@ export const load: PageServerLoad = ({ params }) => {
 			title: doc.title,
 			subtitle: doc.subtitle,
 			lede: doc.lede,
-			html: doc.html,
+			contentBlocks: doc.contentBlocks,
 			sections: doc.sections
 		},
 		prev: prev
