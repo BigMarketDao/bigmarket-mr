@@ -19,7 +19,15 @@
 	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import { daoConfigStore, requireDaoConfig } from '@bigmarket/bm-common';
 	import { ConnectButton } from '@bigmarket/bm-ui';
-	import { Crown, Power, Trophy, Vote, Settings, CreditCard, Blocks } from 'lucide-svelte';
+	import { Crown, Power, Trophy, Vote, Settings, Copy, Check } from 'lucide-svelte';
+	import type { Icon } from 'lucide-svelte';
+	import { scale } from 'svelte/transition';
+
+	const TOKEN_TOOLTIPS: Record<string, string> = {
+		STX: 'Used to pay for actions on BigMarket',
+		BIG: 'Earn it by participating. Use it to vote.',
+		sBTC: 'Bitcoin that works inside apps like BigMarket'
+	};
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
@@ -44,8 +52,7 @@
 	}
 
 	function getBtcBalanceMicro(): number {
-		const ks = $userWalletStore.sBTCBalance ?? 0;
-		return ks;
+		return $userWalletStore.sBTCBalance ?? 0;
 	}
 
 	let isOpen = $state(false);
@@ -55,8 +62,11 @@
 	let stxAddress = $state('');
 	let btcAddress = $state('');
 	let bigAllowed = $state(false);
+	let addressCopied = $state(false);
 
 	const allowedTokens = $derived($allowedTokenStore ?? []);
+	const isTestnet = $derived(appConfig.VITE_NETWORK === 'testnet');
+	const networkInfo = $derived(getCurrentNetwork());
 	const bigToken = $derived(
 		`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_GOVERNANCE_TOKEN}`
 	);
@@ -108,6 +118,36 @@
 		return getTokenBalanceMicro(token, tokenBalances) || 0;
 	}
 
+	function formatBalanceDisplay(micro: number, decimals: number, suffix = ''): string {
+		if (!micro) return '—';
+		const formatted = fmtMicroToStx(micro, decimals);
+		if (parseFloat(formatted) === 0) return '—';
+		return suffix ? `${formatted} ${suffix}` : formatted;
+	}
+
+	function getFullWalletAddress(): string {
+		if ($walletState.chain === 'stacks') {
+			return showStacksAddress ? stxAddress : (btcAddress?.toUpperCase() ?? '');
+		}
+		return $walletState.activeAccount?.address ?? '';
+	}
+
+	function getNetworkDotClass(color: string): string {
+		if (color === 'emerald') return 'bg-emerald-500';
+		if (color === 'orange') return 'bg-orange-500';
+		return 'bg-blue-500';
+	}
+
+	async function copyWalletAddress() {
+		const address = getFullWalletAddress();
+		if (!address || typeof navigator === 'undefined') return;
+		await navigator.clipboard.writeText(address);
+		addressCopied = true;
+		setTimeout(() => {
+			addressCopied = false;
+		}, 1500);
+	}
+
 	onMount(() => {
 		if (isLoggedIn() && typeof window !== 'undefined') {
 			window.addEventListener('click', handleClickOutside);
@@ -123,6 +163,51 @@
 		};
 	});
 </script>
+
+{#snippet tokenRow(
+	symbol: string,
+	subtitle: string,
+	balance: string,
+	tooltip: string | undefined
+)}
+	<div
+		class="group/token relative flex items-center justify-between rounded-md border-l-2 border-transparent px-3 py-2.5 transition duration-150 ease-out hover:border-l-accent hover:bg-black/5 dark:hover:bg-white/5"
+	>
+		<div class="flex flex-col gap-0.5">
+			<span class="text-sm font-semibold text-foreground">{symbol}</span>
+			{#if subtitle}
+				<span class="text-xs text-muted-foreground">{subtitle}</span>
+			{/if}
+		</div>
+		<span class="font-mono text-sm text-foreground">{balance}</span>
+		{#if tooltip}
+			<div
+				class="pointer-events-none absolute bottom-full left-3 z-10 mb-1 max-w-[14rem] rounded-lg bg-popover px-2.5 py-1.5 text-xs text-popover-foreground opacity-0 shadow-md ring-1 ring-border transition-opacity duration-150 group-hover/token:opacity-100 dark:bg-card"
+				role="tooltip"
+			>
+				{tooltip}
+			</div>
+		{/if}
+	</div>
+{/snippet}
+
+{#snippet navItem(
+	NavIcon: typeof Icon,
+	href: string,
+	title: string,
+	subtitle: string
+)}
+	<a
+		{href}
+		class="group/nav flex w-full cursor-pointer items-start gap-3 rounded-md border-l-2 border-transparent px-3 py-2.5 transition duration-150 ease-out hover:border-l-accent hover:bg-black/5 dark:hover:bg-white/5"
+	>
+		<NavIcon class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+		<div class="min-w-0 flex-1">
+			<div class="text-sm font-semibold text-foreground">{title}</div>
+			<div class="text-xs text-muted-foreground">{subtitle}</div>
+		</div>
+	</a>
+{/snippet}
 
 <div class="relative flex items-center gap-3" bind:this={dropdownRef}>
 	{#if isLoggedIn()}
@@ -165,220 +250,151 @@
 
 		{#if isOpen}
 			<div
-				class=" absolute top-full right-0 z-50 mt-2 w-80 rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
+				class="absolute top-full right-0 z-50 mt-2 min-w-[300px] origin-top-right overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl dark:border-white/10"
+				transition:scale={{ duration: 150, start: 0.95, opacity: 0 }}
 			>
-				<div class="max-h-80 space-y-3 overflow-y-auto p-4">
-					<div class="space-y-3 p-4">
-						<div class="space-y-1">
-							<div class="text-xs text-gray-500 dark:text-gray-400">Your wallet</div>
-							<div class="flex items-center justify-between">
-								{#if $walletState.chain === 'stacks'}
-									<div
-										class="max-w-[14rem] font-mono text-[10px] text-gray-900 dark:text-gray-100"
-										title={showStacksAddress ? stxAddress : (btcAddress?.toUpperCase() ?? '')}
+				{#if isTestnet}
+					<div
+						class="border-b border-border bg-warning-soft px-4 py-2 text-center text-[11px] font-medium tracking-wide text-warning dark:border-white/10"
+					>
+						Test mode — not real funds
+					</div>
+				{/if}
+
+				<div class="max-h-[min(32rem,80vh)] overflow-y-auto">
+					<!-- Layer 1 — Identity -->
+					<section class="space-y-3 p-4">
+						<div class="flex items-start justify-between gap-3">
+							<div class="min-w-0 flex-1 space-y-2">
+								<div class="flex items-center gap-1.5">
+									<p
+										class="truncate font-mono text-sm text-muted-foreground"
+										title={getFullWalletAddress()}
 									>
-										{showStacksAddress ? stxAddress : (btcAddress?.toUpperCase() ?? '')}
-									</div>
-								{:else}
-									<div
-										class="max-w-[14rem] font-mono text-[10px] text-gray-900 dark:text-gray-100"
-										title={$walletState.activeAccount?.address}
+										{truncate(getFullWalletAddress())}
+									</p>
+									<button
+										type="button"
+										class="relative shrink-0 rounded p-0.5 text-muted-foreground transition hover:text-foreground"
+										aria-label="Copy wallet address"
+										onclick={copyWalletAddress}
 									>
-										{$walletState.activeAccount?.address}
+										{#if addressCopied}
+											<Check class="h-4 w-4 text-accent" />
+										{:else}
+											<Copy class="h-4 w-4" />
+										{/if}
+										{#if addressCopied}
+											<span
+												class="pointer-events-none absolute -top-8 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-lg bg-popover px-2 py-1 text-[10px] text-foreground shadow-md ring-1 ring-border dark:bg-card"
+											>
+												Copied!
+											</span>
+										{/if}
+									</button>
+								</div>
+								{#if $walletState.chain !== 'stacks' && $walletState.activeAccount?.mappedAddress}
+									<div class="space-y-0.5">
+										<p class="text-[10px] text-muted-foreground">Mapped wallet</p>
+										<p
+											class="truncate font-mono text-xs text-muted-foreground"
+											title={$walletState.activeAccount.mappedAddress}
+										>
+											{$walletState.activeAccount.mappedAddress}
+										</p>
 									</div>
 								{/if}
+								<p class="text-xs text-muted-foreground">
+									🏅 <span class="font-medium text-accent">
+										{$userReputationStore.userReputationData?.weightedReputation || 0}
+									</span> Reputation pts
+								</p>
 							</div>
-							{#if $walletState.chain !== 'stacks'}
-								<div class="text-xs text-gray-500 dark:text-gray-400">Mapped wallet</div>
-								<div
-									class="max-w-[14rem] font-mono text-[10px] text-gray-900 dark:text-gray-100"
-									title={$walletState.activeAccount?.mappedAddress}
-								>
-									{$walletState.activeAccount?.mappedAddress}
-								</div>
-							{/if}
-						</div>
-
-						<p class="text-xs text-gray-500 dark:text-gray-400">
-							🏅 <span class="font-medium text-orange-500 dark:text-orange-300">
-								{$userReputationStore.userReputationData?.weightedReputation || 0}
-							</span> Reputation pts
-						</p>
-
-						<div class="space-y-2">
-							<div class="flex items-center justify-between">
-								<div class="flex flex-col">
-									<span class="text-xs text-gray-500 dark:text-gray-400">STX</span>
-									<span class="text-[10px] text-gray-400 dark:text-gray-500"
-										>for transactions & fees</span
-									>
-								</div>
-								<div class="flex items-center gap-1.5">
-									<CreditCard class="h-3 w-3 text-gray-400 dark:text-gray-500" />
-									<span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-										{showStacksAddress
-											? `${fmtMicroToStx(getStxBalanceMicro(), 6)}`
-											: `${fmtMicroToStx(getBtcBalanceMicro(), 8)} BTC`}
-									</span>
-								</div>
-							</div>
-						</div>
-						{#if !bigAllowed}
-							<div class="space-y-2">
-								<div class="flex items-center justify-between">
-									<div class="flex flex-col">
-										<span class="text-xs text-gray-500 dark:text-gray-400">BIG</span>
-										<span class="text-[10px] text-gray-400 dark:text-gray-500"
-											>your platform token</span
-										>
-									</div>
-									<div class="flex items-center gap-1.5">
-										<CreditCard class="h-3 w-3 text-gray-400 dark:text-gray-500" />
-										<span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-											{fmtMicroToStx(getBalance(bigToken), 6)}
-										</span>
-									</div>
-								</div>
-							</div>
-						{/if}
-						{#each allowedTokens as token (token.token)}
-							{#if token.sip10Data?.symbol !== 'STX' && token.sip10Data?.symbol !== 'BIG'}
-								<div class="space-y-1">
-									<div class="flex items-center justify-between">
-										<div class="flex flex-col">
-											<span class="text-xs text-gray-500 dark:text-gray-400"
-												>{token.sip10Data?.symbol}</span
-											>
-											{#if token.sip10Data?.symbol === 'sBTC'}
-												<span class="text-[10px] text-gray-400 dark:text-gray-500"
-													>Bitcoin on Stacks</span
-												>
-											{/if}
-										</div>
-										<div class="flex items-center gap-1.5">
-											<CreditCard class="h-3 w-3 text-gray-400 dark:text-gray-500" />
-											<span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-												{fmtMicroToStx(getBalance(token.token) || 0, token.sip10Data?.decimals)}
-											</span>
-										</div>
-									</div>
-								</div>
-							{/if}
-						{/each}
-					</div>
-
-					<hr class="my-3 border-gray-200 dark:border-gray-700" />
-					<div class="space-y-3 px-4">
-						<div class="mb-2 flex items-center justify-between">
-							<div class="text-xs text-gray-500 dark:text-gray-400">Network</div>
 							<span
-								class="flex items-center gap-1.5 rounded-md border border-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 dark:border-gray-700 dark:text-gray-300"
+								class="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground dark:border-white/10"
 							>
-								<div
-									class="h-1.5 w-1.5 rounded-full {getCurrentNetwork().color === 'emerald'
-										? 'bg-emerald-500'
-										: getCurrentNetwork().color === 'orange'
-											? 'bg-orange-500'
-											: 'bg-blue-500'}"
-								></div>
-								Stacks · {getCurrentNetwork().name}
+								<span class="h-1.5 w-1.5 rounded-full {getNetworkDotClass(networkInfo.color)}"
+								></span>
+								Stacks · {networkInfo.name}
 							</span>
 						</div>
-					</div>
-					<hr class="my-3 border-gray-200 dark:border-gray-700" />
+					</section>
 
-					<div class="space-y-1 px-3 py-2">
-						<a
-							href={resolve('/reputation')}
-							class="group flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800"
-						>
-							<div
-								class="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-600 group-hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:group-hover:bg-gray-600"
-							>
-								<Trophy class="h-4 w-4" />
-							</div>
-							<div class="flex-1">
-								<div class="font-medium text-gray-900 dark:text-gray-100">Reputation Hub</div>
-								<div class="text-xs text-gray-500 dark:text-gray-400">
-									Your reputation score & rewards
-								</div>
-							</div>
-						</a>
-						<a
-							href={resolve('/reputation/leader-board')}
-							class="group flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800"
-						>
-							<div
-								class="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-600 group-hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:group-hover:bg-gray-600"
-							>
-								<Crown class="h-4 w-4" />
-							</div>
-							<div class="flex-1">
-								<div class="font-medium text-gray-900 dark:text-gray-100">Top Traders</div>
-								<div class="text-xs text-gray-500 dark:text-gray-400">See the leaderboard</div>
-							</div>
-						</a>
-						<a
-							href={resolve(daoLink as '/')}
-							class="group flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800"
-						>
-							<div
-								class="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-600 group-hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:group-hover:bg-gray-600"
-							>
-								<Vote class="h-4 w-4" />
-							</div>
-							<div class="flex-1">
-								<div class="font-medium text-gray-900 dark:text-gray-100">Governance</div>
-								<div class="text-xs text-gray-500 dark:text-gray-400">Vote on proposals</div>
-							</div>
-						</a>
-						<a
-							href={resolve('/settings')}
-							class="group flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800"
-						>
-							<div
-								class="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-600 group-hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:group-hover:bg-gray-600"
-							>
-								<Settings class="h-4 w-4" />
-							</div>
-							<div class="flex-1">
-								<div class="font-medium text-gray-900 dark:text-gray-100">Settings</div>
-								<div class="text-xs text-gray-500 dark:text-gray-400">Customize experience</div>
-							</div>
-						</a>
-						<span
-							class="group flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800"
-						>
-							<div
-								class="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-600 group-hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:group-hover:bg-gray-600"
-							>
-								<Blocks class="h-4 w-4" />
-							</div>
-							<div class="flex-1">
-								<div class="font-medium text-gray-900 dark:text-gray-100">Bitcoin block</div>
-								<div class="text-xs text-gray-500 dark:text-gray-400">{fmtNumber(blockHeight)}</div>
-							</div>
-						</span>
-					</div>
-					<hr class="my-2 border-gray-200 dark:border-gray-700" />
+					<hr class="border-border dark:border-white/10" />
 
-					<div class="p-3">
+					<!-- Layer 2 — Token balances -->
+					<section class="space-y-0.5 p-2">
+						{@render tokenRow(
+							'STX',
+							'for transactions & fees',
+							showStacksAddress
+								? formatBalanceDisplay(getStxBalanceMicro(), 6)
+								: formatBalanceDisplay(getBtcBalanceMicro(), 8, 'BTC'),
+							TOKEN_TOOLTIPS.STX
+						)}
+
+						{#if !bigAllowed}
+							{@render tokenRow(
+								'BIG',
+								'your platform token',
+								formatBalanceDisplay(getBalance(bigToken), 6),
+								TOKEN_TOOLTIPS.BIG
+							)}
+						{/if}
+
+						{#each allowedTokens as token (token.token)}
+							{#if token.sip10Data?.symbol !== 'STX' && token.sip10Data?.symbol !== 'BIG'}
+								{@const symbol = token.sip10Data?.symbol ?? ''}
+								{@render tokenRow(
+									symbol,
+									symbol === 'sBTC' ? 'Bitcoin on Stacks' : '',
+									formatBalanceDisplay(
+										getBalance(token.token) || 0,
+										token.sip10Data?.decimals ?? 6
+									),
+									TOKEN_TOOLTIPS[symbol]
+								)}
+							{/if}
+						{/each}
+					</section>
+
+					<hr class="border-border dark:border-white/10" />
+
+					<!-- Layer 3 — Navigation -->
+					<section class="space-y-0.5 p-2">
+						{@render navItem(
+							Trophy,
+							resolve('/reputation'),
+							'Reputation Hub',
+							'Your reputation score & rewards'
+						)}
+						{@render navItem(
+							Crown,
+							resolve('/reputation/leader-board'),
+							'Top Traders',
+							'See the leaderboard'
+						)}
+						{@render navItem(Vote, resolve(daoLink as '/'), 'Governance', 'Vote on proposals')}
+						{@render navItem(Settings, resolve('/settings'), 'Settings', 'Customize experience')}
+
+						<div class="px-3 py-2 text-[11px] text-muted-foreground/70">
+							Bitcoin block
+							<span class="font-mono text-muted-foreground">{fmtNumber(blockHeight)}</span>
+						</div>
+					</section>
+
+					<hr class="border-border dark:border-white/10" />
+
+					<div class="p-2">
 						<button
+							type="button"
 							onclick={disWallet}
-							class="group w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-red-950"
+							class="group/nav flex w-full cursor-pointer items-start gap-3 rounded-md border-l-2 border-transparent px-3 py-2.5 text-left transition duration-150 ease-out hover:border-l-destructive hover:bg-destructive/5"
 						>
-							<div class="flex items-center gap-3">
-								<div
-									class="flex h-7 w-7 items-center justify-center rounded-md bg-red-100 group-hover:bg-red-200 dark:bg-red-900 dark:group-hover:bg-red-800"
-								>
-									<Power class="h-4 w-4 text-red-600 dark:text-red-400" />
-								</div>
-								<div>
-									<div class="font-medium">Disconnect</div>
-									<div class="text-xs text-gray-500 dark:text-gray-400">
-										Log out anytime and take a break
-									</div>
-								</div>
+							<Power class="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+							<div>
+								<div class="text-sm font-semibold text-destructive">Disconnect</div>
+								<div class="text-xs text-muted-foreground">Log out anytime and take a break</div>
 							</div>
 						</button>
 					</div>
