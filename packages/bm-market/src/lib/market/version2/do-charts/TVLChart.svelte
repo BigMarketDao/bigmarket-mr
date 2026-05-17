@@ -36,8 +36,22 @@
 		return categoryTVL;
 	};
 
+	function chartColor(cssVar: string): string {
+		if (typeof document === 'undefined') return '';
+		return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
+	}
+
+	function chartChromeColors() {
+		return {
+			border: chartColor('--color-border'),
+			mutedForeground: chartColor('--color-muted-foreground'),
+			primary: chartColor('--color-outcome-1'),
+		};
+	}
+
 	function initializeChart() {
 		if (!sip10Data) return;
+		const chrome = chartChromeColors();
 		let categories = mapToMinMaxStrings(market.marketData.categories);
 
 		let categoryTVL: Record<string, number>;
@@ -63,14 +77,14 @@
 						data: vals
 					}
 				],
-				colors: ['#ea580c'],
+				colors: [chrome.primary],
 				theme: { mode: 'light' },
 				chart: {
 					type: 'bar',
 					toolbar: { show: false },
 					zoom: { enabled: false },
 					background: 'transparent',
-					foreColor: '#374151',
+					foreColor: chrome.border,
 					fontFamily: 'inherit'
 				},
 				title: {
@@ -78,7 +92,7 @@
 					align: 'center',
 					style: {
 						fontSize: '11px',
-						color: '#374151'
+						color: chrome.border
 					}
 				},
 				xaxis: {
@@ -87,7 +101,7 @@
 						text: 'Prediction Outcomes',
 						style: {
 							fontSize: '10px',
-							color: '#6b7280'
+							color: chrome.mutedForeground
 						}
 					},
 					labels: {
@@ -96,7 +110,7 @@
 						},
 						style: {
 							fontSize: '11px',
-							colors: '#4b5563'
+							colors: chrome.border
 						}
 					}
 				},
@@ -107,14 +121,14 @@
 						text: `Staked (${sip10Data.symbol})`,
 						style: {
 							fontSize: '12px',
-							color: '#6b7280'
+							color: chrome.mutedForeground
 						}
 					},
 					labels: {
 						formatter: (value: number) => value.toFixed(2),
 						style: {
 							fontSize: '11px',
-							colors: '#4b5563'
+							colors: chrome.border
 						}
 					}
 				},
@@ -129,7 +143,7 @@
 				dataLabels: {
 					enabled: true,
 					offsetY: -18,
-					style: { fontSize: '10px', colors: ['#374151'] },
+					style: { fontSize: '10px', colors: [chrome.border] },
 					formatter: (val: number) => (val > 0 ? val.toFixed(1) : '')
 				},
 				tooltip: {
