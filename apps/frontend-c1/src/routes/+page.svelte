@@ -33,13 +33,13 @@
 		<MarketPlace {markets} {leaderBoard} />
 	{:else}
 		<div
-			class="flex flex-col items-center justify-center text-center text-gray-900 dark:text-gray-100"
+			class="flex flex-col items-center justify-center text-center text-foreground"
 		>
 			<p class="mb-4 text-lg font-medium">No markets available…</p>
 			<img
 				src="/splash.png"
 				alt="BigMarket loading..."
-				class="max-w-md rounded-lg border border-purple-600/20 shadow"
+				class="max-w-md rounded-md border border-border shadow-sm"
 			/>
 		</div>
 	{/if}

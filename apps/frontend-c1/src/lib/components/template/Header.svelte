@@ -108,7 +108,7 @@
 </script>
 
 <header
-	class="relative top-0 right-0 left-0 z-[999] h-16 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+	class="relative top-0 right-0 left-0 z-[999] h-16 border-b border-border bg-background/90 backdrop-blur-md"
 	bind:this={dropdownRef}
 >
 	<nav
@@ -120,11 +120,11 @@
 
 			<a href={resolve('/')} class="group flex items-center gap-3">
 				<div
-					class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-white shadow-sm transition-all duration-200 group-hover:bg-orange-600 group-hover:shadow-md"
+					class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-foreground shadow-sm transition-all duration-200 group-hover:bg-accent/90 group-hover:shadow-md"
 				>
 					<span class="text-sm font-bold">BM</span>
 				</div>
-				<span class="text-xl font-bold text-gray-900 dark:text-white">BigMarket</span>
+				<span class="text-xl font-bold text-foreground">BigMarket</span>
 			</a>
 			{#if typeof window !== 'undefined'}
 				<div class="hidden items-center gap-4 md:flex">
@@ -159,7 +159,7 @@
 				onclick={toggleDarkMode}
 				type="button"
 				aria-label="Toggle dark mode"
-				class="hidden h-9 w-9 items-center justify-center rounded-md text-gray-600 transition-all hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none md:inline-flex dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white dark:focus-visible:ring-offset-gray-900"
+				class="hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none md:inline-flex dark:focus-visible:ring-offset-background"
 			>
 				{#if isDarkMode}
 					<Sun class="h-4 w-4" />
@@ -170,11 +170,11 @@
 			{#if isLoggedIn()}
 				<a
 					href={resolve('/vault/deposit')}
-					class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+					class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-muted/50"
 					onclick={closeMenu}
 				>
 					<div class="flex-1">
-						<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">Deposits</div>
+						<div class="text-sm font-semibold text-foreground">Deposits</div>
 					</div>
 				</a>
 			{/if}
@@ -191,8 +191,8 @@
 				type="button"
 				aria-label={isOpen ? 'Close menu' : 'Open menu'}
 				aria-expanded={isOpen}
-				class="relative inline-flex h-10 w-10 items-center justify-center rounded-md text-gray-600 transition-all hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:outline-none md:hidden dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white dark:focus-visible:ring-offset-gray-900 {isOpen
-					? 'bg-orange-100 dark:bg-orange-900'
+				class="relative inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none md:hidden dark:focus-visible:ring-offset-background {isOpen
+					? 'bg-accent/10 dark:bg-accent/20'
 					: ''}"
 			>
 				{#if isOpen}
@@ -208,100 +208,100 @@
 	{#if isOpen}
 		<div
 			id="header-dd"
-			class="absolute top-16 right-0 left-0 z-[999] border-b border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
+			class="absolute top-16 right-0 left-0 z-[999] border-b border-border bg-popover shadow-lg"
 		>
 			<div class="mx-auto max-w-7xl p-4">
 				<!-- Main Actions (Top) -->
-				<div class="mb-4 space-y-1 border-b border-gray-200 pb-4 dark:border-gray-700">
+				<div class="mb-4 space-y-1 border-b border-border pb-4">
 					{#if typeof window !== 'undefined'}
 						{#if isLoggedIn()}
 							<a
 								href={resolve('/vault/deposit')}
-								class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+								class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-muted/50"
 								onclick={closeMenu}
 							>
 								<div
-									class="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+									class="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-muted-foreground"
 								>
 									<BarChart3 class="h-4 w-4" />
 								</div>
 								<div class="flex-1">
-									<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">Deposits</div>
-									<div class="text-xs text-gray-500 dark:text-gray-400">Deposit funds</div>
+									<div class="text-sm font-semibold text-foreground">Deposits</div>
+									<div class="text-xs text-muted-foreground">Deposit funds</div>
 								</div>
 							</a>
 						{/if}
 						<a
 							href={resolve('/dao')}
-							class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+							class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-muted/50"
 							onclick={closeMenu}
 						>
 							<div
-								class="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+								class="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-muted-foreground"
 							>
 								<DollarSign class="h-4 w-4" />
 							</div>
 							<div class="flex-1">
-								<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+								<div class="text-sm font-semibold text-foreground">
 									BigMarket IDO
 								</div>
-								<div class="text-xs text-gray-500 dark:text-gray-400">Join our token sale</div>
+								<div class="text-xs text-muted-foreground">Join our token sale</div>
 							</div>
 						</a>
 						{#if isLoggedIn()}
 							<a
 								href={resolve(`/my-markets/${getStxAddress()}`)}
-								class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+								class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-muted/50"
 								onclick={closeMenu}
 							>
 								<div
-									class="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+									class="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-muted-foreground"
 								>
 									<BarChart3 class="h-4 w-4" />
 								</div>
 								<div class="flex-1">
-									<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+									<div class="text-sm font-semibold text-foreground">
 										My Markets
 									</div>
-									<div class="text-xs text-gray-500 dark:text-gray-400">View your positions</div>
+									<div class="text-xs text-muted-foreground">View your positions</div>
 								</div>
 							</a>
 							<!-- <a
 								href={resolve('/market-mgt')}
-								class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+								class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-muted/50"
 								onclick={closeMenu}
 							/> -->
 						{/if}
 					{/if}
 					<a
 						href={resolve('/reputation')}
-						class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+						class="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-muted/50"
 						onclick={closeMenu}
 					>
 						<div
-							class="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+							class="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-muted-foreground"
 						>
 							<Trophy class="h-4 w-4" />
 						</div>
 						<div class="flex-1">
-							<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+							<div class="text-sm font-semibold text-foreground">
 								Reputation Hub
 							</div>
-							<div class="text-xs text-gray-500 dark:text-gray-400">Build your track record</div>
+							<div class="text-xs text-muted-foreground">Build your track record</div>
 						</div>
 					</a>
 				</div>
 
 				<!-- Dark Mode Toggle (Mobile) -->
 				<div
-					class="mb-4 flex items-center justify-between border-b border-gray-200 py-2 dark:border-gray-700"
+					class="mb-4 flex items-center justify-between border-b border-border py-2"
 				>
-					<span class="text-sm font-medium text-gray-700 dark:text-gray-300">Theme</span>
+					<span class="text-sm font-medium text-muted-foreground">Theme</span>
 					<button
 						onclick={toggleDarkMode}
 						class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {isDarkMode
-							? 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
-							: 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}"
+							? 'bg-muted text-foreground'
+							: 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 					>
 						{#if isDarkMode}
 							<Sun class="h-4 w-4" />
@@ -317,16 +317,16 @@
 				{#if typeof window !== 'undefined' && isLoggedIn()}
 					<div class="space-y-3">
 						<!-- Wallet Info Card -->
-						<div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+						<div class="rounded-md border border-border bg-card p-3 text-card-foreground shadow-sm">
 							<div class="flex items-center justify-between">
 								<div class="min-w-0 flex-1">
-									<div class="text-xs text-gray-500 dark:text-gray-400">Connected wallet</div>
-									<div class="truncate font-mono text-sm text-gray-900 dark:text-gray-100">
+									<div class="text-xs text-muted-foreground">Connected wallet</div>
+									<div class="truncate font-mono text-sm text-foreground">
 										{truncate(getStxAddress())}
 									</div>
 								</div>
 								<span
-									class="rounded bg-orange-100 px-2 py-1 text-[10px] font-bold text-orange-700 dark:bg-orange-500/20 dark:text-orange-400"
+									class="rounded bg-accent/15 px-2 py-1 text-xs font-bold text-accent dark:bg-accent/20"
 									>STX</span
 								>
 							</div>
@@ -336,34 +336,34 @@
 						<div class="space-y-1">
 							<a
 								href={resolve('/reputation/leader-board')}
-								class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+								class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-muted"
 								onclick={closeMenu}
 							>
 								<div
-									class="flex h-6 w-6 items-center justify-center rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+									class="flex h-6 w-6 items-center justify-center rounded-md bg-muted text-muted-foreground"
 								>
 									<Crown class="h-3.5 w-3.5" />
 								</div>
 								<div class="flex-1">
-									<div class="text-sm font-medium text-gray-600 dark:text-gray-400">
+									<div class="text-sm font-medium text-muted-foreground">
 										Top Traders
 									</div>
-									<div class="text-xs text-gray-500 dark:text-gray-400">See the leaderboard</div>
+									<div class="text-xs text-muted-foreground">See the leaderboard</div>
 								</div>
 							</a>
 							<a
 								href={resolve('/settings')}
-								class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+								class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-muted"
 								onclick={closeMenu}
 							>
 								<div
-									class="flex h-6 w-6 items-center justify-center rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+									class="flex h-6 w-6 items-center justify-center rounded-md bg-muted text-muted-foreground"
 								>
 									<Settings class="h-3.5 w-3.5" />
 								</div>
 								<div class="flex-1">
-									<div class="text-sm font-medium text-gray-600 dark:text-gray-400">Settings</div>
-									<div class="text-xs text-gray-500 dark:text-gray-400">
+									<div class="text-sm font-medium text-muted-foreground">Settings</div>
+									<div class="text-xs text-muted-foreground">
 										Customize your experience
 									</div>
 								</div>
@@ -376,16 +376,16 @@
 									closeMenu();
 									if (typeof window !== 'undefined') window.location.reload();
 								}}
-								class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+								class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-muted"
 							>
 								<div
-									class="flex h-6 w-6 items-center justify-center rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+									class="flex h-6 w-6 items-center justify-center rounded-md bg-muted text-muted-foreground"
 								>
 									<Power class="h-3.5 w-3.5" />
 								</div>
 								<div class="flex-1">
-									<div class="text-sm font-medium text-gray-700 dark:text-gray-300">Disconnect</div>
-									<div class="text-xs text-gray-500 dark:text-gray-400">Log out safely</div>
+									<div class="text-sm font-medium text-destructive">Disconnect</div>
+									<div class="text-xs text-muted-foreground">Log out safely</div>
 								</div>
 							</button>
 						</div>

@@ -35,18 +35,18 @@
 </script>
 
 <header
-	class="relative top-0 right-0 left-0 z-[999] h-16 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+	class="relative top-0 right-0 left-0 z-[999] h-16 border-b border-border bg-background"
 >
 	<nav
 		class="mx-auto flex h-full w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
 	>
-		<div class="font-bold tracking-wide text-gray-900 dark:text-gray-200">
+		<div class="font-bold tracking-wide text-foreground">
 			BigMarket {appConfig.VITE_NETWORK === 'testnet'
 				? appConfig.VITE_NETWORK.toUpperCase()
 				: 'ALPHA'}
 		</div>
 
-		<div class="flex h-[80%] items-center gap-3 overflow-hidden text-gray-900 dark:text-gray-200">
+		<div class="flex h-[80%] items-center gap-3 overflow-hidden text-foreground">
 			<!-- <div
 				class="border-bloodorange relative flex h-4 items-center overflow-hidden border-l-2 pl-2 sm:h-5 lg:h-6"
 			>
