@@ -4,7 +4,8 @@
 	import { fromStore } from 'svelte/store';
 	import CategoryButton from './markets/CategoryButton.svelte';
 	import { getMarketStatus, totalPoolSum } from '@bigmarket/bm-utilities';
-	import { TrendingUp, XIcon } from 'lucide-svelte';
+	import { Search, TrendingUp, XIcon } from 'lucide-svelte';
+	import FilterSelect from './markets/FilterSelect.svelte';
 	import MarketEntry from './markets/MarketEntry.svelte';
 	import { SearchState } from '../core/app/filtering';
 	import {
@@ -64,6 +65,23 @@
 		{ name: 'Yes/No', value: 'binary' },
 		{ name: 'Multiple Choice', value: 'multiple' },
 		{ name: 'Scalar', value: 'scalar' }
+	];
+
+	const sortOptions = [
+		{ value: 'ending-soon', label: 'Ending soon' },
+		{ value: 'newest', label: 'Newest' },
+		{ value: 'tvl', label: 'TVL' },
+		{ value: 'outcomes', label: 'Most outcomes' }
+	];
+
+	const statusOptions = [
+		{ value: 'all', label: 'All Markets' },
+		{ value: 'open', label: 'Open Markets' },
+		{ value: 'resolving', label: 'Resolving' },
+		{ value: 'disputed', label: 'Disputed' },
+		{ value: 'pending', label: 'Pending' },
+		{ value: 'cooling', label: 'Cooling' },
+		{ value: 'resolved', label: 'Closed' }
 	];
 
 	// Debounce search for smoother UX (timeout id must not be $state — effect reads it and would re-run forever)
@@ -201,6 +219,8 @@
 		categoryStateStore.set('all');
 		marketTypeStore.set('all');
 		sortStateStore.set('tvl');
+		sortBy = 'tvl';
+		localMarketStatus = 'open';
 	});
 </script>
 
@@ -266,103 +286,65 @@
 	<!-- Divider -->
 	<div class="h-px w-full bg-border"></div>
 
-	<!-- Row 2: Search + dropdowns + results counter -->
-	<div class="space-y-3">
-		<!-- Search and filters container with grid alignment -->
-		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
-			<!-- Search input that matches first card column width -->
-			<div class="relative col-span-1">
-				<!-- <label for="searchTerm" class="sr-only">Search</label> -->
-				<input
-					id="searchTerm"
-					type="text"
-					bind:value={searchTerm}
-					placeholder="Search markets..."
-					class="h-9 w-full rounded-md border border-input bg-background px-3 py-2 pl-20 text-sm text-foreground shadow-xs placeholder:text-muted-foreground placeholder:mx-8 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none dark:bg-input/30"
-				/>
-				<!-- <Search
-					class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-				/> -->
-				{#if searchTerm}
-					<button
-						type="button"
-						aria-label="Clear search"
-						onclick={() => (searchTerm = '')}
-						class="absolute top-1/2 right-2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-					>
-						<XIcon class="h-3.5 w-3.5" />
-					</button>
-				{/if}
-			</div>
-
-			<!-- Filters in remaining columns -->
-			<div class="col-span-1 sm:col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-3">
-				<div
-					class="flex items-center gap-6 text-xs font-normal text-muted-foreground md:text-sm"
+	<!-- Row 2: search + filters (single line from md up) -->
+	<div class="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:gap-3">
+		<div
+			class="relative h-10 w-full min-w-0 rounded-lg border border-border bg-background shadow-xs md:min-w-52 md:max-w-sm md:flex-1 dark:bg-input/30"
+		>
+			<label for="searchTerm" class="sr-only">Search markets</label>
+			<Search
+				class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+				aria-hidden="true"
+			/>
+			<input
+				id="searchTerm"
+				type="search"
+				bind:value={searchTerm}
+				placeholder="Search markets..."
+				class="h-full w-full rounded-lg border-0 bg-transparent py-0 pr-10 pl-10 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+			/>
+			{#if searchTerm}
+				<button
+					type="button"
+					aria-label="Clear search"
+					onclick={() => (searchTerm = '')}
+					class="absolute top-1/2 right-3 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 				>
-					<!-- Sort by -->
-					<div class="relative">
-						<select
-							bind:value={sortBy}
-							onchange={() => updateSortState(sortBy)}
-							class="appearance-none bg-transparent px-2 py-1 pr-6 text-xs text-muted-foreground hover:text-foreground focus:text-foreground focus:outline-none"
-						>
-							<option value="ending-soon">Ending soon</option>
-							<option value="newest">Newest</option>
-							<option value="tvl">TVL</option>
-							<option value="outcomes">Most outcomes</option>
-						</select>
-						<!-- <ChevronDown
-							class="pointer-events-none absolute top-1/2 right-0 h-3 w-3 -translate-y-1/2 text-muted-foreground"
-						/> -->
-					</div>
-
-					<!-- Status -->
-					<div class="relative">
-						<select
-							bind:value={localMarketStatus}
-							onchange={updateMarketStatus}
-							class="appearance-none bg-transparent px-2 py-1 pr-6 text-xs text-muted-foreground hover:text-foreground focus:text-foreground focus:outline-none"
-						>
-							<option value="all" selected={$marketStateStore === 'all'}>All Markets</option>
-							<option value="open" selected={$marketStateStore === 'open'}>Open Markets</option>
-							<option value="resolving" selected={$marketStateStore === 'resolving'}
-								>Resolving</option
-							>
-							<option value="disputed" selected={$marketStateStore === 'disputed'}>Disputed</option>
-							<option value="pending" selected={$marketStateStore === 'pending'}>Pending</option>
-							<option value="cooling" selected={$marketStateStore === 'cooling'}>Cooling</option>
-							<option value="resolved" selected={$marketStateStore === 'resolved'}>Closed</option>
-						</select>
-					</div>
-
-					<!-- Type -->
-					<div class="relative">
-						<select
-							bind:value={localMarketType}
-							onchange={() => updateMarketType(localMarketType)}
-							class="appearance-none bg-transparent px-2 py-1 pr-6 text-xs text-muted-foreground hover:text-foreground focus:text-foreground focus:outline-none"
-						>
-							{#each marketTypes as marketType (marketType.value)}
-								<option value={marketType.value}>{marketType.name}</option>
-							{/each}
-
-							<!-- <option value="all types">All types</option>
-							<option value="boolean">Yes/No</option>
-							<option value="multiple">Multiple Choice</option> -->
-						</select>
-					</div>
-
-					<!-- Vertical divider -->
-					<div class="h-5 w-px bg-border"></div>
-
-					<!-- Results counter -->
-					<div class="text-xs font-medium tabular-nums text-muted-foreground md:text-sm">
-						{filteredMarkets.length} of {markets.length} Markets
-					</div>
-				</div>
-			</div>
+					<XIcon class="size-3.5" />
+				</button>
+			{/if}
 		</div>
+
+		<div class="grid grid-cols-3 gap-2 md:contents">
+			<FilterSelect
+				id="filter-sort"
+				label="Sort by"
+				class="min-w-0 md:w-32"
+				bind:value={sortBy}
+				options={sortOptions}
+				onchange={() => updateSortState(sortBy)}
+			/>
+			<FilterSelect
+				id="filter-status"
+				label="Market status"
+				class="min-w-0 md:w-36"
+				bind:value={localMarketStatus}
+				options={statusOptions}
+				onchange={updateMarketStatus}
+			/>
+			<FilterSelect
+				id="filter-type"
+				label="Market type"
+				class="min-w-0 md:w-32"
+				bind:value={localMarketType}
+				options={marketTypes.map((t) => ({ value: t.value, label: t.name }))}
+				onchange={() => updateMarketType(localMarketType)}
+			/>
+		</div>
+
+		<p class="shrink-0 text-sm font-medium whitespace-nowrap tabular-nums text-muted-foreground">
+			{filteredMarkets.length} of {markets.length} Markets
+		</p>
 	</div>
 </div>
 
