@@ -79,30 +79,31 @@
 </svelte:head>
 
 {#if inited}
-	<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+	<div class="min-h-screen bg-background">
 		<PageContainer>
 			{#key componentKey}
 				{#if isLoading}
 					<div class="flex min-h-[400px] items-center justify-center">
 						<div class="text-center">
 							<div
-								class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-gray-500"
+								class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary"
 							></div>
-							<p class="text-lg text-gray-600 dark:text-gray-400">Loading token sale data...</p>
+							<p class="text-lg text-muted-foreground">Loading token sale data...</p>
 						</div>
 					</div>
 				{:else if error}
 					<!-- Error State -->
 					<div class="flex min-h-[400px] items-center justify-center">
 						<div class="max-w-md text-center">
-							<div class="mb-4 text-6xl text-red-500">⚠️</div>
-							<h2 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
+							<div class="mb-4 text-6xl text-destructive">⚠️</div>
+							<h2 class="mb-2 text-xl font-semibold text-foreground">
 								Failed to Load
 							</h2>
-							<p class="mb-4 text-gray-600 dark:text-gray-400">{error}</p>
+							<p class="mb-4 text-muted-foreground">{error}</p>
 							<button
+								type="button"
 								onclick={() => window.location.reload()}
-								class="rounded-lg bg-orange-500 px-4 py-2 text-white transition-colors hover:bg-orange-600"
+								class="h-11 rounded-lg bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:h-10"
 							>
 								Try Again
 							</button>
@@ -111,7 +112,7 @@
 				{:else}
 					{#key componentKey}<DaoTabs {currentPage} onReload={handleChange} />{/key}
 					<!-- Hero Section: 2-Column Layout -->
-					<div class="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
+					<div class="border-b border-border bg-background">
 						<div class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
 							{#if currentPage === 'dao-with-liquidity'}
 								<div class="grid gap-12 lg:grid-cols-5 lg:gap-16">

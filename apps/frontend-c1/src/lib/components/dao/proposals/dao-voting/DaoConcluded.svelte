@@ -21,15 +21,15 @@
 </svelte:head>
 
 <div>
-	<div class="my-8 flex w-full flex-col rounded-2xl bg-[#F4F3F0] text-black">
+	<div class="my-8 flex w-full flex-col rounded-2xl bg-muted text-foreground">
 		<div
 			class="relative overflow-hidden py-10 md:grid md:auto-cols-auto md:grid-flow-col md:gap-12 md:px-12"
 		>
 			<div class="">
 				<div class="mb-4">
-					<h2 class="mb-3 text-2xl text-black">Voting ended</h2>
+					<h2 class="mb-3 text-2xl text-foreground">Voting ended</h2>
 				</div>
-				<div class="relative max-w-xl space-y-3 rounded-lg bg-[#E6E4E2] px-6 py-6">
+				<div class="relative max-w-xl space-y-3 rounded-lg bg-card px-6 py-6 text-card-foreground">
 					<p>
 						Voting ended <strong
 							>{fmtNumber(burnHeight - proposal.proposalData.burnEndHeight)} blocks ago</strong
