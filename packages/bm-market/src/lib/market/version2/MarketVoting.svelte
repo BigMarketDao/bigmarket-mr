@@ -197,8 +197,8 @@
           {#if resolutionVote.concluded}
             <tr><td>Winner</td><td>{resolutionVote.winningCategory}</td></tr>
           {/if}
-          <tr><td>Votes For</td><td>{resolutionVote.votes[1]}</td></tr>
-          <tr><td>Votes Against</td><td>{resolutionVote.votes[0]}</td></tr>
+          <tr><td>Votes For</td><td class="tabular-nums">{resolutionVote.votes[1]}</td></tr>
+          <tr><td>Votes Against</td><td class="tabular-nums">{resolutionVote.votes[0]}</td></tr>
         </tbody>
       </table>
     {/if}
@@ -230,7 +230,7 @@
               errorMessage = undefined;
               castVote(index, votingPower);
             }}
-            class="mt-4 rounded bg-green-700 px-4 py-2 text-white hover:bg-green-600"
+            class="mt-4 rounded-md bg-success px-4 py-2 text-sm font-semibold text-success-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Vote: {category}
           </button>
@@ -240,7 +240,7 @@
       {#if myVotes?.length > 0}
         <p class="mt-2 text-sm">
           You voted {myVotes.length} time(s) with
-          <strong>{fmtMicroToStx(myVotesAmount, sip10Data.decimals)}</strong> governance tokens.
+          <strong class="tabular-nums">{fmtMicroToStx(myVotesAmount, sip10Data.decimals)}</strong> governance tokens.
         </p>
       {/if}
       {#if txId}
@@ -266,7 +266,7 @@
     {/if}
     <ParaContainer
       >Note: voting on proposals locks your $BIG governance tokens - <a
-        class="text-blue-800 underline dark:text-blue-300"
+        class="text-community underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         href={`/dispute/${market.marketId}/${market.marketType}`}>unlock them here</a
       > once voting has finished</ParaContainer
     >
