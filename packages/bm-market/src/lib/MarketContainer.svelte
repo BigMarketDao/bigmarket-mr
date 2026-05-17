@@ -17,6 +17,7 @@
   import MarketStakingContainer from './MarketStakingContainer.svelte';
   import MarketLiquidityContainer from './MarketLiquidityContainer.svelte';
   import MarketSummary from './MarketSummary.svelte';
+  import ResolutionBanner from './market/version2/do-resolve/ResolutionBanner.svelte';
 
 	const {
     market,
@@ -111,6 +112,8 @@
 
     <!-- Market Overview Cards -->
     <MarketSummary market={market} {marketStakes} />
+
+    <ResolutionBanner {market} />
 
     <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
       <aside class="space-y-4 lg:sticky lg:top-16 lg:col-start-2 lg:row-start-1 lg:self-start">

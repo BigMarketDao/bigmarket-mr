@@ -77,6 +77,9 @@
       }
     }
   });
+
+  const resolveBtnClass =
+    'w-full flex-1 rounded-md bg-destructive px-4 h-11 md:h-10 text-sm font-semibold text-destructive-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto';
 </script>
 
 <div>
@@ -93,7 +96,7 @@
       </div>
     {/if}
     {#if errorMessage}
-      <div class="flex w-full justify-start gap-x-4">
+      <div class="flex w-full justify-start gap-x-4 text-destructive">
         {errorMessage}
       </div>
     {/if}
@@ -105,7 +108,7 @@
               errorMessage = undefined;
               resolveMarket(category);
             }}
-            class="w-full flex-1 rounded bg-red-700 px-4 py-2 text-white transition-all duration-300 hover:bg-red-500 sm:w-auto"
+            class={resolveBtnClass}
           >
             RESOLVE <span class="uppercase">{category}</span>
           </button>
@@ -118,9 +121,9 @@
             errorMessage = undefined;
             resolveMarket(stacksHeight);
           }}
-          class="w-full flex-1 rounded bg-red-700 px-4 py-2 text-white transition-all duration-300 hover:bg-red-500 sm:w-auto"
+          class={resolveBtnClass}
         >
-          RESOLVE <span class="uppercase">{stacksHeight}</span>
+          RESOLVE <span class="uppercase tabular-nums">{stacksHeight}</span>
         </button>
       </div>
     {/if}
