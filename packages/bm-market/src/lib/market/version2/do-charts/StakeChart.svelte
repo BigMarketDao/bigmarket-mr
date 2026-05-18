@@ -61,11 +61,40 @@
     return (data as { min: number; max: number }[]).map((item, index) => `Range ${index}`);
   }
 
+  const SERIES_COLOR_VARS = [
+    '--color-outcome-1',
+    '--color-outcome-2',
+    '--color-outcome-3',
+    '--color-outcome-4',
+    '--color-warning',
+    '--color-info',
+    '--color-community',
+    '--color-info',
+    '--color-primary',
+    '--color-success',
+  ] as const;
+
+  function chartColor(cssVar: string): string {
+    if (typeof document === 'undefined') return '';
+    return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
+  }
+
+  function seriesColors(count: number): string[] {
+    return SERIES_COLOR_VARS.slice(0, Math.max(count, 1)).map((v) => chartColor(v));
+  }
+
+  function chartChromeColors() {
+    return {
+      border: chartColor('--color-border'),
+      mutedForeground: chartColor('--color-muted-foreground'),
+    };
+  }
+
   /** Snapshot when API returns [] — plot pool depth per outcome in native token units */
   function initializeSnapshotChart(): void {
+    const chrome = chartChromeColors();
     const categories = mapToMinMaxStrings(market.marketData.categories);
     const stakeTokens = market.marketData.stakeTokens ?? [];
-    const palette = ['#ea580c', '#22c55e', '#3b82f6', '#a855f7', '#eab308', '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#84cc16'];
     const series = categories.map((category, idx) => {
       const tokensMicro = stakeTokens[idx] ?? 0;
       const human = fmtMicroToStxNumber(tokensMicro, sip10Data.decimals);
@@ -75,7 +104,7 @@
     const maxNum = Math.max(...flat, 1e-12);
 
     options = {
-      colors: palette.slice(0, Math.max(series.length, 1)),
+      colors: seriesColors(series.length),
       theme: { mode: 'light' },
       legend: {
         show: !homepage && !simplified,
@@ -94,7 +123,7 @@
           useSeriesColors: true,
           padding: 10,
           vertical: 5,
-          colors: '#374151',
+          colors: chrome.border,
         },
         itemMargin: {
           horizontal: 10,
@@ -114,7 +143,7 @@
         zoom: { enabled: false },
         height: height || 280,
         background: 'transparent',
-        foreColor: '#374151',
+        foreColor: chrome.border,
         fontFamily: 'inherit',
       },
       title: {
@@ -122,7 +151,7 @@
         align: 'center',
         style: {
           fontSize: '11px',
-          color: '#374151',
+          color: chrome.border,
         },
       },
       markers: {
@@ -137,12 +166,12 @@
           text: '',
           style: {
             fontSize: '10px',
-            color: '#6b7280',
+            color: chrome.mutedForeground,
           },
         },
         labels: {
           show: !simplified,
-          style: { fontSize: '12px', colors: '#4b5563' },
+          style: { fontSize: '12px', colors: chrome.border },
         },
       },
       yaxis: {
@@ -150,7 +179,7 @@
           text: simplified ? '' : `Tokens (${sip10Data.symbol})`,
           style: {
             fontSize: '12px',
-            color: '#6b7280',
+            color: chrome.mutedForeground,
           },
         },
         min: 0,
@@ -158,12 +187,12 @@
         labels: {
           show: !simplified,
           formatter: (value: number) => value.toFixed(2),
-          style: { fontSize: '12px', colors: '#4b5563' },
+          style: { fontSize: '12px', colors: chrome.border },
         },
       },
       grid: {
         show: !simplified,
-        borderColor: '#e5e7eb',
+        borderColor: chrome.border,
         strokeDashArray: 0,
         position: 'back',
       },
@@ -188,6 +217,7 @@
     if (!sip10Data) return;
 
     if (marketStakes.length > 0) {
+      const chrome = chartChromeColors();
       //let categories = mapToMinMaxStrings(market.marketData.categories);
       //let categories = (market.marketData.categories as { min: number; max: number }[]).map((item) => `${item.min},${item.max}`);
       let categories = mapToMinMaxStrings(market.marketData.categories);
@@ -195,11 +225,8 @@
 
       const maxNum = Math.max(...Object.values(categoryData).flat(), 1e-12);
 
-      // Create series data for ApexCharts
-      const palette = ['#ea580c', '#22c55e', '#3b82f6', '#a855f7', '#eab308', '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#84cc16'];
-
       options = {
-        colors: palette.slice(0, categories.length),
+        colors: seriesColors(categories.length),
         theme: { mode: 'light' },
         legend: {
           show: !homepage && !simplified,
@@ -218,7 +245,7 @@
             useSeriesColors: true,
             padding: 10,
             vertical: 5,
-            colors: '#374151',
+            colors: chrome.border,
           },
           itemMargin: {
             horizontal: 10,
@@ -243,7 +270,7 @@
           zoom: { enabled: !simplified },
           height: height || 280,
           background: 'transparent',
-          foreColor: '#374151',
+          foreColor: chrome.border,
           fontFamily: 'inherit',
         },
         title: {
@@ -251,7 +278,7 @@
           align: 'center',
           style: {
             fontSize: '11px',
-            color: '#374151',
+            color: chrome.border,
           },
         },
         // tooltip: {
@@ -267,12 +294,12 @@
             text: '',
             style: {
               fontSize: '10px',
-              color: '#6b7280',
+              color: chrome.mutedForeground,
             },
           },
           labels: {
             show: !simplified,
-            style: { fontSize: '12px', colors: '#4b5563' },
+            style: { fontSize: '12px', colors: chrome.border },
           },
         },
         yaxis: {
@@ -280,7 +307,7 @@
             text: simplified ? '' : `Cumulative (${sip10Data.symbol})`,
             style: {
               fontSize: '12px',
-              color: '#6b7280',
+              color: chrome.mutedForeground,
             },
           },
           min: 0,
@@ -288,12 +315,12 @@
           labels: {
             show: !simplified,
             formatter: (value: number) => value.toFixed(2),
-            style: { fontSize: '12px', colors: '#4b5563' },
+            style: { fontSize: '12px', colors: chrome.border },
           },
         },
         grid: {
           show: !simplified,
-          borderColor: '#e5e7eb',
+          borderColor: chrome.border,
           strokeDashArray: 0,
           position: 'back',
         },

@@ -5,6 +5,7 @@
 	import CategoryButton from './markets/CategoryButton.svelte';
 	import { getMarketStatus, totalPoolSum } from '@bigmarket/bm-utilities';
 	import { Search, TrendingUp, XIcon } from 'lucide-svelte';
+	import FilterSelect from './markets/FilterSelect.svelte';
 	import MarketEntry from './markets/MarketEntry.svelte';
 	import { SearchState } from '../core/app/filtering';
 	import {
@@ -64,6 +65,23 @@
 		{ name: 'Yes/No', value: 'binary' },
 		{ name: 'Multiple Choice', value: 'multiple' },
 		{ name: 'Scalar', value: 'scalar' }
+	];
+
+	const sortOptions = [
+		{ value: 'ending-soon', label: 'Ending soon' },
+		{ value: 'newest', label: 'Newest' },
+		{ value: 'tvl', label: 'TVL' },
+		{ value: 'outcomes', label: 'Most outcomes' }
+	];
+
+	const statusOptions = [
+		{ value: 'all', label: 'All Markets' },
+		{ value: 'open', label: 'Open Markets' },
+		{ value: 'resolving', label: 'Resolving' },
+		{ value: 'disputed', label: 'Disputed' },
+		{ value: 'pending', label: 'Pending' },
+		{ value: 'cooling', label: 'Cooling' },
+		{ value: 'resolved', label: 'Closed' }
 	];
 
 	// Debounce search for smoother UX (timeout id must not be $state — effect reads it and would re-run forever)
@@ -134,18 +152,49 @@
 			.sort(comparator);
 	});
 
+	/** Single nav highlight: sort tab, scope tab, or one category — never more than one. */
+	const navSelection = $derived.by(() => {
+		const category = categoryS.current;
+		if (category && category !== 'all') {
+			return `category:${category.toLowerCase()}`;
+		}
+		const sort = sortStateS.current;
+		if (sort === 'newest') return 'sort:newest';
+		if (sort === 'tvl') return 'sort:tvl';
+		return 'scope:all';
+	});
+
 	const handleAll = () => {
 		marketStateStore.set('all');
 		marketTypeStore.set('all');
 		categoryStateStore.set('all');
 		searchStateStore.set('all');
+		sortStateStore.set('tvl');
+		componentKey++;
+	};
+
+	const selectTrending = () => {
+		sortStateStore.set('tvl');
+		categoryStateStore.set('all');
+		searchStateStore.set('all');
+		componentKey++;
+	};
+
+	const selectNew = () => {
+		sortStateStore.set('newest');
+		categoryStateStore.set('all');
+		searchStateStore.set('all');
+		componentKey++;
 	};
 
 	const handleChangeCategory = (label: string) => {
-		searchStateStore.set(label || 'all');
-		categoryStateStore.set(label || 'all');
+		const normalized = (label || 'all').trim();
+		categoryStateStore.set(normalized.toLowerCase() === 'all' ? 'all' : normalized);
+		searchStateStore.set('all');
+		sortStateStore.set('tvl');
 		componentKey++;
 	};
+
 	const updateMarketStatus = () => {
 		searchStateStore.set('all');
 		marketStateStore.set(localMarketStatus);
@@ -169,150 +218,133 @@
 		marketStateStore.set('open');
 		categoryStateStore.set('all');
 		marketTypeStore.set('all');
+		sortStateStore.set('tvl');
+		sortBy = 'tvl';
+		localMarketStatus = 'open';
 	});
 </script>
 
 <!-- Filter Section with improved spacing -->
 <div class="space-y-4">
 	<!-- Row 1: Primary category tabs -->
-	<div class="overflow-x-auto">
-		<nav class="flex items-center gap-2 gap-x-4 pb-2">
+	<div class="scrollbar-hide overflow-x-auto">
+		<nav class="flex items-center gap-4 pb-2" aria-label="Market filters">
 			{#key componentKey}
-				<CategoryButton label="tvl" active={$sortStateStore} onChangeCategory={updateSortState}>
-					{#snippet body()}
-						<span class="flex items-center gap-2">
-							<TrendingUp class="h-4 w-4" />
-							Trending
-						</span>
-					{/snippet}
-				</CategoryButton>
+				<div class="flex shrink-0 items-center gap-4">
+					<CategoryButton
+						label="tvl"
+						selected={navSelection === 'sort:tvl'}
+						onChangeCategory={selectTrending}
+					>
+						{#snippet body()}
+							<span class="flex items-center gap-1.5">
+								<TrendingUp class="h-4 w-4 shrink-0" aria-hidden="true" />
+								Trending
+							</span>
+						{/snippet}
+					</CategoryButton>
 
-				<CategoryButton label="newest" active={$sortStateStore} onChangeCategory={updateSortState}>
-					{#snippet body()}New{/snippet}
-				</CategoryButton>
+					<CategoryButton
+						label="newest"
+						selected={navSelection === 'sort:newest'}
+						onChangeCategory={selectNew}
+					>
+						{#snippet body()}New{/snippet}
+					</CategoryButton>
+				</div>
 
-				<CategoryButton label="all" active={$searchStateStore} onChangeCategory={handleAll}>
-					{#snippet body()}
-						{searchStateLabels[searchState]}
-					{/snippet}
-				</CategoryButton>
+				<div class="bg-border h-4 w-px shrink-0" aria-hidden="true"></div>
 
-				{#each marketCategories as category (category.name)}
-					{#if category.active}
-						<CategoryButton
-							label={category.name}
-							active={$categoryStateStore}
-							onChangeCategory={handleChangeCategory}
-						>
-							{#snippet body()}
-								{category.displayName}
-							{/snippet}
-						</CategoryButton>
-					{/if}
-				{/each}
+				<div class="flex min-w-0 items-center gap-4">
+					<CategoryButton
+						label="all"
+						selected={navSelection === 'scope:all'}
+						onChangeCategory={handleAll}
+					>
+						{#snippet body()}
+							{searchStateLabels[searchState]}
+						{/snippet}
+					</CategoryButton>
+
+					{#each marketCategories as category (category.name)}
+						{#if category.active}
+							<CategoryButton
+								label={category.name}
+								selected={navSelection === `category:${category.name.toLowerCase()}`}
+								onChangeCategory={handleChangeCategory}
+							>
+								{#snippet body()}
+									{category.displayName}
+								{/snippet}
+							</CategoryButton>
+						{/if}
+					{/each}
+				</div>
 			{/key}
 		</nav>
 	</div>
 	<!-- Divider -->
-	<div class="h-px w-full bg-gray-200 dark:bg-gray-800"></div>
+	<div class="bg-border h-px w-full"></div>
 
-	<!-- Row 2: Search + dropdowns + results counter -->
-	<div class="space-y-3">
-		<!-- Search and filters container with grid alignment -->
-		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
-			<!-- Search input that matches first card column width -->
-			<div class="relative col-span-1">
-				<!-- <label for="searchTerm" class="sr-only">Search</label> -->
-				<input
-					id="searchTerm"
-					type="text"
-					bind:value={searchTerm}
-					placeholder="Search markets..."
-					class="h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-2 pl-20 text-sm text-gray-900 placeholder-gray-400 placeholder:mx-8 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-gray-600"
-				/>
-				<!-- <Search
-					class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-				/> -->
-				{#if searchTerm}
-					<button
-						type="button"
-						aria-label="Clear search"
-						onclick={() => (searchTerm = '')}
-						class="absolute top-1/2 right-2 -translate-y-1/2 rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none dark:hover:bg-gray-800"
-					>
-						<XIcon class="h-3.5 w-3.5" />
-					</button>
-				{/if}
-			</div>
-
-			<!-- Filters in remaining columns -->
-			<div class="col-span-1 sm:col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-3">
-				<div
-					class="flex items-center gap-6 text-xs font-normal text-gray-500 md:text-sm dark:text-gray-400"
+	<!-- Row 2: search + filters (single line from md up) -->
+	<div class="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:gap-3">
+		<div
+			class="border-border bg-background dark:bg-input/30 relative h-10 w-full min-w-0 rounded-lg border shadow-xs md:max-w-sm md:min-w-52 md:flex-1"
+		>
+			<label for="searchTerm" class="sr-only">Search markets</label>
+			<Search
+				class="text-muted-foreground pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
+				aria-hidden="true"
+			/>
+			<input
+				id="searchTerm"
+				type="search"
+				bind:value={searchTerm}
+				placeholder="Search markets..."
+				class="text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring h-full w-full rounded-lg border-0 bg-transparent py-0 pr-10 pl-10 text-sm focus-visible:ring-2 focus-visible:outline-none"
+			/>
+			{#if searchTerm}
+				<button
+					type="button"
+					aria-label="Clear search"
+					onclick={() => (searchTerm = '')}
+					class="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 rounded-sm p-0.5 focus-visible:ring-2 focus-visible:outline-none"
 				>
-					<!-- Sort by -->
-					<div class="relative">
-						<select
-							bind:value={sortBy}
-							onchange={() => updateSortState(sortBy)}
-							class="appearance-none bg-transparent px-2 py-1 pr-6 text-xs text-gray-600 hover:text-gray-800 focus:text-gray-800 focus:outline-none dark:text-gray-400 dark:hover:text-gray-200 dark:focus:text-gray-200"
-						>
-							<option value="ending-soon">Ending soon</option>
-							<option value="newest">Newest</option>
-							<option value="tvl">TVL</option>
-							<option value="outcomes">Most outcomes</option>
-						</select>
-						<!-- <ChevronDown
-							class="pointer-events-none absolute top-1/2 right-0 h-3 w-3 -translate-y-1/2 text-gray-400"
-						/> -->
-					</div>
-
-					<!-- Status -->
-					<div class="relative">
-						<select
-							bind:value={localMarketStatus}
-							onchange={updateMarketStatus}
-							class="appearance-none bg-transparent px-2 py-1 pr-6 text-xs text-gray-600 hover:text-gray-800 focus:text-gray-800 focus:outline-none dark:text-gray-400 dark:hover:text-gray-200 dark:focus:text-gray-200"
-						>
-							<option value="all" selected={$marketStateStore === 'all'}>All Markets</option>
-							<option value="open" selected={$marketStateStore === 'open'}>Open Markets</option>
-							<option value="resolving" selected={$marketStateStore === 'resolving'}
-								>Resolving</option
-							>
-							<option value="disputed" selected={$marketStateStore === 'disputed'}>Disputed</option>
-							<option value="pending" selected={$marketStateStore === 'pending'}>Pending</option>
-							<option value="cooling" selected={$marketStateStore === 'cooling'}>Cooling</option>
-							<option value="resolved" selected={$marketStateStore === 'resolved'}>Closed</option>
-						</select>
-					</div>
-
-					<!-- Type -->
-					<div class="relative">
-						<select
-							bind:value={localMarketType}
-							onchange={() => updateMarketType(localMarketType)}
-							class="appearance-none bg-transparent px-2 py-1 pr-6 text-xs text-gray-600 hover:text-gray-800 focus:text-gray-800 focus:outline-none dark:text-gray-400 dark:hover:text-gray-200 dark:focus:text-gray-200"
-						>
-							{#each marketTypes as marketType (marketType.value)}
-								<option value={marketType.value}>{marketType.name}</option>
-							{/each}
-
-							<!-- <option value="all types">All types</option>
-							<option value="boolean">Yes/No</option>
-							<option value="multiple">Multiple Choice</option> -->
-						</select>
-					</div>
-
-					<!-- Vertical divider -->
-					<div class="h-5 w-px bg-gray-300 dark:bg-gray-600"></div>
-
-					<!-- Results counter -->
-					<div class="text-xs font-medium text-gray-600 md:text-sm dark:text-gray-400">
-						{filteredMarkets.length} of {markets.length} Markets
-					</div>
-				</div>
-			</div>
+					<XIcon class="size-3.5" />
+				</button>
+			{/if}
 		</div>
+
+		<div class="grid grid-cols-3 gap-2 md:contents">
+			<FilterSelect
+				id="filter-sort"
+				label="Sort by"
+				class="min-w-0 md:w-32"
+				bind:value={sortBy}
+				options={sortOptions}
+				onchange={() => updateSortState(sortBy)}
+			/>
+			<FilterSelect
+				id="filter-status"
+				label="Market status"
+				class="min-w-0 md:w-36"
+				bind:value={localMarketStatus}
+				options={statusOptions}
+				onchange={updateMarketStatus}
+			/>
+			<FilterSelect
+				id="filter-type"
+				label="Market type"
+				class="min-w-0 md:w-32"
+				bind:value={localMarketType}
+				options={marketTypes.map((t) => ({ value: t.value, label: t.name }))}
+				onchange={() => updateMarketType(localMarketType)}
+			/>
+		</div>
+
+		<p class="text-muted-foreground shrink-0 text-sm font-medium whitespace-nowrap tabular-nums">
+			{filteredMarkets.length} of {markets.length} Markets
+		</p>
 	</div>
 </div>
 
@@ -335,12 +367,10 @@
 			{/each}
 		</div>
 	{:else}
-		<div
-			class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-8 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800"
-		>
-			<div class="mx-auto max-w-sm">
-				<h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">No markets found</h3>
-				<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+		<div class="border-border bg-muted mt-4 w-full rounded-xl border p-8 text-center shadow-sm">
+			<div class="mx-auto">
+				<h3 class="text-foreground text-lg font-medium">No markets found</h3>
+				<p class="text-muted-foreground mt-2 text-sm">
 					Try adjusting your filters or search terms to find more markets.
 				</p>
 				<button
@@ -350,8 +380,10 @@
 						marketTypeStore.set('all');
 						searchStateStore.set('all');
 						searchTypeStore.set('all');
+						categoryStateStore.set('all');
+						sortStateStore.set('tvl');
 					}}
-					class="mt-4 inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:ring-2 focus-visible:ring-orange-600 focus-visible:ring-offset-2 focus-visible:outline-none"
+					class="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring focus-visible:ring-offset-background mt-4 inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 				>
 					Clear all filters
 				</button>

@@ -4,6 +4,8 @@
   import { Thread } from '@bigmarket/sip18-forum';
   import { onMount } from 'svelte';
   import { appConfigStore, isLoggedIn, requireAppConfig } from '@bigmarket/bm-common';
+  import { truncate } from '@bigmarket/bm-utilities';
+
   const appConfig = $derived(requireAppConfig($appConfigStore));
 
   const { market, thread, userStake } = $props<{
@@ -12,72 +14,98 @@
 		userStake: UserStake | undefined;
 	}>();
 
-  // Address formatting function (matching screenshot style)
-  function formatWalletAddress(address: string): string {
-    if (!address || address === 'Unknown') return '--';
-    if (address.length < 8) return address;
-    return `${address.slice(0, 2)}..${address.slice(-2).toUpperCase()}`;
+  const STACKS_ADDRESS_RE = /(ST|SP)[A-Z0-9]{8,}/g;
+
+  function truncateAddressesIn(root: ParentNode) {
+    root.querySelectorAll('.thread-wrapper h3').forEach((h3) => {
+      if (!(h3 instanceof HTMLElement)) return;
+
+      let fullAddress: string | undefined;
+      const walker = document.createTreeWalker(h3, NodeFilter.SHOW_TEXT);
+      let node: Node | null;
+
+      while ((node = walker.nextNode())) {
+        const text = node.textContent ?? '';
+        const match = text.match(/(ST|SP)[A-Z0-9]{8,}/);
+        if (!match) continue;
+
+        fullAddress ??= match[0];
+        node.textContent = text.replace(STACKS_ADDRESS_RE, (addr) => truncate(addr, 4));
+      }
+
+      if (fullAddress) {
+        h3.title = fullAddress;
+      }
+    });
   }
 
-  // Clean address formatting - NO BADGES as requested
-  function formatAllAddresses() {
-    if (typeof window !== 'undefined') {
-      setTimeout(() => {
-        const authors = document.querySelectorAll('.thread-wrapper h3');
-        authors.forEach((el, index) => {
-          const text = el.textContent || '';
-          if (text.startsWith('ST') && text.length > 8) {
-            // Format the address
-            const formattedAddress = formatWalletAddress(text);
+  function enhanceThreadLayout(wrapper: HTMLElement) {
+    truncateAddressesIn(wrapper);
 
-            // Create timestamp
-            const timestamps = ['now', '12h ago', '1h ago', '3h ago'];
-            const timestamp = timestamps[index % timestamps.length] || '12h ago';
+    const threadRoot = wrapper.querySelector(':scope > div');
+    if (!threadRoot) return;
 
-            // Simple format: ADDRESS, TIME_AGO
-            el.innerHTML = `${formattedAddress}, ${timestamp}`;
-            el.className = 'text-blue-400 dark:text-blue-400 font-mono text-sm mb-2';
-          }
-        });
-      }, 100);
+    const rootCard = threadRoot.querySelector(':scope > div');
+    if (!rootCard || !(rootCard instanceof HTMLElement)) return;
+
+    rootCard.classList.add('thread-root-message');
+
+    if (!rootCard.querySelector('.thread-root-badge')) {
+      const badge = document.createElement('span');
+      badge.className = 'thread-root-badge';
+      badge.textContent = 'Original post';
+      rootCard.insertBefore(badge, rootCard.firstChild);
     }
   }
 
-  // Monitor for changes and format addresses
+  onMount(() => {
+    if (!thread) return;
 
-  // Also format addresses after updates
-  onMount(() => { 
-    if (thread) {formatAllAddresses();}
+    const runEnhancement = () => {
+      const wrapper = document.querySelector('.thread-wrapper');
+      if (wrapper instanceof HTMLElement) {
+        enhanceThreadLayout(wrapper);
+      }
+    };
+
+    runEnhancement();
+    const observer = new MutationObserver(() => runEnhancement());
+    const wrapper = document.querySelector('.thread-wrapper');
+    if (wrapper) {
+      observer.observe(wrapper, { childList: true, subtree: true, characterData: true });
+    }
+
+    return () => observer.disconnect();
   });
 
-  // Clean forum styling - compact and well-aligned
   let threadClasses = {
     root: 'space-y-0',
     messageCard: {
-      container: 'border-b border-gray-200 dark:border-gray-700 pb-3 mb-3 last:border-b-0',
+      container: 'border-b border-border pb-4 mb-4 last:border-b-0 last:mb-0',
       title: 'hidden',
-      author: 'text-sm text-blue-400 dark:text-blue-400 font-mono mb-2',
-      iconSuccess: 'hidden',
-      iconError: 'hidden',
-      body: 'text-sm text-gray-900 dark:text-white leading-relaxed',
+      author:
+        'flex items-center gap-1.5 text-xs font-medium text-info font-mono mb-2 tabular-nums',
+      iconSuccess: 'inline-block h-3.5 w-3.5 shrink-0 text-info',
+      iconError: 'inline-block h-3.5 w-3.5 shrink-0 text-muted-foreground',
+      body: 'text-sm text-foreground leading-relaxed prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2',
     },
     newMessageCard: {
-      container: 'mb-4 space-y-3',
+      container: 'mb-4 space-y-3 rounded-lg border border-border bg-muted/50 p-3',
       titleInput: 'hidden',
       contentLabel: 'hidden',
       contentEditor:
-        'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 resize-none min-h-[70px] text-sm',
+        'w-full p-3 border border-input rounded-lg bg-card text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:border-ring resize-none min-h-[70px] text-sm',
       contentPreview:
-        'prose prose-gray dark:prose-invert max-w-none bg-gray-50 dark:bg-gray-800 p-3 rounded text-sm',
-      error: 'text-sm text-red-600 dark:text-red-400 mt-1',
+        'prose prose-sm max-w-none bg-card border border-border p-3 rounded-lg text-sm text-foreground',
+      error: 'text-sm text-destructive mt-1',
       buttonCancel:
-        'px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors border border-gray-300 dark:border-gray-600 rounded-md',
+        'px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border border-border rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
       buttonPost:
-        'px-4 py-1.5 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-colors focus:ring-2 focus:ring-orange-500/20 focus:outline-none disabled:opacity-50',
+        'px-4 py-1.5 h-11 md:h-10 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50',
       replyLink:
-        'text-xs text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors',
+        'text-xs font-medium text-info hover:text-info/80 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-sm',
       previewButton:
-        'text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors',
+        'text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-sm',
       replyContainer: 'flex justify-end items-center gap-2 mt-2',
     },
   };
@@ -85,23 +113,28 @@
 
 <div
   id="comments"
-  class="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+  class="rounded-xl border border-border bg-card shadow-sm"
 >
-  <div class="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-    <h2 class="text-center text-lg font-medium text-gray-900 dark:text-white">Discussion</h2>
+  <div class="border-b border-border px-4 py-3">
+    <h2 class="text-center text-lg font-medium text-foreground">Discussion</h2>
   </div>
 
-  <div class="bg-white p-4 dark:bg-gray-900">
+  <div class="p-4 sm:p-5">
     {#if thread}
       <div class="thread-wrapper">
-        <!-- threadId={thread.forumContent.messageId} -->
-        <Thread forumApi={appConfig.VITE_FORUM_API} config={appConfig} threadId={thread.forumContent.messageId} threadIn={thread} classes={threadClasses} isConnected={isLoggedIn()} />
+        <Thread
+          forumApi={appConfig.VITE_FORUM_API}
+          config={appConfig}
+          threadId={thread.forumContent.messageId}
+          threadIn={thread}
+          classes={threadClasses}
+          isConnected={isLoggedIn()}
+        />
       </div>
-
     {:else}
       <div class="py-8 text-center">
-        <div class="mb-3 text-gray-400 dark:text-gray-500">
-          <svg class="mx-auto h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="mb-3 text-muted-foreground">
+          <svg class="mx-auto h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -110,33 +143,78 @@
             />
           </svg>
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+        <p class="text-sm text-muted-foreground">
           No discussion available for this market.
         </p>
-        <p class="mt-1 text-xs text-gray-500">Be the first to share your thoughts!</p>
+        <p class="mt-1 text-xs text-muted-foreground">Be the first to share your thoughts!</p>
       </div>
     {/if}
   </div>
 </div>
 
 <style>
-  /* EXACTLY AS REQUESTED - Clean forum styling */
   :global(.thread-wrapper) {
     font-family: inherit;
-    color: rgb(17, 24, 39);
+    color: var(--color-foreground);
   }
 
-  :global(.dark .thread-wrapper) {
-    color: white;
+  /* Original market post — distinct from replies */
+  :global(.thread-wrapper .thread-root-message) {
+    background: color-mix(in oklab, var(--color-primary) 7%, var(--color-muted));
+    border: 1px solid color-mix(in oklab, var(--color-primary) 22%, var(--color-border));
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: none !important;
   }
 
-  /* CRITICAL: Input box FIRST - move to top */
-  :global(.thread-wrapper > div:first-child) {
-    order: -1 !important;
-    margin-bottom: 1rem !important;
+  :global(.thread-wrapper .thread-root-badge) {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 0.625rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    background: color-mix(in oklab, var(--color-primary) 14%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-primary) 25%, transparent);
   }
 
-  /* Clean root container */
+  /* Replies block */
+  :global(.thread-wrapper ul) {
+    margin-left: 0 !important;
+    margin-top: 0.25rem !important;
+    padding-left: 0.875rem !important;
+    border-left: 2px solid var(--color-border) !important;
+    list-style-type: none !important;
+  }
+
+  :global(.thread-wrapper ul::before) {
+    content: 'Replies';
+    display: block;
+    margin-bottom: 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+  }
+
+  :global(.thread-wrapper ul > div) {
+    padding-bottom: 0.875rem;
+    margin-bottom: 0.875rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  :global(.thread-wrapper ul > div:last-child) {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
   :global(.thread-wrapper > div) {
     margin-left: 0 !important;
     padding-left: 0 !important;
@@ -145,16 +223,6 @@
     padding: 0 !important;
   }
 
-  /* NO VERTICAL LINES - clean indentation only */
-  :global(.thread-wrapper ul) {
-    margin-left: 2rem !important;
-    border-left: none !important; /* NO VERTICAL LINES */
-    padding-left: 0 !important;
-    list-style-type: none !important;
-    margin-top: 0.5rem !important;
-  }
-
-  /* Hide title inputs */
   :global(.thread-wrapper input[placeholder*='title']),
   :global(.thread-wrapper input[placeholder*='Title']) {
     display: none !important;
@@ -165,7 +233,6 @@
     display: none !important;
   }
 
-  /* PROPER BUTTON STYLING - as requested */
   :global(.thread-wrapper button) {
     cursor: pointer !important;
     transition: all 0.2s ease !important;
@@ -175,43 +242,68 @@
     border-radius: 0.5rem !important;
   }
 
-  /* COMMENT button (main) - orange */
-  :global(.thread-wrapper button[type='submit']) {
-    background-color: rgb(249, 115, 22) !important; /* orange-500 */
-    color: white !important;
+  :global(.thread-wrapper button[type='submit']),
+  :global(.thread-wrapper button:not([type='submit']):not(.cancel-btn):not(.preview-btn):not(.btn-ghost):not(.btn)) {
+    background-color: var(--color-primary) !important;
+    color: var(--color-primary-foreground) !important;
     border: none !important;
+    min-height: 2.75rem !important;
   }
 
-  :global(.thread-wrapper button[type='submit']:hover) {
-    background-color: rgb(234, 88, 12) !important; /* orange-600 */
+  :global(.thread-wrapper button[type='submit']:hover),
+  :global(.thread-wrapper button:not([type='submit']):not(.cancel-btn):not(.preview-btn):not(.btn-ghost):not(.btn):hover) {
+    background-color: color-mix(in oklab, var(--color-primary) 90%, transparent) !important;
   }
 
-  /* POST REPLY button - orange */
-  :global(.thread-wrapper button:not([type='submit']):not(.cancel-btn):not(.preview-btn)) {
-    background-color: rgb(249, 115, 22) !important; /* orange-500 */
-    color: white !important;
-    border: none !important;
+  :global(.thread-wrapper button[type='submit']:focus-visible),
+  :global(.thread-wrapper button:not([type='submit']):not(.cancel-btn):not(.preview-btn):not(.btn-ghost):not(.btn):focus-visible) {
+    outline: none !important;
+    box-shadow: 0 0 0 2px var(--color-ring) !important;
   }
 
-  :global(.thread-wrapper button:not([type='submit']):not(.cancel-btn):not(.preview-btn):hover) {
-    background-color: rgb(234, 88, 12) !important; /* orange-600 */
+  @media (min-width: 768px) {
+    :global(.thread-wrapper button[type='submit']),
+    :global(.thread-wrapper button:not([type='submit']):not(.cancel-btn):not(.preview-btn):not(.btn-ghost):not(.btn)) {
+      min-height: 2.5rem !important;
+    }
   }
 
-  /* CANCEL button - gray with border */
   :global(.thread-wrapper .cancel-btn),
   :global(.thread-wrapper button[class*='cancel']) {
     background-color: transparent !important;
-    color: rgb(107, 114, 128) !important; /* gray-500 */
-    border: 1px solid rgb(209, 213, 219) !important; /* gray-300 */
+    color: var(--color-muted-foreground) !important;
+    border: 1px solid var(--color-border) !important;
+    min-height: auto !important;
   }
 
-  :global(.dark .thread-wrapper .cancel-btn),
-  :global(.dark .thread-wrapper button[class*='cancel']) {
-    color: rgb(156, 163, 175) !important; /* gray-400 */
-    border-color: rgb(75, 85, 99) !important; /* gray-600 */
+  :global(.thread-wrapper .cancel-btn:hover),
+  :global(.thread-wrapper button[class*='cancel']:hover) {
+    color: var(--color-foreground) !important;
   }
 
-  /* Form actions container - more compact */
+  :global(.thread-wrapper .cancel-btn:focus-visible),
+  :global(.thread-wrapper button[class*='cancel']:focus-visible) {
+    outline: none !important;
+    box-shadow: 0 0 0 2px var(--color-ring) !important;
+  }
+
+  :global(.thread-wrapper .btn-ghost),
+  :global(.thread-wrapper button.btn-ghost) {
+    background: transparent !important;
+    color: var(--color-muted-foreground) !important;
+    border: none !important;
+    min-height: auto !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+  }
+
+  :global(.thread-wrapper .btn-ghost:hover),
+  :global(.thread-wrapper button.btn-ghost:hover) {
+    color: var(--color-foreground) !important;
+    background: var(--color-muted) !important;
+  }
+
   :global(.thread-wrapper .form-actions),
   :global(.thread-wrapper div[class*='flex justify-end']) {
     display: flex !important;
@@ -222,111 +314,95 @@
     padding: 0 !important;
   }
 
-  /* ADDRESS, TIME_AGO format - exactly as requested */
   :global(.thread-wrapper h3) {
-    font-family:
-      ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace !important;
-    font-size: 14px !important;
-    font-weight: 400 !important;
-    color: rgb(96, 165, 250) !important; /* blue-400 */
-    margin-bottom: 0.5rem !important;
-    display: block !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    font-family: var(--font-mono) !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    font-variant-numeric: tabular-nums !important;
+    color: var(--color-info) !important;
+    margin-bottom: 0.375rem !important;
   }
 
-  /* Text content */
   :global(.thread-wrapper .prose) {
     max-width: none !important;
     font-size: 0.875rem !important;
-    color: rgb(17, 24, 39) !important;
-    line-height: 1.5 !important;
+    color: var(--color-foreground) !important;
+    line-height: 1.55 !important;
     margin-top: 0 !important;
-    margin-bottom: 1rem !important;
-  }
-
-  :global(.dark .thread-wrapper .prose) {
-    color: white !important;
-  }
-
-  /* THIN LINE SEPARATORS - between main comments */
-  :global(.thread-wrapper > div > div) {
-    border-bottom: 1px solid rgb(229, 231, 235) !important;
-    padding-bottom: 0.75rem !important;
     margin-bottom: 0.75rem !important;
   }
 
-  :global(.dark .thread-wrapper > div > div) {
-    border-bottom-color: rgb(75, 85, 99) !important;
+  :global(.thread-wrapper .thread-root-message .prose) {
+    font-size: 0.9375rem !important;
   }
 
-  /* Last comment no border */
-  :global(.thread-wrapper > div > div:last-child) {
-    border-bottom: none !important;
-  }
-
-  /* Textarea styling - more compact */
   :global(.thread-wrapper textarea) {
     width: 100% !important;
     padding: 0.75rem !important;
-    border: 1px solid rgb(209, 213, 219) !important;
+    border: 1px solid var(--color-input) !important;
     border-radius: 0.5rem !important;
-    background-color: white !important;
-    color: rgb(17, 24, 39) !important;
+    background-color: var(--color-card) !important;
+    color: var(--color-foreground) !important;
     font-size: 0.875rem !important;
     resize: vertical !important;
     min-height: 70px !important;
     line-height: 1.4 !important;
   }
 
-  :global(.dark .thread-wrapper textarea) {
-    background-color: rgb(31, 41, 55) !important; /* gray-800 */
-    border-color: rgb(75, 85, 99) !important; /* gray-600 */
-    color: white !important;
+  :global(.thread-wrapper textarea::placeholder) {
+    color: var(--color-muted-foreground) !important;
   }
 
-  :global(.thread-wrapper textarea:focus) {
+  :global(.thread-wrapper textarea:focus-visible) {
     outline: none !important;
-    border-color: rgb(249, 115, 22) !important; /* orange-500 */
-    box-shadow: 0 0 0 3px rgb(249, 115, 22, 0.1) !important;
+    border-color: var(--color-ring) !important;
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-ring) 25%, transparent) !important;
   }
 
-  /* Reply links */
   :global(.thread-wrapper .my-5),
   :global(.thread-wrapper div[class*='my-5']) {
-    margin-top: 0.5rem !important;
-    margin-bottom: 0.5rem !important;
+    margin-top: 0.375rem !important;
+    margin-bottom: 0 !important;
     display: flex !important;
     justify-content: flex-end !important;
     width: 100% !important;
   }
 
   :global(.thread-wrapper a) {
-    color: rgb(96, 165, 250) !important;
+    color: var(--color-info) !important;
     text-decoration: none !important;
     font-size: 0.75rem !important;
   }
 
   :global(.thread-wrapper a:hover) {
-    color: rgb(147, 197, 253) !important;
+    color: color-mix(in oklab, var(--color-info) 80%, transparent) !important;
     text-decoration: underline !important;
   }
 
-  /* Force proper sizing */
+  :global(.thread-wrapper a:focus-visible) {
+    outline: none !important;
+    box-shadow: 0 0 0 2px var(--color-ring) !important;
+    border-radius: 0.125rem !important;
+  }
+
   :global(.thread-wrapper *) {
     box-sizing: border-box !important;
   }
 
-  /* Mobile responsiveness */
   @media (max-width: 640px) {
-    :global(.thread-wrapper) {
-      font-size: 0.875rem;
+    :global(.thread-wrapper ul) {
+      padding-left: 0.625rem !important;
     }
 
-    :global(.thread-wrapper ul) {
-      margin-left: 1rem !important;
+    :global(.thread-wrapper .thread-root-message) {
+      padding: 0.875rem 1rem;
     }
 
     :global(.thread-wrapper h3) {
-      font-size: 12px !important;
+      font-size: 0.75rem !important;
     }
 
     :global(.thread-wrapper button) {

@@ -1,0 +1,48 @@
+--accent-foreground:#111827
+--accent-foreground:#f9fafb
+--accent:#1f2937
+--accent:#f3f4f6
+--background:#030712
+--border:#1f2937
+--border:#e5e7eb
+--card-foreground:#030712
+--card-foreground:#f9fafb
+--card:#030712
+--card:#fff
+--destructive-foreground:#f9fafb
+--destructive:#7f1d1d
+--destructive:#ef4444
+--foreground:#f9fafb
+--input:#1f2937
+--input:#e5e7eb
+--muted-foreground:#6b7280
+--muted-foreground:#9ca3af
+--muted:#1f2937
+--muted:#f3f4f6
+--popover-foreground:#030712
+--popover-foreground:#f9fafb
+--popover:#030712
+--popover:#fff
+--primary-foreground:#111827
+--primary-foreground:#f9fafb
+--primary:#111827
+--primary:#f9fafb
+--ring:#030712
+--ring:#d1d5db
+--secondary-foreground:#111827
+--secondary-foreground:#f9fafb
+--secondary:#1f2937
+--secondary:#f3f4f6
+--text-base--line-height:calc(1.5 / 1)
+--text-base:1rem
+--text-disabled:#9f9fa9
+--text-lg--line-height:calc(1.75 / 1.125)
+--text-lg:1.125rem
+--text-sm--line-height:calc(1.25 / .875)
+--text-sm:.875rem
+--text-xl--line-height:calc(1.75 / 1.25)
+--text-xl:1.25rem
+--text-xs--line-height:calc(1 / .75)
+--text-xs:.75rem
+--text:#18181b
+--text:#e5e5e5

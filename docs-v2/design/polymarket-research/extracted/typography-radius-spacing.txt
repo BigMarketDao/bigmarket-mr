@@ -1,0 +1,58 @@
+--blur-lg:16px
+--blur-md:12px
+--blur-sm:8px
+--container-3xl:48rem
+--container-6xl:72rem
+--container-lg:32rem
+--container-md:28rem
+--container-sm:24rem
+--container-xs:20rem
+--font-inter:"Inter", sans-serif
+--font-inter:"inter", "inter Fallback"
+--font-mono:"Geist Mono", monospace
+--font-sans:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"
+--font-sauce:"Open Sauce One", sans-serif
+--font-weight-black:900
+--font-weight-bold:700
+--font-weight-extrabold:800
+--font-weight-light:300
+--font-weight-medium:500
+--font-weight-normal:400
+--font-weight-semibold:600
+--radius-2xl:1rem
+--radius-3xl:1.5rem
+--radius-lg:var(--radius)
+--radius-md:calc(var(--radius) - 2px)
+--radius-sm:calc(var(--radius) - 4px)
+--radius-xl:calc(var(--radius) + 4px)
+--radius-xs:calc(var(--radius) - 6px)
+--radius:.7rem
+--spacing:.25rem
+--text-2xl--line-height:calc(2 / 1.5)
+--text-2xl:1.5rem
+--text-3xl--line-height:calc(2.25 / 1.875)
+--text-3xl:1.875rem
+--text-4xl--line-height:calc(2.5 / 2.25)
+--text-4xl:2.25rem
+--text-5xl--line-height:1
+--text-5xl:3rem
+--text-6xl--line-height:1
+--text-6xl:3.75rem
+--text-base--line-height:calc(1.5 / 1)
+--text-base:1rem
+--text-disabled:#9f9fa9
+--text-lg--line-height:calc(1.75 / 1.125)
+--text-lg:1.125rem
+--text-sm--line-height:calc(1.25 / .875)
+--text-sm:.875rem
+--text-xl--line-height:calc(1.75 / 1.25)
+--text-xl:1.25rem
+--text-xs--line-height:calc(1 / .75)
+--text-xs:.75rem
+--text:#18181b
+--text:#e5e5e5
+--tracking-normal:0em
+--tracking-tight:-.025em
+--tracking-wide:.025em
+--tracking-wider:.05em
+--tracking-widest:.1em
