@@ -67,20 +67,34 @@
 	}
 </script>
 
-<div class="mx-auto px-4 text-white shadow-md">
-	<h2 class="mb-4 text-xl font-bold">Vote Gating Tokens</h2>
+<div class="mx-auto px-4 text-foreground shadow-md">
+	<h2 class="mb-4 text-xl font-bold text-foreground">Vote Gating Tokens</h2>
 
 	<!-- Textarea for manual entry -->
 	<div class="mb-6">
-		<label for="manual-entry" class="mb-2 block text-sm font-medium"> Enter Contract IDs (one per line): </label>
-		<textarea id="manual-entry" bind:value={manualEntry} rows="5" class="w-full rounded-md border-gray-300 p-5 text-black shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
-		<button onclick={addFromTextarea} class="mt-2 rounded bg-blue-500 px-4 py-2 text-sm hover:bg-blue-600 focus:outline-none"> Add Contracts </button>
+		<label for="manual-entry" class="mb-2 block text-sm font-medium text-foreground"> Enter Contract IDs (one per line): </label>
+		<textarea
+			id="manual-entry"
+			bind:value={manualEntry}
+			rows="5"
+			class="w-full rounded-md border border-border bg-background p-5 text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+		></textarea>
+		<button
+			onclick={addFromTextarea}
+			class="mt-2 rounded bg-info px-4 py-2 text-sm text-info-foreground hover:bg-info/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+		>
+			Add Contracts
+		</button>
 	</div>
 
 	<!-- Dropdown for popular contracts -->
 	<div class="mb-6">
-		<label for="popular-contracts" class="mb-2 block text-sm font-medium"> Add a Popular Contract: </label>
-		<select id="popular-contracts" onchange={(e) => addContract(e)} class="h-10 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+		<label for="popular-contracts" class="mb-2 block text-sm font-medium text-foreground"> Add a Popular Contract: </label>
+		<select
+			id="popular-contracts"
+			onchange={(e) => addContract(e)}
+			class="h-10 w-full rounded-md border border-border bg-background text-foreground shadow-sm focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+		>
 			<option value="" disabled selected>-- Select a Contract --</option>
 			{#each popularContracts as contract}
 				<option value={contract.id}>{contract.name}</option>
@@ -89,15 +103,21 @@
 	</div>
 
 	<!-- Display added contracts -->
-	<div class=" text-white">
-		<h3 class="mb-2 text-lg font-semibold">
+	<div class="text-foreground">
+		<h3 class="mb-2 text-lg font-semibold text-foreground">
 			Selected Contracts ({contractIds.length}/{maxContracts}):
 		</h3>
 		<ul class="list-inside list-disc">
 			{#each contractIds as id}
 				<li class="mb-2 flex items-center justify-between">
-					<span class="text-sm">{id}</span>
-					<button onclick={() => removeContract(id)} class="text-lg font-bold text-red-500 hover:text-red-700 focus:outline-none"> &times; </button>
+					<span class="text-sm text-foreground">{id}</span>
+					<button
+						onclick={() => removeContract(id)}
+						class="text-lg font-bold text-destructive hover:text-destructive/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+						aria-label="Remove contract"
+					>
+						&times;
+					</button>
 				</li>
 			{/each}
 		</ul>

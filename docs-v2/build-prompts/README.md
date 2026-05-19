@@ -12,7 +12,7 @@ Prompts are organized **one folder per page/section**, run in strict order. Each
 | [`03-market-detail/`](./03-market-detail/) | `/market/[id]/[type]` | 20 components | Ready (full sweep) / Pending (per-component split) |
 | [`04-dao/`](./04-dao/) | `/dao`, `/dao/proposals/[slug]` | 14 components | **Pending** |
 | [`05-reputation/`](./05-reputation/) | `/reputation`, `/reputation/leader-board` | 4 components | **Pending** |
-| [`06-market-creation/`](./06-market-creation/) | `/market-mgt` | 11 components | **Pending** |
+| [`06-market-creation/`](./06-market-creation/) | `/market-mgt` | 11 components | **Done** (M-10 N/A — bm-ui only) |
 | [`07-my-markets/`](./07-my-markets/) | `/my-markets/[address]` | 2 components | **Pending** |
 
 **Total prompts needed:** ~60–80 (component-by-component) or ~10 (full sweeps). See below.

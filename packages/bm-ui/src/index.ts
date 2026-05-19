@@ -16,5 +16,11 @@ export { default as Popover } from "./lib/components/ui/popover/popover.svelte";
 export { default as Select } from "./lib/components/ui/select/select.svelte";
 export { default as Switch } from "./lib/components/ui/switch/switch.svelte";
 export { default as Tabs } from "./lib/components/ui/tabs/tabs.svelte";
+export {
+	Tabs as TabsRoot,
+	TabsContent,
+	TabsList,
+	TabsTrigger
+} from "./lib/components/ui/tabs/index.js";
 export { default as Tooltip } from "./lib/components/ui/tooltip/tooltip.svelte";
 export * from "./lib/components/custom/index.js";

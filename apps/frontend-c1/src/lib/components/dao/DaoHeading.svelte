@@ -13,9 +13,9 @@
 </script>
 
 <div class="">
-  <h1 class="text-5xl leading-tight font-bold text-gray-900 lg:text-6xl dark:text-white">
+  <h1 class="text-5xl leading-tight font-bold text-foreground lg:text-6xl">
     {headingPart1}
-    <span class="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
+    <span class="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
       {headingPart2}
     </span>
   </h1>

@@ -223,7 +223,7 @@
 	<meta name="description" content="Create prediction markets at bigmarket.ai" />
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+<div class="min-h-screen bg-background">
 	{#if canCreate}
 		<PageContainer>
 			<!-- Main Content: Mobile-first responsive grid -->
@@ -232,16 +232,16 @@
 					<!-- Left Side: Create Market Form (3 columns width - 3/5) -->
 					<div class="order-1 lg:order-1 lg:col-span-3">
 						<div
-							class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+							class="rounded-xl border border-border bg-card shadow-sm"
 						>
-							<div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-								<h2 class="text-xl font-semibold text-gray-900 dark:text-white">Create Market</h2>
-								<p class="mt-1 mb-5 text-sm text-gray-500 dark:text-gray-400">
+							<div class="border-b border-border px-6 py-4">
+								<h2 class="text-xl font-semibold text-foreground">Create Market</h2>
+								<p class="mt-1 mb-5 text-sm text-muted-foreground">
 									Fill out the form below to create your prediction market. You'll need to supply
 									some liquidity to get the market rolling - ensure you have enough balance in the
 									markets token to cover this!
 								</p>
-								<p class="mt-1 flex justify-between text-sm text-gray-500 dark:text-gray-400">
+								<p class="mt-1 flex justify-between text-sm text-muted-foreground">
 									<span>Bitcoin Height: {fmtNumber($chainStore.stacks.burn_block_height)}</span>
 									<span
 										>Bitcoin Price: {$exchangeRatesStore[0]?.currency || ''}
@@ -286,16 +286,16 @@
 						<!-- Title and Subtitle moved here -->
 						<div class="text-center lg:text-left">
 							<h1
-								class="mb-3 text-3xl leading-tight font-bold text-gray-900 lg:text-4xl dark:text-white"
+								class="mb-3 text-3xl leading-tight font-bold text-foreground lg:text-4xl"
 							>
 								Create Your Own
 								<span
-									class="block bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent"
+									class="block text-primary"
 								>
 									Prediction Market
 								</span>
 							</h1>
-							<p class="mb-6 text-base leading-relaxed text-gray-600 dark:text-gray-400">
+							<p class="mb-6 text-base leading-relaxed text-muted-foreground">
 								Launch your own market on Bitcoin L2. Set the terms, define outcomes, and let the
 								community trade on your insights.
 							</p>
@@ -303,25 +303,25 @@
 
 						<!-- 3. THIRD: Quick Start Templates -->
 						<div
-							class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+							class="rounded-lg border border-border bg-card p-4 shadow-sm"
 						>
 							<div class="mb-4 flex items-center gap-2">
 								<div
-									class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-900/30"
+									class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"
 								>
-									<Zap class="h-4 w-4 text-orange-500" />
+									<Zap class="h-4 w-4 text-primary" />
 								</div>
-								<span class="text-lg font-medium text-gray-900 dark:text-white"
+								<span class="text-lg font-medium text-foreground"
 									>Scalar Market Templates</span
 								>
 							</div>
-							<p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+							<p class="mb-4 text-sm text-muted-foreground">
 								Generate pre-configured markets instantly for popular cryptocurrencies
 							</p>
 							<div class="flex justify-between py-3">
 								<div>Duration (blocks):</div>
 								<input
-									class="mx-5 grow bg-gray-200 p-1 text-gray-900"
+									class="mx-5 grow rounded border border-border bg-background p-1 tabular-nums text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 									type="number"
 									bind:value={newMarketDuration}
 								/>
@@ -335,7 +335,7 @@
 							<!-- <div class="my-5"><Banner bannerType="warning" message={`Disabled until new Pyth Oracle connected`} /></div> -->
 							<div class="grid grid-cols-5 gap-3">
 								<button
-									class="inline-flex transform cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+									class="inline-flex transform cursor-pointer items-center justify-center rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:scale-105 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 									onclick={(e) => {
 										e.preventDefault();
 										quickMarket(BTCUSD);
@@ -344,7 +344,7 @@
 									BTC
 								</button>
 								<button
-									class="inline-flex transform cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-red-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+									class="inline-flex transform cursor-pointer items-center justify-center rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:scale-105 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 									onclick={(e) => {
 										e.preventDefault();
 										quickMarket(STXUSD);
@@ -353,7 +353,7 @@
 									STX
 								</button>
 								<button
-									class="inline-flex transform cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+									class="inline-flex transform cursor-pointer items-center justify-center rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:scale-105 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 									onclick={(e) => {
 										e.preventDefault();
 										quickMarket(ETHUSD);
@@ -362,7 +362,7 @@
 									ETH
 								</button>
 								<button
-									class="inline-flex transform cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+									class="inline-flex transform cursor-pointer items-center justify-center rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:scale-105 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 									onclick={(e) => {
 										e.preventDefault();
 										quickMarket(SUIUSD);
@@ -371,7 +371,7 @@
 									SUI
 								</button>
 								<button
-									class="inline-flex transform cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+									class="inline-flex transform cursor-pointer items-center justify-center rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:scale-105 hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 									onclick={(e) => {
 										e.preventDefault();
 										quickMarket(TONUSD);
@@ -384,19 +384,19 @@
 
 						<!-- 1. FIRST: AI Market Generation - Prominent Styling -->
 						<div
-							class="rounded-xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-6 shadow-lg dark:border-gray-700 dark:from-gray-800 dark:to-gray-900"
+							class="rounded-xl border border-border bg-card p-6 shadow-lg"
 						>
 							<div class="mb-6 flex items-center gap-3">
 								<div
-									class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg"
+									class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-lg"
 								>
-									<Lightbulb class="h-6 w-6 text-white" />
+									<Lightbulb class="h-6 w-6 text-primary-foreground" />
 								</div>
 								<div>
-									<h3 class="text-2xl font-bold text-gray-900 dark:text-white">
+									<h3 class="text-2xl font-bold text-foreground">
 										AI Market Generator
 									</h3>
-									<p class="text-sm text-gray-600 dark:text-gray-400">
+									<p class="text-sm text-muted-foreground">
 										Create markets instantly with AI assistance
 									</p>
 								</div>
@@ -404,11 +404,12 @@
 
 							<!-- Mode Toggle -->
 							<div class="mb-6 flex items-center justify-center sm:justify-start">
-								<div class="rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+								<div class="rounded-lg bg-muted p-1">
 									<button
-										class="rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 {showAIURL
-											? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white'
-											: 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}"
+										type="button"
+										class="rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {showAIURL
+											? 'bg-card text-foreground shadow-sm'
+											: 'text-muted-foreground hover:text-foreground'}"
 										onclick={(e) => {
 											e.preventDefault();
 											showAIURL = !showAIURL;
@@ -417,9 +418,10 @@
 										From URL
 									</button>
 									<button
-										class="rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 {!showAIURL
-											? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white'
-											: 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}"
+										type="button"
+										class="rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {!showAIURL
+											? 'bg-card text-foreground shadow-sm'
+											: 'text-muted-foreground hover:text-foreground'}"
 										onclick={(e) => {
 											e.preventDefault();
 											showAIURL = !showAIURL;
@@ -436,20 +438,20 @@
 										<div>
 											<label
 												for="ai-url-input"
-												class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+												class="mb-2 block text-sm font-medium text-foreground"
 											>
 												News URL
 											</label>
 											<input
 												id="ai-url-input"
 												type="text"
-												class="w-full rounded-lg border-gray-300 px-3 py-3 text-sm placeholder-gray-400 shadow-sm transition-colors focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+												class="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground placeholder:text-muted-foreground shadow-sm transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 												placeholder="https://example.com/news-article..."
 												bind:value={source}
 											/>
 										</div>
 										<button
-											class="inline-flex w-full transform cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:scale-[1.02] hover:from-orange-600 hover:to-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+											class="inline-flex w-full transform cursor-pointer items-center justify-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.02] hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
 											onclick={(e) => {
 												e.preventDefault();
 												prompt(2);
@@ -482,20 +484,20 @@
 										<div>
 											<label
 												for="ai-idea-input"
-												class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+												class="mb-2 block text-sm font-medium text-foreground"
 											>
 												Market Idea
 											</label>
 											<textarea
 												id="ai-idea-input"
 												rows="2"
-												class="w-full resize-none rounded-lg border-gray-300 px-3 py-3 text-sm placeholder-gray-400 shadow-sm transition-colors focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+												class="w-full resize-none rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground placeholder:text-muted-foreground shadow-sm transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 												placeholder="Describe your market idea in detail..."
 												bind:value={suggestion}
 											></textarea>
 										</div>
 										<button
-											class="inline-flex w-full transform cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:scale-[1.02] hover:from-orange-600 hover:to-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+											class="inline-flex w-full transform cursor-pointer items-center justify-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.02] hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
 											onclick={(e) => {
 												e.preventDefault();
 												prompt(1);
@@ -527,9 +529,9 @@
 
 								<!-- Help Text -->
 								<div
-									class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20"
+									class="mt-4 rounded-lg border border-info-border bg-info-soft p-3"
 								>
-									<p class="text-xs text-blue-700 dark:text-blue-300">
+									<p class="text-xs text-info">
 										💡 <strong>Tip:</strong>
 										{showAIURL
 											? 'Paste a news article URL to generate a market based on current events.'
@@ -541,66 +543,66 @@
 
 						<!-- 2. SECOND: Compact Stats Card -->
 						<div
-							class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+							class="rounded-lg border border-border bg-card p-4 shadow-sm"
 						>
-							<h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+							<h3 class="mb-4 text-lg font-medium text-foreground">
 								Market Creation Overview
 							</h3>
 							<div class="grid grid-cols-3 gap-4">
 								<div class="text-center">
 									<div
-										class="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-900/30"
+										class="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"
 									>
-										<Zap class="h-4 w-4 text-orange-500" />
+										<Zap class="h-4 w-4 text-primary" />
 									</div>
-									<p class="text-lg font-semibold text-gray-900 dark:text-white">
+									<p class="text-lg font-semibold text-foreground">
 										{fmtMicroToStx($daoOverviewStore.contractData?.marketInitialLiquidity || 0)}
 									</p>
-									<p class="text-xs text-gray-500 dark:text-gray-400">Creation Fee</p>
+									<p class="text-xs text-muted-foreground">Creation Fee</p>
 								</div>
 
 								<div class="text-center">
 									<div
-										class="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-900/30"
+										class="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"
 									>
-										<Target class="h-4 w-4 text-orange-500" />
+										<Target class="h-4 w-4 text-primary" />
 									</div>
-									<p class="text-lg font-semibold text-gray-900 dark:text-white">
+									<p class="text-lg font-semibold text-foreground">
 										0-{$daoOverviewStore.contractData?.marketFeeBipsMax / 100}%
 									</p>
-									<p class="text-xs text-gray-500 dark:text-gray-400">Market Fee</p>
+									<p class="text-xs text-muted-foreground">Market Fee</p>
 								</div>
 
 								<div class="text-center">
 									<div
-										class="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/30"
+										class="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-success-soft"
 									>
-										<Lightbulb class="h-4 w-4 text-green-500" />
+										<Lightbulb class="h-4 w-4 text-success" />
 									</div>
-									<p class="text-lg font-semibold text-gray-900 dark:text-white">AI</p>
-									<p class="text-xs text-gray-500 dark:text-gray-400">Available</p>
+									<p class="text-lg font-semibold text-foreground">AI</p>
+									<p class="text-xs text-muted-foreground">Available</p>
 								</div>
 							</div>
 						</div>
 
 						<!-- 4. FOURTH: How-to Guide with Collapsible FAQ -->
 						<div
-							class="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+							class="rounded-lg border border-border bg-card shadow-sm"
 						>
-							<div class="border-b border-gray-200 p-4 dark:border-gray-700">
-								<h3 class="text-lg font-medium text-gray-900 dark:text-white">
+							<div class="border-b border-border p-4">
+								<h3 class="text-lg font-medium text-foreground">
 									How to Use This Form
 								</h3>
 							</div>
 
-							<div class="divide-y divide-gray-200 dark:divide-gray-700">
-								<details class="p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50">
+							<div class="divide-y divide-border">
+								<details class="p-4 transition-colors hover:bg-muted/50">
 									<summary
-										class="flex cursor-pointer items-center justify-between font-medium text-gray-900 dark:text-white"
+										class="flex cursor-pointer items-center justify-between font-medium text-foreground"
 									>
 										<span>What are the different market types?</span>
 										<svg
-											class="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180"
+											class="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180"
 											fill="none"
 											viewBox="0 0 24 24"
 											stroke="currentColor"
@@ -613,19 +615,19 @@
 											/>
 										</svg>
 									</summary>
-									<p class="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+									<p class="mt-3 text-sm leading-relaxed text-muted-foreground">
 										Binary: Simple Yes/No questions. Categorical: Multiple choice options. Scalar:
 										Price range predictions with oracle feeds.
 									</p>
 								</details>
 
-								<details class="p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50">
+								<details class="p-4 transition-colors hover:bg-muted/50">
 									<summary
-										class="flex cursor-pointer items-center justify-between font-medium text-gray-900 dark:text-white"
+										class="flex cursor-pointer items-center justify-between font-medium text-foreground"
 									>
 										<span>How do I set resolution criteria?</span>
 										<svg
-											class="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180"
+											class="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180"
 											fill="none"
 											viewBox="0 0 24 24"
 											stroke="currentColor"
@@ -638,19 +640,19 @@
 											/>
 										</svg>
 									</summary>
-									<p class="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+									<p class="mt-3 text-sm leading-relaxed text-muted-foreground">
 										Provide clear criteria and reliable sources. The AI agent will use these to
 										resolve your market automatically.
 									</p>
 								</details>
 
-								<details class="p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50">
+								<details class="p-4 transition-colors hover:bg-muted/50">
 									<summary
-										class="flex cursor-pointer items-center justify-between font-medium text-gray-900 dark:text-white"
+										class="flex cursor-pointer items-center justify-between font-medium text-foreground"
 									>
 										<span>What fees do I pay?</span>
 										<svg
-											class="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180"
+											class="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180"
 											fill="none"
 											viewBox="0 0 24 24"
 											stroke="currentColor"
@@ -663,7 +665,7 @@
 											/>
 										</svg>
 									</summary>
-									<p class="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+									<p class="mt-3 text-sm leading-relaxed text-muted-foreground">
 										One-time creation fee plus optional market fee (0-10%) that you earn from
 										trading activity.
 									</p>
@@ -678,17 +680,17 @@
 			<div class="py-8 sm:py-16">
 				<div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
 					<div
-						class="rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm sm:p-8 dark:border-gray-700 dark:bg-gray-800"
+						class="rounded-xl border border-border bg-card p-6 text-center shadow-sm sm:p-8"
 					>
-						<h2 class="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">Need Help?</h2>
+						<h2 class="text-xl font-bold text-foreground sm:text-2xl">Need Help?</h2>
 						<p
-							class="mx-auto mt-3 max-w-2xl text-sm text-gray-600 sm:mt-4 sm:text-base dark:text-gray-400"
+							class="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:mt-4 sm:text-base"
 						>
 							Check out our documentation for detailed guides on creating and managing markets.
 						</p>
 						<a
 							href="/docs"
-							class="mt-4 inline-flex items-center gap-2 rounded-md bg-orange-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none sm:mt-6"
+							class="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:mt-6"
 						>
 							View Documentation
 							<ArrowRight class="h-4 w-4" />
@@ -705,17 +707,17 @@
 				<div class="space-y-8">
 					<div class="space-y-6">
 						<h1
-							class="mb-6 text-5xl font-bold tracking-tight text-gray-900 lg:text-7xl dark:text-white"
+							class="mb-6 text-5xl font-bold tracking-tight text-foreground lg:text-7xl"
 						>
 							Create Your Own
 							<span
-								class="block bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent"
+								class="block text-primary"
 							>
 								Prediction Market
 							</span>
 						</h1>
 						<p
-							class="mx-auto max-w-4xl text-xl leading-relaxed text-gray-600 lg:text-2xl dark:text-gray-400"
+							class="mx-auto max-w-4xl text-xl leading-relaxed text-muted-foreground lg:text-2xl"
 						>
 							Launch prediction markets on Bitcoin L2 with AI-powered generation, automated
 							resolution, and earn market fees from trading activity.
@@ -726,65 +728,65 @@
 				<!-- Features Section -->
 				<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
 					<div
-						class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+						class="rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
 					>
 						<div
-							class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg"
+							class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-lg"
 						>
-							<Lightbulb class="h-6 w-6 text-white" />
+							<Lightbulb class="h-6 w-6 text-primary-foreground" />
 						</div>
-						<h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+						<h3 class="mb-2 text-lg font-semibold text-foreground">
 							AI-Powered Generation
 						</h3>
-						<p class="text-sm text-gray-600 dark:text-gray-400">
+						<p class="text-sm text-muted-foreground">
 							Create markets instantly with AI assistance from news URLs or market ideas
 						</p>
 					</div>
 
 					<div
-						class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+						class="rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
 					>
 						<div
-							class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg"
+							class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-lg"
 						>
-							<Zap class="h-6 w-6 text-white" />
+							<Zap class="h-6 w-6 text-primary-foreground" />
 						</div>
-						<h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+						<h3 class="mb-2 text-lg font-semibold text-foreground">
 							Bitcoin L2 Integration
 						</h3>
-						<p class="text-sm text-gray-600 dark:text-gray-400">
+						<p class="text-sm text-muted-foreground">
 							Built on Stacks for fast, secure, and scalable Bitcoin transactions
 						</p>
 					</div>
 
 					<div
-						class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+						class="rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
 					>
 						<div
-							class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg"
+							class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-lg"
 						>
-							<Target class="h-6 w-6 text-white" />
+							<Target class="h-6 w-6 text-primary-foreground" />
 						</div>
-						<h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+						<h3 class="mb-2 text-lg font-semibold text-foreground">
 							Automated Resolution
 						</h3>
-						<p class="text-sm text-gray-600 dark:text-gray-400">
+						<p class="text-sm text-muted-foreground">
 							AI agents automatically resolve markets based on real-world data
 						</p>
 					</div>
 
 					<div
-						class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+						class="rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
 					>
 						<div
-							class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg"
+							class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-lg"
 						>
-							<Plus class="h-6 w-6 text-white" />
+							<Plus class="h-6 w-6 text-primary-foreground" />
 						</div>
-						<h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+						<h3 class="mb-2 text-lg font-semibold text-foreground">
 							Earn Market Fees
 						</h3>
-						<p class="text-sm text-gray-600 dark:text-gray-400">
+						<p class="text-sm text-muted-foreground">
 							Generate revenue from trading fees and market creation
 						</p>
 					</div>
@@ -792,51 +794,51 @@
 
 				<!-- How It Works Section -->
 				<div class="space-y-8">
-					<h2 class="text-center text-3xl font-bold text-gray-900 dark:text-white">How It Works</h2>
+					<h2 class="text-center text-3xl font-bold text-foreground">How It Works</h2>
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-4">
 						<div class="space-y-4 text-center">
 							<div
-								class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-2xl font-bold text-white shadow-lg"
+								class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow-lg"
 							>
 								1
 							</div>
-							<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Connect Wallet</h3>
-							<p class="text-sm text-gray-600 dark:text-gray-400">
+							<h3 class="text-lg font-semibold text-foreground">Connect Wallet</h3>
+							<p class="text-sm text-muted-foreground">
 								Connect your Stacks wallet to access the platform
 							</p>
 						</div>
 						<div class="space-y-4 text-center">
 							<div
-								class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-2xl font-bold text-white shadow-lg"
+								class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow-lg"
 							>
 								2
 							</div>
-							<h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+							<h3 class="text-lg font-semibold text-foreground">
 								Define Your Market
 							</h3>
-							<p class="text-sm text-gray-600 dark:text-gray-400">
+							<p class="text-sm text-muted-foreground">
 								Use AI or manual creation to set market parameters
 							</p>
 						</div>
 						<div class="space-y-4 text-center">
 							<div
-								class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-2xl font-bold text-white shadow-lg"
+								class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow-lg"
 							>
 								3
 							</div>
-							<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Set Resolution</h3>
-							<p class="text-sm text-gray-600 dark:text-gray-400">
+							<h3 class="text-lg font-semibold text-foreground">Set Resolution</h3>
+							<p class="text-sm text-muted-foreground">
 								Choose resolution criteria and timeline
 							</p>
 						</div>
 						<div class="space-y-4 text-center">
 							<div
-								class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-2xl font-bold text-white shadow-lg"
+								class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow-lg"
 							>
 								4
 							</div>
-							<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Launch & Earn</h3>
-							<p class="text-sm text-gray-600 dark:text-gray-400">
+							<h3 class="text-lg font-semibold text-foreground">Launch & Earn</h3>
+							<p class="text-sm text-muted-foreground">
 								Launch your market and earn fees from trading
 							</p>
 						</div>
@@ -845,46 +847,46 @@
 
 				<!-- Market Types Showcase -->
 				<div class="space-y-8">
-					<h2 class="text-center text-3xl font-bold text-gray-900 dark:text-white">Market Types</h2>
+					<h2 class="text-center text-3xl font-bold text-foreground">Market Types</h2>
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 						<div
-							class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+							class="rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
 						>
-							<h3 class="mb-3 text-xl font-semibold text-gray-900 dark:text-white">
+							<h3 class="mb-3 text-xl font-semibold text-foreground">
 								Binary Markets
 							</h3>
-							<p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+							<p class="mb-4 text-sm text-muted-foreground">
 								Yes/No questions with clear outcomes
 							</p>
-							<div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
+							<div class="space-y-1 text-xs text-muted-foreground">
 								<p>• Will Bitcoin reach $100k by 2024?</p>
 								<p>• Will the election result be called by midnight?</p>
 							</div>
 						</div>
 
 						<div
-							class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+							class="rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
 						>
-							<h3 class="mb-3 text-xl font-semibold text-gray-900 dark:text-white">
+							<h3 class="mb-3 text-xl font-semibold text-foreground">
 								Categorical Markets
 							</h3>
-							<p class="mb-4 text-sm text-gray-600 dark:text-gray-400">Multiple choice outcomes</p>
-							<div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
+							<p class="mb-4 text-sm text-muted-foreground">Multiple choice outcomes</p>
+							<div class="space-y-1 text-xs text-muted-foreground">
 								<p>• Which team will win the championship?</p>
 								<p>• What will be the next major crypto trend?</p>
 							</div>
 						</div>
 
 						<div
-							class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+							class="rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
 						>
-							<h3 class="mb-3 text-xl font-semibold text-gray-900 dark:text-white">
+							<h3 class="mb-3 text-xl font-semibold text-foreground">
 								Scalar Markets
 							</h3>
-							<p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+							<p class="mb-4 text-sm text-muted-foreground">
 								Price ranges and numerical outcomes
 							</p>
-							<div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
+							<div class="space-y-1 text-xs text-muted-foreground">
 								<p>• What will Bitcoin's price be on Dec 31?</p>
 								<p>• How many users will the platform have?</p>
 							</div>
@@ -894,22 +896,22 @@
 
 				<!-- Professional Connect Section -->
 				<div
-					class="space-y-6 rounded-xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-8 text-center shadow-lg dark:border-gray-700 dark:from-gray-800 dark:to-gray-900"
+					class="space-y-6 rounded-xl border border-border bg-card p-8 text-center shadow-lg"
 				>
-					<h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+					<h2 class="text-3xl font-bold text-foreground">
 						Ready to Start Creating Markets?
 					</h2>
-					<p class="mx-auto max-w-2xl text-lg text-gray-600 dark:text-gray-400">
+					<p class="mx-auto max-w-2xl text-lg text-muted-foreground">
 						Connect your wallet to access the AI Market Generator, create prediction markets, and
 						start earning from trading fees.
 					</p>
 
-					<div class="border-t border-gray-200 pt-6 dark:border-gray-700">
+					<div class="border-t border-border pt-6">
 						<div
-							class="grid grid-cols-1 gap-6 text-sm text-gray-600 md:grid-cols-3 dark:text-gray-400"
+							class="grid grid-cols-1 gap-6 text-sm text-muted-foreground md:grid-cols-3"
 						>
 							<div class="flex items-center justify-center space-x-2">
-								<svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+								<svg class="h-5 w-5 text-success" fill="currentColor" viewBox="0 0 20 20">
 									<path
 										fill-rule="evenodd"
 										d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -919,7 +921,7 @@
 								<span>Secure wallet connection</span>
 							</div>
 							<div class="flex items-center justify-center space-x-2">
-								<svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+								<svg class="h-5 w-5 text-success" fill="currentColor" viewBox="0 0 20 20">
 									<path
 										fill-rule="evenodd"
 										d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -929,7 +931,7 @@
 								<span>AI-powered market creation</span>
 							</div>
 							<div class="flex items-center justify-center space-x-2">
-								<svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+								<svg class="h-5 w-5 text-success" fill="currentColor" viewBox="0 0 20 20">
 									<path
 										fill-rule="evenodd"
 										d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"

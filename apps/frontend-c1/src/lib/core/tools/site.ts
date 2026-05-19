@@ -11,33 +11,53 @@ export type NavSection = {
 
 export const daoLink = '/dao';
 
-export const mainNavLinks: Array<NavLink> = [{ href: '/dao', label: 'Community' }];
+export const controlRoomLink: NavLink = { href: '/dao', label: 'CONTROL ROOM' };
 
+export const howItWorksLink: NavLink = {
+	href: '/docs',
+	label: 'HOW IT WORKS',
+	external: false
+};
+
+/** Footer columns — only routes that exist in the app or verified external URLs. */
 export const footerNavSections: Array<NavSection> = [
 	{
-		title: 'Quick Links',
+		title: 'Platform',
 		links: [
-			{ href: '/dao', label: 'DAO Information' },
-			{ href: '/market-mgt', label: 'Create Market' },
-			{ href: 'https://big-market-dao.gitbook.io/big-market-dao-docs/', label: 'Docs' }
+			{ href: '/', label: 'Markets' },
+			{ href: '/dao', label: 'Control Room' },
+			{ href: '/docs', label: 'How It Works' },
+			{ href: '/reputation', label: 'Reputation' },
+			{ href: '/reputation/leader-board', label: 'Leaderboard' },
+			{ href: '/vault/deposit', label: 'Deposit' }
 		]
 	},
 	{
-		title: 'Resources',
+		title: 'Documentation',
 		links: [
 			{ href: '/docs', label: 'Documentation' },
-			{ href: 'https://github.com/BigMarketDao', label: 'GitHub', external: true },
-			{ href: '/docs/terms', label: 'Terms & Conditions' },
-			{ href: '/docs/privacy', label: 'Privacy Policy' }
+			{ href: '/docs/getting-started/overview', label: 'Overview' },
+			{ href: '/docs/trading/quickstart', label: 'Quickstart' },
+			{ href: '/docs/trading/fees-and-payouts', label: 'Fees & Payouts' }
+		]
+	},
+	{
+		title: 'Legal',
+		links: [
+			{ href: '/docs/terms', label: 'Terms of Use' },
+			{ href: '/docs/privacy', label: 'Privacy Policy' },
+			{ href: '/docs/license', label: 'Content License (MIT)' }
 		]
 	},
 	{
 		title: 'Community',
 		links: [
-			{ href: 'https://x.com/BigMarketDAO', label: 'Twitter', external: true },
-			{ href: 'https://discord.gg/WhdxNhSV', label: 'Discord', external: true },
-			{ href: 'https://leather.io/', label: 'Download Leather', external: true },
-			{ href: 'https://www.xverse.app/', label: 'Download Xverse', external: true }
+			{ href: 'https://github.com/BigMarketDao', label: 'GitHub', external: true },
+			{ href: 'https://x.com/BigMarketDAO', label: 'X (Twitter)', external: true },
+			{ href: 'https://discord.gg/WhdxNhSV', label: 'Discord', external: true }
 		]
 	}
 ];
+
+export const footerDisclaimer =
+	'BigMarket is an open, non-custodial prediction-market protocol on Stacks. This interface provides software and documentation only. We do not hold user funds, execute trades on your behalf, or provide investment, legal, or tax advice. All collateral and outcomes are controlled by smart contracts and participating wallets.';

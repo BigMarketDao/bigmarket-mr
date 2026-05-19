@@ -46,8 +46,6 @@
 		) {
 			return;
 		}
-		//const claims = await runBatchClaims();
-		//console.log('lastClaimed: ', claims);
 		try {
 			let result = await runBatchClaims();
 			txId = result as string;
@@ -55,21 +53,6 @@
 				result = 'Claims process is running. BIG will be allocated to all users soon. ';
 			else result = 'Response from claims process: ' + result;
 			showTxModal(result);
-			// isLoading = true;
-			// const postConditions: Array<PostCondition> = [];
-			// const postConditionFt = Pc.principal(`${daoConfigStore.VITE_DAO_DEPLOYER}.${daoConfigStore.VITE_DAO_TREASURY}`).willSendEq(claimable).ft(`${daoConfigStore.VITE_DAO_DEPLOYER}.${daoConfigStore.VITE_DAO_GOVERNANCE_TOKEN}`, 'bmg-token');
-			// const bigrPc = await getBigRPostConditionNft(CLAIMING_TIER, getStxAddress());
-			// if (bigrPc) postConditions.push(bigrPc);
-			// postConditions.push(postConditionFt);
-			// const functionName = 'claim-big-reward';
-
-			// const response = await requestWallet(`${daoConfigStore.VITE_DAO_DEPLOYER}.${daoConfigStore.VITE_DAO_REPUTATION_TOKEN}`, functionName, [], [], 'allow');
-			// if (response?.txid) {
-			// 	showTxModal(response.txid);
-			// 	watchTransaction(response.txid);
-			// } else {
-			// 	showTxModal('Unable to process right now');
-			// }
 		} catch (e) {
 			errorMessage = e instanceof Error ? e.message : 'Failed to initiate claim';
 		} finally {
@@ -82,7 +65,6 @@
 			const lastClaimed = await stacks
 				.createReputationClient(daoConfig)
 				.fetchLastEpochClaimed(appConfig.VITE_STACKS_API, getStxAddress());
-			console.log('lastClaimed: ', lastClaimed);
 			const decimals = 6n;
 			const precision = 10n ** decimals;
 
@@ -113,81 +95,69 @@
 </script>
 
 <div class="space-y-4">
-	<!-- Header row: Weighted Reputation + Current Epoch -->
 	<div class="flex items-start justify-between">
 		<div>
-			<h3 class="text-base font-semibold text-gray-900 dark:text-white">
-				Your Weighted Reputation
-			</h3>
-			<p class="mt-1 text-sm font-bold text-orange-900 dark:text-orange-100">
+			<h3 class="text-base font-semibold text-foreground">Your Weighted Reputation</h3>
+			<p class="mt-1 text-sm font-bold tabular-nums text-primary">
 				{fmtNumber(userReputationData?.weightedReputation || 0)} BIGR
 			</p>
 		</div>
 		<div class="text-right">
-			<p class="text-xs text-gray-500 dark:text-gray-400">Current Epoch</p>
-			<p class="text-sm font-semibold text-gray-900 dark:text-white">
+			<p class="text-xs text-muted-foreground">Current Epoch</p>
+			<p class="text-sm font-semibold tabular-nums text-foreground">
 				{reputationData.currentEpoch}
 			</p>
 		</div>
 	</div>
 
-	<p class="text-xs text-gray-500 dark:text-gray-400">
+	<p class="text-xs text-muted-foreground">
 		Claim BIG after each epoch based on your BIGR. The higher your BIGR compared to everyone else,
 		the larger your share.
 	</p>
 
 	{#if !walletConnected}
 		<div
-			class="rounded border border-gray-200 bg-white p-4 text-center shadow-sm dark:border-gray-700 dark:bg-gray-900"
+			class="rounded-lg border border-border bg-muted/30 p-4 text-center shadow-sm"
 		>
-			<Wallet class="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500" />
-			<h4 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Connect Your Wallet</h4>
-			<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+			<Wallet class="mx-auto h-8 w-8 text-muted-foreground" />
+			<h4 class="mt-2 text-sm font-semibold text-foreground">Connect Your Wallet</h4>
+			<p class="mt-1 text-xs text-muted-foreground">
 				Connect to claim rewards and view balances
 			</p>
 			<button
-				on:click={() => connect()}
-				class="mt-3 inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-xs font-medium text-white hover:bg-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none dark:bg-orange-500 dark:hover:bg-orange-600"
+				type="button"
+				onclick={() => connect()}
+				class="mt-3 inline-flex h-10 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 			>
 				Connect Wallet
 			</button>
 		</div>
 	{:else}
-		<!-- Wallet info tiles -->
 		<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-			<div
-				class="rounded-md border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900"
-			>
-				<div class="text-[11px] text-gray-500 dark:text-gray-400">Your Wallet</div>
-				<div class="mt-1 font-mono text-xs text-gray-900 dark:text-gray-100">
+			<div class="rounded-md border border-border bg-muted/30 p-3">
+				<div class="text-[11px] text-muted-foreground">Your Wallet</div>
+				<div class="mt-1 font-mono text-xs text-foreground">
 					{truncate(getStxAddress())}
 				</div>
 			</div>
-			<div
-				class="rounded-md border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900"
-			>
-				<div class="text-[11px] text-gray-500 dark:text-gray-400">Last Epoch Claimed</div>
-				<div class="mt-1 text-xs font-medium text-gray-900 dark:text-gray-100">
+			<div class="rounded-md border border-border bg-muted/30 p-3">
+				<div class="text-[11px] text-muted-foreground">Last Epoch Claimed</div>
+				<div class="mt-1 text-xs font-medium tabular-nums text-foreground">
 					{userReputationData.lastClaimedEpoch || '-'}
 				</div>
 			</div>
-			<div
-				class="rounded-md border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900"
-			>
-				<div class="text-[11px] text-gray-500 dark:text-gray-400">Your BIG Balance</div>
-				<div class="mt-1 text-xs font-medium text-gray-900 dark:text-gray-100">
+			<div class="rounded-md border border-border bg-muted/30 p-3">
+				<div class="text-[11px] text-muted-foreground">Your BIG Balance</div>
+				<div class="mt-1 text-xs font-medium tabular-nums text-foreground">
 					{fmtMicroToStx(bigBalance, 6)} BIG
 				</div>
 			</div>
 		</div>
 
-		<!-- Rewards available -->
-		<div
-			class="rounded-md border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900"
-		>
+		<div class="rounded-md border border-border bg-muted/30 p-3">
 			<div class="flex items-center justify-between text-xs">
-				<span class="text-gray-500 dark:text-gray-400">Rewards available</span>
-				<span class="font-semibold text-gray-900 dark:text-gray-100"
+				<span class="text-muted-foreground">Rewards available</span>
+				<span class="font-semibold tabular-nums text-foreground"
 					>{fmtMicroToStx(Number(claimable), 6)} BIG</span
 				>
 			</div>
@@ -195,30 +165,27 @@
 
 		{#if errorMessage}
 			<div
-				class="rounded-md border border-red-200 bg-red-50 p-3 text-center text-xs text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+				class="rounded-md border border-destructive-border bg-destructive-soft p-3 text-center text-xs text-destructive"
 			>
 				{errorMessage}
 			</div>
 		{/if}
 
 		{#if txId}
-			<div
-				class="rounded-md border border-purple-200 bg-purple-50 p-3 text-center text-xs text-purple-700 dark:border-purple-800 dark:bg-purple-900/20 dark:text-purple-300"
-			>
-				<Banner
-					bannerType="info"
-					message={`Transaction pending. <a href="${stacks.explorerTxUrl(appConfig.VITE_NETWORK, appConfig.VITE_STACKS_EXPLORER, txId)}" target="_blank">Track transaction</a>`}
-				/>
-			</div>
+			<Banner
+				bannerType="info"
+				message={`Transaction pending. <a href="${stacks.explorerTxUrl(appConfig.VITE_NETWORK, appConfig.VITE_STACKS_EXPLORER, txId)}" target="_blank">Track transaction</a>`}
+			/>
 		{/if}
 
 		<button
-			on:click={claimTokens}
-			class="inline-flex w-full items-center justify-center rounded-md bg-orange-600 px-3 py-2 text-xs font-medium text-white hover:bg-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50 dark:bg-orange-500 dark:hover:bg-orange-600"
+			type="button"
+			onclick={claimTokens}
+			class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 			disabled={isLoading || !canClaim || userReputationData.weightedReputation === 0}
 		>
 			{#if isLoading}
-				<svg class="mr-1 -ml-1 h-3 w-3 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+				<svg class="mr-1 -ml-1 h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
 					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
 					></circle>
 					<path
@@ -235,9 +202,10 @@
 			{/if}
 		</button>
 		{#if isCoordinator(getStxAddress())}
-			<p class="text-[11px] text-gray-500 dark:text-gray-400">
-				<a href="/" on:click|preventDefault={() => claimTokens()}>Claims are run automatically</a> once
-				per epoch — an epoch lasts roughly 1 weeks (1,000 blocks).
+			<p class="text-[11px] text-muted-foreground">
+				<a href="/" class="text-primary hover:underline" onclick={(e) => { e.preventDefault(); claimTokens(); }}
+					>Claims are run automatically</a
+				> once per epoch — an epoch lasts roughly 1 week (~1,000 blocks).
 			</p>
 		{/if}
 	{/if}

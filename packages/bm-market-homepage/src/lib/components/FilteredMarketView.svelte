@@ -1,5 +1,11 @@
 <script lang="ts">
-	import type { Currency, MarketCategory, PredictionMarketCreateEvent } from '@bigmarket/bm-types';
+	import type {
+		Currency,
+		ExchangeRate,
+		MarketCategory,
+		PredictionMarketCreateEvent,
+		TokenPermissionEvent
+	} from '@bigmarket/bm-types';
 	import { onMount } from 'svelte';
 	import { fromStore } from 'svelte/store';
 	import CategoryButton from './markets/CategoryButton.svelte';
@@ -29,7 +35,9 @@
 		currentBurnHeight,
 		disputeWindowLength,
 		marketVotingDuration,
-		forumApi,
+		bmApi,
+		tokens = [],
+		exchangeRates = [],
 		isCoordinator
 	} = $props<{
 		markets: Array<PredictionMarketCreateEvent>;
@@ -38,7 +46,9 @@
 		currentBurnHeight: number;
 		disputeWindowLength: number;
 		marketVotingDuration: number;
-		forumApi: string;
+		bmApi: string;
+		tokens?: TokenPermissionEvent[];
+		exchangeRates?: ExchangeRate[];
 		isCoordinator: boolean;
 	}>();
 
@@ -48,6 +58,7 @@
 	let debouncedSearchTerm = $state('');
 	let componentKey = $state(0);
 	let sortBy: string = $state('ending-soon');
+	let categoryNavWidth = $state(0);
 
 	const searchStateLabels: Record<SearchState, string> = {
 		[SearchState.All]: 'All Markets',
@@ -224,102 +235,44 @@
 	});
 </script>
 
-<!-- Filter Section with improved spacing -->
-<div class="space-y-4">
-	<!-- Row 1: Primary category tabs -->
-	<div class="scrollbar-hide overflow-x-auto">
-		<nav class="flex items-center gap-4 pb-2" aria-label="Market filters">
-			{#key componentKey}
-				<div class="flex shrink-0 items-center gap-4">
-					<CategoryButton
-						label="tvl"
-						selected={navSelection === 'sort:tvl'}
-						onChangeCategory={selectTrending}
+<!-- Category nav width drives toolbar; controls row matches (right edge = Culture) -->
+<div class="-mt-8 w-full md:-mt-10">
+	<div
+		class="max-w-full"
+		style:width={categoryNavWidth > 0 ? `min(100%, ${categoryNavWidth}px)` : undefined}
+		role="toolbar"
+		aria-label="Search and filter markets"
+	>
+		<div class="flex w-full min-w-0 items-center gap-3">
+			<div class="relative h-8 min-w-0 flex-1">
+				<label for="searchTerm" class="sr-only">Search markets</label>
+				<Search
+					class="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+					aria-hidden="true"
+				/>
+				<input
+					id="searchTerm"
+					type="search"
+					bind:value={searchTerm}
+					placeholder="Search markets..."
+					class="h-full w-full rounded-[4px] border border-border bg-background py-0 pr-7 pl-8 text-xs font-medium text-foreground placeholder:text-muted-foreground transition-colors hover:border-muted-foreground/40 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+				/>
+				{#if searchTerm}
+					<button
+						type="button"
+						aria-label="Clear search"
+						onclick={() => (searchTerm = '')}
+						class="absolute top-1/2 right-2 -translate-y-1/2 rounded-[4px] p-0.5 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
 					>
-						{#snippet body()}
-							<span class="flex items-center gap-1.5">
-								<TrendingUp class="h-4 w-4 shrink-0" aria-hidden="true" />
-								Trending
-							</span>
-						{/snippet}
-					</CategoryButton>
+						<XIcon class="h-3.5 w-3.5" />
+					</button>
+				{/if}
+			</div>
 
-					<CategoryButton
-						label="newest"
-						selected={navSelection === 'sort:newest'}
-						onChangeCategory={selectNew}
-					>
-						{#snippet body()}New{/snippet}
-					</CategoryButton>
-				</div>
-
-				<div class="bg-border h-4 w-px shrink-0" aria-hidden="true"></div>
-
-				<div class="flex min-w-0 items-center gap-4">
-					<CategoryButton
-						label="all"
-						selected={navSelection === 'scope:all'}
-						onChangeCategory={handleAll}
-					>
-						{#snippet body()}
-							{searchStateLabels[searchState]}
-						{/snippet}
-					</CategoryButton>
-
-					{#each marketCategories as category (category.name)}
-						{#if category.active}
-							<CategoryButton
-								label={category.name}
-								selected={navSelection === `category:${category.name.toLowerCase()}`}
-								onChangeCategory={handleChangeCategory}
-							>
-								{#snippet body()}
-									{category.displayName}
-								{/snippet}
-							</CategoryButton>
-						{/if}
-					{/each}
-				</div>
-			{/key}
-		</nav>
-	</div>
-	<!-- Divider -->
-	<div class="bg-border h-px w-full"></div>
-
-	<!-- Row 2: search + filters (single line from md up) -->
-	<div class="flex flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:gap-3">
-		<div
-			class="border-border bg-background dark:bg-input/30 relative h-10 w-full min-w-0 rounded-lg border shadow-xs md:max-w-sm md:min-w-52 md:flex-1"
-		>
-			<label for="searchTerm" class="sr-only">Search markets</label>
-			<Search
-				class="text-muted-foreground pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
-				aria-hidden="true"
-			/>
-			<input
-				id="searchTerm"
-				type="search"
-				bind:value={searchTerm}
-				placeholder="Search markets..."
-				class="text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring h-full w-full rounded-lg border-0 bg-transparent py-0 pr-10 pl-10 text-sm focus-visible:ring-2 focus-visible:outline-none"
-			/>
-			{#if searchTerm}
-				<button
-					type="button"
-					aria-label="Clear search"
-					onclick={() => (searchTerm = '')}
-					class="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 rounded-sm p-0.5 focus-visible:ring-2 focus-visible:outline-none"
-				>
-					<XIcon class="size-3.5" />
-				</button>
-			{/if}
-		</div>
-
-		<div class="grid grid-cols-3 gap-2 md:contents">
 			<FilterSelect
 				id="filter-sort"
 				label="Sort by"
-				class="min-w-0 md:w-32"
+				class="w-[6.75rem] shrink-0"
 				bind:value={sortBy}
 				options={sortOptions}
 				onchange={() => updateSortState(sortBy)}
@@ -327,7 +280,7 @@
 			<FilterSelect
 				id="filter-status"
 				label="Market status"
-				class="min-w-0 md:w-36"
+				class="w-[7.5rem] shrink-0"
 				bind:value={localMarketStatus}
 				options={statusOptions}
 				onchange={updateMarketStatus}
@@ -335,24 +288,80 @@
 			<FilterSelect
 				id="filter-type"
 				label="Market type"
-				class="min-w-0 md:w-32"
+				class="w-[6.75rem] shrink-0"
 				bind:value={localMarketType}
 				options={marketTypes.map((t) => ({ value: t.value, label: t.name }))}
 				onchange={() => updateMarketType(localMarketType)}
 			/>
 		</div>
 
-		<p class="text-muted-foreground shrink-0 text-sm font-medium whitespace-nowrap tabular-nums">
-			{filteredMarkets.length} of {markets.length} Markets
-		</p>
+		<div class="scrollbar-hide mt-4 max-w-full overflow-x-auto">
+			<nav
+				bind:clientWidth={categoryNavWidth}
+				class="flex h-8 w-max items-center gap-2"
+				aria-label="Market categories"
+			>
+				{#key componentKey}
+					<CategoryButton
+						label="tvl"
+					selected={navSelection === 'sort:tvl'}
+					onChangeCategory={selectTrending}
+				>
+					{#snippet body()}
+						<span class="flex items-center gap-1.5">
+							<TrendingUp class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+							Trending
+						</span>
+					{/snippet}
+				</CategoryButton>
+
+				<CategoryButton
+					label="newest"
+					selected={navSelection === 'sort:newest'}
+					onChangeCategory={selectNew}
+				>
+					{#snippet body()}New{/snippet}
+				</CategoryButton>
+
+				<div class="bg-border h-4 w-px shrink-0" aria-hidden="true"></div>
+
+				<CategoryButton
+					label="all"
+					selected={navSelection === 'scope:all'}
+					onChangeCategory={handleAll}
+				>
+					{#snippet body()}
+						{searchStateLabels[searchState]}
+					{/snippet}
+				</CategoryButton>
+
+				{#each marketCategories as category (category.name)}
+					{#if category.active}
+						<CategoryButton
+							label={category.name}
+							selected={navSelection === `category:${category.name.toLowerCase()}`}
+							onChangeCategory={handleChangeCategory}
+						>
+							{#snippet body()}
+								{category.displayName}
+							{/snippet}
+						</CategoryButton>
+					{/if}
+				{/each}
+				{/key}
+			</nav>
+		</div>
 	</div>
+
+	<div class="mt-4 h-px w-full bg-border" aria-hidden="true"></div>
 </div>
 
 <!-- Market Grid with enhanced spacing -->
 {#key componentKey}
 	{#if filteredMarkets && filteredMarkets.length > 0}
 		<div
-			class="mt-4 grid gap-4 sm:grid-cols-2 md:mt-6 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
+			class="market-cards-grid mt-5 grid items-stretch gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
+			style="--market-ticker-duration: 48s"
 		>
 			{#each filteredMarkets as market (market.marketId + '-' + market.marketType)}
 				<MarketEntry
@@ -361,7 +370,9 @@
 					{currentBurnHeight}
 					{disputeWindowLength}
 					{marketVotingDuration}
-					{forumApi}
+					{bmApi}
+					{tokens}
+					{exchangeRates}
 					{isCoordinator}
 				/>
 			{/each}

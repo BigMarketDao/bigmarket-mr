@@ -121,10 +121,10 @@
 			</div>
 		{/if}
 
-		<main class="flex min-h-0 w-full flex-1 flex-col">
+		<main class="flex w-full flex-col">
 			{#if networkWarning}
-				<div class="flex flex-1 flex-col p-8 sm:p-12 lg:p-20">
-					<div class="max-w-3xl grow">
+				<div class="flex flex-col p-8 sm:p-12 lg:p-20">
+					<div class="max-w-3xl">
 						Incorrect network detected — this is
 						<span class="text-warning">
 							{requireAppConfig($appConfigStore).VITE_NETWORK}
@@ -133,7 +133,7 @@
 					</div>
 				</div>
 			{:else}
-				<div class="flex w-full flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
+				<div class="flex w-full flex-col px-4 py-6 sm:px-6 lg:px-8">
 					{@render children()}
 				</div>
 			{/if}

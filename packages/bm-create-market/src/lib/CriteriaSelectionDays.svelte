@@ -111,16 +111,16 @@
 
 <div class="space-y-6" data-testid={testIdPrefix}>
   <div>
-    <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <label for="duration" class="block text-sm font-medium text-foreground">
       Market Close Date
     </label>
     <input
       type="datetime-local"
       data-testid={`${testIdPrefix}:close-datetime`}
       id="duration"
-      class="mt-1 block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm
-				text-gray-900 shadow-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20
-				dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+      class="mt-1 block w-full rounded border border-border bg-background px-3 py-2 text-sm tabular-nums
+				text-foreground shadow-sm focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring
+				focus-visible:outline-none"
       onchange={handleDateChange}
       bind:value={selectedDate}
       min={minDatetime}
@@ -129,7 +129,8 @@
     {#if validation.errors.duration}
       <p
         data-testid={`${testIdPrefix}:error:duration`}
-        class="mt-1 text-sm text-red-600 dark:text-red-400"
+        role="alert"
+        class="mt-1 text-sm text-destructive"
       >
         {validation.errors.duration}
       </p>
@@ -137,7 +138,7 @@
 
     <p
       data-testid={`${testIdPrefix}:duration-blocks`}
-      class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+      class="mt-1 text-xs tabular-nums text-muted-foreground"
     >
       ≈ {duration} Bitcoin blocks
     </p>
@@ -145,15 +146,15 @@
 </div>
 
 <div>
-  <label for="coolDown" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+  <label for="coolDown" class="block text-sm font-medium text-foreground">
     Cool Down Duration
   </label>
   <select
     id="coolDown"
     data-testid={`${testIdPrefix}:cooldown-select`}
-    class="mt-1 block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm
-             text-gray-900 shadow-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20
-             dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+    class="mt-1 block w-full rounded border border-border bg-background px-3 py-2 text-sm
+             text-foreground shadow-sm focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring
+             focus-visible:outline-none"
     onchange={handleCooldownChange}
     bind:value={coolDown}
   >
@@ -164,14 +165,15 @@
   {#if validation.errors.coolDown}
     <p
       data-testid={`${testIdPrefix}:error:coolDown`}
-      class="mt-1 text-sm text-red-600 dark:text-red-400"
+      role="alert"
+      class="mt-1 text-sm text-destructive"
     >
       {validation.errors.coolDown}
     </p>
   {/if}
   <p
     data-testid={`${testIdPrefix}:cooldown-blocks`}
-    class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+    class="mt-1 text-xs tabular-nums text-muted-foreground"
   >
     {coolDown} blocks (~ {formatCooldown(coolDown)})
   </p>
@@ -180,20 +182,20 @@
 {#if marketType === 1}
   <div
     data-testid={`${testIdPrefix}:summary`}
-    class="grid grid-cols-1 gap-6 rounded-sm border-2 border-amber-600"
+    class="grid grid-cols-1 gap-6 rounded-sm border-2 border-warning-border"
   >
     <div>
       <div class="bg-muted/30 space-y-3 rounded-xl">
         <!-- <BannerSlot bannerType="info"> -->
-        <div class="p-5 gap-y-4 flex flex-col text-gray-500 dark:text-gray-200">
+        <div class="flex flex-col gap-y-4 p-5 text-muted-foreground">
           <div>Resolves <span class="inline-block font-thin">{resolutionDateLabel}</span></div>
           <div>
-            Duration (bitcoin blocks): <span class="inline-block font-thin"
+            Duration (bitcoin blocks): <span class="inline-block font-thin tabular-nums"
               >{duration} (~ {(duration / 144).toFixed(2)} days)</span
             >
           </div>
           <div>
-            Cooldown (bitcoin blocks): <span class="inline-block font-thin"
+            Cooldown (bitcoin blocks): <span class="inline-block font-thin tabular-nums"
               >{coolDown} (~ {formatCooldown(coolDown)})</span
             >
           </div>
