@@ -53,10 +53,10 @@ export async function registerDepositIntent(
     headers: { "content-type": "application/json" },
     body: JSON.stringify(params),
   });
-
-  export async function registerBridgeIntent() {
-
   return intentRes;
-
-  // if (!intentRes.ok) throw new Error(await intentRes.text());
 }
+
+// export async function registerBridgeIntent() {
+//   return intentRes;
+//   // if (!intentRes.ok) throw new Error(await intentRes.text());
+// }

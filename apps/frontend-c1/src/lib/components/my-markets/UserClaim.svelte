@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { allowedTokenStore } from '@bigmarket/bm-common';
-	import type { MarketData, UserMarketStake } from '@bigmarket/bm-types';
+	import type { UserMarketStake } from '@bigmarket/bm-types';
 	import { Bulletin } from '@bigmarket/bm-ui';
 	import {
 		calculateExpectedPayout,
@@ -86,7 +86,7 @@
 		else return false;
 	};
 
-	const claimWinningsInt = async (extension: string, marketData: MarketData, marketId: number) => {
+	const claimWinningsInt = () => {
 		try {
 			goto(`/market/${market.marketId}/${market.marketType}#claiming`);
 			return;
@@ -179,9 +179,7 @@
 			>
 		{/if}
 	</td>
-	<td
-		class="px-4 py-3 text-right align-middle font-mono text-[11px] text-foreground tabular-nums"
-	>
+	<td class="px-4 py-3 text-right align-middle font-mono text-[11px] text-foreground tabular-nums">
 		{fmtMicroToStx(
 			market.marketData.stakes.reduce((acc: number, val: number) => acc + val, 0),
 			getMarketToken(market.marketData.token, $allowedTokenStore).decimals
@@ -204,7 +202,7 @@
 				>
 			{:else if market.marketData.concluded && canUserClaim(market.marketData.outcome!, stakes!)}
 				<button
-					onclick={() => claimWinningsInt(market.extension, market.marketData, market.marketId)}
+					onclick={() => claimWinningsInt()}
 					class="inline-flex h-11 cursor-pointer items-center rounded-md bg-primary px-3 text-[11px] font-medium text-primary-foreground transition-opacity hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50 md:h-10"
 					disabled={isLoading}
 				>

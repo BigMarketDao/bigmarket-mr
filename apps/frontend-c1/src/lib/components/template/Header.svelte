@@ -4,16 +4,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import SlotModal from './SlotModal.svelte';
 	import { showOnRampModal } from '@bigmarket/bm-common';
-	import {
-		Menu,
-		X,
-		Sun,
-		Moon,
-		Trophy,
-		Crown,
-		Settings,
-		Power
-	} from 'lucide-svelte';
+	import { Menu, X, Sun, Moon, Trophy, Crown, Settings, Power } from 'lucide-svelte';
 	import { truncate } from '@bigmarket/bm-utilities';
 	import ConnectLanes from './ConnectLanes.svelte';
 	import { getStxAddress, isLoggedIn } from '@bigmarket/bm-common';
@@ -148,9 +139,9 @@
 			{#if isLoggedIn()}
 				<div class="hidden md:block">
 					<HeaderButton
-						href={resolve('/vault/deposit')}
+						href={resolve('/vault')}
 						label="DEPOSIT"
-						active={currentPath.startsWith('/vault/deposit')}
+						active={currentPath.startsWith('/vault')}
 					/>
 				</div>
 			{/if}
@@ -213,9 +204,9 @@
 						/>
 						{#if isLoggedIn()}
 							<HeaderButton
-								href={resolve('/vault/deposit')}
+								href={resolve('/vault')}
 								label="DEPOSIT"
-								active={currentPath.startsWith('/vault/deposit')}
+								active={currentPath.startsWith('/vault')}
 							/>
 						{/if}
 					{/if}

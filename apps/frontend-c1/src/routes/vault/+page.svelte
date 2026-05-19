@@ -38,7 +38,7 @@
 		<div class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 			<div class="mb-6 space-y-4">
 				<div
-					class="mx-auto flex max-w-lg gap-2 rounded-md border border-neutral-200 p-1 dark:border-neutral-600"
+					class="mx-auto flex gap-2 rounded-md border border-neutral-200 p-1 dark:border-neutral-600"
 					role="tablist"
 				>
 					<button
@@ -47,7 +47,7 @@
 						aria-selected={panel === 'bridge'}
 						class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors {panel ===
 						'bridge'
-							? 'bg-orange-500 text-white shadow-sm'
+							? 'bg-green-500 text-white shadow-sm'
 							: 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'}"
 						onclick={() => selectPanel('bridge')}
 					>
@@ -61,7 +61,7 @@
 						title={stacksConnected ? undefined : 'Connect a Stacks wallet to manage vault funds'}
 						class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors {panel ===
 						'manage'
-							? 'bg-orange-500 text-white shadow-sm'
+							? 'bg-green-500 text-white shadow-sm'
 							: 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'} {!stacksConnected
 							? 'cursor-not-allowed opacity-50'
 							: ''}"
@@ -78,7 +78,7 @@
 					</p>
 				{/if}
 			</div>
-			<div class="mx-auto flex max-w-lg gap-2 rounded-md p-1" role="tablist">
+			<div class="mx-auto flex gap-2 rounded-md p-1" role="tablist">
 				{#if panel === 'bridge'}
 					<p class="text-sm text-gray-500 dark:text-gray-400">
 						Bridge USDC or USDT between Ethereum and Stacks, then move bridged USDCx into your

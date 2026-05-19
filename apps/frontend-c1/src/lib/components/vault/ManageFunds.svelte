@@ -127,10 +127,7 @@
 			}
 
 			const vault = stacks.createVaultClient(daoConfig);
-			custodyBalanceMicro = await vault.getUsdcxBalance(
-				appConfig.VITE_STACKS_API,
-				mappedAddress
-			);
+			custodyBalanceMicro = await vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress);
 			vaultBalanceMicro = await vault.getVaultUsdcxBalance(
 				appConfig.VITE_STACKS_API,
 				sourceIdentity.chain,
@@ -185,12 +182,12 @@
 </script>
 
 <div
-	class="w-full max-w-lg space-y-5 rounded-lg border border-neutral-200 bg-neutral-50/80 p-5 dark:border-neutral-700 dark:bg-neutral-900/40"
+	class="w-full space-y-5 rounded-lg border border-neutral-200 bg-neutral-50/80 p-5 dark:border-neutral-700 dark:bg-neutral-900/40"
 >
 	<h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Manage vault</h2>
 	<p class="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
-		Move USDCx from your mapped Stacks custody address into the BigMarket vault. Your vault balance is
-		credited to your cross-chain identity (Ethereum, Solana, or native Stacks).
+		Move USDCx from your mapped Stacks custody address into the BigMarket vault. Your vault balance
+		is credited to your cross-chain identity (Ethereum, Solana, or native Stacks).
 	</p>
 
 	{#if !stacksConnected}
@@ -225,13 +222,17 @@
 	</div>
 
 	<div class="grid grid-cols-2 gap-3">
-		<div class="rounded-md border border-neutral-200 bg-white/80 p-3 dark:border-neutral-600 dark:bg-neutral-900/60">
+		<div
+			class="rounded-md border border-neutral-200 bg-white/80 p-3 dark:border-neutral-600 dark:bg-neutral-900/60"
+		>
 			<p class="text-[11px] text-neutral-500 dark:text-neutral-400">USDCx on mapped address</p>
 			<p class="mt-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
 				{loadingBalance ? '…' : custodyBalanceDisplay}
 			</p>
 		</div>
-		<div class="rounded-md border border-neutral-200 bg-white/80 p-3 dark:border-neutral-600 dark:bg-neutral-900/60">
+		<div
+			class="rounded-md border border-neutral-200 bg-white/80 p-3 dark:border-neutral-600 dark:bg-neutral-900/60"
+		>
 			<p class="text-[11px] text-neutral-500 dark:text-neutral-400">USDCx in vault</p>
 			<p class="mt-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
 				{loadingBalance ? '…' : vaultBalanceDisplay}
@@ -278,8 +279,8 @@
 
 	{#if canDepositViaRelayer}
 		<p class="text-[11px] leading-relaxed text-neutral-500 dark:text-neutral-400">
-			USDCx sits on your mapped address (derived from your {apiSourceChain} key). The relayer will
-			submit <code class="text-[10px]">deposit</code> on your behalf.
+			USDCx sits on your mapped address (derived from your {apiSourceChain} key). The relayer will submit
+			<code class="text-[10px]">deposit</code> on your behalf.
 		</p>
 	{:else if canDepositViaWallet}
 		<p class="text-[11px] leading-relaxed text-neutral-500 dark:text-neutral-400">

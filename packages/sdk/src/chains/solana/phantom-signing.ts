@@ -48,7 +48,7 @@
 //   const solanaPubkey = phantom.publicKey.toBase58();
 
 //   // Register with backend — backend puts pending deposit on-chain
-//   const response = await fetch("/api/vault/deposit/register", {
+//   const response = await fetch("/api/vault/register", {
 //     method: "POST",
 //     headers: { "Content-Type": "application/json" },
 //     body: JSON.stringify({ solanaPubkey, amount: amount.toString() }),
