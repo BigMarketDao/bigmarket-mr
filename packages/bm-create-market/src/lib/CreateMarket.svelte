@@ -294,7 +294,7 @@
 
     <!-- Tabs -->
     <div
-      class="mb-6 border-b border-gray-200 dark:border-gray-700"
+      class="mb-6 border-b border-border"
       data-testid="market-mgt:steps"
     >
       <nav
@@ -304,10 +304,10 @@
           <button
             data-testid={`market-mgt:step-tab:${step.title.toLowerCase()}`}
             aria-current={i === currentStep ? "step" : undefined}
-            class="flex items-center gap-2 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap transition-colors sm:px-4 {i ===
+            class="flex items-center gap-2 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:px-4 {i ===
             currentStep
-              ? 'border-orange-500 text-orange-600 dark:border-orange-500 dark:text-orange-500'
-              : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'}"
             onclick={() => (currentStep = i)}
           >
             {step.title}
@@ -373,21 +373,21 @@
         />
       {:else if currentStep === 3}
         <div
-          class="rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800"
+          class="rounded-lg border border-border bg-muted p-6"
         >
-          <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+          <h3 class="mb-4 text-lg font-medium text-foreground">
             Market Creation Process
           </h3>
-          <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">
+          <p class="mb-3 text-sm text-muted-foreground">
             You'll need to approve two transactions:
           </p>
           <ul
-            class="list-inside list-disc space-y-2 text-sm text-gray-600 dark:text-gray-400"
+            class="list-inside list-disc space-y-2 text-sm text-muted-foreground"
           >
             <li>Sign content to authorize with server</li>
             <li>Sign transaction to set up the market in the smart contract</li>
           </ul>
-          <p class="my-3 text-sm text-gray-600 dark:text-gray-400">
+          <p class="my-3 text-sm text-muted-foreground">
             Allow <span class="font-extrabold">around 5 minutes</span> for the market
             to appear on the public site.
           </p>
@@ -397,10 +397,12 @@
 
     <!-- Nav buttons -->
     <div
-      class="flex justify-between border-t border-gray-200 pt-6 dark:border-gray-700"
+      class="flex justify-between border-t border-border pt-6"
     >
       <button
+        type="button"
         data-testid="market-mgt:prev"
+        class="focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
         onclick={prevStep}
         disabled={currentStep === 0}
       >
@@ -408,10 +410,19 @@
       </button>
 
       {#if currentStep < totalSteps - 1}
-        <button data-testid="market-mgt:next" onclick={nextStep}>Next</button>
+        <button
+          type="button"
+          data-testid="market-mgt:next"
+          class="focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          onclick={nextStep}
+        >
+          Next
+        </button>
       {:else}
         <button
+          type="button"
           data-testid="market-mgt:create"
+          class="focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
           onclick={openSigRequest}
           disabled={isWaitingForTransaction || !sessionStoreReady}
         >
@@ -430,7 +441,7 @@
     {#if !isValid()}
       <div>
         {#each Object.values(validation.errors) as error}
-          <div class="text-red-500">{error}</div>
+          <div class="text-destructive" role="alert">{error}</div>
         {/each}
         <div data-testid="market-mgt:fix-validation">Fix validation errors</div>
       </div>

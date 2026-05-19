@@ -59,9 +59,9 @@
 <div data-testid={testIdPrefix} class="space-y-4">
   <div data-testid={`${testIdPrefix}:ready`} class="hidden"></div>
 
-  <label for="liquidity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+  <label for="liquidity" class="block text-sm font-medium text-foreground">
     <div class="flex items-center gap-2">
-      <Coins class="h-4 w-4 text-gray-500" />
+      <Coins class="h-4 w-4 text-muted-foreground" />
       Market Liquidity
     </div>
   </label>
@@ -84,12 +84,13 @@
       type="number"
       id="liquidity"
       data-testid={`${testIdPrefix}:input`}
-      class={`mt-2 block w-full rounded border px-3 py-2 text-sm text-gray-900 placeholder-gray-500 shadow-sm
-        focus:ring-1 focus:ring-orange-500/20 focus:outline-none dark:bg-gray-800 dark:text-white dark:placeholder-gray-400
+      class={`mt-2 block w-full rounded border bg-background px-3 py-2 text-sm tabular-nums text-foreground
+        placeholder:text-muted-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2
+        focus-visible:ring-ring
         ${
           !localLiquidityError && !validation?.errors?.liquidity
-            ? 'border-gray-300 focus:border-orange-500 dark:border-gray-700'
-            : 'border-red-300 focus:border-red-500 dark:border-red-600'
+            ? 'border-border focus-visible:border-ring'
+            : 'border-destructive-border focus-visible:border-destructive'
         }`}
       placeholder={`Enter the amount of ${sip10Data.symbol} to seed market`}
       bind:value={liquidityUi}
@@ -97,19 +98,19 @@
     />
 
     {#if localLiquidityError}
-      <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+      <p role="alert" class="mt-1 text-sm text-destructive">
         {localLiquidityError}
       </p>
     {/if}
 
     {#if validation?.errors?.liquidity}
-      <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+      <p role="alert" class="mt-1 text-sm text-destructive">
         {validation.errors.liquidity}
       </p>
     {/if}
   </div>
 
-  <div class="text-xs text-gray-500 dark:text-gray-400">
+  <div class="text-xs text-muted-foreground">
     {fmtMicroToStx(liquidityUi * Math.pow(10, sip10Data.decimals), sip10Data.decimals)} {sip10Data.symbol}
     Minimum allowed: {((tokenEvent?.minLiquidity || -1))} {sip10Data.symbol}
   </div>

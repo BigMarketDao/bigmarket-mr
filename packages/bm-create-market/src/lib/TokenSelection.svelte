@@ -52,16 +52,16 @@
 
   <label
     for="token"
-    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+    class="block text-sm font-medium text-foreground"
   >
     <div class="flex items-center gap-2">
-      <Coins class="h-4 w-4 text-gray-500" />
+      <Coins class="h-4 w-4 text-muted-foreground" />
       Market Token
     </div>
   </label>
 
   <p
-    class="mb-2 text-sm text-gray-500 dark:text-gray-400"
+    class="mb-2 text-sm text-muted-foreground"
     data-testid={`${testIdPrefix}:help`}
   >
     Users will transact in this market using this token
@@ -70,10 +70,9 @@
   <select
     id="token"
     data-testid={`${testIdPrefix}:select`}
-    class="mt-1 block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm
-           text-gray-900 shadow-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20
-           focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200
-           dark:placeholder-gray-400"
+    class="mt-1 block w-full rounded border border-border bg-background px-3 py-2 text-sm
+           text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:border-ring
+           focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     bind:value={template.token}
     onchange={tokenChange}
   >
@@ -88,7 +87,8 @@
   {#if validation?.errors?.token}
     <p
       data-testid={`${testIdPrefix}:error:token`}
-      class="mt-1 text-sm text-red-600 dark:text-red-400"
+      role="alert"
+      class="mt-1 text-sm text-destructive"
     >
       {validation.errors.token}
     </p>
@@ -97,7 +97,7 @@
   <!-- Tiny debug/computed marker for tests -->
   <div
     data-testid={`${testIdPrefix}:selected`}
-    class="text-xs text-gray-500 dark:text-gray-400"
+    class="text-xs text-muted-foreground"
   >
     Selected: {template.token || "(none)"}
   </div>

@@ -154,10 +154,10 @@
 		<!-- Voting Status -->
 		<div class="flex items-center justify-between rounded-xl border border-white/50 px-4 py-2">
 			<div class="flex items-center gap-2">
-				<span class={`h-3 w-3 rounded-full ${isVoting(proposal) ? 'bg-green-500' : 'bg-red-500'}`}
+				<span class={`h-3 w-3 rounded-full ${isVoting(proposal) ? 'bg-success' : 'bg-destructive'}`}
 				></span>
 				<p
-					class={`font-mono text-sm tracking-wide uppercase ${isVoting(proposal) ? 'text-green-400' : 'text-red-400'}`}
+					class={`font-mono text-sm tracking-wide uppercase ${isVoting(proposal) ? 'text-success' : 'text-destructive'}`}
 				>
 					{votingStatus}
 				</p>
@@ -173,17 +173,17 @@
 		<!-- Voting Information -->
 		<div class="space-y-1 rounded-lg py-6">
 			<p>
-				Current block: <span class="font-bold"
+				Current block: <span class="font-bold tabular-nums"
 					>{fmtNumber($chainStore.stacks.burn_block_height)}</span
 				>
 			</p>
 			<p>
-				Voting ends at block <span class="font-bold"
+				Voting ends at block <span class="font-bold tabular-nums"
 					>{fmtNumber(proposal.proposalData.burnEndHeight)}</span
 				>
 			</p>
-			<p>Total votes cast: <span class="font-bold">{totalVotesHuman} $BIG</span></p>
-			<p>Total voting power (you): <span class="font-bold">{toHumanStr(bigBalance)} $BIG</span></p>
+			<p>Total votes cast: <span class="font-bold tabular-nums">{totalVotesHuman} $BIG</span></p>
+			<p>Total voting power (you): <span class="font-bold tabular-nums">{toHumanStr(bigBalance)} $BIG</span></p>
 			<p>
 				Check <a class="font-bold underline" href="/reputation">eligibility</a> for a $BIG token claim
 			</p>
@@ -219,14 +219,14 @@
 				</div>
 
 				<p class="mt-2 text-sm">
-					Selected voting power: <span class="font-bold"
+					Selected voting power: <span class="font-bold tabular-nums"
 						>{selectedHuman.toLocaleString(undefined, { maximumFractionDigits: 6 })} $BIG</span
 					>
 				</p>
 			</div>
 		{:else}
-			<div class="rounded-lg bg-gray-800 p-4">
-				Your $BIG balance is currently {toHumanStr(bigBalance)}.
+			<div class="rounded-lg bg-card p-4 text-card-foreground">
+				Your $BIG balance is currently <span class="tabular-nums">{toHumanStr(bigBalance)}</span>.
 			</div>
 		{/if}
 
@@ -235,30 +235,38 @@
 			{#if showButtons}
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<button
+						type="button"
 						onclick={() => castVote(true)}
-						class="rounded-lg bg-green-600 p-4 text-2xl font-bold transition hover:bg-green-500"
+						class="h-11 rounded-lg bg-success p-4 text-2xl font-bold text-success-foreground transition hover:bg-success/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:h-10"
 					>
-						✅ Vote Yes ({selectedHuman.toLocaleString(undefined, { maximumFractionDigits: 6 })} $BIG)
+						✅ Vote Yes (<span class="tabular-nums"
+							>{selectedHuman.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span
+						> $BIG)
 					</button>
 					<button
+						type="button"
 						onclick={() => castVote(false)}
-						class="rounded-lg bg-red-600 p-4 text-2xl font-bold transition hover:bg-red-500"
+						class="h-11 rounded-lg bg-destructive p-4 text-2xl font-bold text-destructive-foreground transition hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:h-10"
 					>
-						❌ Vote No ({selectedHuman.toLocaleString(undefined, { maximumFractionDigits: 6 })} $BIG)
+						❌ Vote No (<span class="tabular-nums"
+							>{selectedHuman.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span
+						> $BIG)
 					</button>
 				</div>
 			{:else}
-				<div class="rounded-lg bg-gray-800 p-4">Slide to choose how much $BIG to vote with.</div>
+				<div class="rounded-lg bg-card p-4 text-card-foreground">
+					Slide to choose how much $BIG to vote with.
+				</div>
 			{/if}
 		{:else}
-			<div class="rounded-lg bg-gray-700 p-6 text-center text-xl font-semibold">
+			<div class="rounded-lg bg-muted p-6 text-center text-xl font-semibold text-foreground">
 				Voting has closed.
 			</div>
 		{/if}
 
 		<!-- Errors -->
 		{#if errorMessage}
-			<div class="rounded-lg bg-red-700/60 p-3 text-sm">{errorMessage}</div>
+			<div class="rounded-lg bg-destructive-soft p-3 text-sm text-destructive">{errorMessage}</div>
 		{/if}
 
 		<!-- Transaction Details -->

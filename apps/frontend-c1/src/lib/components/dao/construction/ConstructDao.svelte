@@ -60,7 +60,7 @@
 <div class="mx-auto max-w-7xl py-6 md:px-6">
 	<div class="my-8 flex w-full flex-col">
 		<div
-			class="flex w-full flex-col gap-y-4 overflow-hidden rounded-lg border-[0.5px] border-gray-700 p-6 sm:p-10"
+			class="flex w-full flex-col gap-y-4 overflow-hidden rounded-lg border border-border p-6 sm:p-10"
 		>
 			{#if inited}
 				<div class="py-0">
@@ -119,8 +119,10 @@
 								</li>
 								<li class="list-disc">
 									<button
+										type="button"
 										onclick={() => (showOpenProposals = !showOpenProposals)}
-										class="hover:underline">view open proposals</button
+										class="hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+										>view open proposals</button
 									>
 								</li>
 								<li class="list-disc">

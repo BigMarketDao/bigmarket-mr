@@ -89,12 +89,12 @@
 	/>
 </svelte:head>
 
-<div class="max-w-4xl text-gray-900 dark:text-gray-100">
+<div class="max-w-4xl text-foreground">
 	<!-- Main Hero -->
 	<div class="">
-		<h1 class="text-5xl leading-tight font-bold text-gray-900 lg:text-6xl dark:text-white">
+		<h1 class="text-5xl leading-tight font-bold text-foreground lg:text-6xl">
 			Propose a
-			<span class="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent"
+			<span class="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent"
 				>change!</span
 			>
 		</h1>

@@ -64,17 +64,17 @@ const appConfig = $derived(requireAppConfig($appConfigStore));
 		/>
 	{:else}
 		<!-- Security warning for invalid URLs -->
-		<div class="rounded border border-red-200 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/20">
-			<p class="text-sm font-medium text-red-600 dark:text-red-400">⚠️ Security Warning: Invalid or unsafe logo URL detected</p>
-			<p class="mt-1 text-sm text-red-500 dark:text-red-400">Only HTTPS URLs and safe data:image/ URLs are allowed for security reasons.</p>
-			<p class="mt-2 text-xs text-red-400 dark:text-red-500">
+		<div class="rounded border border-destructive-border bg-destructive-soft p-4" role="alert">
+			<p class="text-sm font-medium text-destructive">⚠️ Security Warning: Invalid or unsafe logo URL detected</p>
+			<p class="mt-1 text-sm text-destructive">Only HTTPS URLs and safe data:image/ URLs are allowed for security reasons.</p>
+			<p class="mt-2 text-xs text-destructive">
 				Blocked URL: {logo}
 			</p>
 		</div>
 	{/if}
 {:else}
 	<!-- No logo provided -->
-	<div class="rounded border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-		<p class="text-sm text-gray-600 dark:text-gray-400">No logo provided</p>
+	<div class="rounded border border-border bg-muted p-4">
+		<p class="text-sm text-muted-foreground">No logo provided</p>
 	</div>
 {/if}

@@ -20,22 +20,20 @@
 	} = $props();
 </script>
 
-<div
-	class="relative h-10 w-full rounded-lg border border-border bg-background shadow-xs dark:bg-input/30 {className}"
->
+<div class="relative h-8 shrink-0 {className}">
 	<label for={id} class="sr-only">{label}</label>
 	<select
 		{id}
 		bind:value
 		{onchange}
-		class="h-full w-full min-w-0 cursor-pointer appearance-none truncate rounded-lg bg-transparent py-0 pr-10 pl-3 text-sm text-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+		class="h-full w-full min-w-0 cursor-pointer appearance-none truncate rounded-[4px] border border-border bg-background py-0 pr-7 pl-2.5 text-xs font-medium text-foreground transition-colors hover:border-muted-foreground/40 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
 	>
 		{#each options as option (option.value)}
 			<option value={option.value}>{option.label}</option>
 		{/each}
 	</select>
 	<ChevronDown
-		class="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
+		class="pointer-events-none absolute top-1/2 right-2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
 		aria-hidden="true"
 	/>
 </div>

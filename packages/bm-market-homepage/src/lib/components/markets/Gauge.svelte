@@ -54,10 +54,10 @@
 	</svg>
 
 	<!-- Percentage number below the arc -->
-	<div class="mt-1 flex flex-col items-center">
-		<span class="text-sm font-semibold text-card-foreground tabular-nums">
+	<div class="mt-1 flex flex-col items-center leading-tight">
+		<span class="text-[11px] font-semibold text-card-foreground tabular-nums">
 			{Math.round(percent)}%
 		</span>
-		<span class="text-xs text-muted-foreground">chance</span>
+		<span class="text-[10px] text-muted-foreground">chance</span>
 	</div>
 </div>

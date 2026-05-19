@@ -18,7 +18,7 @@
 	});
 </script>
 
-<div class="max-w-4xl text-gray-900 dark:text-gray-100">
+<div class="max-w-4xl text-foreground">
 	<!-- Main Hero -->
 	<DaoHeading
 		headingPart1="Market"

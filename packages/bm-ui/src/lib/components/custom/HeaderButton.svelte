@@ -1,26 +1,24 @@
 <script lang="ts">
-    let { href, label, active } = $props<{
-    href: string;
-    label: string;
-    active: boolean;
-  }>();
+	let { href, label, active, external = false } = $props<{
+		href: string;
+		label: string;
+		active: boolean;
+		external?: boolean;
+	}>();
 </script>
 
 <a
-    {href}
-    data-sveltekit-preload-data="hover"
-    data-sveltekit-preload-code="hover"
-    class={`relative rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 ${
-        active 
-            ? 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-500/20 dark:text-orange-300 dark:hover:bg-orange-500/30' 
-            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
-    }`}
-    aria-current={active ? 'page' : undefined}
+	{href}
+	target={external ? '_blank' : undefined}
+	rel={external ? 'noopener noreferrer' : undefined}
+	data-sveltekit-preload-data={external ? undefined : 'hover'}
+	data-sveltekit-preload-code={external ? undefined : 'hover'}
+	class={`rounded-md px-3 py-2 text-xs font-semibold tracking-wide uppercase transition-colors duration-200 ${
+		active
+			? 'bg-primary/20 text-foreground hover:bg-primary/25 dark:bg-primary/15 dark:text-primary dark:hover:bg-primary/20'
+			: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+	}`}
+	aria-current={active ? 'page' : undefined}
 >
-	<span class="relative">{label}</span>
-	
-    {#if active}
-        <!-- Active state indicator -->
-        <span class="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-orange-500 transition-all duration-300"></span>
-    {/if}
+	{label}
 </a>

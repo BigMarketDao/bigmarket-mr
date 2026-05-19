@@ -31,12 +31,12 @@
 	let componentKey = 0;
 </script>
 
-<div class="space-y-6 rounded-lg bg-[#0F1225] p-6 text-white shadow-lg">
+<div class="space-y-6 rounded-lg bg-card p-6 text-card-foreground shadow-lg">
 	<!-- Voting Status -->
 	<div class="flex items-center justify-between rounded-xl border border-white/50 px-4 py-2">
 		<div class="flex items-center gap-2">
-			<span class="h-3 w-3 rounded-full bg-red-500"></span>
-			<p class="font-mono text-sm tracking-wide text-red-400 uppercase">{votingStatus}</p>
+			<span class="h-3 w-3 rounded-full bg-destructive"></span>
+			<p class="font-mono text-sm tracking-wide text-destructive uppercase">{votingStatus}</p>
 		</div>
 	</div>
 
@@ -44,21 +44,21 @@
 	<div class="text-center">
 		<h1 class="text-3xl font-bold">
 			Proposal:
-			<a class="text-blue-400 hover:underline" href={`${base}${proposalLink}`}>{proposalTitle}</a>
+			<a class="text-info hover:underline" href={`${base}${proposalLink}`}>{proposalTitle}</a>
 		</h1>
 	</div>
 
 	<!-- Voting Summary -->
-	<div class="flex flex-col gap-y-5 rounded-lg bg-gray-900 p-6">
+	<div class="flex flex-col gap-y-5 rounded-lg bg-muted p-6">
 		<h2 class="text-2xl capitalize">{votingStatus}</h2>
-		<p>Voting closed at block <span class="font-bold">{fmtNumber(closingBlock)}</span></p>
-		<p>{summary.accountsFor + summary.accountsAgainst} accounts participated</p>
+		<p>Voting closed at block <span class="font-bold tabular-nums">{fmtNumber(closingBlock)}</span></p>
+		<p class="tabular-nums">{summary.accountsFor + summary.accountsAgainst} accounts participated</p>
 	</div>
 
 	<!-- Vote Results -->
 	<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 		<div
-			class={`flex flex-col items-center rounded-lg p-6 text-white ${voteResult ? 'bg-green-700' : 'bg-red-700'}`}
+			class={`flex flex-col items-center rounded-lg p-6 text-white ${voteResult ? 'bg-success text-success-foreground' : 'bg-destructive text-destructive-foreground'}`}
 		>
 			<img
 				alt={voteResult ? 'approved' : 'rejected'}
@@ -71,25 +71,27 @@
 			</p>
 		</div>
 
-		<div class="rounded-lg bg-gray-100 p-6 text-gray-900">
+		<div class="rounded-lg bg-muted p-6 text-foreground">
 			<h3 class="text-xl font-semibold">Voting Power</h3>
-			<p class="text-2xl font-bold">{fmtMicroToStxNumber(totalVotes).toFixed(6)} Stacks</p>
+			<p class="text-2xl font-bold tabular-nums">{fmtMicroToStxNumber(totalVotes).toFixed(6)} Stacks</p>
 			<div class="mt-4 flex justify-between">
 				<div>
-					<p class="font-bold text-green-600">Yes</p>
-					<p>{yesVotes} accounts</p>
+					<p class="font-bold text-success">Yes</p>
+					<p class="tabular-nums">{yesVotes} accounts</p>
 				</div>
 				<div>
-					<p class="font-bold text-red-600">No</p>
-					<p>{noVotes} accounts</p>
+					<p class="font-bold text-destructive">No</p>
+					<p class="tabular-nums">{noVotes} accounts</p>
 				</div>
 			</div>
 		</div>
 	</div>
-	<div class="relative rounded-lg bg-gray-900 p-6">
+	<div class="relative rounded-lg bg-muted p-6">
 		<div class="">
-			<button class="z-50 text-gray-400 hover:underline" onclick={() => (showVotes = !showVotes)}
-				>Show transaction details</button
+			<button
+				type="button"
+				class="z-50 text-muted-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+				onclick={() => (showVotes = !showVotes)}>Show transaction details</button
 			>
 		</div>
 		{#if showVotes}

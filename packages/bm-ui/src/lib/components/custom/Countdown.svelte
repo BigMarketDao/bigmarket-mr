@@ -5,6 +5,7 @@
     endBlock,
     scaleFactor = 1,
     showTilde = true,
+    compact = false,
     suffix = '',
     valueClass = '',
     suffixClass = '',
@@ -12,6 +13,7 @@
     endBlock: number;
     scaleFactor?: number;
     showTilde?: boolean;
+    compact?: boolean;
     suffix?: string;
     valueClass?: string;
     suffixClass?: string;
@@ -22,6 +24,18 @@
   let moreThanDay = $state(false);
 
   const display = $derived(end && now ? Duration.fromObject(end.diff(now).toObject()) : undefined);
+
+  const compactLabel = $derived.by(() => {
+    if (!display) return '';
+    const parts = display.shiftTo('days', 'hours', 'minutes', 'seconds').toObject();
+    const days = Math.floor(parts.days ?? 0);
+    const hours = Math.floor(parts.hours ?? 0);
+    const minutes = Math.floor(parts.minutes ?? 0);
+    if (days > 0) return `${days} D ${hours} H`;
+    if (hours > 0) return `${hours} H ${minutes} M`;
+    const seconds = Math.floor(parts.seconds ?? 0);
+    return `${minutes} M ${seconds} S`;
+  });
 
   $effect(() => {
     try {
@@ -44,7 +58,9 @@
   <span class="inline-flex items-baseline gap-1">
     {#if showTilde}<span>~ </span>{/if}
     <span class={valueClass}>
-      {#if moreThanDay}
+      {#if compact}
+        {compactLabel}
+      {:else if moreThanDay}
         {display.toFormat("d 'days' h 'hrs'")}
       {:else}
         {display.toFormat("h 'hrs' m 'mins' ss 'secs'")}
