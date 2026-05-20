@@ -111,7 +111,7 @@
 	// ];
 </script>
 
-<div data-testid="wallet-connect:panel" class="mx-auto max-w-xl">
+<div data-testid="wallet-connect:panel" class="mx-auto">
 	<div class="mb-4 flex items-center justify-between">
 		<TypoHeader level={2} className="text-neutral-900 dark:text-neutral-100"
 			>Buy STX &amp; Connect Wallet</TypoHeader

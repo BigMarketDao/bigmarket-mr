@@ -65,7 +65,7 @@
 
 <div
 	data-testid="wallet-connect:panel"
-	class="mx-auto max-w-xl rounded-2xl border border-neutral-200 bg-white/80 p-6 shadow-sm backdrop-blur
+	class="mx-auto rounded-2xl border border-neutral-200 bg-white/80 p-6 shadow-sm backdrop-blur
          sm:p-8 dark:border-neutral-800 dark:bg-neutral-900/80"
 >
 	<div class="mb-10 flex items-center justify-between">

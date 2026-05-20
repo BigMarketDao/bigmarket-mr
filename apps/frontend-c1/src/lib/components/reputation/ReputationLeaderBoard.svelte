@@ -48,9 +48,7 @@
 </script>
 
 {#if error}
-	<div
-		class="rounded-lg border border-destructive-border bg-destructive-soft p-4 text-center"
-	>
+	<div class="rounded-lg border border-destructive-border bg-destructive-soft p-4 text-center">
 		<p class="text-sm text-destructive">Error: {error}</p>
 	</div>
 {:else if isLoading}
@@ -62,13 +60,13 @@
 	<div class="mb-6 grid grid-cols-2 gap-4">
 		<div class="rounded-md border border-border bg-muted/30 p-3">
 			<div class="text-[11px] text-muted-foreground">Total Participants</div>
-			<div class="mt-1 text-lg font-semibold tabular-nums text-foreground">
+			<div class="mt-1 text-lg font-semibold text-foreground tabular-nums">
 				{reputationLeaderBoard.length}
 			</div>
 		</div>
 		<div class="rounded-md border border-border bg-muted/30 p-3">
 			<div class="text-[11px] text-muted-foreground">Top Score</div>
-			<div class="mt-1 text-lg font-semibold tabular-nums text-primary">
+			<div class="mt-1 text-lg font-semibold text-primary tabular-nums">
 				{fmtNumber(reputationLeaderBoard[0]?.reputationScore || 0)}
 			</div>
 		</div>
@@ -78,12 +76,10 @@
 		<table class="w-full text-xs md:table-fixed">
 			<thead class="border-b border-border text-left">
 				<tr>
-					<th
-						class="px-4 py-2 text-[11px] font-medium tracking-wider text-muted-foreground"
+					<th class="px-4 py-2 text-[11px] font-medium tracking-wider text-muted-foreground"
 						>Rank</th
 					>
-					<th
-						class="px-4 py-2 text-[11px] font-medium tracking-wider text-muted-foreground"
+					<th class="px-4 py-2 text-[11px] font-medium tracking-wider text-muted-foreground"
 						>Address</th
 					>
 					<th
@@ -116,7 +112,7 @@
 							</span>
 						</td>
 						<td class="px-4 py-3 text-right align-middle">
-							<span class="font-mono text-[11px] tabular-nums text-foreground">
+							<span class="font-mono text-[11px] text-foreground tabular-nums">
 								{fmtNumber(item.reputationScore)}
 							</span>
 						</td>
@@ -153,16 +149,13 @@
 	{#if reputationLeaderBoard.length > 10}
 		<div class="mt-4 text-center">
 			<p class="text-xs text-muted-foreground">
-				Showing top {reputationLeaderBoard.length} of {reputationLeaderBoard.length} total
-				participants
+				Showing top {reputationLeaderBoard.length} of {reputationLeaderBoard.length} total participants
 			</p>
 		</div>
 	{/if}
 {:else}
-	<div
-		class="rounded-lg border border-border bg-muted/30 p-8 text-center shadow-sm"
-	>
-		<div class="mx-auto max-w-sm">
+	<div class="rounded-lg border border-border bg-muted/30 p-8 text-center shadow-sm">
+		<div class="mx-auto">
 			<h3 class="text-base font-medium text-foreground">No rankings yet</h3>
 			<p class="mt-2 text-xs text-muted-foreground">
 				Start participating in markets to earn reputation and appear on the leaderboard.

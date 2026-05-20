@@ -67,6 +67,10 @@
 					extension: .bme032-0-scalar-strategy-hedge,
 					enabled: true,
 				}
+				{
+					extension: .bme050-0-vault,
+					enabled: true,
+				}
 			)))
 
 		;; Set core team members.
@@ -75,6 +79,20 @@
 		))
 		(try! (contract-call? .bme003-0-core-proposals set-core-team-member
 			'ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5 true
+		))
+
+		;; Set allowed vault contracts.
+		(try! (contract-call? .bme050-0-vault set-token-allowed
+			'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.wrapped-stx true
+		))
+		(try! (contract-call? .bme050-0-vault set-token-allowed
+			'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.tusdh true
+		))
+		(try! (contract-call? .bme050-0-vault set-token-allowed
+			'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.tpepe true
+		))
+		(try! (contract-call? .bme050-0-vault set-token-allowed
+			'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sbtc true
 		))
 
 		;; Set executive team members.
