@@ -88,7 +88,7 @@ Agent holds its own keypair (secp256k1/ed25519) and signs autonomously — fully
 
 Question 2 — What is the agent submitting?
 
-The markets can be binary or categorical - we also have scalar/range but these are limited to price pair markets (btc/usd, stx/usd, etc) with oracle settlement
+The markets can be binary or categorical - we also have scalar/range but these are limited to price pair markets (btc/usd, stx/usd, etc) with oracle settlement. Categorical are one of three to nine options - ascii labels.
 
 Question 3 — On what interval do agents update positions?
 
@@ -100,7 +100,13 @@ the ui shows the agent addresses, prediction history for given market. The user 
 
 ## Architecture
 
-```mermaid
+Good, this clarifies the architecture significantly. Let me reflect back what I'm now understanding as the system, then focus on where the interesting design decisions still live.
+
+---
+
+## The Architecture As I Now Understand It
+
+```
 [Backend Server]
     └── Agent processes (one per model/strategy)
          └── Each holds own keypair (secp256k1/ed25519)
@@ -120,3 +126,88 @@ the ui shows the agent addresses, prediction history for given market. The user 
     └── User selects agent, calls deposit-for with USDCx amount
     └── Or user submits own pubkey and manages vault directly
 ```
+
+That's a clean, coherent system. The AIBTC team's work on agent signing is the right reference point — no need to reinvent that layer.
+
+---
+
+## Where The Interesting Design Decisions Still Live
+
+**1. The tool suite for agents — this is the biggest open question**
+
+What the agent has access to determines what signal it's actually processing. For the crash detection experiment specifically, you'd want to think about tiers:
+
+_Tier 1 — Price/market data (baseline)_
+
+- Real-time index prices (S&P, FTSE, Nikkei, DAX)
+- VIX and equivalent volatility indices
+- Oil/Brent price feed
+- BTC/STX price pairs (already handled by your oracle)
+
+_Tier 2 — Macro signals (where it gets interesting)_
+
+- Central bank meeting calendars and rate decisions
+- CPI/inflation releases
+- PMI data
+- Yield curve data (10yr-2yr spread — historically reliable recession signal)
+
+_Tier 3 — Sentiment/news (the experimental layer)_
+
+- News feed with Hormuz/Iran conflict updates
+- Fed/BoE statement sentiment analysis
+- Options market positioning (put/call ratios)
+- Dark pool flow data if accessible
+
+The diversity of tool access across agents is actually a design variable — you could deliberately run some agents on Tier 1 only and others on all three tiers, which lets you isolate which signal types are actually predictive.
+
+**2. The cron interval and position structure**
+
+You're right to keep it simple initially — cron-based buy/sell is clean. But even in the simple model there are two design choices:
+
+_What triggers a position change vs. a hold?_
+The agent needs a decision function — not just "should I buy or sell" but "is my conviction strong enough to transact given gas/fees?" A simple threshold on signal change makes sense initially.
+
+_Position sizing vs. binary buy/sell_
+Even in a binary market, does the agent submit a fixed stake each interval, or does it size its position based on conviction? Variable sizing is more information-rich for the experiment but more complex in the contract. Fixed stake per submission is cleaner for v1.
+
+**3. The categorical market question structure**
+
+For the non-binary markets you mentioned — what does the category set look like? For example a FTSE crash market:
+
+- Option A: Simple binary — "FTSE 100 falls 20%+ before date X: Yes/No"
+- Option B: Categorical — "FTSE 100 maximum drawdown by date X: 0-10% / 10-20% / 20-40% / 40%+"
+
+Option B is richer but the agent needs to distribute conviction across categories. Does the contract currently support multi-outcome categorical markets or is that a build item?
+
+**4. The questions themselves — settlement specificity**
+
+For binary/categorical markets to settle cleanly on-chain you need unambiguous resolution criteria. Suggested formulation pattern:
+
+```
+Market ID: US-SPX-CRASH-2026-H2
+Question: Will the S&P 500 close more than 20% below
+          its closing price on 1 June 2026, on any
+          single trading day before 31 December 2026?
+Resolution: Binary Yes/No
+Oracle: Chainlink S&P 500 price feed
+Settlement date: 31 December 2026 or immediately
+                 upon threshold breach
+```
+
+The "immediately upon breach" vs "end of period" distinction matters for how agents manage positions — do they get rewarded for early detection or just for being right at settlement?
+
+---
+
+## The Experiment Design Crystallising
+
+What's emerging is actually two nested experiments:
+
+**Experiment A — Can agents detect crash criticality?**
+Measured by: which agents accumulate winning positions, on which markets, with what lead time before resolution
+
+**Experiment B — Can humans meta-predict agent performance?**
+Measured by: which agents attract most delegation, whether high-delegation agents outperform low-delegation agents, whether human selection skill is itself predictable
+
+Experiment B is the genuinely novel one academically. It's essentially a market for forecaster quality, which barely exists in structured form anywhere.
+
+---
