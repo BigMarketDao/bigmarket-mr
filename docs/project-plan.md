@@ -23,13 +23,12 @@ This phase introduces a BigMarket message protocol, evolving the system into a s
 ### **On-Chain (Clarity) Work**
 
 - Define and implement new contract primitives:
-  - Sell shares \- completes CPMM loop
+  - Sell shares  completes CPMM loop
   - Add liquidity
   - Remove liquidity
   - Claim LP fee share
   - Embed CPMM vs Parimutuel market types
-- Retain existing CPMM contracts as a legacy (v1) system
-- Separate DAO and market logic where required
+- Updates existing CPMM contracts
 
 ### **Off-Chain / Protocol Work**
 
@@ -61,19 +60,19 @@ This phase introduces a BigMarket message protocol, evolving the system into a s
 - Deploy to testnet
 - Documented usage, testing activity, and feedback
 
-_Note: the design will be universal signature based protocol to ensure users from both ED25519 (Solana, Near, SUI, Aptos, etc) and Secp126k1 (EVM, bitcoin, stacks chains) interact in the same way with the same underlying messaging protocol an to ensure secp256r1 (WebAuthn, Apple Secure Enclave, Android Keystore, HTTPS/TLS, FIDO2) can be supported in a later iteration._
+*Note: the design will be universal signature based protocol to ensure users from both ED25519 (Solana, Near, SUI, Aptos, etc) and Secp126k1 (EVM, bitcoin, stacks chains) interact in the same way with the same underlying messaging protocol an to ensure secp256r1 (WebAuthn, Apple Secure Enclave, Android Keystore, HTTPS/TLS, FIDO2) can be supported in a later iteration.*
 
 ### **On-Chain (Clarity) Work**
 
 - Vault contract:
-  - Deposits \- via relayer
-  - Withdrawals \- via relayer
+  - Deposits  via relayer
+  - Withdrawals  via relayer
 - Ensure contracts are fully integrated with DAO governance
 
 ### **Off-Chain**
 
 - Integrate Allbridge for user USDC deposits
-- Develop relayer \- watches for bridged deposits \- moves funds to vault contract
+- Develop relayer  watches for bridged deposits  moves funds to vault contract
 - Enable Ethereum → Stacks deposit flow
 - Handle meta mask wallet primitives
   - Connect / disconnect
@@ -92,7 +91,7 @@ _Note: the design will be universal signature based protocol to ensure users fro
 ### **Scope**
 
 - Support Meta Mask wallet sign message
-- Build the BigMarket _signature prediction protocol_ \- for future compatibility this protocol will support (secp256k1, secp256r1 and ed25519 signature schemes)
+- Build the BigMarket *signature prediction protocol*  for future compatibility this protocol will support (secp256k1, secp256r1 and ed25519 signature schemes)
 - Integrate Allbridge for user USDC withdrawals Stacks → Eth
 - Implement: Buy shares, Sell Shares, Claim Winnings proxy methods in Clarity
 - Deploy to Mainnet
@@ -118,3 +117,4 @@ _Note: the design will be universal signature based protocol to ensure users fro
 - Deploy to mainnet
 
 ---
+
