@@ -68,7 +68,8 @@ export default defineConfig({
 			'@bigmarket/sdk',
 			'@bigmarket/bm-utilities',
 			// Bundled into SSR chunks — adapter-node output must not bare-import this at runtime (deploy often has no node_modules beside server/).
-			'prismjs'
+			'prismjs',
+			'marked'
 		]
 	},
 	optimizeDeps: {
