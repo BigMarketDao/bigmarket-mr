@@ -10,7 +10,7 @@ BigMarket is a decentralised prediction market platform built on Stacks, designe
 
 The current system supports both Constant Product Market Maker (CPMM) and Parimutuel prediction models, with on-chain market creation, trading, and settlement governed by DAO-controlled contracts.
 
-This phase focuses on evolving the existing system into a **scalable, production-ready trading platform**, with improved execution efficiency, reduced on-chain costs, and support for cross-chain participation.
+This phase introduces a BigMarket message protocol, evolving the system into a scalable, production-ready prediction platform, with improved execution efficiency, reduced participation costs, that supports users across a range of chains and wallets.
 
 ---
 
