@@ -5,7 +5,7 @@
 <div class="my-4">
 	<TypoHeader level={2}>Voting starts soon</TypoHeader>
 </div>
-<div class="relative max-w-xl space-y-3 rounded-lg">
+<div class="relative space-y-3 rounded-lg">
 	<ParaContainer
 		>When voting starts you will be able to cast your vote on the proposal.</ParaContainer
 	>

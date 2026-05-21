@@ -21,7 +21,7 @@
 	});
 </script>
 
-<div class="my-5 max-w-xl rounded-lg bg-gray-50 p-4 shadow-md">
+<div class="my-5 rounded-lg bg-gray-50 p-4 shadow-md">
 	<!-- Staking Info -->
 	<div class="mb-3 flex flex-col">
 		<span class="text-lg font-medium text-gray-800">Market Resolution </span>

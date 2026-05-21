@@ -29,7 +29,7 @@
 				<div class="mb-4">
 					<h2 class="mb-3 text-2xl text-foreground">Voting ended</h2>
 				</div>
-				<div class="relative max-w-xl space-y-3 rounded-lg bg-card px-6 py-6 text-card-foreground">
+				<div class="relative space-y-3 rounded-lg bg-card px-6 py-6 text-card-foreground">
 					<p>
 						Voting ended <strong
 							>{fmtNumber(burnHeight - proposal.proposalData.burnEndHeight)} blocks ago</strong
