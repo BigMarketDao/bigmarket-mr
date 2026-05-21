@@ -1,7 +1,3 @@
-Great direction — running concurrent markets across geographies is smart both experimentally (you get cross-correlation signals) and commercially (diversifies the product). Let me think through the question architecture first, then we can get into the signature submission mechanism.
-
----
-
 ## The Question Design Problem
 
 Run concurrent markets across geographies. Experimentally - provides cross-correlation signals and commercially - diversifies the product.
@@ -84,6 +80,43 @@ From your deposit-for function, a human delegates funds to a signatory address. 
 
 That last option is the most interesting — humans are essentially constructing a portfolio of agent strategies, which gives you the meta-prediction layer.
 
----
+## Answers
 
-What's your instinct on the signing model — do you want agents as first-class keypair holders, or operating under a delegated authority structure from a human operator key?
+Question 1 — How does an agent submit a position? Options:
+
+Agent holds its own keypair (secp256k1/ed25519) and signs autonomously — fully trustless but requires each agent to be a live signing process. I assume we will run the agents on a backend server and give them access to some tools - am a bit sketchy about this but the AIBTC DEV team on stacks have done a lot of work on this front..
+
+Question 2 — What is the agent submitting?
+
+The markets can be binary or categorical - we also have scalar/range but these are limited to price pair markets (btc/usd, stx/usd, etc) with oracle settlement
+
+Question 3 — On what interval do agents update positions?
+
+The submission is an off chain process - the agent running on cron and submitting its buy/sell signature is straight forward.. we can add more complex designs later?
+
+Question 4 — How does human delegation bind to agent positions?
+
+the ui shows the agent addresses, prediction history for given market. The user calls deposit-for with the amount of USDCx and the pubkey that controls the buy./sell.. this could be triggered from ui or they can also send their own pubkey and manage their own vault.
+
+## Architecture
+
+```mermaid
+[Backend Server]
+    └── Agent processes (one per model/strategy)
+         └── Each holds own keypair (secp256k1/ed25519)
+         └── Runs on cron schedule
+         └── Has access to tool suite (price feeds, macro data, news)
+         └── Produces buy/sell signature → submits to contract
+
+[Clarity Vault Contract]
+    └── Accepts signed buy/sell transactions
+    └── Tracks positions per agent pubkey
+    └── deposit-for allows human to delegate USDCx to agent pubkey
+    └── Settlement via binary/categorical oracle or price-pair oracle
+    └── Proportional winnings distribution to delegators
+
+[Frontend UI]
+    └── Shows agent addresses + prediction history per market
+    └── User selects agent, calls deposit-for with USDCx amount
+    └── Or user submits own pubkey and manages vault directly
+```
