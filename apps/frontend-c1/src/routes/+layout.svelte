@@ -8,7 +8,8 @@
 		daoOverviewStore,
 		exchangeRatesStore,
 		marketSystemCategoriesStore,
-		requireAppConfig
+		requireAppConfig,
+		userWalletStore
 	} from '@bigmarket/bm-common';
 	import { daoConfigStore } from '@bigmarket/bm-common';
 	import type { AppConfig, DaoConfig } from '@bigmarket/bm-types';
@@ -90,10 +91,10 @@
 		if (!browser) return;
 		console.log('data', data);
 		initAppShell(data?.appConfig?.VITE_STACKS_API);
-		await loadSystemData(data)
-		await initWallet(data?.appConfig?.VITE_BIGMARKET_API)
-		await loadWalletData()
-
+		await loadSystemData(data);
+		await initWallet(data?.appConfig?.VITE_BIGMARKET_API);
+		await loadWalletData();
+		console.log('$userWalletStore', $userWalletStore);
 		// await Promise.all([loadSystemData(data), initWallet(data?.appConfig?.VITE_BIGMARKET_API).then(loadWalletData)]);
 
 		ready = true;

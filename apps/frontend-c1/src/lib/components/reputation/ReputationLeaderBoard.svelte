@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Trophy, Medal, Award } from 'lucide-svelte';
-	import { isLoggedIn } from '@bigmarket/bm-common';
 	import { getReputationLeaderBoard } from '$lib/core/app/loaders/reputationLoaders';
 	import type { ReputationLeaderboardItem } from '@bigmarket/bm-types';
 	import { fmtNumber, truncate } from '@bigmarket/bm-utilities';

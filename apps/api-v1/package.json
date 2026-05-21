@@ -33,6 +33,7 @@
 		"axios": "^1.7.9",
 		"bitcoin-tx-proof": "^1.0.0",
 		"bitcoinjs-lib": "^6.1.7",
+		"c32check": "^2.0.0",
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.5",
 		"dotenv": "^16.4.7",

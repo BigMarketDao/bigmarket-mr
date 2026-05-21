@@ -1,4 +1,4 @@
-export type VaultSourceChain = "ethereum" | "solana" | "stacks";
+import type { VaultUserChain } from "@bigmarket/bm-types";
 
 export type MappedDepositToVaultResult = {
   mappedAddress: string;
@@ -8,7 +8,7 @@ export type MappedDepositToVaultResult = {
 
 export async function requestMappedDepositToVault(
   bmApiUrl: string,
-  sourceChain: VaultSourceChain,
+  sourceChain: VaultUserChain,
   sourceAddress: string,
 ): Promise<MappedDepositToVaultResult> {
   const path = `${bmApiUrl}/cross-chain/mappings/${encodeURIComponent(sourceChain)}/${encodeURIComponent(sourceAddress)}/deposit-to-vault`;

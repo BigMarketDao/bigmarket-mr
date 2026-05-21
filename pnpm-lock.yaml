@@ -81,6 +81,9 @@ importers:
       bitcoinjs-lib:
         specifier: ^6.1.7
         version: 6.1.7
+      c32check:
+        specifier: ^2.0.0
+        version: 2.0.0
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7

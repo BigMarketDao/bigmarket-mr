@@ -1,13 +1,22 @@
 import { c32addressDecode } from "c32check";
 import { hexToBytes } from "@stacks/common";
 import { VaultUserChain } from "@bigmarket/bm-types";
+import { bufferCV } from "@stacks/transactions";
+import { normalizeVaultSourceChain } from "../vault.js";
 
 /** Matches `CHAIN_*` constants in bme050-0-vault.clar */
 export const VAULT_CHAIN_ID = {
-  ethereum: hexToBytes("0x00000001"),
+  evm: hexToBytes("0x00000001"),
   stacks: hexToBytes("0x00000003"),
   solana: hexToBytes("0x00000004"),
 } as const;
+
+type VaultSourceChain = keyof typeof VAULT_CHAIN_ID;
+
+export function vaultChainIdCV(sourceChain: string) {
+  const normalized = normalizeVaultSourceChain(sourceChain) as VaultSourceChain;
+  return bufferCV(Buffer.from(VAULT_CHAIN_ID[normalized]));
+}
 
 /** Left-pad a 20-byte address to 32 bytes (vault storage format). */
 export function padAddress20To32(addr20: Uint8Array): Uint8Array {
@@ -27,7 +36,7 @@ export function vaultUserAddressBuffer(
   chain: VaultUserChain,
   sourceAddress: string,
 ): Uint8Array {
-  if (chain === "ethereum") {
+  if (chain === "evm") {
     const hex = sourceAddress.trim().replace(/^0x/i, "");
     if (hex.length !== 40) {
       throw new Error("EVM address must be 20 bytes (40 hex chars)");

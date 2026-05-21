@@ -1,20 +1,14 @@
 import express from 'express';
 import { getOrCreateMappedAddress } from './crossChainMappingHelpers.js';
-import {
-	depositMappedBalanceToVault,
-	getBridgeIntent,
-	markIntentSubmitted,
-	registerBridgeIntent,
-	sweepIntentToVault
-} from './intentRegistryHelper.js';
+import { depositMappedBalanceToVault, getBridgeIntent, markIntentSubmitted, registerBridgeIntent, sweepIntentToVault } from './intentRegistryHelper.js';
 
 const router = express.Router();
 
 router.get('/mappings/:sourceChain/:sourceAddress', async (req, res) => {
 	try {
-		const mappedAddress = await getOrCreateMappedAddress(req.params.sourceChain, req.params.sourceAddress);
+		const mappedAddress = await getOrCreateMappedAddress(req.params.sourceChain, req.params.sourceAddress.toUpperCase());
 
-		res.json({ mappedAddress });
+		res.json({ mappedAddress: mappedAddress.toUpperCase() });
 	} catch (err: any) {
 		console.error('GET /mappings failed', err);
 		res.status(500).json({ error: err.message ?? 'Failed to get mapped address' });

@@ -8,7 +8,7 @@
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
 	let flow = $state<'deposit' | 'withdraw'>('deposit');
-	let amount = $state('100');
+	let amount = $state('');
 	let tokenSymbol = $state<'USDC' | 'USDT'>('USDC');
 	/** For withdraw: Ethereum address that receives USDC / USDT. */
 	let ethRecipient = $state('');
@@ -222,9 +222,9 @@
 		</p>
 	{:else if flow === 'deposit' && $walletState.chain !== 'ethereum'}
 		<p class="text-sm text-amber-800 dark:text-amber-200">
-			Switch to an Ethereum connection: connect with MetaMask so your chain is <strong
-				>ethereum</strong
-			>.
+			<strong>Switch connection</strong>: connect with MetaMask/Phantom/etc on
+			<strong>ethereum</strong>
+			or <strong>solana</strong> chains.
 		</p>
 	{:else if flow === 'deposit' && !mappedStx}
 		<p class="text-sm text-amber-800 dark:text-amber-200">
@@ -366,12 +366,13 @@
 			Transaction sent. <span class="font-mono break-all">{txHash}</span>
 		</p>
 	{/if}
-
-	<Button type="button" onclick={onSubmit} disabled={!canSubmit} class="w-full cursor-pointer">
-		{busy
-			? 'Confirm in wallet…'
-			: flow === 'deposit'
-				? `Bridge ${tokenSymbol} to Stacks`
-				: `Bridge ${tokenSymbolSourceStx} to Ethereum`}
-	</Button>
+	{#if flow === 'deposit'}
+		<Button type="button" onclick={onSubmit} disabled={!canSubmit} class="w-full cursor-pointer">
+			{busy ? 'Confirm in wallet…' : `Bridge ${tokenSymbol} to Stacks`}
+		</Button>
+	{:else}
+		<Button type="button" onclick={onSubmit} disabled={!canSubmit} class="w-full cursor-pointer">
+			{busy ? 'Confirm in wallet…' : `Bridge ${tokenSymbolSourceStx} to Ethereum`}
+		</Button>
+	{/if}
 </div>

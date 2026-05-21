@@ -3,6 +3,7 @@ import { hexToBytes } from "@stacks/common";
 import {
   bufferCV,
   contractPrincipalCV,
+  noneCV,
   principalCV,
   serializeCV,
   uintCV,
@@ -14,6 +15,14 @@ import {
   vaultChainIdBuffer,
   vaultUserAddressBuffer,
 } from "./utils/vaultIdentity.js";
+
+export function normalizeVaultSourceChain(sourceChain: string): VaultUserChain {
+  const s = sourceChain.toLowerCase();
+  if (s === "eth" || s === "ethereum") return "evm";
+  if (s === "sol" || s === "solana") return "solana";
+  if (s === "stx" || s === "stacks") return "stacks";
+  throw new Error(`Unsupported source chain: ${sourceChain}`);
+}
 
 export {
   vaultChainIdBuffer,
@@ -48,13 +57,13 @@ export function createVaultClient(daoConfig: DaoConfig) {
         functionName: "get-balance",
         functionArgs: [`0x${serializeCV(principalCV(owner))}`],
       });
-      return parseClarityUint(res?.value);
+      return BigInt(res?.value?.value || 0);
     },
 
     async getVaultUsdcxBalance(
       stacksApi: string,
       userChain: VaultUserChain,
-      sourceAddress: string,
+      address: string,
     ): Promise<bigint> {
       const tokenArg = `0x${serializeCV(contractPrincipalCV(usdcxAddr, usdcxContractName))}`;
 
@@ -63,15 +72,12 @@ export function createVaultClient(daoConfig: DaoConfig) {
           contractAddress: deployer,
           contractName: vaultName,
           functionName: "get-stacks-balance",
-          functionArgs: [
-            `0x${serializeCV(principalCV(sourceAddress))}`,
-            tokenArg,
-          ],
+          functionArgs: [`0x${serializeCV(principalCV(address))}`, tokenArg],
         });
-        return parseClarityUint(res?.value);
+        return BigInt(res?.value || 0);
       }
 
-      const ethHex = sourceAddress.trim().replace(/^0x/i, "");
+      const ethHex = address.trim().replace(/^0x/i, "");
       if (ethHex.length !== 40) {
         throw new Error("EVM address must be 40 hex characters");
       }
@@ -83,7 +89,43 @@ export function createVaultClient(daoConfig: DaoConfig) {
         functionName: "get-evm-balance",
         functionArgs: [`0x${serializeCV(bufferCV(eth20))}`, tokenArg],
       });
-      return parseClarityUint(res?.value);
+      return BigInt(res?.value || 0);
+    },
+
+    /**
+     * SIP-010 transfer: moves USDCx from the user's wallet to any Stacks address.
+     * Used to fund a relayer-controlled mapped address before the relayer sweeps to vault.
+     */
+    transferUsdcxTo(params: {
+      amountMicro: bigint;
+      senderStxAddress: string;
+      recipientStxAddress: string;
+    }) {
+      const amount = params.amountMicro;
+      if (amount <= 0n) {
+        throw new Error("Transfer amount must be greater than zero");
+      }
+
+      const postConditions = pcForDeposit(
+        usdcx,
+        params.senderStxAddress,
+        Number(amount),
+      );
+
+      return callContract(
+        usdcxAddr,
+        usdcxContractName,
+        network,
+        "transfer",
+        [
+          uintCV(amount),
+          principalCV(params.senderStxAddress),
+          principalCV(params.recipientStxAddress),
+          noneCV(),
+        ],
+        postConditions,
+        "deny",
+      );
     },
 
     depositUsdcxToVault(params: {

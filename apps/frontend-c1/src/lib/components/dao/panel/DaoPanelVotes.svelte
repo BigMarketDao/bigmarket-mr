@@ -4,16 +4,19 @@
 	import { Button } from '@bigmarket/bm-ui';
 	import type { VotingEventProposeProposal } from '@bigmarket/bm-types';
 	import { onMount } from 'svelte';
-	import { fetchProposals, isPostVoting, isVoting } from '$lib/core/app/loaders/governance/proposals';
+	import {
+		fetchProposals
+		// isPostVoting,
+		// isVoting
+	} from '$lib/core/app/loaders/governance/proposals';
 	import DaoProposalCard from './DaoProposalCard.svelte';
 	import { Plus } from 'lucide-svelte';
 
 	let proposals = $state<VotingEventProposeProposal[]>([]);
 	let loaded = $state(false);
 
-	const active = $derived(
-		proposals.filter((p) => isVoting(p) || isPostVoting(p))
-	);
+	//const active = $derived(proposals.filter((p) => isVoting(p) || isPostVoting(p)));
+	const active = $derived(proposals);
 
 	function openPropose() {
 		const url = new URL(page.url);
@@ -38,7 +41,8 @@
 
 	{#if !loaded}
 		<p class="text-muted-foreground">Loading proposals…</p>
-	{:else if active.length === 0}
+	{/if}
+	{#if active.length === 0}
 		<div class="rounded-lg border border-border bg-card p-8 text-center">
 			<p class="font-medium text-foreground">No active votes right now</p>
 			<p class="mt-2 text-sm text-muted-foreground">
@@ -49,7 +53,8 @@
 				Submit a proposal
 			</Button>
 		</div>
-	{:else}
+	{/if}
+	{#if active.length > 0}
 		{#each active as proposal (proposal.proposal)}
 			<DaoProposalCard {proposal} />
 		{/each}

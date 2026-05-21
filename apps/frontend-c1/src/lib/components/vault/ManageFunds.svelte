@@ -12,9 +12,7 @@
 		walletState
 	} from '@bigmarket/bm-common';
 	import { fmtMicroToStx, requestMappedDepositToVault } from '@bigmarket/bm-utilities';
-
-	type VaultSourceChain = 'evm' | 'stacks' | 'solana';
-	type ApiSourceChain = 'ethereum' | 'solana' | 'stacks';
+	import type { VaultUserChain } from '@bigmarket/bm-types';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
@@ -34,16 +32,16 @@
 		$walletState.status === 'connected' && $walletState.chain === 'stacks' && stxAddress.length > 0
 	);
 
-	const sourceIdentity = $derived.by((): { chain: VaultSourceChain; address: string } | null => {
+	const sourceIdentity = $derived.by((): { chain: VaultUserChain; address: string } | null => {
 		if (ethAddress) return { chain: 'evm', address: ethAddress };
 		if (solAddress) return { chain: 'solana', address: solAddress };
 		if (stxAddress) return { chain: 'stacks', address: stxAddress };
 		return null;
 	});
 
-	const apiSourceChain = $derived.by((): ApiSourceChain | null => {
+	const apiSourceChain = $derived.by((): VaultUserChain | null => {
 		if (!sourceIdentity) return null;
-		if (sourceIdentity.chain === 'evm') return 'ethereum';
+		if (sourceIdentity.chain === 'evm') return 'evm';
 		if (sourceIdentity.chain === 'solana') return 'solana';
 		return 'stacks';
 	});

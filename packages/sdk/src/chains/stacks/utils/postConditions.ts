@@ -25,7 +25,7 @@ export const getFungibleTokenName = (tokenContract: string) => {
   } else if (tokenContract.indexOf("play") > -1) {
     return "bmg-play";
   } else if (tokenContract.indexOf("usdcx") > -1) {
-    return "usdcx";
+    return "usdcx-token";
   }
   return "bigr-token";
 };

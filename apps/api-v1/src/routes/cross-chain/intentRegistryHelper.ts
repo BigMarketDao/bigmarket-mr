@@ -27,6 +27,7 @@ export type CrossChainIntent = {
 	createdAt: Date;
 	updatedAt: Date;
 	error?: string;
+	sweepAttempt: number;
 };
 
 const RELAYER_STX_FEE = Number(process.env.RELAYER_STX_FEE ?? '250000');
@@ -39,24 +40,25 @@ function getStacksNetwork() {
 
 export async function registerBridgeIntent(params: { sourceChain: string; sourceAddress: string; amount?: string; tokenContractAddress?: string; tokenContractName?: string; destinationVaultAddress?: string }) {
 	console.log('registerBridgeIntent: params = ', params);
-	const mappedAddress = await getOrCreateMappedAddress(params.sourceChain, params.sourceAddress);
+	const mappedAddress = await getOrCreateMappedAddress(params.sourceChain, params.sourceAddress.toUpperCase());
 
 	const now = new Date();
 
 	const intent: CrossChainIntent = {
 		intentId: crypto.randomUUID(),
-		sourceChain: params.sourceChain.toUpperCase(),
-		sourceAddress: params.sourceAddress.toLowerCase(),
+		sourceChain: params.sourceChain,
+		sourceAddress: params.sourceAddress.toUpperCase(),
 		destinationChain: 'STX',
-		mappedAddress,
+		mappedAddress: mappedAddress.toUpperCase(),
 		destinationVaultAddress: params.destinationVaultAddress ?? getDaoConfig().VITE_DAO_VAULT,
 		tokenContractAddress: params.tokenContractAddress ?? getDaoConfig().VITE_USDCX_CONTRACT_ADDRESS,
-		tokenContractName: params.tokenContractName ?? getDaoConfig().VITE_USDCX_CONTRACT_ADDRESS,
+		tokenContractName: params.tokenContractName ?? getDaoConfig().VITE_USDCX_CONTRACT_NAME,
 		amount: params.amount,
 		status: 'created',
 		network: getConfig().network as 'mainnet' | 'testnet' | 'devnet',
 		createdAt: now,
-		updatedAt: now
+		updatedAt: now,
+		sweepAttempt: 0
 	};
 
 	await crossChainIntentCollection.insertOne(intent);
@@ -96,8 +98,7 @@ export async function getBridgeIntent(intentId: string) {
 
 async function getMappingByMappedAddress(mappedAddress: string) {
 	return crossChainMappingCollection.findOne<CreatedStacksWallet>({
-		mappedAddress,
-		mappedChain: 'STX',
+		mappedAddress: { $regex: `^${mappedAddress}$`, $options: 'i' },
 		network: getConfig().network as 'mainnet' | 'testnet' | 'devnet'
 	});
 }
@@ -122,38 +123,10 @@ async function getAccountNonce(address: string): Promise<number> {
 	return 0;
 }
 
-async function getSip010Balance(params: { owner: string; contractAddress: string; contractName: string }): Promise<bigint> {
-	const res = await fetch(`${getConfig().stacksApi}/v2/contracts/call-read/${params.contractAddress}/${params.contractName}/get-balance`, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({
-			sender: params.owner,
-			arguments: [`0x${principalCV(params.owner)}`]
-		})
-	});
-
-	if (!res.ok) {
-		throw new Error(`Could not read SIP010 balance: ${await res.text()}`);
-	}
-
-	const json: any = await res.json();
-
-	if (!json.okay) {
-		throw new Error(`SIP010 balance read failed: ${JSON.stringify(json)}`);
-	}
-
-	return parseClarityUintHex(json.result);
-}
-
-function parseClarityUintHex(hexValue: string): bigint {
-	const hex = hexValue.replace(/^0x/, '');
-
-	// Clarity uint prefix is 01, followed by 16-byte uint.
-	if (!hex.startsWith('01')) {
-		throw new Error(`Expected Clarity uint, received ${hexValue}`);
-	}
-
-	return BigInt(`0x${hex.slice(2)}`);
+async function getSip010Balance(params: { sourceChain: VaultUserChain; address: string }): Promise<bigint> {
+	const vault = stacks.createVaultClient(getDaoConfig());
+	const vaultBalanceMicro = await vault.getUsdcxBalance(getConfig().stacksApi, params.address);
+	return vaultBalanceMicro;
 }
 
 export async function sweepIntentToVault(intentId: string) {
@@ -174,6 +147,7 @@ export async function sweepIntentToVault(intentId: string) {
 	}
 
 	const mapping = await getMappingByMappedAddress(intent.mappedAddress);
+	console.log(`[cross-chain sweep] sweeping mapping: ` + mapping, intent);
 
 	if (!mapping) {
 		throw new Error(`No private key mapping found for ${intent.mappedAddress}`);
@@ -188,55 +162,46 @@ export async function sweepIntentToVault(intentId: string) {
 			}
 		}
 	);
+	if (intent.sweepAttempt > 3) {
+		throw new Error(`Sweep attempt ${intent.sweepAttempt} - too many sweeps`);
+	}
 
 	try {
+		console.log('balance fetching ' + intent.mappedAddress);
 		const balance = await getSip010Balance({
-			owner: intent.mappedAddress,
-			contractAddress: intent.tokenContractAddress,
-			contractName: intent.tokenContractName
+			sourceChain: stacks.normalizeVaultSourceChain(intent.sourceChain),
+			address: intent.mappedAddress
 		});
+		console.log('balance = ' + balance + ' for ' + intent.mappedAddress);
 
 		if (balance <= 0n) {
 			throw new Error(`No token balance to sweep for ${intent.mappedAddress}`);
 		}
 
 		const nonce = await getAccountNonce(intent.mappedAddress);
+		console.log('nonce = ' + nonce + ' for ' + intent.mappedAddress);
 		const privateKey = stacks.deriveStacksPrivateKey(getConfig().walletKey, intent.sourceAddress);
 
-		// const tx = await makeContractCall({
-		// 	contractAddress: intent.tokenContractAddress,
-		// 	contractName: intent.tokenContractName,
-		// 	functionName: 'transfer',
-		// 	functionArgs: [uintCV(balance), principalCV(intent.mappedAddress), principalCV(intent.destinationVaultAddress), noneCV()],
-		// 	senderKey: stacks.deriveStacksPrivateKey(getConfig().walletKey, privateKey),
-		// 	network: getStacksNetwork(),
-		// 	fee: RELAYER_STX_FEE,
-		// 	nonce,
-		// 	postConditionMode: PostConditionMode.Deny
-		// });
+		if (intent.sourceChain.toUpperCase() === 'STACKS') {
+			//throw new Error(`Source chain ${intent.sourceChain} is not supported for sweeping`);
+			console.log(`Source chain ${intent.sourceChain} is stacks - using the mapped address for testing the relayer`);
+		}
+
+		// const publicKeyBuffer = bufferCV(Buffer.from(intent.mappedAddress.replace(/^0x/i, ''), 'hex'));
+		const intentIdBuffer = bufferCV(Buffer.from(intent.intentId.replace(/^0x/i, ''), 'hex'));
+		const publicKeyBuffer = bufferCV(stacks.padTo32(intent.mappedAddress));
+
 		const tx = await makeContractCall({
-			contractAddress: getDaoConfig().VITE_DAO_DEPLOYER, // your vault, not the token
+			contractAddress: getDaoConfig().VITE_DAO_DEPLOYER,
 			contractName: getDaoConfig().VITE_DAO_VAULT,
 			functionName: 'deposit-for',
-			functionArgs: [
-				contractPrincipalCV(intent.tokenContractAddress, intent.tokenContractName),
-				uintCV(balance),
-				standardPrincipalCV(intent.mappedAddress), // the real user
-				bufferCV(Buffer.from(intent.intentId.replace('0x', ''), 'hex')) // 32-byte intent id
-			],
+			functionArgs: [contractPrincipalCV(intent.tokenContractAddress, intent.tokenContractName), uintCV(balance), stacks.vaultChainIdCV(intent.sourceChain), publicKeyBuffer, intentIdBuffer],
 			senderKey: privateKey, // already derived, don't re-derive
 			network: getStacksNetwork(),
 			fee: RELAYER_STX_FEE,
 			nonce,
 			postConditionMode: PostConditionMode.Allow,
-			postConditions: [
-				//   makeContractFungiblePostCondition(         // be explicit — mapped address sends exactly `balance`
-				// 	intent.mappedAddress,
-				// 	FungibleConditionCode.Equal,
-				// 	balance,
-				// 	createAsset(intent.tokenContractAddress, intent.tokenContractName, 'usdc') // your asset name
-				//   )
-			]
+			postConditions: []
 		});
 		const broadcast = await broadcastTransaction({
 			transaction: tx,
@@ -244,6 +209,14 @@ export async function sweepIntentToVault(intentId: string) {
 		});
 
 		if ('error' in broadcast) {
+			await crossChainIntentCollection.updateOne(
+				{ intentId },
+				{
+					$set: {
+						sweepAttempt: intent.sweepAttempt + 1
+					}
+				}
+			);
 			throw new Error(JSON.stringify(broadcast));
 		}
 
@@ -253,7 +226,8 @@ export async function sweepIntentToVault(intentId: string) {
 				$set: {
 					status: 'swept',
 					sweepTxId: broadcast.txid,
-					updatedAt: new Date()
+					updatedAt: new Date(),
+					sweepAttempt: intent.sweepAttempt + 1
 				}
 			}
 		);
@@ -280,27 +254,18 @@ export async function sweepIntentToVault(intentId: string) {
 	}
 }
 
-function normalizeVaultSourceChain(sourceChain: string): VaultUserChain {
-	const s = sourceChain.toLowerCase();
-	if (s === 'eth' || s === 'ethereum') return 'ethereum';
-	if (s === 'sol' || s === 'solana') return 'solana';
-	if (s === 'stx' || s === 'stacks') return 'stacks';
-	throw new Error(`Unsupported source chain: ${sourceChain}`);
-}
-
 /**
  * Sweep USDCx from the mapped Stacks custody address into the vault via `deposit`,
  * crediting the cross-chain identity (source chain + address).
  */
 export async function depositMappedBalanceToVault(sourceChain: string, sourceAddress: string) {
-	const chain = normalizeVaultSourceChain(sourceChain);
-	const mappedAddress = await getOrCreateMappedAddress(chain, sourceAddress);
+	const chain = stacks.normalizeVaultSourceChain(sourceChain);
+	const mappedAddress = await getOrCreateMappedAddress(chain, sourceAddress.toUpperCase());
 	const dao = getDaoConfig();
 
 	const balance = await getSip010Balance({
-		owner: mappedAddress,
-		contractAddress: dao.VITE_USDCX_CONTRACT_ADDRESS,
-		contractName: dao.VITE_USDCX_CONTRACT_NAME
+		sourceChain: chain,
+		address: mappedAddress
 	});
 
 	if (balance <= 0n) {
@@ -313,13 +278,13 @@ export async function depositMappedBalanceToVault(sourceChain: string, sourceAdd
 	const tokenContract = contractPrincipalCV(dao.VITE_USDCX_CONTRACT_ADDRESS, dao.VITE_USDCX_CONTRACT_NAME);
 	const asset = createAsset(dao.VITE_USDCX_CONTRACT_ADDRESS, dao.VITE_USDCX_CONTRACT_NAME, 'usdcx');
 	//const postCondition = makeStandardFungiblePostCondition(mappedAddress, FungibleConditionCode.LessEqual, balance, asset);
+	const publicKeyBuffer = bufferCV(stacks.padTo32(sourceAddress));
 
 	const tx = await makeContractCall({
 		contractAddress: dao.VITE_DAO_DEPLOYER,
 		contractName: dao.VITE_DAO_VAULT,
 		functionName: 'deposit',
-		//functionArgs: [tokenContract, uintCV(balance), bufferCV(stacks.vaultChainIdBuffer(chain)), bufferCV(vaultUserAddress32(chain, sourceAddress))],
-		functionArgs: [tokenContract, uintCV(balance), bufferCV(stacks.vaultChainIdBuffer(chain)), principalCV(sourceAddress)],
+		functionArgs: [tokenContract, uintCV(balance), stacks.vaultChainIdCV(chain), publicKeyBuffer],
 		senderKey: privateKey,
 		network: getStacksNetwork(),
 		fee: RELAYER_STX_FEE,

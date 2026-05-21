@@ -4,10 +4,11 @@
 	import { appConfigStore, initWallet, requireAppConfig, walletState } from '@bigmarket/bm-common';
 	import BridgeFunds from '$lib/components/vault/BridgeFunds.svelte';
 	import ManageFunds from '$lib/components/vault/ManageFunds.svelte';
+	import DepositFunds from '$lib/components/vault/DepositFunds.svelte';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
-	let panel = $state<'bridge' | 'manage'>('bridge');
+	let panel = $state<'bridge' | 'manage' | 'deposit'>('bridge');
 
 	const stacksConnected = $derived(
 		$walletState.status === 'connected' &&
@@ -19,8 +20,8 @@
 		void initWallet(appConfig.VITE_BIGMARKET_API);
 	});
 
-	function selectPanel(next: 'bridge' | 'manage') {
-		if (next === 'manage' && !stacksConnected) return;
+	function selectPanel(next: 'bridge' | 'manage' | 'deposit') {
+		if ((next === 'manage' || next === 'deposit') && !stacksConnected) return;
 		panel = next;
 	}
 </script>
@@ -69,9 +70,25 @@
 					>
 						Manage vault
 					</button>
+					<button
+						type="button"
+						role="tab"
+						aria-selected={panel === 'deposit'}
+						aria-disabled={!stacksConnected}
+						title={stacksConnected ? undefined : 'Connect a Stacks wallet to deposit USDCx'}
+						class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors {panel ===
+						'deposit'
+							? 'bg-green-500 text-white shadow-sm'
+							: 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'} {!stacksConnected
+							? 'cursor-not-allowed opacity-50'
+							: ''}"
+						onclick={() => selectPanel('deposit')}
+					>
+						Deposit USDCx
+					</button>
 				</div>
 
-				{#if panel === 'manage' && !stacksConnected}
+				{#if (panel === 'manage' || panel === 'deposit') && !stacksConnected}
 					<p class="mx-auto max-w-lg text-sm text-amber-800 dark:text-amber-200">
 						Connect with a <strong>Stacks</strong> wallet to view balances and deposit USDCx into the
 						vault.
@@ -84,9 +101,13 @@
 						Bridge USDC or USDT between Ethereum and Stacks, then move bridged USDCx into your
 						vault.
 					</p>
-				{:else if stacksConnected}
+				{:else if panel === 'manage' && stacksConnected}
 					<p class="text-sm text-gray-500 dark:text-gray-400">
 						Manage funds in your BigMarket vault.
+					</p>
+				{:else if panel === 'deposit' && stacksConnected}
+					<p class="text-sm text-gray-500 dark:text-gray-400">
+						Deposit USDCx directly from your connected Stacks wallet into the BigMarket vault.
 					</p>
 				{/if}
 			</div>
@@ -94,6 +115,8 @@
 			<div class="flex w-full justify-center">
 				{#if panel === 'bridge'}
 					<BridgeFunds />
+				{:else if panel === 'deposit' && stacksConnected}
+					<DepositFunds />
 				{:else if stacksConnected}
 					<ManageFunds />
 				{/if}

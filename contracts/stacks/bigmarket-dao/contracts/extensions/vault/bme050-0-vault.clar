@@ -53,9 +53,6 @@
 ;; Whitelisted SIP-010 tokens
 (define-map allowed-tokens principal bool)
 
-;; Authorised relayer Stacks principals
-(define-map relayers principal bool)
-
 ;; Cross-chain balances
 ;; user-chain:   4-byte chain id
 ;; user-address: 32-byte normalised address
@@ -86,18 +83,9 @@
       ERR_UNAUTHORISED)
     (ok true)))
 
-(define-private (check-relayer)
-  (default-to false (map-get? relayers tx-sender)))
-
 ;; ============================================================
 ;; Admin (DAO only)
 ;; ============================================================
-
-(define-public (set-relayer (who principal) (enabled bool))
-  (begin
-    (try! (is-dao-or-extension))
-    (map-set relayers who enabled)
-    (ok true)))
 
 (define-public (set-token-allowed (token <sip010>) (allowed bool))
   (begin
@@ -133,9 +121,6 @@
 
 (define-read-only (is-intent-swept (intent-id (buff 32)))
   (default-to false (map-get? swept-intents intent-id)))
-
-(define-read-only (is-relayer-read (who principal))
-  (default-to false (map-get? relayers who)))
 
 (define-read-only (is-token-allowed-read (token-contract principal))
   (default-to false (map-get? allowed-tokens token-contract)))
@@ -192,7 +177,6 @@
     (user-address (buff 32))
     (intent-id    (buff 32)))
   (let ((token-contract (contract-of token)))
-    (asserts! (check-relayer)                            ERR_UNAUTHORISED)
     (asserts! (> amount u0)                              ERR_INVALID_AMOUNT)
     (asserts! (check-token token-contract)               ERR_TOKEN_NOT_ALLOWED)
     (asserts! (check-chain user-chain)                   ERR_UNSUPPORTED_CHAIN)
@@ -205,24 +189,6 @@
 
 ;; ============================================================
 ;; Use Case 3a: secp256k1 withdrawal (EVM, BTC, Stacks)
-;;
-;; Fully trustless Clarity verifies the signature on-chain.
-;; The relayer (or anyone) can submit this tx; signature is auth.
-;;
-;; For CHAIN_EVM:    address = keccak256(pubkey)[12:]   20 bytes
-;; For CHAIN_BTC:    address = hash160(pubkey)          20 bytes
-;; For CHAIN_STACKS: address = hash160(pubkey)          20 bytes
-;;
-;; All three use the same code path; only address derivation differs.
-;;
-;; Message signed off-chain (TypeScript):
-;;   keccak256(WITHDRAW_DOMAIN ++ source-chain-id ++ address ++ token ++ amount ++ recipient ++ nonce)
-;;
-;; raw-address: the 20-byte address BEFORE padding (caller convenience)
-;; signature:   64-byte compact sig (r ++ s)
-;; recovery-id: 0 or 1
-;; ============================================================
-
 (define-public (withdraw-secp256k1
     (token        <sip010>)
     (amount       uint)

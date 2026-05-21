@@ -68,6 +68,8 @@ export const getFungibleTokenName = (tokenContract: string) => {
     return "bmg-token";
   } else if (tokenContract.indexOf("pepe") > -1) {
     return "pepe-token";
+  } else if (tokenContract.indexOf("usdcx") > -1) {
+    return "usdcx-token";
   } else if (tokenContract.indexOf("usdh") > -1) {
     return "usdh-token";
   } else if (tokenContract.indexOf("sbtc") > -1) {
