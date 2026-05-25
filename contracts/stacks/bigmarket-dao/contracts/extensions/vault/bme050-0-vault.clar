@@ -1,35 +1,80 @@
 ;; Title: BME050 Cross-Chain User Funds Vault
-;; Version: 0.3.0
+;; Version: 0.4.0
 ;;
 ;; Synopsis:
 ;; Chain-agnostic vault holding user funds from any source chain.
-;; User identity: (source-chain-id buff-4, address buff-32).
+;; User identity: (controller-chain buff 4, controller-address buff 32).
+;; Funds are addressed by a 4-tuple key
+;;   (controller-chain, controller-address, mapped-address, token)
+;; where mapped-address is the Stacks principal that received the bridged
+;; tokens (a relayer-derived ephemeral address for cross-chain users, or the
+;; user's own STX principal for native Stacks deposits).
+;;
+;; The vault -- not tx-sender -- custodies the SIP-010 balance, so withdrawals
+;; MUST transfer with `as-contract?` and MUST be authorised by a signature
+;; produced by the controller key, not by whoever happens to be tx-sender.
+;;
+;; Authorisation uses the BigMarket Protocol Message v1 (BMP1) -- a 256-byte
+;; fixed-length structured message that is signed off-chain by the user. The
+;; same envelope covers withdraw / buy-shares / sell-shares / claim-winnings;
+;; only the per-opcode body slots differ.
 ;;
 ;; Verification matrix:
-;;   CHAIN_EVM    (0x00000001) secp256k1, keccak256(pubkey)[12:],  20-byte addr padded to 32
-;;   CHAIN_BTC    (0x00000002) secp256k1, hash160(pubkey),          20-byte addr padded to 32
-;;   CHAIN_STACKS (0x00000003) secp256k1, hash160(pubkey),          20-byte addr padded to 32
-;;   CHAIN_SOLANA (0x00000004) ed25519,   raw pubkey,               32-byte addr (relayer-attested)
-;;
-;; Withdrawal auth:
-;;   secp256k1 chains on-chain secp256k1-recover? (trustless)
-;;   ed25519 chains   relayer-attested (pragmatic until Clarity adds ed25519-verify?)
+;;   CHAIN_EVM    (0x00000001) secp256k1, keccak256(uncompressed-pubkey)[12:]
+;;   CHAIN_BTC    (0x00000002) secp256k1, hash160(compressed-pubkey)        [future]
+;;   CHAIN_STACKS (0x00000003) secp256k1, hash160(compressed-pubkey)        [future]
+;;   CHAIN_SOLANA (0x00000004) ed25519,   raw pubkey                        [future, ed25519-verify?]
+;;   CHAIN_P256   (0x00000005) secp256r1, WebAuthn-style                    [future, secp256r1-verify]
 
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 (use-trait sip010 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 
 ;; ============================================================
-;; Constants
+;; Constants -- chains
 ;; ============================================================
 
 (define-constant CHAIN_EVM    0x00000001)
 (define-constant CHAIN_BTC    0x00000002)
 (define-constant CHAIN_STACKS 0x00000003)
 (define-constant CHAIN_SOLANA 0x00000004)
+(define-constant CHAIN_P256   0x00000005)
 
-;; Domain separator for withdrawal message hashing
-;; bytes of "bigmarket-vault-withdraw-v1"
-(define-constant WITHDRAW_DOMAIN 0x6269676d61726b65742d7661756c742d77697468647261772d7631)
+;; ============================================================
+;; Constants -- BigMarket Protocol Message v1 (BMP1)
+;; ============================================================
+
+;; 8-byte magic: ASCII "BMP1MSG\0"
+(define-constant BMP1_MAGIC   0x424d50314d534700)
+(define-constant BMP1_VERSION 0x01)
+
+;; Opcodes
+(define-constant OP_WITHDRAW       0x01)
+(define-constant OP_BUY_SHARES     0x02)
+(define-constant OP_SELL_SHARES    0x03)
+(define-constant OP_CLAIM_WINNINGS 0x04)
+
+;; Field offsets within the 256-byte message
+(define-constant OFF_MAGIC        u0)    ;; 8
+(define-constant OFF_OPCODE       u8)    ;; 1
+(define-constant OFF_VERSION      u9)    ;; 1
+(define-constant OFF_FLAGS        u10)   ;; 2
+(define-constant OFF_CHAIN        u12)   ;; 4
+(define-constant OFF_CONTROLLER   u16)   ;; 32
+(define-constant OFF_NONCE        u48)   ;; 16
+(define-constant OFF_SLOT0        u64)   ;; 32
+(define-constant OFF_SLOT1        u96)   ;; 32
+(define-constant OFF_SLOT2        u128)  ;; 32
+(define-constant OFF_SLOT3        u160)  ;; 32
+(define-constant OFF_SLOT4        u192)  ;; 32
+(define-constant OFF_SLOT5        u224)  ;; 32
+
+;; EIP-191 personal-sign prefix for a 256-byte payload:
+;;   "\x19" || "Ethereum Signed Message:\n" || "256"
+(define-constant EIP191_PREFIX_256
+  0x19457468657265756d205369676e6564204d6573736167653a0a323536)
+
+(define-constant ZERO_32
+  0x0000000000000000000000000000000000000000000000000000000000000000)
 
 ;; ============================================================
 ;; Errors
@@ -45,6 +90,15 @@
 (define-constant ERR_ADDRESS_MISMATCH     (err u7107))
 (define-constant ERR_UNSUPPORTED_CHAIN    (err u7108))
 (define-constant ERR_INVALID_ADDRESS      (err u7109))
+(define-constant ERR_MSG_MAGIC            (err u7110))
+(define-constant ERR_MSG_VERSION          (err u7111))
+(define-constant ERR_MSG_OPCODE           (err u7112))
+(define-constant ERR_TOKEN_COMMIT         (err u7113))
+(define-constant ERR_MAPPED_COMMIT        (err u7114))
+(define-constant ERR_RECIPIENT_COMMIT     (err u7115))
+(define-constant ERR_EXPIRED              (err u7116))
+(define-constant ERR_PUBKEY_MISMATCH      (err u7117))
+(define-constant ERR_SIG_SCHEME           (err u7118))
 
 ;; ============================================================
 ;; Storage
@@ -62,12 +116,12 @@
   { controller-chain: (buff 4), controller-address: (buff 32), mapped-address: principal, token: principal }
   uint)
 
-;; Per-user withdrawal nonces (prevents signature replay)
+;; Per-controller withdrawal nonces (prevents signed-message replay across all opcodes)
 (define-map withdrawal-nonces
   { controller-chain: (buff 4), controller-address: (buff 32) }
   uint)
 
-;; Consumed intent IDs (prevents double-sweep)
+;; Consumed intent IDs (prevents double-sweep on deposit)
 (define-map swept-intents { intent-id: (buff 32), token-contract: principal, controller-chain: (buff 4), controller-address: (buff 32), mapped-address: principal } bool)
 
 ;; ============================================================
@@ -126,10 +180,6 @@
 (define-read-only (is-token-allowed-read (token-contract principal))
   (default-to false (map-get? allowed-tokens token-contract)))
 
-(define-private (credit-balance (controller-chain (buff 4)) (controller-address (buff 32)) (mapped-address principal) (token-contract principal) (amount uint))
-  (let ((prev (default-to u0 (map-get? balances { controller-chain: controller-chain, controller-address: controller-address, mapped-address: mapped-address, token: token-contract }))))
-    (map-set balances { controller-chain: controller-chain, controller-address: controller-address, mapped-address: mapped-address, token: token-contract } (+ prev amount))))
-
 ;; Convenience: get balance by raw EVM address (no padding needed by caller)
 (define-read-only (get-evm-balance (eth-address (buff 20)) (mapped-address principal) (token principal))
   (get-balance CHAIN_EVM (pad-address-20 eth-address) mapped-address token))
@@ -137,6 +187,10 @@
 ;; Convenience: get balance by Stacks principal
 (define-read-only (get-stacks-balance (stacks-address principal) (mapped-address principal) (token principal))
   (get-balance CHAIN_STACKS (pad-address-20 (principal-to-hash160 stacks-address)) mapped-address token))
+
+(define-private (credit-balance (controller-chain (buff 4)) (controller-address (buff 32)) (mapped-address principal) (token-contract principal) (amount uint))
+  (let ((prev (default-to u0 (map-get? balances { controller-chain: controller-chain, controller-address: controller-address, mapped-address: mapped-address, token: token-contract }))))
+    (map-set balances { controller-chain: controller-chain, controller-address: controller-address, mapped-address: mapped-address, token: token-contract } (+ prev amount))))
 
 ;; ============================================================
 ;; Use Case 1: Direct deposit (any chain user, self-custodied)
@@ -168,7 +222,7 @@
 ;;
 ;; Relayer holds the ephemeral mapped Stacks key, calls this
 ;; after tokens arrive at the mapped address.
-;; Tokens: mapped-address vault contract
+;; Tokens: mapped-address -> vault contract
 ;; Credit: goes to (controller-chain, controller-address) the real user
 ;; ============================================================
 
@@ -188,146 +242,226 @@
     (try! (contract-call? token transfer amount tx-sender current-contract none))
     (credit-balance controller-chain controller-address mapped-address token-contract amount)
     (map-set swept-intents { intent-id: intent-id, token-contract: token-contract, controller-chain: controller-chain, controller-address: controller-address, mapped-address: mapped-address } true)
-    ;;(try! (contract-call? .bme030-0-reputation-token mint tx-sender u4 u1))
     (print {event: "deposit-for", token-contract : token-contract , amount: amount, controller-chain: controller-chain, controller-address: controller-address, mapped-address: mapped-address, intent-id: intent-id})
     (ok amount)))
 
 ;; ============================================================
-;; Use Case 3a: secp256k1 withdrawal (EVM, BTC, Stacks)
-(define-public (withdraw-secp256k1
-    (token        <sip010>)
-    (amount       uint)
-    (source-chain-id     (buff 4))
-    (raw-address  (buff 20))
-    (recipient    principal)
+;; Use Case 3: Withdrawal via signed BigMarket Protocol Message v1
+;;
+;; The user signs a 256-byte fixed-length BMP1 message off-chain. The
+;; signed message commits to:
+;;   - opcode = OP_WITHDRAW
+;;   - the controller identity (chain + 32-byte address)
+;;   - the per-controller nonce
+;;   - keccak256-commitments to (token-principal, mapped-address-principal,
+;;     recipient-principal)
+;;   - the withdrawal amount and optional expiry block height
+;;
+;; The relayer submits (message, signature, pubkey, token, mapped, recipient)
+;; on-chain. The vault recomputes the three principal commitments from the
+;; principals it was passed, verifies the signature against the controller
+;; address, debits the balance keyed by (chain, controller, mapped, token),
+;; and transfers using as-contract.
+;;
+;; For EVM, `pubkey` must be the controller's UNCOMPRESSED secp256k1 public
+;; key (64 bytes: X || Y). The contract recompresses it, compares against
+;; the pubkey recovered from the signature, then derives the standard EVM
+;; address keccak256(uncompressed)[12:32].
+;; ============================================================
+
+(define-public (withdraw
+    (message        (buff 256))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (token          <sip010>)
     (mapped-address principal)
-    (nonce        uint)
-    (signature    (buff 64))
-  )
+    (recipient      principal))
   (let
-    ((token-contract  (contract-of token))
-     (controller-address    (pad-address-20 raw-address))
-     (current-balance (get-balance source-chain-id controller-address mapped-address token-contract))
-     (current-nonce   (get-nonce source-chain-id controller-address))
-     (message-hash    (build-withdraw-hash
-                        source-chain-id controller-address token-contract amount recipient nonce)))
-    (asserts! (> amount u0)                          ERR_INVALID_AMOUNT)
-    (asserts! (check-token token-contract)           ERR_TOKEN_NOT_ALLOWED)
-    (asserts! (is-secp256k1-chain source-chain-id)          ERR_UNSUPPORTED_CHAIN)
-    (asserts! (>= current-balance amount)            ERR_INSUFFICIENT_BALANCE)
-    (asserts! (is-eq nonce current-nonce)            ERR_INVALID_NONCE)
-    (let ((recovered (unwrap! (recover-address source-chain-id message-hash signature) ERR_ADDRESS_MISMATCH)))
-      (asserts! (is-eq recovered raw-address)        ERR_ADDRESS_MISMATCH)
-      ;; debit before transfer guards against re-entrancy
-      (map-set balances
-        { controller-chain: source-chain-id, controller-address: controller-address, mapped-address: mapped-address, token: token-contract }
-        (- current-balance amount))
-      (map-set withdrawal-nonces
-        { controller-chain: source-chain-id, controller-address: controller-address }
-        (+ current-nonce u1))
-      ;;(try! (as-contract? () (contract-call? token transfer amount tx-sender recipient none)))
-      (ok amount))))
+    (
+      (token-contract     (contract-of token))
+      (parsed             (parse-message message))
+      (chain              (get controller-chain parsed))
+      (controller         (get controller-address parsed))
+      (nonce              (buff-to-uint-be (get nonce parsed)))
+      (amount             (slot-low-uint (get slot3 parsed)))
+      (expiry             (slot-low-uint (get slot4 parsed)))
+      (token-commit       (keccak256 (unwrap-panic (to-consensus-buff? token-contract))))
+      (mapped-commit      (keccak256 (unwrap-panic (to-consensus-buff? mapped-address))))
+      (recipient-commit   (keccak256 (unwrap-panic (to-consensus-buff? recipient))))
+      (current-balance    (get-balance chain controller mapped-address token-contract))
+      (current-nonce      (get-nonce chain controller))
+    )
+    ;; Envelope: magic / version / opcode
+    (asserts! (is-eq (get magic   parsed) BMP1_MAGIC)         ERR_MSG_MAGIC)
+    (asserts! (is-eq (get version parsed) BMP1_VERSION)       ERR_MSG_VERSION)
+    (asserts! (is-eq (get opcode  parsed) OP_WITHDRAW)        ERR_MSG_OPCODE)
+
+    ;; Field validation
+    (asserts! (check-chain chain)                             ERR_UNSUPPORTED_CHAIN)
+    (asserts! (check-address chain controller)                ERR_INVALID_ADDRESS)
+    (asserts! (> amount u0)                                   ERR_INVALID_AMOUNT)
+    (asserts! (check-token token-contract)                    ERR_TOKEN_NOT_ALLOWED)
+    (asserts! (is-eq (get slot0 parsed) token-commit)         ERR_TOKEN_COMMIT)
+    (asserts! (is-eq (get slot1 parsed) mapped-commit)        ERR_MAPPED_COMMIT)
+    (asserts! (is-eq (get slot2 parsed) recipient-commit)     ERR_RECIPIENT_COMMIT)
+    (asserts! (>= current-balance amount)                     ERR_INSUFFICIENT_BALANCE)
+    (asserts! (is-eq nonce current-nonce)                     ERR_INVALID_NONCE)
+    (asserts! (or (is-eq expiry u0)
+                  (<= stacks-block-height expiry))            ERR_EXPIRED)
+
+    ;; Signature: verify against the controller address
+    (try! (verify-message-signature chain message signature pubkey controller))
+
+    ;; Effects (before token transfer -- re-entrancy)
+    (map-set balances
+      { controller-chain: chain, controller-address: controller, mapped-address: mapped-address, token: token-contract }
+      (- current-balance amount))
+    (map-set withdrawal-nonces
+      { controller-chain: chain, controller-address: controller }
+      (+ current-nonce u1))
+
+    ;; Interaction: vault transfers SIP-010 to recipient as the contract.
+    ;; with-all-assets-unsafe matches the pattern used elsewhere for SIP-010
+    ;; transfers driven by an externally-supplied trait reference (the asset
+    ;; identifier isn't known at compile time so it can't be declared via
+    ;; with-ft).
+    (try! (as-contract? ((with-all-assets-unsafe))
+            (try! (contract-call? token transfer amount tx-sender recipient none))
+            true))
+
+    (print {
+      event: "withdraw",
+      token-contract: token-contract,
+      amount: amount,
+      controller-chain: chain,
+      controller-address: controller,
+      mapped-address: mapped-address,
+      recipient: recipient,
+      nonce: nonce
+    })
+    (ok amount)))
 
 ;; ============================================================
-;; Use Case 3b: Solana withdrawal (relayer-attested)
+;; BMP1 message parsing
+;; ============================================================
+
+(define-private (parse-message (msg (buff 256)))
+  {
+    magic:              (msg-slice-8  msg OFF_MAGIC),
+    opcode:             (msg-slice-1  msg OFF_OPCODE),
+    version:            (msg-slice-1  msg OFF_VERSION),
+    flags:              (msg-slice-2  msg OFF_FLAGS),
+    controller-chain:   (msg-slice-4  msg OFF_CHAIN),
+    controller-address: (msg-slice-32 msg OFF_CONTROLLER),
+    nonce:              (msg-slice-16 msg OFF_NONCE),
+    slot0:              (msg-slice-32 msg OFF_SLOT0),
+    slot1:              (msg-slice-32 msg OFF_SLOT1),
+    slot2:              (msg-slice-32 msg OFF_SLOT2),
+    slot3:              (msg-slice-32 msg OFF_SLOT3),
+    slot4:              (msg-slice-32 msg OFF_SLOT4),
+    slot5:              (msg-slice-32 msg OFF_SLOT5)
+  })
+
+;; Extract the low 16 bytes of a 32-byte slot and decode as u128 big-endian.
+;; Used for amount / expiry / market-id / outcome fields.
+(define-private (slot-low-uint (slot (buff 32)))
+  (buff-to-uint-be
+    (unwrap-panic (as-max-len? (unwrap-panic (slice? slot u16 u32)) u16))))
+
+;; Extract the high 16 bytes of a 32-byte slot and decode as u128 big-endian.
+;; Used by buy/sell opcodes to pack (amount-in, min-out) in a single slot.
+(define-private (slot-high-uint (slot (buff 32)))
+  (buff-to-uint-be
+    (unwrap-panic (as-max-len? (unwrap-panic (slice? slot u0 u16)) u16))))
+
+(define-private (msg-slice-1 (msg (buff 256)) (offset uint))
+  (unwrap-panic (as-max-len? (unwrap-panic (slice? msg offset (+ offset u1))) u1)))
+
+(define-private (msg-slice-2 (msg (buff 256)) (offset uint))
+  (unwrap-panic (as-max-len? (unwrap-panic (slice? msg offset (+ offset u2))) u2)))
+
+(define-private (msg-slice-4 (msg (buff 256)) (offset uint))
+  (unwrap-panic (as-max-len? (unwrap-panic (slice? msg offset (+ offset u4))) u4)))
+
+(define-private (msg-slice-8 (msg (buff 256)) (offset uint))
+  (unwrap-panic (as-max-len? (unwrap-panic (slice? msg offset (+ offset u8))) u8)))
+
+(define-private (msg-slice-16 (msg (buff 256)) (offset uint))
+  (unwrap-panic (as-max-len? (unwrap-panic (slice? msg offset (+ offset u16))) u16)))
+
+(define-private (msg-slice-32 (msg (buff 256)) (offset uint))
+  (unwrap-panic (as-max-len? (unwrap-panic (slice? msg offset (+ offset u32))) u32)))
+
+;; ============================================================
+;; Signature verification -- chain dispatch
 ;;
-;; Relayer verifies the Solana (ed25519) signature off-chain,
-;; then submits this tx. Trust assumption: relayer cannot steal
-;; funds (balances are set by deposit-for with on-chain intent
-;; tracking), but relayer must be honest about which sol-address
-;; authorised the withdrawal.
+;; Only EVM (CHAIN_EVM) is implemented in this revision. The other arms are
+;; placeholders so future revisions can drop in BTC/Stacks signed-message
+;; digests and ed25519 / secp256r1 verifiers without breaking the public
+;; entrypoint shape.
+;; ============================================================
+
+(define-private (verify-message-signature
+    (chain      (buff 4))
+    (message    (buff 256))
+    (signature  (buff 65))
+    (pubkey     (buff 64))
+    (controller (buff 32)))
+  (if (is-eq chain CHAIN_EVM)
+    (verify-evm message signature pubkey controller)
+    ERR_SIG_SCHEME))
+
+;; EVM secp256k1 + EIP-191 personal_sign verification.
 ;;
-;; Upgrade path: replace relayer assertion with ed25519-verify?
-;; when Clarity adds native ed25519 support.
-;;
-;; sol-address: 32-byte ed25519 public key (= Solana address)
-;; ============================================================
+;; Trust path:
+;;   1. Compute digest = keccak256( "\x19Ethereum Signed Message:\n256" || msg )
+;;   2. Recover the compressed pubkey from the signature
+;;   3. Recompress the supplied uncompressed pubkey and compare -- this proves
+;;      the caller-supplied uncompressed pubkey is the signer's
+;;   4. Derive the standard EVM address keccak256(uncompressed)[12:32] and
+;;      compare against the last 20 bytes of the controller address slot
+(define-private (verify-evm
+    (message    (buff 256))
+    (signature  (buff 65))
+    (pubkey     (buff 64))
+    (controller (buff 32)))
+  (let
+    (
+      (digest         (keccak256 (concat EIP191_PREFIX_256 message)))
+      (recovered      (unwrap! (secp256k1-recover? digest signature) ERR_SIG_VERIFICATION))
+      (recompressed   (compress-pubkey pubkey))
+      (derived-addr   (evm-address-from-pubkey pubkey))
+      (expected-addr  (low-20-of-32 controller))
+    )
+    (asserts! (is-eq recovered recompressed)      ERR_PUBKEY_MISMATCH)
+    (asserts! (is-eq derived-addr expected-addr)  ERR_ADDRESS_MISMATCH)
+    (ok true)))
 
-;; (define-public (withdraw-solana
-;;     (token       <sip010>)
-;;     (amount      uint)
-;;     (sol-address (buff 32))
-;;     (recipient   principal)
-;;     (nonce       uint))
-;;   (let
-;;     ((token-contract  (contract-of token))
-;;      (current-balance (get-balance CHAIN_SOLANA sol-address token-contract))
-;;      (current-nonce   (get-nonce CHAIN_SOLANA sol-address)))
-;;     (asserts! (check-relayer)                         ERR_UNAUTHORISED)
-;;     (asserts! (> amount u0)                           ERR_INVALID_AMOUNT)
-;;     (asserts! (check-token token-contract)            ERR_TOKEN_NOT_ALLOWED)
-;;     (asserts! (>= current-balance amount)             ERR_INSUFFICIENT_BALANCE)
-;;     (asserts! (is-eq nonce current-nonce)             ERR_INVALID_NONCE)
-;;     (map-set balances
-;;       { controller-chain: CHAIN_SOLANA, controller-address: sol-address, token: token-contract }
-;;       (- current-balance amount))
-;;     (map-set withdrawal-nonces
-;;       { controller-chain: CHAIN_SOLANA, controller-address: sol-address }
-;;       (+ current-nonce u1))
-;;     (try! (as-contract? () (contract-call? token transfer amount tx-sender recipient none)))
-;;     (ok amount)))
+;; Recompress an uncompressed secp256k1 pubkey (X || Y) to the 33-byte SEC
+;; compressed form (prefix || X), where prefix is 0x02 if Y is even and 0x03
+;; if odd.
+(define-private (compress-pubkey (uncompressed (buff 64)))
+  (let
+    (
+      (x (unwrap-panic (as-max-len? (unwrap-panic (slice? uncompressed u0 u32)) u32)))
+      (y-last (unwrap-panic (element-at? uncompressed u63)))
+      (prefix (if (is-eq (mod (buff-to-uint-be y-last) u2) u0) 0x02 0x03))
+    )
+    (unwrap-panic (as-max-len? (concat prefix x) u33))))
 
-;; ============================================================
-;; Private: signature verification
-;; ============================================================
-
-;; Recover the raw address (20 bytes, unpadded) from a secp256k1 sig.
-;; Dispatches on source-chain-id for address derivation:
-;;   EVM    keccak256(compressed-pubkey)[12:]
-;;   BTC    hash160(compressed-pubkey)
-;;   STX    hash160(compressed-pubkey - as BTC derivation)
-(define-private (recover-address
-    (source-chain-id    (buff 4))
-    (msg-hash    (buff 32))
-    (signature   (buff 64)))
-  (match (secp256k1-recover? msg-hash signature)
-    pubkey
-      (if (is-eq source-chain-id CHAIN_EVM)
-        (ok (keccak-to-address pubkey))
-        (ok (hash160-to-address pubkey)))  ;; BTC and Stacks both use hash160
-    err-code
-      (err ERR_SIG_VERIFICATION)))
-
-;; keccak256(compressed-pubkey), take last 20 bytes EVM address
-(define-private (keccak-to-address (pubkey (buff 33)))
+;; keccak256(uncompressed) and take the last 20 bytes -- the canonical EVM
+;; address derivation.
+(define-private (evm-address-from-pubkey (uncompressed (buff 64)))
   (unwrap-panic (as-max-len?
-    (unwrap-panic (slice? (keccak256 pubkey) u12 u32))
+    (unwrap-panic (slice? (keccak256 uncompressed) u12 u32))
     u20)))
 
-;; hash160(compressed-pubkey) BTC/Stacks address bytes
-(define-private (hash160-to-address (pubkey (buff 33)))
-  (hash160 pubkey))
-
-;; ============================================================
-;; Private: message hashing
-;; ============================================================
-
-;; Build the withdrawal message hash.
-;; Must be reproduced identically in TypeScript:
-;;   keccak256(concat(
-;;     WITHDRAW_DOMAIN,
-;;     source-chain-id,           // 4 bytes
-;;     controller-address,       // 32 bytes (padded)
-;;     token-principal,    // consensus-serialised principal
-;;     uint256(amount),    // 16 bytes big-endian
-;;     recipient-principal,// consensus-serialised principal
-;;     uint256(nonce)      // 16 bytes big-endian
-;;   ))
-(define-private (build-withdraw-hash
-    (source-chain-id       (buff 4))
-    (controller-address   (buff 32))
-    (token-contract principal)
-    (amount         uint)
-    (recipient      principal)
-    (nonce          uint))
-  (keccak256
-    (concat WITHDRAW_DOMAIN
-    (concat source-chain-id
-    (concat controller-address
-    (concat (unwrap-panic (to-consensus-buff? token-contract))
-    (concat (uint-to-buff-16 amount)
-    (concat (unwrap-panic (to-consensus-buff? recipient))
-            (uint-to-buff-16 nonce)))))))))
+;; Take the last 20 bytes of a 32-byte normalised address (drops the
+;; left-pad zeros used by EVM/BTC/Stacks identities).
+(define-private (low-20-of-32 (addr (buff 32)))
+  (unwrap-panic (as-max-len?
+    (unwrap-panic (slice? addr u12 u32))
+    u20)))
 
 ;; ============================================================
 ;; Private: address helpers
@@ -356,7 +490,8 @@
     (is-eq source-chain-id CHAIN_EVM)
     (is-eq source-chain-id CHAIN_BTC)
     (is-eq source-chain-id CHAIN_STACKS)
-    (is-eq source-chain-id CHAIN_SOLANA)))
+    (is-eq source-chain-id CHAIN_SOLANA)
+    (is-eq source-chain-id CHAIN_P256)))
 
 (define-private (is-secp256k1-chain (source-chain-id (buff 4)))
   (or
@@ -364,54 +499,8 @@
     (is-eq source-chain-id CHAIN_BTC)
     (is-eq source-chain-id CHAIN_STACKS)))
 
-;; Validate address length for the given chain
-;; All chains use 32-byte controller-address in storage.
-;; For 20-byte chains the caller passes the padded form via pad-address-20.
-;; This just checks the stored address is non-zero.
+;; Validate the controller address is non-zero. All chains use a 32-byte
+;; normalised form (left-pad for 20-byte chains, raw 32-byte pubkey for
+;; ed25519 chains).
 (define-private (check-address (source-chain-id (buff 4)) (controller-address (buff 32)))
-  (not (is-eq controller-address 0x0000000000000000000000000000000000000000000000000000000000000000)))
-
-;; ============================================================
-;; Private: uint serialisation
-;; ============================================================
-
-;; Encode uint as 16-byte big-endian buffer (covers u128 max)
-;; Used in message hashing matches TypeScript encodePacked uint128
-;; Encode uint as 16-byte big-endian buffer
-;; Split into two u64 halves avoids u128 literal overflow in parser
-(define-private (uint-to-buff-16 (n uint))
-  (let
-    ((high (/ n u18446744073709551616))   ;; u64 max + 1 upper 8 bytes
-     (low  (mod n u18446744073709551616))) ;; lower 8 bytes
-    (unwrap-panic (as-max-len?
-      (concat (uint-to-buff-8 high) (uint-to-buff-8 low))
-      u16))))
-
-(define-private (uint-to-buff-8 (n uint))
-  (let
-    ((high (/ n u4294967296))    ;; u32 max + 1 upper 4 bytes
-     (low  (mod n u4294967296))) ;; lower 4 bytes
-    (unwrap-panic (as-max-len?
-      (concat (uint-to-buff-4 high) (uint-to-buff-4 low))
-      u8))))
-
-(define-private (uint-to-buff-4 (n uint))
-  (let
-    ((high (/ n u65536))    ;; upper 2 bytes
-     (low  (mod n u65536))) ;; lower 2 bytes
-    (unwrap-panic (as-max-len?
-      (concat (uint-to-buff-2 high) (uint-to-buff-2 low))
-      u4))))
-
-(define-private (uint-to-buff-2 (n uint))
-  (let
-    ((high (/ n u256))    ;; upper byte
-     (low  (mod n u256))) ;; lower byte
-    (unwrap-panic (as-max-len?
-      (concat (uint-to-buff-1 high) (uint-to-buff-1 low))
-      u2))))
-
-(define-private (uint-to-buff-1 (n uint))
-  (unwrap-panic (element-at?
-    0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff
-    n)))
+  (not (is-eq controller-address ZERO_32)))
