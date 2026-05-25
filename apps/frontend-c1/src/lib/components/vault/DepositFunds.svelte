@@ -117,7 +117,7 @@
 
 	{#if !stacksConnected}
 		<p class="text-sm text-amber-800 dark:text-amber-200">
-			Connect a <strong>Stacks</strong> wallet (Hiro or compatible) to deposit USDCx.
+			Connect a <strong>Stacks</strong> wallet to deposit USDCx.
 		</p>
 	{:else}
 		<div class="font-mono text-xs text-neutral-700 dark:text-neutral-300">

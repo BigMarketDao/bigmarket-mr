@@ -26,7 +26,6 @@
 		walletState
 	} from '@bigmarket/bm-common';
 	import { fmtMicroToStx, requestMappedDepositToVault } from '@bigmarket/bm-utilities';
-	import VaultBalanceStrip from './VaultBalanceStrip.svelte';
 	import DepositAction from './DepositAction.svelte';
 	import type { WalletAccount } from '@bigmarket/bm-types';
 
@@ -53,7 +52,6 @@
 	// ── loaded state ─────────────────────────────────────────────────────────
 	let loading = $state(false);
 	let mappedAddress = $state('');
-	let vaultBalance = $state<bigint | null>(null);
 	let mappedBalance = $state<bigint | null>(null);
 	let errorMsg = $state<string | null>(null);
 
@@ -94,9 +92,7 @@
 	let sweepError = $state<string | null>(null);
 
 	// ── derived capability flags ──────────────────────────────────────────────
-	const canDirectDeposit = $derived(
-		stacksConnected && !directBusy && walletBalance > 0n
-	);
+	const canDirectDeposit = $derived(stacksConnected && !directBusy && walletBalance > 0n);
 	const canRelayTransfer = $derived(
 		stacksConnected &&
 			!relayTransferBusy &&
@@ -156,17 +152,10 @@
 			);
 			mappedAddress = mapping.mappedAddress?.trim() ?? '';
 
-			const [vaultBal, mappedBal] = await Promise.all([
-				// Vault balance always keyed by (sourceAddress, sourceAddress):
-				// both direct deposits and relay sweeps credit this same slot.
-				vault.getVaultUsdcxBalance(appConfig.VITE_STACKS_API, 'stacks', stxAddress, stxAddress),
-				mappedAddress
-					? vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress)
-					: Promise.resolve(0n)
-			]);
-
-			vaultBalance = vaultBal;
-			mappedBalance = mappedBal;
+			// Only fetch relay/mapped balance — vault balance is shown by the page-level VaultBalanceSummary
+			mappedBalance = mappedAddress
+				? await vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress)
+				: 0n;
 		} catch (e) {
 			errorMsg = e instanceof Error ? e.message : String(e);
 		} finally {
@@ -271,19 +260,9 @@
 >
 	{#if !stacksConnected}
 		<p class="text-sm text-amber-800 dark:text-amber-200">
-			Connect a <strong>Stacks</strong> wallet (Hiro or compatible) to deposit USDCx.
+			Connect a <strong>Stacks</strong> wallet to deposit USDCx.
 		</p>
 	{:else}
-		<!-- Shared balance strip -->
-		<VaultBalanceStrip
-			{loading}
-			{vaultBalance}
-			{walletBalance}
-			{mappedBalance}
-			{stxAddress}
-			{mappedAddress}
-		/>
-
 		{#if errorMsg}
 			<p class="text-sm text-red-700 dark:text-red-300">{errorMsg}</p>
 		{/if}
@@ -316,8 +295,8 @@
 		{#if path === 'direct'}
 			<!-- ── Direct: wallet → vault ───────────────────────────────────────── -->
 			<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-				Move USDCx directly from your Stacks wallet into the vault. You sign the transaction in
-				Hiro or a compatible wallet.
+				Move USDCx directly from your Stacks wallet into the vault. You sign the transaction in Hiro
+				or a compatible wallet.
 			</p>
 			<DepositAction
 				maxBalance={walletBalance}

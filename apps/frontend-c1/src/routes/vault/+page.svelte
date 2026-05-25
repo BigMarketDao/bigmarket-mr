@@ -4,6 +4,7 @@
 	import { appConfigStore, initWallet, requireAppConfig } from '@bigmarket/bm-common';
 	import VaultDeposit from '$lib/components/vault/VaultDeposit.svelte';
 	import VaultWithdraw from '$lib/components/vault/VaultWithdraw.svelte';
+	import VaultBalanceSummary from '$lib/components/vault/VaultBalanceSummary.svelte';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
@@ -13,9 +14,8 @@
 		void initWallet(appConfig.VITE_BIGMARKET_API);
 	});
 
-	const tabBase =
-		'flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer';
-	const tabActive = 'bg-green-500 text-white shadow-sm';
+	const tabBase = 'flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer';
+	const tabActive = 'bg-orange-500 text-white shadow-sm';
 	const tabInactive =
 		'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800';
 </script>
@@ -29,9 +29,12 @@
 </svelte:head>
 
 <PageContainer>
-	<div class="flex w-full justify-center bg-white py-1 dark:bg-gray-900">
+	<div class="flex w-full justify-center py-1">
 		<div class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 			<div class="mb-6 space-y-4">
+				<!-- Balance summary — visible whenever any wallet is connected -->
+				<VaultBalanceSummary />
+
 				<!-- Top-level Deposit / Withdraw tabs -->
 				<div
 					class="mx-auto flex gap-2 rounded-md border border-neutral-200 p-1 dark:border-neutral-600"
@@ -57,17 +60,19 @@
 					</button>
 				</div>
 			</div>
-
-			<div class="flex w-full justify-center">
-				{#if panel === 'deposit'}
-					<div class="w-full max-w-2xl">
-						<VaultDeposit />
-					</div>
-				{:else}
-					<div class="w-full max-w-2xl">
-						<VaultWithdraw />
-					</div>
-				{/if}
+			<div class="w-full space-y-4">
+				<!-- Source selector -->
+				<div class="flex gap-1 rounded-md p-1 dark:border-neutral-600" role="tablist">
+					{#if panel === 'deposit'}
+						<div class="w-full">
+							<VaultDeposit />
+						</div>
+					{:else}
+						<div class="w-full">
+							<VaultWithdraw />
+						</div>
+					{/if}
+				</div>
 			</div>
 		</div>
 	</div>

@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { fmtMicroToStx } from '@bigmarket/bm-utilities';
+	import { daoConfigStore, requireDaoConfig } from '@bigmarket/bm-common';
+	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 
 	interface Props {
 		loading: boolean;
 		vaultBalance: bigint | null;
 		walletBalance: bigint | null;
 		mappedBalance: bigint | null;
-		stxAddress?: string;
 		mappedAddress?: string;
 	}
 
@@ -15,7 +16,6 @@
 		vaultBalance,
 		walletBalance,
 		mappedBalance,
-		stxAddress = '',
 		mappedAddress = ''
 	}: Props = $props();
 
@@ -33,6 +33,9 @@
 		<p class="mt-1 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
 			{loading ? '…' : fmt(vaultBalance)}
 		</p>
+		<p class="mt-0.5 font-mono text-[9px] break-all text-neutral-400">
+			{daoConfig.VITE_DAO_VAULT + '.usdcx'}
+		</p>
 	</div>
 
 	<!-- Wallet + mapped side by side -->
@@ -44,11 +47,11 @@
 			<p class="mt-1 text-base font-semibold text-neutral-900 dark:text-neutral-100">
 				{loading ? '…' : fmt(walletBalance)}
 			</p>
-			{#if stxAddress}
+			<!-- {#if stxAddress}
 				<p class="mt-0.5 font-mono text-[9px] break-all text-neutral-400">
 					{stxAddress}
 				</p>
-			{/if}
+			{/if} -->
 		</div>
 
 		<div

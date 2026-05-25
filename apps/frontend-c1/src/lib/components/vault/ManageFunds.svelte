@@ -191,7 +191,7 @@
 
 	{#if !stacksConnected}
 		<p class="text-sm text-amber-800 dark:text-amber-200">
-			Connect with a <strong>Stacks</strong> wallet (Hiro or compatible) to manage vault deposits.
+			Connect with a <strong>Stacks</strong> wallet to manage vault deposits.
 		</p>
 	{:else if !sourceIdentity}
 		<p class="text-sm text-amber-800 dark:text-amber-200">

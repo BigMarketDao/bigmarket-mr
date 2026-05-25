@@ -61,7 +61,7 @@
 			$walletState.chain === 'ethereum' &&
 			mappedStx.length > 0 &&
 			ethAddress.length > 0) ||
-			$walletState.chain === 'stacks'
+			($walletState.status === 'connected' && $walletState.chain === 'stacks')
 	);
 
 	const readyWithdraw = $derived(
@@ -253,138 +253,141 @@
 		</p>
 	{/if}
 
-	<div class="space-y-1 font-mono text-xs text-neutral-700 dark:text-neutral-300">
-		{#if flow === 'deposit'}
-			{#if ethAddress}
+	{#if $walletState.status === 'connected'}
+		<div class="space-y-1 font-mono text-xs text-neutral-700 dark:text-neutral-300">
+			{#if flow === 'deposit'}
+				{#if ethAddress}
+					<p>
+						<span class="text-neutral-500 dark:text-neutral-400">From (ETH)</span>
+						<span class="mt-0.5 block break-all">{ethAddress}</span>
+					</p>
+				{/if}
+				{#if mappedStx}
+					<p>
+						<span class="text-neutral-500 dark:text-neutral-400">To (Stacks / mapped)</span>
+						<span class="mt-0.5 block break-all">{mappedStx}</span>
+					</p>
+				{/if}
+			{:else}
+				{#if stxAddress}
+					<p>
+						<span class="text-neutral-500 dark:text-neutral-400">From (Stacks)</span>
+						<span class="mt-0.5 block break-all">{stxAddress}</span>
+					</p>
+				{/if}
 				<p>
-					<span class="text-neutral-500 dark:text-neutral-400">From (ETH)</span>
-					<span class="mt-0.5 block break-all">{ethAddress}</span>
+					<span class="text-neutral-500 dark:text-neutral-400">To (ETH)</span>
+					<span class="mt-0.5 block break-all text-neutral-400 italic"
+						>{ethRecipientOk ? ethRecipient.trim() : 'Enter recipient below'}</span
+					>
 				</p>
 			{/if}
-			{#if mappedStx}
-				<p>
-					<span class="text-neutral-500 dark:text-neutral-400">To (Stacks / mapped)</span>
-					<span class="mt-0.5 block break-all">{mappedStx}</span>
-				</p>
-			{/if}
-		{:else}
-			{#if stxAddress}
-				<p>
-					<span class="text-neutral-500 dark:text-neutral-400">From (Stacks)</span>
-					<span class="mt-0.5 block break-all">{stxAddress}</span>
-				</p>
-			{/if}
-			<p>
-				<span class="text-neutral-500 dark:text-neutral-400">To (ETH)</span>
-				<span class="mt-0.5 block break-all text-neutral-400 italic"
-					>{ethRecipientOk ? ethRecipient.trim() : 'Enter recipient below'}</span
-				>
-			</p>
-		{/if}
-	</div>
+		</div>
 
-	<div class="space-y-2">
-		<label
-			class="block text-xs font-medium text-neutral-700 dark:text-neutral-300"
-			for="bm-vault-token">Token</label
-		>
-		<select
-			id="bm-vault-token"
-			bind:value={tokenSymbol}
-			class="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 shadow-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100"
-		>
-			<option value="USDC">USDC</option>
-			<option value="USDT">USDT</option>
-		</select>
-	</div>
-
-	{#if flow === 'withdraw'}
 		<div class="space-y-2">
 			<label
 				class="block text-xs font-medium text-neutral-700 dark:text-neutral-300"
-				for="bm-vault-eth-recipient">Recipient on Ethereum (0x…)</label
+				for="bm-vault-token">Token</label
+			>
+			<select
+				id="bm-vault-token"
+				bind:value={tokenSymbol}
+				class="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 shadow-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100"
+			>
+				<option value="USDC">USDC</option>
+				<option value="USDT">USDT</option>
+			</select>
+		</div>
+
+		{#if flow === 'withdraw'}
+			<div class="space-y-2">
+				<label
+					class="block text-xs font-medium text-neutral-700 dark:text-neutral-300"
+					for="bm-vault-eth-recipient">Recipient on Ethereum (0x…)</label
+				>
+				<input
+					id="bm-vault-eth-recipient"
+					type="text"
+					autocomplete="off"
+					placeholder="0x..."
+					bind:value={ethRecipient}
+					class="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 shadow-sm placeholder:text-neutral-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100"
+				/>
+				<p class="text-[11px] leading-relaxed text-neutral-500 dark:text-neutral-400">
+					Use the address where you want to receive {tokenSymbolDestEth} (for example your MetaMask account).
+				</p>
+			</div>
+		{/if}
+
+		<div class="space-y-2">
+			<label
+				class="block text-xs font-medium text-neutral-700 dark:text-neutral-300"
+				for="bm-vault-amount">Amount</label
 			>
 			<input
-				id="bm-vault-eth-recipient"
+				id="bm-vault-amount"
 				type="text"
-				autocomplete="off"
-				placeholder="0x..."
-				bind:value={ethRecipient}
-				class="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-sm text-neutral-900 shadow-sm placeholder:text-neutral-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100"
+				inputmode="decimal"
+				placeholder="e.g. 100"
+				bind:value={amount}
+				class="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 shadow-sm placeholder:text-neutral-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100"
 			/>
-			<p class="text-[11px] leading-relaxed text-neutral-500 dark:text-neutral-400">
-				Use the address where you want to receive {tokenSymbolDestEth} (for example your MetaMask account).
-			</p>
 		</div>
-	{/if}
 
-	<div class="space-y-2">
-		<label
-			class="block text-xs font-medium text-neutral-700 dark:text-neutral-300"
-			for="bm-vault-amount">Amount</label
-		>
-		<input
-			id="bm-vault-amount"
-			type="text"
-			inputmode="decimal"
-			placeholder="e.g. 100"
-			bind:value={amount}
-			class="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 shadow-sm placeholder:text-neutral-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100"
-		/>
-	</div>
+		{#if errorMsg}
+			<p class="text-sm text-red-700 dark:text-red-300">{@html errorMsg}</p>
+		{/if}
 
-	{#if errorMsg}
-		<p class="text-sm text-red-700 dark:text-red-300">{@html errorMsg}</p>
-	{/if}
+		{#if flow === 'deposit' && explorerEthApproveUrl}
+			<p class="text-xs text-neutral-700 dark:text-neutral-300">
+				Approval tx:
+				<a
+					class="font-mono break-all underline"
+					href={explorerEthApproveUrl}
+					target="_blank"
+					rel="noreferrer">{approveTxHash}</a
+				>
+			</p>
+		{:else if flow === 'deposit' && approveTxHash}
+			<p class="text-xs text-neutral-700 dark:text-neutral-300">
+				Approval tx: <span class="font-mono break-all">{approveTxHash}</span>
+			</p>
+		{/if}
 
-	{#if flow === 'deposit' && explorerEthApproveUrl}
-		<p class="text-xs text-neutral-700 dark:text-neutral-300">
-			Approval tx:
-			<a
-				class="font-mono break-all underline"
-				href={explorerEthApproveUrl}
-				target="_blank"
-				rel="noreferrer">{approveTxHash}</a
-			>
-		</p>
-	{:else if flow === 'deposit' && approveTxHash}
-		<p class="text-xs text-neutral-700 dark:text-neutral-300">
-			Approval tx: <span class="font-mono break-all">{approveTxHash}</span>
-		</p>
-	{/if}
-
-	{#if flow === 'deposit' && explorerEthTxUrl}
-		<p class="text-xs text-emerald-800 dark:text-emerald-200">
-			Bridge transaction sent.
-			<a
-				class="font-mono break-all underline"
-				href={explorerEthTxUrl}
-				target="_blank"
-				rel="noreferrer">{txHash}</a
-			>
-		</p>
-	{:else if flow === 'withdraw' && explorerStxTxUrl}
-		<p class="text-xs text-emerald-800 dark:text-emerald-200">
-			Stacks transaction sent. Funds will arrive on Ethereum after Allbridge completes the transfer.
-			<a
-				class="font-mono break-all underline"
-				href={explorerStxTxUrl}
-				target="_blank"
-				rel="noreferrer">{txHash}</a
-			>
-		</p>
-	{:else if txHash}
-		<p class="text-xs text-emerald-800 dark:text-emerald-200">
-			Transaction sent. <span class="font-mono break-all">{txHash}</span>
-		</p>
-	{/if}
-	{#if flow === 'deposit'}
-		<Button type="button" onclick={onSubmit} disabled={!canSubmit} class="w-full cursor-pointer">
-			{busy ? 'Confirm in wallet…' : `Bridge ${tokenSymbol} to Stacks`}
-		</Button>
-	{:else}
-		<Button type="button" onclick={onSubmit} disabled={!canSubmit} class="w-full cursor-pointer">
-			{busy ? 'Confirm in wallet…' : `Bridge ${tokenSymbolSourceStx} to Ethereum`}
-		</Button>
+		{#if flow === 'deposit' && explorerEthTxUrl}
+			<p class="text-xs text-emerald-800 dark:text-emerald-200">
+				Bridge transaction sent.
+				<a
+					class="font-mono break-all underline"
+					href={explorerEthTxUrl}
+					target="_blank"
+					rel="noreferrer">{txHash}</a
+				>
+			</p>
+		{:else if flow === 'withdraw' && explorerStxTxUrl}
+			<p class="text-xs text-emerald-800 dark:text-emerald-200">
+				Stacks transaction sent. Funds will arrive on Ethereum after Allbridge completes the
+				transfer.
+				<a
+					class="font-mono break-all underline"
+					href={explorerStxTxUrl}
+					target="_blank"
+					rel="noreferrer">{txHash}</a
+				>
+			</p>
+		{:else if txHash}
+			<p class="text-xs text-emerald-800 dark:text-emerald-200">
+				Transaction sent. <span class="font-mono break-all">{txHash}</span>
+			</p>
+		{/if}
+		{#if flow === 'deposit'}
+			<Button type="button" onclick={onSubmit} disabled={!canSubmit} class="w-full cursor-pointer">
+				{busy ? 'Confirm in wallet…' : `Bridge ${tokenSymbol} to Stacks`}
+			</Button>
+		{:else}
+			<Button type="button" onclick={onSubmit} disabled={!canSubmit} class="w-full cursor-pointer">
+				{busy ? 'Confirm in wallet…' : `Bridge ${tokenSymbolSourceStx} to Ethereum`}
+			</Button>
+		{/if}
 	{/if}
 </div>

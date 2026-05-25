@@ -3,53 +3,129 @@
 	import BridgeFunds from './BridgeFunds.svelte';
 	import StacksVaultPanel from './StacksVaultPanel.svelte';
 
-	type Source = 'bridge' | 'stacks';
+	type ControllerChain = 'evm' | 'stacks';
 
-	let source = $state<Source>(
-		$walletState.status === 'connected' && $walletState.chain === 'stacks' ? 'stacks' : 'bridge'
+	// Auto-select the chain matching the currently-connected wallet
+	let chain = $state<ControllerChain>(
+		$walletState.status === 'connected' && $walletState.chain === 'stacks' ? 'stacks' : 'evm'
 	);
 
-	const tabBase =
-		'flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer';
-	const tabActive = 'bg-green-500 text-white shadow-sm';
-	const tabInactive =
-		'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800';
+	const evmConnected = $derived(
+		$walletState.status === 'connected' && $walletState.chain === 'ethereum'
+	);
+	const stacksConnected = $derived(
+		$walletState.status === 'connected' && $walletState.chain === 'stacks'
+	);
 </script>
 
-<div class="w-full space-y-4">
-	<!-- Source selector -->
-	<div
-		class="flex gap-1 rounded-md border border-neutral-200 p-1 dark:border-neutral-600"
-		role="tablist"
-	>
+<div class="w-full space-y-5">
+	<!-- Chain selector -->
+	<div class="grid grid-cols-2 gap-3">
+		<!-- Ethereum card -->
 		<button
 			type="button"
-			role="tab"
-			aria-selected={source === 'bridge'}
-			class="{tabBase} {source === 'bridge' ? tabActive : tabInactive}"
-			onclick={() => (source = 'bridge')}
+			onclick={() => (chain = 'evm')}
+			class="group flex flex-col gap-1.5 rounded-lg border-2 p-3 text-left transition-all {chain ===
+			'evm'
+				? 'border-green-500 bg-green-50/60 dark:border-green-500/70 dark:bg-green-900/10'
+				: 'border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-900/40 dark:hover:border-neutral-600'}"
 		>
-			AllBridge
+			<div class="flex items-center justify-between">
+				<!-- ETH diamond icon -->
+				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" aria-hidden="true">
+					<polygon points="12,2 20,12 12,22 4,12" fill="#627EEA" opacity="0.85" />
+					<polygon points="12,2 20,12 12,14.5" fill="#C0CBF6" />
+					<polygon points="12,2 4,12 12,14.5" fill="white" opacity="0.9" />
+					<polygon points="12,14.5 20,12 12,22" fill="#8197EE" />
+					<polygon points="12,14.5 4,12 12,22" fill="#C0CBF6" opacity="0.8" />
+				</svg>
+				<!-- Connection dot -->
+				<span
+					class="h-2 w-2 rounded-full {evmConnected
+						? 'bg-green-500'
+						: 'bg-neutral-300 dark:bg-neutral-600'}"
+					title={evmConnected ? 'MetaMask connected' : 'MetaMask not connected'}
+				></span>
+			</div>
+			<span
+				class="text-sm font-semibold {chain === 'evm'
+					? 'text-green-700 dark:text-green-400'
+					: 'text-neutral-700 dark:text-neutral-300'}"
+			>
+				Ethereum
+			</span>
+			<span class="text-[10px] leading-tight text-neutral-500 dark:text-neutral-400">
+				{evmConnected ? 'MetaMask connected' : 'Requires MetaMask'}
+			</span>
 		</button>
+
+		<!-- Stacks card -->
 		<button
 			type="button"
-			role="tab"
-			aria-selected={source === 'stacks'}
-			class="{tabBase} {source === 'stacks' ? tabActive : tabInactive}"
-			onclick={() => (source = 'stacks')}
+			onclick={() => (chain = 'stacks')}
+			class="group flex flex-col gap-1.5 rounded-lg border-2 p-3 text-left transition-all {chain ===
+			'stacks'
+				? 'border-green-500 bg-green-50/60 dark:border-green-500/70 dark:bg-green-900/10'
+				: 'border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-900/40 dark:hover:border-neutral-600'}"
 		>
-			Stacks wallet
+			<div class="flex items-center justify-between">
+				<!-- STX logo -->
+				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" aria-hidden="true">
+					<circle cx="12" cy="12" r="11" fill="#FF5500" />
+					<text
+						x="12"
+						y="16.5"
+						text-anchor="middle"
+						font-size="11"
+						font-weight="bold"
+						fill="white"
+						font-family="sans-serif">S</text
+					>
+				</svg>
+				<span
+					class="h-2 w-2 rounded-full {stacksConnected
+						? 'bg-green-500'
+						: 'bg-neutral-300 dark:bg-neutral-600'}"
+					title={stacksConnected ? 'Stacks wallet connected' : 'Stacks wallet not connected'}
+				></span>
+			</div>
+			<span
+				class="text-sm font-semibold {chain === 'stacks'
+					? 'text-green-700 dark:text-green-400'
+					: 'text-neutral-700 dark:text-neutral-300'}"
+			>
+				Stacks
+			</span>
+			<span class="text-[10px] leading-tight text-neutral-500 dark:text-neutral-400">
+				{stacksConnected ? 'Hiro wallet connected' : 'Requires Hiro wallet'}
+			</span>
 		</button>
 	</div>
 
-	{#if source === 'bridge'}
-		<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-			Bridge USDC or USDT from Ethereum to Stacks. USDCx lands on your mapped custody address and
-			can then be moved to your vault.
-		</p>
+	<!-- Context message -->
+	{#if chain === 'evm'}
+		{#if !evmConnected}
+			<p
+				class="rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/10 dark:text-amber-300"
+			>
+				Connect <strong>MetaMask</strong> to deposit USDC from Ethereum. USDCx will arrive on your mapped
+				relay address and can be swept into the vault.
+			</p>
+		{:else}
+			<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+				Deposit USDC from Ethereum via AllBridge. USDCx lands on your mapped relay address and is
+				then moved to your vault.
+			</p>
+		{/if}
 		<BridgeFunds initialFlow="deposit" locked />
 	{:else}
-		<!-- Unified Stacks panel: shared balances, direct + relay paths -->
+		{#if !stacksConnected}
+			<p
+				class="rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/10 dark:text-amber-300"
+			>
+				Connect a <strong>Stacks wallet</strong> to deposit USDCx directly into the vault.
+			</p>
+		{/if}
 		<StacksVaultPanel />
 	{/if}
 </div>
