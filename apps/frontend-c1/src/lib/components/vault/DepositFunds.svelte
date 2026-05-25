@@ -84,7 +84,7 @@
 
 		try {
 			const vault = stacks.createVaultClient(daoConfig);
-			const result = await vault.depositUsdcxToVault({
+			const result = await vault.depositSip10ToVault({
 				amountMicro,
 				userChain: 'stacks',
 				sourceAddress: getStxAddress(),

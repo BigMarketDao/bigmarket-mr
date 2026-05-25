@@ -135,11 +135,11 @@
 					>
 					<ParaContainer>Full access including staking in markets.</ParaContainer>
 					<Button onclick={connectStacks}>Connect Stacks</Button>
-					{#if isPhantomConnected}
+					<!-- {#if isPhantomConnected}
 						<Button onclick={disconnectPhantom}>Disconnect Phantom</Button>
 					{:else}
 						<Button onclick={connectPhantom}>Connect Phantom</Button>
-					{/if}
+					{/if} -->
 					{#if isMetaMaskConnected}
 						<Button onclick={disconnectMetaMask}>Disconnect Meta Mask</Button>
 					{:else}

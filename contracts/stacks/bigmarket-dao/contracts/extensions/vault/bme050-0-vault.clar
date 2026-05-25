@@ -35,16 +35,16 @@
 ;; Errors
 ;; ============================================================
 
-(define-constant ERR_UNAUTHORISED         (err u100))
-(define-constant ERR_INVALID_AMOUNT       (err u101))
-(define-constant ERR_TOKEN_NOT_ALLOWED    (err u102))
-(define-constant ERR_INSUFFICIENT_BALANCE (err u103))
-(define-constant ERR_INVALID_NONCE        (err u104))
-(define-constant ERR_ALREADY_SWEPT        (err u105))
-(define-constant ERR_SIG_VERIFICATION     (err u106))
-(define-constant ERR_ADDRESS_MISMATCH     (err u107))
-(define-constant ERR_UNSUPPORTED_CHAIN    (err u108))
-(define-constant ERR_INVALID_ADDRESS      (err u109))
+(define-constant ERR_UNAUTHORISED         (err u7100))
+(define-constant ERR_INVALID_AMOUNT       (err u7101))
+(define-constant ERR_TOKEN_NOT_ALLOWED    (err u7102))
+(define-constant ERR_INSUFFICIENT_BALANCE (err u7103))
+(define-constant ERR_INVALID_NONCE        (err u7104))
+(define-constant ERR_ALREADY_SWEPT        (err u7105))
+(define-constant ERR_SIG_VERIFICATION     (err u7106))
+(define-constant ERR_ADDRESS_MISMATCH     (err u7107))
+(define-constant ERR_UNSUPPORTED_CHAIN    (err u7108))
+(define-constant ERR_INVALID_ADDRESS      (err u7109))
 
 ;; ============================================================
 ;; Storage
@@ -54,21 +54,21 @@
 (define-map allowed-tokens principal bool)
 
 ;; Cross-chain balances
-;; user-chain:   4-byte chain id
-;; user-address: 32-byte normalised address
+;; controller-chain:   4-byte chain id
+;; controller-address: 32-byte normalised address
 ;;   EVM/BTC/Stacks 12x 0x00 ++ 20-byte address
 ;;   Solana         32-byte ed25519 public key (raw)
 (define-map balances
-  { user-chain: (buff 4), user-address: (buff 32), token: principal }
+  { controller-chain: (buff 4), controller-address: (buff 32), mapped-address: principal, token: principal }
   uint)
 
 ;; Per-user withdrawal nonces (prevents signature replay)
 (define-map withdrawal-nonces
-  { user-chain: (buff 4), user-address: (buff 32) }
+  { controller-chain: (buff 4), controller-address: (buff 32) }
   uint)
 
 ;; Consumed intent IDs (prevents double-sweep)
-(define-map swept-intents (buff 32) bool)
+(define-map swept-intents { intent-id: (buff 32), token-contract: principal, controller-chain: (buff 4), controller-address: (buff 32), mapped-address: principal } bool)
 
 ;; ============================================================
 ;; Auth helpers
@@ -105,60 +105,62 @@
 ;; ============================================================
 
 (define-read-only (get-balance
-    (user-chain   (buff 4))
-    (user-address (buff 32))
+    (controller-chain   (buff 4))
+    (controller-address (buff 32))
+    (mapped-address principal)
     (token        principal))
   (default-to u0
     (map-get? balances
-      { user-chain: user-chain, user-address: user-address, token: token })))
+      { controller-chain: controller-chain, controller-address: controller-address, mapped-address: mapped-address, token: token })))
 
 (define-read-only (get-nonce
-    (user-chain   (buff 4))
-    (user-address (buff 32)))
+    (controller-chain   (buff 4))
+    (controller-address (buff 32)))
   (default-to u0
     (map-get? withdrawal-nonces
-      { user-chain: user-chain, user-address: user-address })))
+      { controller-chain: controller-chain, controller-address: controller-address })))
 
-(define-read-only (is-intent-swept (intent-id (buff 32)))
-  (default-to false (map-get? swept-intents intent-id)))
+(define-read-only (is-intent-swept (intent-id (buff 32)) (token-contract principal) (controller-chain (buff 4)) (controller-address (buff 32)) (mapped-address principal))
+  (default-to false (map-get? swept-intents { intent-id: intent-id, token-contract: token-contract, controller-chain: controller-chain, controller-address: controller-address, mapped-address: mapped-address })))
 
 (define-read-only (is-token-allowed-read (token-contract principal))
   (default-to false (map-get? allowed-tokens token-contract)))
 
-(define-private (credit-balance (user-chain (buff 4)) (user-address (buff 32)) (token-contract principal) (amount uint))
-  (let ((prev (default-to u0 (map-get? balances { user-chain: user-chain, user-address: user-address, token: token-contract }))))
-    (map-set balances { user-chain: user-chain, user-address: user-address, token: token-contract } (+ prev amount))))
+(define-private (credit-balance (controller-chain (buff 4)) (controller-address (buff 32)) (mapped-address principal) (token-contract principal) (amount uint))
+  (let ((prev (default-to u0 (map-get? balances { controller-chain: controller-chain, controller-address: controller-address, mapped-address: mapped-address, token: token-contract }))))
+    (map-set balances { controller-chain: controller-chain, controller-address: controller-address, mapped-address: mapped-address, token: token-contract } (+ prev amount))))
 
 ;; Convenience: get balance by raw EVM address (no padding needed by caller)
-(define-read-only (get-evm-balance (eth-address (buff 20)) (token principal))
-  (get-balance CHAIN_EVM (pad-address-20 eth-address) token))
+(define-read-only (get-evm-balance (eth-address (buff 20)) (mapped-address principal) (token principal))
+  (get-balance CHAIN_EVM (pad-address-20 eth-address) mapped-address token))
 
 ;; Convenience: get balance by Stacks principal
-(define-read-only (get-stacks-balance (stacks-addr principal) (token principal))
-  (get-balance CHAIN_STACKS (pad-address-20 (principal-to-hash160 stacks-addr)) token))
+(define-read-only (get-stacks-balance (stacks-address principal) (mapped-address principal) (token principal))
+  (get-balance CHAIN_STACKS (pad-address-20 (principal-to-hash160 stacks-address)) mapped-address token))
 
 ;; ============================================================
 ;; Use Case 1: Direct deposit (any chain user, self-custodied)
 ;;
 ;; tx-sender holds the tokens on Stacks and calls this directly.
-;; user-chain + user-address declare which source chain identity
+;; controller-chain + controller-address declare which source chain identity
 ;; this balance belongs to. For native Stacks users, pass
 ;; CHAIN_STACKS and their own hash160.
 ;; ============================================================
 
 (define-public (deposit
     (token        <sip010>)
-    (amount       uint)
-    (user-chain   (buff 4))
-    (user-address (buff 32)))
-  (let ((token-contract (contract-of token)))
+    (amount       uint))
+  (let (
+    (token-contract (contract-of token))
+    (controller-address (pad-address-20 (principal-to-hash160 tx-sender)))
+  )
     (asserts! (> amount u0)                              ERR_INVALID_AMOUNT)
     (asserts! (check-token token-contract)               ERR_TOKEN_NOT_ALLOWED)
-    (asserts! (check-chain user-chain)                   ERR_UNSUPPORTED_CHAIN)
-    (asserts! (check-address user-chain user-address)    ERR_INVALID_ADDRESS)
+    (asserts! (check-address CHAIN_STACKS controller-address)    ERR_INVALID_ADDRESS)
     (try! (contract-call? token transfer amount tx-sender current-contract none))
 
-    (credit-balance user-chain user-address token-contract amount)
+    (credit-balance CHAIN_STACKS controller-address tx-sender token-contract amount)
+    (print {event: "deposit", token-contract : token-contract , amount: amount, controller-chain: CHAIN_STACKS, controller-address: controller-address, mapped-address: tx-sender})
     (ok amount)))
 
 ;; ============================================================
@@ -167,24 +169,27 @@
 ;; Relayer holds the ephemeral mapped Stacks key, calls this
 ;; after tokens arrive at the mapped address.
 ;; Tokens: mapped-address vault contract
-;; Credit: goes to (user-chain, user-address) the real user
+;; Credit: goes to (controller-chain, controller-address) the real user
 ;; ============================================================
 
 (define-public (deposit-for
     (token        <sip010>)
     (amount       uint)
-    (user-chain   (buff 4))
-    (user-address (buff 32))
+    (controller-chain   (buff 4))
+    (controller-address (buff 32))
+    (mapped-address principal)
     (intent-id    (buff 32)))
   (let ((token-contract (contract-of token)))
     (asserts! (> amount u0)                              ERR_INVALID_AMOUNT)
     (asserts! (check-token token-contract)               ERR_TOKEN_NOT_ALLOWED)
-    (asserts! (check-chain user-chain)                   ERR_UNSUPPORTED_CHAIN)
-    (asserts! (check-address user-chain user-address)    ERR_INVALID_ADDRESS)
-    (asserts! (not (is-intent-swept intent-id))          ERR_ALREADY_SWEPT)
+    (asserts! (check-chain controller-chain)                   ERR_UNSUPPORTED_CHAIN)
+    (asserts! (check-address controller-chain controller-address)    ERR_INVALID_ADDRESS)
+    (asserts! (not (is-intent-swept intent-id token-contract controller-chain controller-address mapped-address))          ERR_ALREADY_SWEPT)
     (try! (contract-call? token transfer amount tx-sender current-contract none))
-    (credit-balance user-chain user-address token-contract amount)
-    (map-set swept-intents intent-id true)
+    (credit-balance controller-chain controller-address mapped-address token-contract amount)
+    (map-set swept-intents { intent-id: intent-id, token-contract: token-contract, controller-chain: controller-chain, controller-address: controller-address, mapped-address: mapped-address } true)
+    ;;(try! (contract-call? .bme030-0-reputation-token mint tx-sender u4 u1))
+    (print {event: "deposit-for", token-contract : token-contract , amount: amount, controller-chain: controller-chain, controller-address: controller-address, mapped-address: mapped-address, intent-id: intent-id})
     (ok amount)))
 
 ;; ============================================================
@@ -195,29 +200,30 @@
     (source-chain-id     (buff 4))
     (raw-address  (buff 20))
     (recipient    principal)
+    (mapped-address principal)
     (nonce        uint)
     (signature    (buff 64))
-    (recovery-id  uint))
+  )
   (let
     ((token-contract  (contract-of token))
-     (user-address    (pad-address-20 raw-address))
-     (current-balance (get-balance source-chain-id user-address token-contract))
-     (current-nonce   (get-nonce source-chain-id user-address))
+     (controller-address    (pad-address-20 raw-address))
+     (current-balance (get-balance source-chain-id controller-address mapped-address token-contract))
+     (current-nonce   (get-nonce source-chain-id controller-address))
      (message-hash    (build-withdraw-hash
-                        source-chain-id user-address token-contract amount recipient nonce)))
+                        source-chain-id controller-address token-contract amount recipient nonce)))
     (asserts! (> amount u0)                          ERR_INVALID_AMOUNT)
     (asserts! (check-token token-contract)           ERR_TOKEN_NOT_ALLOWED)
     (asserts! (is-secp256k1-chain source-chain-id)          ERR_UNSUPPORTED_CHAIN)
     (asserts! (>= current-balance amount)            ERR_INSUFFICIENT_BALANCE)
     (asserts! (is-eq nonce current-nonce)            ERR_INVALID_NONCE)
-    (let ((recovered (unwrap! (recover-address source-chain-id message-hash signature recovery-id) ERR_ADDRESS_MISMATCH)))
+    (let ((recovered (unwrap! (recover-address source-chain-id message-hash signature) ERR_ADDRESS_MISMATCH)))
       (asserts! (is-eq recovered raw-address)        ERR_ADDRESS_MISMATCH)
       ;; debit before transfer guards against re-entrancy
       (map-set balances
-        { user-chain: source-chain-id, user-address: user-address, token: token-contract }
+        { controller-chain: source-chain-id, controller-address: controller-address, mapped-address: mapped-address, token: token-contract }
         (- current-balance amount))
       (map-set withdrawal-nonces
-        { user-chain: source-chain-id, user-address: user-address }
+        { controller-chain: source-chain-id, controller-address: controller-address }
         (+ current-nonce u1))
       ;;(try! (as-contract? () (contract-call? token transfer amount tx-sender recipient none)))
       (ok amount))))
@@ -253,10 +259,10 @@
 ;;     (asserts! (>= current-balance amount)             ERR_INSUFFICIENT_BALANCE)
 ;;     (asserts! (is-eq nonce current-nonce)             ERR_INVALID_NONCE)
 ;;     (map-set balances
-;;       { user-chain: CHAIN_SOLANA, user-address: sol-address, token: token-contract }
+;;       { controller-chain: CHAIN_SOLANA, controller-address: sol-address, token: token-contract }
 ;;       (- current-balance amount))
 ;;     (map-set withdrawal-nonces
-;;       { user-chain: CHAIN_SOLANA, user-address: sol-address }
+;;       { controller-chain: CHAIN_SOLANA, controller-address: sol-address }
 ;;       (+ current-nonce u1))
 ;;     (try! (as-contract? () (contract-call? token transfer amount tx-sender recipient none)))
 ;;     (ok amount)))
@@ -269,12 +275,11 @@
 ;; Dispatches on source-chain-id for address derivation:
 ;;   EVM    keccak256(compressed-pubkey)[12:]
 ;;   BTC    hash160(compressed-pubkey)
-;;   Stacks hash160(compressed-pubkey)   (same as BTC derivation)
+;;   STX    hash160(compressed-pubkey - as BTC derivation)
 (define-private (recover-address
     (source-chain-id    (buff 4))
     (msg-hash    (buff 32))
-    (signature   (buff 64))
-    (recovery-id uint))
+    (signature   (buff 64)))
   (match (secp256k1-recover? msg-hash signature)
     pubkey
       (if (is-eq source-chain-id CHAIN_EVM)
@@ -302,7 +307,7 @@
 ;;   keccak256(concat(
 ;;     WITHDRAW_DOMAIN,
 ;;     source-chain-id,           // 4 bytes
-;;     user-address,       // 32 bytes (padded)
+;;     controller-address,       // 32 bytes (padded)
 ;;     token-principal,    // consensus-serialised principal
 ;;     uint256(amount),    // 16 bytes big-endian
 ;;     recipient-principal,// consensus-serialised principal
@@ -310,7 +315,7 @@
 ;;   ))
 (define-private (build-withdraw-hash
     (source-chain-id       (buff 4))
-    (user-address   (buff 32))
+    (controller-address   (buff 32))
     (token-contract principal)
     (amount         uint)
     (recipient      principal)
@@ -318,7 +323,7 @@
   (keccak256
     (concat WITHDRAW_DOMAIN
     (concat source-chain-id
-    (concat user-address
+    (concat controller-address
     (concat (unwrap-panic (to-consensus-buff? token-contract))
     (concat (uint-to-buff-16 amount)
     (concat (unwrap-panic (to-consensus-buff? recipient))
@@ -360,11 +365,11 @@
     (is-eq source-chain-id CHAIN_STACKS)))
 
 ;; Validate address length for the given chain
-;; All chains use 32-byte user-address in storage.
+;; All chains use 32-byte controller-address in storage.
 ;; For 20-byte chains the caller passes the padded form via pad-address-20.
 ;; This just checks the stored address is non-zero.
-(define-private (check-address (source-chain-id (buff 4)) (user-address (buff 32)))
-  (not (is-eq user-address 0x0000000000000000000000000000000000000000000000000000000000000000)))
+(define-private (check-address (source-chain-id (buff 4)) (controller-address (buff 32)))
+  (not (is-eq controller-address 0x0000000000000000000000000000000000000000000000000000000000000000)))
 
 ;; ============================================================
 ;; Private: uint serialisation

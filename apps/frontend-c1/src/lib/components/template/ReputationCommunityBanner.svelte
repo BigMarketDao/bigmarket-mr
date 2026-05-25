@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { appConfigStore, daoOverviewStore, requireAppConfig, userReputationStore, walletState } from '@bigmarket/bm-common';
+	import {
+		appConfigStore,
+		daoOverviewStore,
+		requireAppConfig,
+		userReputationStore,
+		walletState
+	} from '@bigmarket/bm-common';
 	import { fmtNumber, fmtNumberStacksFloor } from '@bigmarket/bm-utilities';
 	import { resolve } from '$app/paths';
 	import type { ReputationContractData } from '@bigmarket/bm-types';
@@ -18,7 +24,7 @@
 	const personalRep = $derived(loggedIn ? $userReputationStore?.userReputationData : undefined);
 
 	const networkLabel = $derived(
-		appConfig.VITE_NETWORK === 'testnet'
+		appConfig.VITE_NETWORK === 'testnet' || appConfig.VITE_NETWORK === 'devnet'
 			? appConfig.VITE_NETWORK.toUpperCase()
 			: 'ALPHA'
 	);

@@ -4,7 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-BigMarket is a DAO-governed prediction market on Stacks (Clarity). It uses a hybrid CPMM + LP architecture.
+BigMarket is a DAO-governed prediction market on Stacks (Clarity). It uses a hybrid CPMM + LP architecture and provides binary, categorical and scalar market types.
+
+DAO governance is based on the executor dao framework.
+
+The current phase of the project opens markets to users on other chains by enabling participation (buy shares, sell shares, claim winnings) via signed structured messages which are decoded in the Clarity vault contracts
 
 ## Commands
 

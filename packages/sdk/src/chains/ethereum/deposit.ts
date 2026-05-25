@@ -135,10 +135,18 @@ export async function approveAllbridgeDepositIfNeeded(
     return { alreadyApproved: true };
   }
 
+  // The Allbridge SDK's prepareApproveParams does NOT convert the human-readable
+  // float to integer token units (unlike checkAllowance which does). We must
+  // pre-convert here: e.g. "1" USDC with 6 decimals → "1000000".
+  // This makes MetaMask show the exact amount ("1 USDC") rather than "Unlimited".
+  const amountInt = BigInt(
+    Math.round(parseFloat(params.amount) * 10 ** sourceToken.decimals),
+  ).toString();
+
   const approveTx = (await sdk.bridge.rawTxBuilder.approve(web3 as any, {
     token: sourceToken,
     owner: userAddress,
-    amount: params.amount,
+    amount: amountInt,
     messenger,
   })) as {
     from?: string;
@@ -147,9 +155,20 @@ export async function approveAllbridgeDepositIfNeeded(
     data?: string;
   };
 
+  let approveGas: bigint;
+  try {
+    approveGas = await web3.eth.estimateGas({ ...approveTx, from: userAddress });
+  } catch (estimateErr) {
+    throw new Error(
+      `USDC approval would fail — check wallet connection and token address. ` +
+      `Detail: ${estimateErr instanceof Error ? estimateErr.message : String(estimateErr)}`,
+    );
+  }
+
   const sent = await web3.eth.sendTransaction({
     ...approveTx,
     from: userAddress,
+    gas: (approveGas * 12n) / 10n,
   });
 
   const txHash = extractTxHash(sent);
@@ -208,9 +227,27 @@ export async function sendAllbridgeDeposit(
     data?: string;
   };
 
+  // Estimate gas explicitly so we get a meaningful error if the tx would revert
+  // (e.g. missing approval, insufficient USDC balance, wrong network).
+  // Without this, a failing eth_estimateGas can produce absurdly large gas values
+  // that cause a cryptic "insufficient funds for gas" error.
+  let gasEstimate: bigint;
+  try {
+    gasEstimate = await web3.eth.estimateGas({ ...rawTx, from: userAddress });
+  } catch (estimateErr) {
+    throw new Error(
+      `Bridge deposit would fail on-chain — check USDC approval and balance. ` +
+      `Detail: ${estimateErr instanceof Error ? estimateErr.message : String(estimateErr)}`,
+    );
+  }
+
+  // Add 20 % buffer; typical Allbridge deposit uses 200k–500k gas
+  const gas = (gasEstimate * 12n) / 10n;
+
   const sent = await web3.eth.sendTransaction({
     ...rawTx,
     from: userAddress,
+    gas,
   });
 
   const txHash = extractTxHash(sent);

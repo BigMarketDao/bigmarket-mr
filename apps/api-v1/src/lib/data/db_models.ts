@@ -65,7 +65,7 @@ export async function connect() {
 	await crossChainMappingCollection.createIndex({ network: 1, mappedAddress: 1 }, { unique: true });
 
 	crossChainIntentCollection = database.collection('crossChainIntentCollection');
-	await crossChainIntentCollection.createIndex({ sourceAddress: 1, mappedAddress: 1 }, { unique: true });
+	//await crossChainIntentCollection.createIndex({ sourceAddress: 1, mappedAddress: 1 }, { unique: true });
 
 	marketLlmLogsCollection = database.collection('marketLlmLogsCollection');
 	await marketLlmLogsCollection.createIndex({ marketId: 1, marketType: 1, event: 1 }, { unique: true });

@@ -34,14 +34,12 @@
 	// };
 </script>
 
-<header
-	class="relative top-0 right-0 left-0 z-[999] h-16 border-b border-border bg-background"
->
+<header class="relative top-0 right-0 left-0 z-[999] h-16 border-b border-border bg-background">
 	<nav
 		class="mx-auto flex h-full w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
 	>
 		<div class="font-bold tracking-wide text-foreground">
-			BigMarket {appConfig.VITE_NETWORK === 'testnet'
+			BigMarket {appConfig.VITE_NETWORK === 'testnet' || appConfig.VITE_NETWORK === 'devnet'
 				? appConfig.VITE_NETWORK.toUpperCase()
 				: 'ALPHA'}
 		</div>

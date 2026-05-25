@@ -5,9 +5,17 @@
 	import { appConfigStore, requireAppConfig, walletState, initWallet } from '@bigmarket/bm-common';
 	import { registerDepositIntent } from '@bigmarket/bm-utilities';
 
+	interface Props {
+		initialFlow?: 'deposit' | 'withdraw';
+		/** Hide the internal Deposit/Withdraw sub-tabs (use when parent already provides context). */
+		locked?: boolean;
+	}
+
+	const { initialFlow = 'deposit', locked = false }: Props = $props();
+
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
-	let flow = $state<'deposit' | 'withdraw'>('deposit');
+	let flow = $state<'deposit' | 'withdraw'>(initialFlow);
 	let amount = $state('');
 	let tokenSymbol = $state<'USDC' | 'USDT'>('USDC');
 	/** For withdraw: Ethereum address that receives USDC / USDT. */
@@ -157,47 +165,51 @@
 <div
 	class="w-full space-y-5 rounded-lg border border-neutral-200 bg-neutral-50/80 p-5 dark:border-neutral-700 dark:bg-neutral-900/40"
 >
-	<h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Vault bridge</h2>
+	{#if !locked}
+		<h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Vault bridge</h2>
+	{/if}
 
-	<div
-		class="flex gap-2 rounded-md border border-neutral-200 p-1 dark:border-neutral-600"
-		role="tablist"
-	>
-		<button
-			type="button"
-			id="bm-vault-flow-deposit"
-			aria-pressed={flow === 'deposit'}
-			aria-controls="bm-vault-flow-panel"
-			class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors {flow === 'deposit'
-				? 'bg-orange-500 text-white shadow-sm'
-				: 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'}"
-			onclick={() => {
-				flow = 'deposit';
-				errorMsg = null;
-				txHash = null;
-				approveTxHash = null;
-			}}
+	{#if !locked}
+		<div
+			class="flex gap-2 rounded-md border border-neutral-200 p-1 dark:border-neutral-600"
+			role="tablist"
 		>
-			Deposit to Stacks
-		</button>
-		<button
-			type="button"
-			id="bm-vault-flow-withdraw"
-			aria-pressed={flow === 'withdraw'}
-			aria-controls="bm-vault-flow-panel"
-			class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors {flow === 'withdraw'
-				? 'bg-orange-500 text-white shadow-sm'
-				: 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'}"
-			onclick={() => {
-				flow = 'withdraw';
-				errorMsg = null;
-				txHash = null;
-				approveTxHash = null;
-			}}
-		>
-			Withdraw to Ethereum
-		</button>
-	</div>
+			<button
+				type="button"
+				id="bm-vault-flow-deposit"
+				aria-pressed={flow === 'deposit'}
+				aria-controls="bm-vault-flow-panel"
+				class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors {flow === 'deposit'
+					? 'bg-orange-500 text-white shadow-sm'
+					: 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'}"
+				onclick={() => {
+					flow = 'deposit';
+					errorMsg = null;
+					txHash = null;
+					approveTxHash = null;
+				}}
+			>
+				Deposit to Stacks
+			</button>
+			<button
+				type="button"
+				id="bm-vault-flow-withdraw"
+				aria-pressed={flow === 'withdraw'}
+				aria-controls="bm-vault-flow-panel"
+				class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors {flow === 'withdraw'
+					? 'bg-orange-500 text-white shadow-sm'
+					: 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'}"
+				onclick={() => {
+					flow = 'withdraw';
+					errorMsg = null;
+					txHash = null;
+					approveTxHash = null;
+				}}
+			>
+				Withdraw to Ethereum
+			</button>
+		</div>
+	{/if}
 
 	{#if flow === 'deposit'}
 		<p
@@ -211,7 +223,7 @@
 			id="bm-vault-flow-panel"
 			class="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400"
 		>
-			Send {tokenSymbolSourceStx} from Stacks (Hiro wallet) to your Ethereum address as {tokenSymbolDestEth}
+			Send {tokenSymbolSourceStx} from Stacks to your Ethereum address as {tokenSymbolDestEth}
 			via Allbridge.
 		</p>
 	{/if}
@@ -233,7 +245,7 @@
 		</p>
 	{:else if flow === 'withdraw' && $walletState.chain !== 'stacks'}
 		<p class="text-sm text-amber-800 dark:text-amber-200">
-			Switch to a Stacks connection so your chain is <strong>stacks</strong> (Hiro or compatible wallet).
+			Switch to a Stacks connection so your chain is a <strong>stacks</strong> compatible wallet.
 		</p>
 	{:else if flow === 'withdraw' && !stxAddress}
 		<p class="text-sm text-amber-800 dark:text-amber-200">

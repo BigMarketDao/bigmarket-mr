@@ -342,8 +342,17 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionName: "get-name",
         functionArgs: [],
       };
-      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return result.value?.value || ""; // ? cvToValue(result.value) : "";
+      try {
+        const result = await callContractReadOnly(
+          stacksApi,
+          data,
+          stacksHiroKey,
+        );
+        return result?.value?.value || result.value || "Unknown"; // ? cvToValue(result.value) : "";
+      } catch (error) {
+        console.error("Error: fetchTokenName: ", error);
+        return "UNKNOWN";
+      }
     },
 
     async fetchTokenSymbol(
@@ -356,8 +365,17 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionName: "get-symbol",
         functionArgs: [],
       };
-      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return result.value?.value || ""; // ? cvToValue(result.value) : "";
+      try {
+        const result = await callContractReadOnly(
+          stacksApi,
+          data,
+          stacksHiroKey,
+        );
+        return result?.value?.value || result.value || "Unknown"; // ? cvToValue(result.value) : "";
+      } catch (error) {
+        console.error("Error: fetchTokenName: ", error);
+        return "UNKNOWN";
+      }
     },
 
     async fetchTokenDecimals(
@@ -370,8 +388,17 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionName: "get-decimals",
         functionArgs: [],
       };
-      const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      return Number(result?.value.value || 1);
+      try {
+        const result = await callContractReadOnly(
+          stacksApi,
+          data,
+          stacksHiroKey,
+        );
+        return Number(result?.value?.value || result.value || -1);
+      } catch (error) {
+        console.error("Error: fetchTokenDecimals: ", error);
+        return -1;
+      }
     },
 
     async fetchEpochDuration(

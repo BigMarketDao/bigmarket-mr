@@ -1,5 +1,6 @@
 import { DaoConfig } from '@bigmarket/bm-types';
 import process from 'process';
+import { getConfig } from './config.js';
 
 let CONFIG = {} as DaoConfig;
 
@@ -35,6 +36,7 @@ export function setDaoConfigOnStart() {
 	CONFIG.VITE_DAO_SCALAR_HEDGE_STRATEGY = process.env[network + '_' + 'VITE_DAO_SCALAR_HEDGE_STRATEGY'] || 'bme032-0-scalar-strategy-hedge';
 	CONFIG.VITE_DAO_RESOLUTION_COORDINATOR = process.env[network + '_' + 'VITE_DAO_RESOLUTION_COORDINATOR'] || 'bme008-0-resolution-coordinator';
 
+	CONFIG.VITE_NETWORK = getConfig().network || '';
 	CONFIG.VITE_SBTC_DEPLOYER = network === 'mainnet' ? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4' : 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT';
 }
 
@@ -44,6 +46,7 @@ export function getDaoConfig() {
 
 export function printDaoConfig() {
 	console.log('== ' + process.env.NODE_ENV + ' ==========================================================');
+	console.log('VITE_NETWORK = ' + CONFIG.VITE_NETWORK);
 	console.log('VITE_DAO = ' + CONFIG.VITE_DAO);
 	console.log('VITE_DAOS = ' + CONFIG.VITE_DAOS);
 	console.log('VITE_DAO_SIP_VOTES = ' + CONFIG.VITE_DAO_SIP_VOTES);

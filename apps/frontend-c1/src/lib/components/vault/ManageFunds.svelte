@@ -129,7 +129,8 @@
 			vaultBalanceMicro = await vault.getVaultUsdcxBalance(
 				appConfig.VITE_STACKS_API,
 				sourceIdentity.chain,
-				sourceIdentity.address
+				sourceIdentity.address,
+				mappedAddress
 			);
 		} catch (e) {
 			errorMsg = e instanceof Error ? e.message : String(e);
@@ -151,7 +152,7 @@
 			if (canDepositViaWallet) {
 				const vault = stacks.createVaultClient(daoConfig);
 				const amount = custodyBalanceMicro!;
-				const result = await vault.depositUsdcxToVault({
+				const result = await vault.depositSip10ToVault({
 					amountMicro: amount,
 					userChain: sourceIdentity.chain,
 					sourceAddress: sourceIdentity.address,

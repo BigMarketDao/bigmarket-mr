@@ -14,7 +14,7 @@ The component must support two user paths:
 The backend already exposes cross-chain mapping and sweep routes under the cross-chain API namespace, currently mounted like:
 
 ```ts
-app.use('/bigmarket-api/cross-chain', crossChainRoutes);
+app.use("/bigmarket-api/cross-chain", crossChainRoutes);
 ```
 
 ### 1. Resolve/create mapped Stacks address
@@ -28,7 +28,11 @@ GET /bigmarket-api/cross-chain/mappings/:sourceChain/:sourceAddress
 Expected use:
 
 ```ts
-const { mappedAddress } = await getCreateMappedStacksAddress(apiBase, sourceChain, sourceAddress);
+const { mappedAddress } = await getCreateMappedStacksAddress(
+  apiBase,
+  sourceChain,
+  sourceAddress,
+);
 ```
 
 Backend behavior:
@@ -42,7 +46,7 @@ Backend behavior:
 Important helper shape:
 
 ```ts
-createStacksWallet(secretSource, sourceChain, sourceAddress, network)
+createStacksWallet(secretSource, sourceChain, sourceAddress, network);
 ```
 
 returns:
@@ -63,7 +67,7 @@ returns:
 Route:
 
 ```ts
-POST /bigmarket-api/cross-chain/intents
+POST / bigmarket - api / cross - chain / intents;
 ```
 
 Backend function:
@@ -100,7 +104,7 @@ POST /bigmarket-api/cross-chain/intents/:intentId/sweep
 Backend function:
 
 ```ts
-sweepIntentToVault(intentId)
+sweepIntentToVault(intentId);
 ```
 
 Behavior:
@@ -117,19 +121,19 @@ Behavior:
 makeContractCall({
   contractAddress: getDaoConfig().VITE_DAO_DEPLOYER,
   contractName: getDaoConfig().VITE_DAO_VAULT,
-  functionName: 'deposit-for',
+  functionName: "deposit-for",
   functionArgs: [
     contractPrincipalCV(intent.tokenContractAddress, intent.tokenContractName),
     uintCV(balance),
     standardPrincipalCV(intent.mappedAddress),
-    bufferCV(Buffer.from(intent.intentId.replace('0x', ''), 'hex'))
+    bufferCV(Buffer.from(intent.intentId.replace("0x", ""), "hex")),
   ],
   senderKey: privateKey,
   network: getStacksNetwork(),
   fee: RELAYER_STX_FEE,
   nonce,
-  postConditionMode: PostConditionMode.Allow
-})
+  postConditionMode: PostConditionMode.Allow,
+});
 ```
 
 - Broadcasts the transaction.
@@ -187,7 +191,7 @@ The primary button should be enabled only when:
 Condition:
 
 ```ts
-sourceIdentity.chain !== 'stacks'
+sourceIdentity.chain !== "stacks";
 ```
 
 Flow:
@@ -195,7 +199,7 @@ Flow:
 1. Call the frontend utility that wraps intent registration + sweep, or implement it if missing:
 
 ```ts
-requestMappedDepositToVault(apiBase, sourceChain, sourceAddress)
+requestMappedDepositToVault(apiBase, sourceChain, sourceAddress);
 ```
 
 Expected utility behavior:
@@ -213,7 +217,9 @@ Expected utility behavior:
 Condition:
 
 ```ts
-sourceIdentity.chain === 'stacks' && stxAddress && custodyAddress === stxAddress
+sourceIdentity.chain === "stacks" &&
+  stxAddress &&
+  custodyAddress === stxAddress;
 ```
 
 Flow:
@@ -222,12 +228,12 @@ Flow:
 2. Use existing vault client helper if available:
 
 ```ts
-vault.depositUsdcxToVault({
+vault.depositSip10ToVault({
   amountMicro,
-  userChain: 'stacks',
+  userChain: "stacks",
   sourceAddress: stxAddress,
-  senderStxAddress: stxAddress
-})
+  senderStxAddress: stxAddress,
+});
 ```
 
 3. The vault deposit should transfer USDCx from the user wallet into the vault and credit the vault ledger against `{ chain: 'stacks', address: stxAddress }`.
