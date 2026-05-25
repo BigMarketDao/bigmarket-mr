@@ -8,14 +8,14 @@ import { getConfig } from '../../lib/config.js';
 export async function getOrCreateMappedAddress(sourceChain: string, sourceAddress: string) {
 	const existing = await crossChainMappingCollection.findOne({
 		sourceChain,
-		sourceAddress
+		sourceAddress: { $regex: `^${sourceAddress.toUpperCase()}$`, $options: 'i' }
 	});
 
 	if (existing?.mappedAddress) {
 		return existing.mappedAddress;
 	}
 
-	const account = await stacks.createStacksWallet(sourceChain, sourceAddress, getConfig().network as 'devnet' | 'mainnet' | 'testnet');
+	const account = await stacks.createStacksWallet(getConfig().walletKey, sourceChain, sourceAddress.toUpperCase(), getConfig().network as 'devnet' | 'mainnet' | 'testnet');
 
 	await crossChainMappingCollection.insertOne(account);
 

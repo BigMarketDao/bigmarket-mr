@@ -3,11 +3,20 @@
 	import { Button } from '@bigmarket/bm-ui';
 	import { stacks } from '@bigmarket/sdk';
 	import { appConfigStore, requireAppConfig, walletState, initWallet } from '@bigmarket/bm-common';
+	import { registerDepositIntent } from '@bigmarket/bm-utilities';
+
+	interface Props {
+		initialFlow?: 'deposit' | 'withdraw';
+		/** Hide the internal Deposit/Withdraw sub-tabs (use when parent already provides context). */
+		locked?: boolean;
+	}
+
+	const { initialFlow = 'deposit', locked = false }: Props = $props();
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
-	let flow = $state<'deposit' | 'withdraw'>('deposit');
-	let amount = $state('100');
+	let flow = $state<'deposit' | 'withdraw'>(initialFlow);
+	let amount = $state('');
 	let tokenSymbol = $state<'USDC' | 'USDT'>('USDC');
 	/** For withdraw: Ethereum address that receives USDC / USDT. */
 	let ethRecipient = $state('');
@@ -48,10 +57,11 @@
 	const ethRecipientOk = $derived(/^0x[a-fA-F0-9]{40}$/.test(ethRecipient.trim()));
 
 	const readyDeposit = $derived(
-		$walletState.status === 'connected' &&
+		($walletState.status === 'connected' &&
 			$walletState.chain === 'ethereum' &&
 			mappedStx.length > 0 &&
-			ethAddress.length > 0
+			ethAddress.length > 0) ||
+			$walletState.chain === 'stacks'
 	);
 
 	const readyWithdraw = $derived(
@@ -86,8 +96,10 @@
 			const { approveAllbridgeDepositIfNeeded, sendAllbridgeDeposit, ChainSymbol } =
 				await import('@bigmarket/sdk/ethereum');
 
+			const sourceAddress = $walletState.activeAccount?.mappedAddress || stxAddress;
 			const base = {
 				amount: amount.trim(),
+				sourceAddress: sourceAddress,
 				sourceChain: ChainSymbol.ETH,
 				destinationChain: ChainSymbol.STX,
 				tokenSymbol,
@@ -100,6 +112,8 @@
 				approveTxHash = approveResult.txHash;
 			}
 
+			const intentRes = await registerDepositIntent(appConfig.VITE_BIGMARKET_API, base);
+			if (!intentRes.ok) throw new Error(await intentRes.text());
 			const { txHash: hash } = await sendAllbridgeDeposit({
 				...base,
 				toAccountAddress: mappedStx
@@ -151,47 +165,51 @@
 <div
 	class="w-full space-y-5 rounded-lg border border-neutral-200 bg-neutral-50/80 p-5 dark:border-neutral-700 dark:bg-neutral-900/40"
 >
-	<h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Vault bridge</h2>
+	{#if !locked}
+		<h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Vault bridge</h2>
+	{/if}
 
-	<div
-		class="flex gap-2 rounded-md border border-neutral-200 p-1 dark:border-neutral-600"
-		role="tablist"
-	>
-		<button
-			type="button"
-			id="bm-vault-flow-deposit"
-			aria-pressed={flow === 'deposit'}
-			aria-controls="bm-vault-flow-panel"
-			class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors {flow === 'deposit'
-				? 'bg-orange-500 text-white shadow-sm'
-				: 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'}"
-			onclick={() => {
-				flow = 'deposit';
-				errorMsg = null;
-				txHash = null;
-				approveTxHash = null;
-			}}
+	{#if !locked}
+		<div
+			class="flex gap-2 rounded-md border border-neutral-200 p-1 dark:border-neutral-600"
+			role="tablist"
 		>
-			Deposit to Stacks
-		</button>
-		<button
-			type="button"
-			id="bm-vault-flow-withdraw"
-			aria-pressed={flow === 'withdraw'}
-			aria-controls="bm-vault-flow-panel"
-			class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors {flow === 'withdraw'
-				? 'bg-orange-500 text-white shadow-sm'
-				: 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'}"
-			onclick={() => {
-				flow = 'withdraw';
-				errorMsg = null;
-				txHash = null;
-				approveTxHash = null;
-			}}
-		>
-			Withdraw to Ethereum
-		</button>
-	</div>
+			<button
+				type="button"
+				id="bm-vault-flow-deposit"
+				aria-pressed={flow === 'deposit'}
+				aria-controls="bm-vault-flow-panel"
+				class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors {flow === 'deposit'
+					? 'bg-orange-500 text-white shadow-sm'
+					: 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'}"
+				onclick={() => {
+					flow = 'deposit';
+					errorMsg = null;
+					txHash = null;
+					approveTxHash = null;
+				}}
+			>
+				Deposit to Stacks
+			</button>
+			<button
+				type="button"
+				id="bm-vault-flow-withdraw"
+				aria-pressed={flow === 'withdraw'}
+				aria-controls="bm-vault-flow-panel"
+				class="flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors {flow === 'withdraw'
+					? 'bg-orange-500 text-white shadow-sm'
+					: 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'}"
+				onclick={() => {
+					flow = 'withdraw';
+					errorMsg = null;
+					txHash = null;
+					approveTxHash = null;
+				}}
+			>
+				Withdraw to Ethereum
+			</button>
+		</div>
+	{/if}
 
 	{#if flow === 'deposit'}
 		<p
@@ -205,7 +223,7 @@
 			id="bm-vault-flow-panel"
 			class="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400"
 		>
-			Send {tokenSymbolSourceStx} from Stacks (Hiro wallet) to your Ethereum address as {tokenSymbolDestEth}
+			Send {tokenSymbolSourceStx} from Stacks to your Ethereum address as {tokenSymbolDestEth}
 			via Allbridge.
 		</p>
 	{/if}
@@ -216,9 +234,9 @@
 		</p>
 	{:else if flow === 'deposit' && $walletState.chain !== 'ethereum'}
 		<p class="text-sm text-amber-800 dark:text-amber-200">
-			Switch to an Ethereum connection: connect with MetaMask so your chain is <strong
-				>ethereum</strong
-			>.
+			<strong>Switch connection</strong>: connect with MetaMask/Phantom/etc on
+			<strong>ethereum</strong>
+			or <strong>solana</strong> chains.
 		</p>
 	{:else if flow === 'deposit' && !mappedStx}
 		<p class="text-sm text-amber-800 dark:text-amber-200">
@@ -227,7 +245,7 @@
 		</p>
 	{:else if flow === 'withdraw' && $walletState.chain !== 'stacks'}
 		<p class="text-sm text-amber-800 dark:text-amber-200">
-			Switch to a Stacks connection so your chain is <strong>stacks</strong> (Hiro or compatible wallet).
+			Switch to a Stacks connection so your chain is a <strong>stacks</strong> compatible wallet.
 		</p>
 	{:else if flow === 'withdraw' && !stxAddress}
 		<p class="text-sm text-amber-800 dark:text-amber-200">
@@ -316,7 +334,7 @@
 	</div>
 
 	{#if errorMsg}
-		<p class="text-sm text-red-700 dark:text-red-300">{errorMsg}</p>
+		<p class="text-sm text-red-700 dark:text-red-300">{@html errorMsg}</p>
 	{/if}
 
 	{#if flow === 'deposit' && explorerEthApproveUrl}
@@ -360,12 +378,13 @@
 			Transaction sent. <span class="font-mono break-all">{txHash}</span>
 		</p>
 	{/if}
-
-	<Button type="button" onclick={onSubmit} disabled={!canSubmit} class="w-full cursor-pointer">
-		{busy
-			? 'Confirm in wallet…'
-			: flow === 'deposit'
-				? `Bridge ${tokenSymbol} to Stacks`
-				: `Bridge ${tokenSymbolSourceStx} to Ethereum`}
-	</Button>
+	{#if flow === 'deposit'}
+		<Button type="button" onclick={onSubmit} disabled={!canSubmit} class="w-full cursor-pointer">
+			{busy ? 'Confirm in wallet…' : `Bridge ${tokenSymbol} to Stacks`}
+		</Button>
+	{:else}
+		<Button type="button" onclick={onSubmit} disabled={!canSubmit} class="w-full cursor-pointer">
+			{busy ? 'Confirm in wallet…' : `Bridge ${tokenSymbolSourceStx} to Ethereum`}
+		</Button>
+	{/if}
 </div>

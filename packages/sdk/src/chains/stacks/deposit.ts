@@ -18,7 +18,8 @@ export function parseToken(token: string) {
   return Cl.contractPrincipal(address, name);
 }
 
-export function createVaultClient(daoConfig: DaoConfig) {
+/** @deprecated Misnamed legacy client (play / stake helpers). Prefer {@link createVaultClient} in vault.ts. */
+export function createStacksPlayClient(daoConfig: DaoConfig) {
   const deployer = daoConfig.VITE_DAO_DEPLOYER;
   const call = (
     contract: string,

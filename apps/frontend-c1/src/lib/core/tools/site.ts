@@ -29,7 +29,7 @@ export const footerNavSections: Array<NavSection> = [
 			{ href: '/docs', label: 'How It Works' },
 			{ href: '/reputation', label: 'Reputation' },
 			{ href: '/reputation/leader-board', label: 'Leaderboard' },
-			{ href: '/vault/deposit', label: 'Deposit' }
+			{ href: '/vault', label: 'Deposit' }
 		]
 	},
 	{

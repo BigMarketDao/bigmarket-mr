@@ -11,7 +11,6 @@
 	import CategoryButton from './markets/CategoryButton.svelte';
 	import { getMarketStatus, totalPoolSum } from '@bigmarket/bm-utilities';
 	import { Search, TrendingUp, XIcon } from 'lucide-svelte';
-	import FilterSelect from './markets/FilterSelect.svelte';
 	import MarketEntry from './markets/MarketEntry.svelte';
 	import { SearchState } from '../core/app/filtering';
 	import {
@@ -22,6 +21,7 @@
 		searchTypeStore,
 		sortStateStore
 	} from '../stores/filterStore';
+	import FilterSelect from './markets/FilterSelect.svelte';
 
 	const categoryS = fromStore(categoryStateStore);
 	const marketStateS = fromStore(marketStateStore);
@@ -247,7 +247,7 @@
 			<div class="relative h-8 min-w-0 flex-1">
 				<label for="searchTerm" class="sr-only">Search markets</label>
 				<Search
-					class="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+					class="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2"
 					aria-hidden="true"
 				/>
 				<input
@@ -255,14 +255,14 @@
 					type="search"
 					bind:value={searchTerm}
 					placeholder="Search markets..."
-					class="h-full w-full rounded-[4px] border border-border bg-background py-0 pr-7 pl-8 text-xs font-medium text-foreground placeholder:text-muted-foreground transition-colors hover:border-muted-foreground/40 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+					class="border-border bg-background text-foreground placeholder:text-muted-foreground hover:border-muted-foreground/40 focus-visible:border-ring focus-visible:ring-ring/30 h-full w-full rounded-[4px] border py-0 pr-7 pl-8 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
 				/>
 				{#if searchTerm}
 					<button
 						type="button"
 						aria-label="Clear search"
 						onclick={() => (searchTerm = '')}
-						class="absolute top-1/2 right-2 -translate-y-1/2 rounded-[4px] p-0.5 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+						class="text-muted-foreground hover:text-foreground focus-visible:ring-ring/30 absolute top-1/2 right-2 -translate-y-1/2 rounded-[4px] p-0.5 focus-visible:ring-2 focus-visible:outline-none"
 					>
 						<XIcon class="h-3.5 w-3.5" />
 					</button>
@@ -304,56 +304,56 @@
 				{#key componentKey}
 					<CategoryButton
 						label="tvl"
-					selected={navSelection === 'sort:tvl'}
-					onChangeCategory={selectTrending}
-				>
-					{#snippet body()}
-						<span class="flex items-center gap-1.5">
-							<TrendingUp class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-							Trending
-						</span>
-					{/snippet}
-				</CategoryButton>
+						selected={navSelection === 'sort:tvl'}
+						onChangeCategory={selectTrending}
+					>
+						{#snippet body()}
+							<span class="flex items-center gap-1.5">
+								<TrendingUp class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+								Trending
+							</span>
+						{/snippet}
+					</CategoryButton>
 
-				<CategoryButton
-					label="newest"
-					selected={navSelection === 'sort:newest'}
-					onChangeCategory={selectNew}
-				>
-					{#snippet body()}New{/snippet}
-				</CategoryButton>
+					<CategoryButton
+						label="newest"
+						selected={navSelection === 'sort:newest'}
+						onChangeCategory={selectNew}
+					>
+						{#snippet body()}New{/snippet}
+					</CategoryButton>
 
-				<div class="bg-border h-4 w-px shrink-0" aria-hidden="true"></div>
+					<div class="bg-border h-4 w-px shrink-0" aria-hidden="true"></div>
 
-				<CategoryButton
-					label="all"
-					selected={navSelection === 'scope:all'}
-					onChangeCategory={handleAll}
-				>
-					{#snippet body()}
-						{searchStateLabels[searchState]}
-					{/snippet}
-				</CategoryButton>
+					<CategoryButton
+						label="all"
+						selected={navSelection === 'scope:all'}
+						onChangeCategory={handleAll}
+					>
+						{#snippet body()}
+							{searchStateLabels[searchState]}
+						{/snippet}
+					</CategoryButton>
 
-				{#each marketCategories as category (category.name)}
-					{#if category.active}
-						<CategoryButton
-							label={category.name}
-							selected={navSelection === `category:${category.name.toLowerCase()}`}
-							onChangeCategory={handleChangeCategory}
-						>
-							{#snippet body()}
-								{category.displayName}
-							{/snippet}
-						</CategoryButton>
-					{/if}
-				{/each}
+					{#each marketCategories as category (category.name)}
+						{#if category.active}
+							<CategoryButton
+								label={category.name}
+								selected={navSelection === `category:${category.name.toLowerCase()}`}
+								onChangeCategory={handleChangeCategory}
+							>
+								{#snippet body()}
+									{category.displayName}
+								{/snippet}
+							</CategoryButton>
+						{/if}
+					{/each}
 				{/key}
 			</nav>
 		</div>
 	</div>
 
-	<div class="mt-4 h-px w-full bg-border" aria-hidden="true"></div>
+	<div class="bg-border mt-4 h-px w-full" aria-hidden="true"></div>
 </div>
 
 <!-- Market Grid with enhanced spacing -->

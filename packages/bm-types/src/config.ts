@@ -48,4 +48,6 @@ export interface DaoConfig {
   VITE_PEPE_FULL_CONTRACT: string;
   VITE_USDH_FULL_CONTRACT: string;
   VITE_WRAPPED_STX_FULL_CONTRACT: string;
+  VITE_USDCX_CONTRACT_ADDRESS: string;
+  VITE_USDCX_CONTRACT_NAME: string;
 }

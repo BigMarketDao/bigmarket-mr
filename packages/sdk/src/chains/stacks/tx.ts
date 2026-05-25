@@ -5,6 +5,17 @@ import {
   type PostCondition,
 } from "@stacks/transactions";
 
+import { hexToBytes } from "@stacks/common";
+import { c32addressDecode } from "c32check";
+
+export function padTo32(addressStx: string): Uint8Array {
+  const [version, hash160Hex] = c32addressDecode(addressStx); // e.g. "SP..."
+  const hash160 = hexToBytes(hash160Hex.replace(/^0x/i, ""));
+  const padded = new Uint8Array(32);
+  padded.set(hash160, 12); // offset 12 → last 20 bytes
+  return padded;
+}
+
 export async function callContract(
   contractAddress: string,
   contractName: string,

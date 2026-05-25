@@ -695,6 +695,11 @@ plan:
       path: contracts/external/velar/univ2-share-fee-to.clar
       clarity-version: 4
     - transaction-type: emulated-contract-publish
+      contract-name: usdcx
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/external/usdcx.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
       contract-name: wormhole-traits-v2
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/external/pyth/wormhole-traits-v2.clar

@@ -1,6 +1,11 @@
 export * from "./tx.js";
 export * from "./utils/index.js";
 export * from "./deposit.js";
+export * from "./vault.js";
+export {
+  vaultChainIdBuffer,
+  vaultUserAddressBuffer,
+} from "./utils/vaultIdentity.js";
 export * from "./govern.js";
 export * from "./adapter.js";
 export * from "./contractViewData.js";

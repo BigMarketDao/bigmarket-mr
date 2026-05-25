@@ -17,7 +17,7 @@ The following use cases are considered;
 ```
 DEPOSIT:
 Solana → Allbridge → Your relayer's Stacks address
-Relayer calls vault.deposit(solana_pubkey, amount)
+Relayer calls vault.depositFromMappedAddress(solana_pubkey, amount)
 Vault credits solana_pubkey
 → Relayer's custody ends here. Vault holds funds.
 ```
@@ -25,7 +25,7 @@ Vault credits solana_pubkey
 Trust assumptions:
 
 ```
-Allbridge landing → vault.deposit()
+Allbridge landing → vault.depositFromMappedAddress()
           Duration: seconds (one tx)
           Risk: relayer could deposit to wrong pubkey
           Mitigation: user provides their solana pubkey

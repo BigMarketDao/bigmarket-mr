@@ -10,7 +10,7 @@
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
 	const networkLabel = $derived(
-		appConfig.VITE_NETWORK === 'testnet'
+		appConfig.VITE_NETWORK === 'testnet' || appConfig.VITE_NETWORK === 'devnet'
 			? appConfig.VITE_NETWORK.toUpperCase()
 			: appConfig.VITE_NETWORK === 'mainnet'
 				? 'MAINNET'
@@ -43,7 +43,7 @@
 		{/each}
 		<div class="absolute inset-x-0 bottom-0 flex items-end justify-end">
 			<p
-				class="relative z-[1] max-w-none select-none font-black leading-[0.85] tracking-tighter text-primary/10"
+				class="relative z-[1] max-w-none leading-[0.85] font-black tracking-tighter text-primary/10 select-none"
 				style="font-size: clamp(21rem, 66vw, 54rem); margin-right: clamp(0.5rem, 3vw, 2.5rem);"
 			>
 				BIG
@@ -97,7 +97,9 @@
 		</div>
 
 		<div class="mt-12 grid gap-8 border-t-2 border-border pt-10 lg:grid-cols-12 lg:gap-10">
-			<p class="text-sm font-semibold leading-relaxed text-foreground/70 sm:text-base lg:col-span-8">
+			<p
+				class="text-sm leading-relaxed font-semibold text-foreground/70 sm:text-base lg:col-span-8"
+			>
 				{footerDisclaimer}
 			</p>
 
@@ -107,9 +109,7 @@
 				<span
 					class="inline-flex w-fit items-center rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-bold tracking-widest text-foreground uppercase"
 				>
-					<span
-						class="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-500"
-						aria-hidden="true"
+					<span class="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"
 					></span>
 					{networkLabel}
 				</span>
@@ -125,7 +125,7 @@
 			class="mt-8 grid grid-cols-2 items-center gap-x-8 gap-y-4 border-t-2 border-border pt-8 md:grid-cols-4 lg:grid-cols-12 lg:gap-x-10"
 		>
 			<p
-				class="col-span-2 text-sm font-bold text-foreground/80 md:col-span-2 lg:col-span-4 sm:text-base"
+				class="col-span-2 text-sm font-bold text-foreground/80 sm:text-base md:col-span-2 lg:col-span-4"
 			>
 				&copy; {currentYear} BigMarket DAO
 			</p>
@@ -177,7 +177,8 @@
 			transparent 100%
 		);
 		opacity: 0.07;
-		animation: footer-scan-drift var(--scan-duration, 14s) var(--scan-delay, 0s) ease-in-out infinite;
+		animation: footer-scan-drift var(--scan-duration, 14s) var(--scan-delay, 0s) ease-in-out
+			infinite;
 		will-change: top, opacity;
 	}
 

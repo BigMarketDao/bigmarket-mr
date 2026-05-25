@@ -2,6 +2,8 @@ export type ChainInfo = {
   stacks: StacksInfo;
 };
 
+export type VaultUserChain = "evm" | "stacks" | "solana";
+
 export type StacksInfo = {
   burn_block_height: number;
   stacks_tip_height?: number;
@@ -42,7 +44,6 @@ export type CreatedStacksWallet = {
   sourceAddress: string;
   mappedChain: string;
   mappedAddress: string;
-  privateKey: string;
   network: "mainnet" | "testnet" | "devnet";
   createdAt: Date;
 };

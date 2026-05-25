@@ -30,6 +30,7 @@ import { initScanDaoEventsDevnetJob, initScanDaoEventsJob, initScanDaoEventsTest
 import { initExchangeRatesJob, initRefreshDaoOverviewJob } from './routes/rates/ratesScheduler.js';
 import { initResolveMarketsJob, initResolveUndisputedMarketsJob } from './routes/agent/agentScheduler.js';
 import { runBatchClaimSweepJob } from './routes/reputation/reputation-helper.js';
+import { runSweepSubmittedIntentsJob } from './routes/cross-chain/crossChainScheduler.js';
 import { startUICacheWarming } from './routes/cache/cache_utils.js';
 import { initWebsocket } from './lib/websockets/init.js';
 
@@ -141,6 +142,10 @@ async function connectToMongoCloud() {
 	// initCreateMarketsJobSui.start();
 	// initCreateMarketsJobTon.start();
 	runBatchClaimSweepJob.start();
+	if (CONFIG.network === 'devnet') {
+		runSweepSubmittedIntentsJob.start();
+		console.log('[cross-chain sweep] 10-second sweep job started (devnet)');
+	}
 	startUICacheWarming(); // runs ui caching every 25s
 
 	const server = app.listen(getConfig().port, () => {
