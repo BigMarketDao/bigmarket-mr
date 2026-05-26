@@ -144,7 +144,9 @@ async function connectToMongoCloud() {
 	runBatchClaimSweepJob.start();
 	if (CONFIG.network === 'devnet') {
 		runSweepSubmittedIntentsJob.start();
-		console.log('[cross-chain sweep] 10-second sweep job started (devnet)');
+		console.log(`[cross-chain sweep] 10-second sweep job started network ${CONFIG.network}`);
+	} else {
+		console.log(`[cross-chain no sweep] 10-second sweep job not started network ${CONFIG.network}`);
 	}
 	startUICacheWarming(); // runs ui caching every 25s
 

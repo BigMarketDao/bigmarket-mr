@@ -2,6 +2,7 @@
 ;; Description:
 ;; simple usdcx sip 10 for testing market creation and staking.
 
+;;(impl-trait 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sip-010-trait-ft-standard.sip-010-trait)
 (impl-trait 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 
 (define-constant ERR_UNAUTHORISED (err u3000))

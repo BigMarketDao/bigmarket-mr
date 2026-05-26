@@ -612,6 +612,21 @@ plan:
       path: contracts/proposals/devnet/unit-tests/reputation/bdp001-sft-tokens-5.clar
       clarity-version: 4
     - transaction-type: emulated-contract-publish
+      contract-name: bme050-0-vault
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/extensions/vault/bme050-0-vault.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
+      contract-name: wrapped-stx
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/external/wrapped-stx.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
+      contract-name: bdp001-vault-setup
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/proposals/devnet/unit-tests/bdp001-vault-setup.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
       contract-name: big-play
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/external/big-play.clar
@@ -620,11 +635,6 @@ plan:
       contract-name: bme040-0-shares-marketplace
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/extensions/bme040-0-shares-marketplace.clar
-      clarity-version: 4
-    - transaction-type: emulated-contract-publish
-      contract-name: bme050-0-vault
-      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
-      path: contracts/extensions/vault/bme050-0-vault.clar
       clarity-version: 4
     - transaction-type: emulated-contract-publish
       contract-name: clarity-bitcoin-lib-v5
@@ -666,6 +676,9 @@ plan:
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/traits/prediction-market-trait.clar
       clarity-version: 4
+    epoch: '3.4'
+  - id: 9
+    transactions:
     - transaction-type: emulated-contract-publish
       contract-name: proposal-trait
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
@@ -676,9 +689,6 @@ plan:
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/external/pyth/pyth-traits-v2.clar
       clarity-version: 4
-    epoch: '3.4'
-  - id: 9
-    transactions:
     - transaction-type: emulated-contract-publish
       contract-name: sip-010-trait-ft-standard
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
@@ -703,10 +713,5 @@ plan:
       contract-name: wormhole-traits-v2
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/external/pyth/wormhole-traits-v2.clar
-      clarity-version: 4
-    - transaction-type: emulated-contract-publish
-      contract-name: wrapped-stx
-      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
-      path: contracts/external/wrapped-stx.clar
       clarity-version: 4
     epoch: '3.4'
