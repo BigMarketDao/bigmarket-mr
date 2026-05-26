@@ -64,6 +64,39 @@ async function loadAllbridgeEthContext(
   await provider.request({ method: "eth_requestAccounts" });
   const [userAddress] = (await web3.eth.getAccounts()) as string[];
 
+  // AllBridge always uses ETH mainnet USDC contract addresses, even when
+  // stxIsTestnet=true. The stxIsTestnet flag only affects the Stacks destination
+  // chain — the ETH source must always be chainId 1 (Ethereum Mainnet).
+  // MetaMask has per-site network pinning, so we call wallet_switchEthereumChain
+  // to prompt a switch rather than just throwing a plain error.
+  if (!params.sourceChain || params.sourceChain === ChainSymbol.ETH) {
+    const chainIdHex = (await provider.request({
+      method: "eth_chainId",
+    })) as string;
+    const chainId = parseInt(chainIdHex, 16);
+    const ETH_MAINNET = 1;
+
+    if (chainId !== ETH_MAINNET) {
+      try {
+        await provider.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0x1" }],
+        });
+        const newHex = (await provider.request({
+          method: "eth_chainId",
+        })) as string;
+        if (parseInt(newHex, 16) !== ETH_MAINNET) {
+          throw new Error("switch did not take effect");
+        }
+      } catch {
+        throw new Error(
+          `AllBridge requires Ethereum Mainnet (chainId 1) — even when bridging to Stacks testnet. ` +
+            `MetaMask is on chainId ${chainId}. Switch MetaMask to Ethereum Mainnet for this tab and try again.`,
+        );
+      }
+    }
+  }
+
   const nodeUrls = {
     ...nodeRpcUrlsDefault,
     ...(params.ethRpcUrl ? { ETH: params.ethRpcUrl } : {}),
@@ -157,11 +190,14 @@ export async function approveAllbridgeDepositIfNeeded(
 
   let approveGas: bigint;
   try {
-    approveGas = await web3.eth.estimateGas({ ...approveTx, from: userAddress });
+    approveGas = await web3.eth.estimateGas({
+      ...approveTx,
+      from: userAddress,
+    });
   } catch (estimateErr) {
     throw new Error(
       `USDC approval would fail — check wallet connection and token address. ` +
-      `Detail: ${estimateErr instanceof Error ? estimateErr.message : String(estimateErr)}`,
+        `Detail: ${estimateErr instanceof Error ? estimateErr.message : String(estimateErr)}`,
     );
   }
 
@@ -198,13 +234,6 @@ export async function sendAllbridgeDeposit(
   };
 
   await provider.request({ method: "eth_requestAccounts" });
-  // ✅ Network consistency check — before anything else
-  await assertNetworkConsistency(
-    provider,
-    params.stxIsTestnet ?? false,
-    params.toAccountAddress,
-    params.sourceChain ?? ChainSymbol.ETH,
-  );
 
   if (params.destinationChain === ChainSymbol.STX) {
     const prefix = params.stxIsTestnet ? "ST" : "SP";
@@ -237,7 +266,7 @@ export async function sendAllbridgeDeposit(
   } catch (estimateErr) {
     throw new Error(
       `Bridge deposit would fail on-chain — check USDC approval and balance. ` +
-      `Detail: ${estimateErr instanceof Error ? estimateErr.message : String(estimateErr)}`,
+        `Detail: ${estimateErr instanceof Error ? estimateErr.message : String(estimateErr)}`,
     );
   }
 
@@ -263,74 +292,3 @@ export const ethereumBridge = {
   approveAllbridgeDepositIfNeeded,
   sendAllbridgeDeposit,
 };
-
-async function assertNetworkConsistency(
-  provider: Eip1193Provider,
-  stxIsTestnet: boolean,
-  toAccountAddress: string,
-  sourceChain: ChainSymbol,
-) {
-  // 1. Get MetaMask's current chainId
-  const chainIdHex = (await provider.request({
-    method: "eth_chainId",
-  })) as string;
-  const chainIdDecimal = parseInt(chainIdHex, 16);
-
-  const EVM_MAINNETS = new Set([
-    1, // Ethereum
-    56, // BSC
-    137, // Polygon
-    42161, // Arbitrum
-    43114, // Avalanche
-    10, // Optimism
-    8453, // Base
-  ]);
-
-  const EVM_TESTNETS = new Set([
-    11155111, // Sepolia
-    17000, // Holesky
-    97, // BSC testnet
-    80002, // Amoy (Polygon testnet)
-    421614, // Arbitrum Sepolia
-    43113, // Fuji (Avalanche testnet)
-  ]);
-
-  const mmIsMainnet = EVM_MAINNETS.has(chainIdDecimal);
-  const mmIsTestnet = EVM_TESTNETS.has(chainIdDecimal);
-
-  if (!mmIsMainnet && !mmIsTestnet) {
-    throw new Error(
-      `MetaMask is on an unrecognised network (chainId ${chainIdDecimal}). ` +
-        `Please switch to a supported network.`,
-    );
-  }
-
-  // 2. Check STX address prefix matches stxIsTestnet flag
-  const stxPrefix = toAccountAddress.slice(0, 2);
-  const expectedStxPrefix = stxIsTestnet ? "ST" : "SP";
-
-  if (stxPrefix !== expectedStxPrefix) {
-    throw new Error(
-      `STX address prefix "${stxPrefix}" doesn't match stxIsTestnet=${stxIsTestnet}. ` +
-        `Expected prefix "${expectedStxPrefix}". ` +
-        `Did you mean to use a ${stxIsTestnet ? "testnet (ST...)" : "mainnet (SP...)"} address?`,
-    );
-  }
-
-  // 3. Cross-check: MetaMask network must agree with Stacks network
-  if (mmIsMainnet && stxIsTestnet) {
-    throw new Error(
-      `Network mismatch: MetaMask is on mainnet (chainId ${chainIdDecimal}) ` +
-        `but stxIsTestnet=true and address "${toAccountAddress}" is a testnet address. ` +
-        `Either switch MetaMask to a testnet or set stxIsTestnet=false with an SP... address.`,
-    );
-  }
-
-  if (mmIsTestnet && !stxIsTestnet) {
-    throw new Error(
-      `Network mismatch: MetaMask is on testnet (chainId ${chainIdDecimal}) ` +
-        `but stxIsTestnet=false and address "${toAccountAddress}" is a mainnet address. ` +
-        `Either switch MetaMask to mainnet or set stxIsTestnet=true with an ST... address.`,
-    );
-  }
-}

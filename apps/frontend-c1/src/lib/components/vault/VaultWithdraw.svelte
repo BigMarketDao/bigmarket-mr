@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { walletState } from '@bigmarket/bm-common';
-	import BridgeFunds from './BridgeFunds.svelte';
+	import VaultWithdrawBridge from './VaultWithdrawBridge.svelte';
 
 	type ControllerChain = 'evm' | 'stacks';
 
@@ -113,7 +113,7 @@
 				USDCx to your relay address. AllBridge then bridges it back to Ethereum as USDC.
 			</p>
 		{/if}
-		<BridgeFunds initialFlow="withdraw" locked />
+		<VaultWithdrawBridge />
 	{:else}
 		<!-- Stacks withdrawal: coming soon -->
 		<p

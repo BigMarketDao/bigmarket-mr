@@ -18,8 +18,9 @@
 		userWalletStore,
 		walletState
 	} from '@bigmarket/bm-common';
-	import { fmtMicroToStx } from '@bigmarket/bm-utilities';
+	import { fmtMicroToStx, truncate } from '@bigmarket/bm-utilities';
 	import type { WalletAccount } from '@bigmarket/bm-types';
+	import { ExternalLink } from 'lucide-svelte';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
@@ -168,7 +169,18 @@
 					{loading ? '…' : fmt(vaultBalance)}
 				</p>
 				<p class="mt-0.5 font-mono text-[9px] text-neutral-400">
-					{daoConfig.VITE_DAO_DEPLOYER + '.' + daoConfig.VITE_DAO_VAULT + '.usdcx'}
+					<a
+						class="flex items-center gap-1 rounded-md px-3 py-1 text-community hover:bg-community-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+						href={stacks.explorerAddressUrl(
+							appConfig.VITE_NETWORK,
+							appConfig.VITE_STACKS_EXPLORER,
+							`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_VAULT}`
+						)}
+						target="_blank"
+					>
+						<ExternalLink class="h-4 w-4" />
+						{daoConfig.VITE_DAO_VAULT}
+					</a>
 				</p>
 			</div>
 
@@ -186,7 +198,18 @@
 					<p class="mt-0.5 text-[9px] text-neutral-400">EVM side</p>
 				{:else}
 					<p class="mt-0.5 font-mono text-[9px] text-neutral-400">
-						{stxAddress}
+						<a
+							class="flex items-center gap-1 rounded-md px-3 py-1 text-community hover:bg-community-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+							href={stacks.explorerAddressUrl(
+								appConfig.VITE_NETWORK,
+								appConfig.VITE_STACKS_EXPLORER,
+								`${stxAddress}`
+							)}
+							target="_blank"
+						>
+							<ExternalLink class="h-4 w-4" />
+							{truncate(stxAddress, 10)}
+						</a>
 					</p>
 				{/if}
 			</div>
@@ -201,7 +224,18 @@
 				</p>
 				{#if relayAddress}
 					<p class="mt-0.5 font-mono text-[9px] text-neutral-400">
-						{relayAddress}
+						<a
+							class="flex items-center gap-1 rounded-md px-3 py-1 text-community hover:bg-community-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+							href={stacks.explorerAddressUrl(
+								appConfig.VITE_NETWORK,
+								appConfig.VITE_STACKS_EXPLORER,
+								`${relayAddress}`
+							)}
+							target="_blank"
+						>
+							<ExternalLink class="h-4 w-4" />
+							{truncate(relayAddress, 10)}
+						</a>
 					</p>
 				{/if}
 			</div>

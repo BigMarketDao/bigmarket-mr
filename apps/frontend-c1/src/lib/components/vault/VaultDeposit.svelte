@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { walletState } from '@bigmarket/bm-common';
-	import BridgeFunds from './BridgeFunds.svelte';
+	import VaultDepositBridge from './VaultDepositBridge.svelte';
 	import StacksVaultPanel from './StacksVaultPanel.svelte';
 
 	type ControllerChain = 'evm' | 'stacks';
@@ -117,7 +117,7 @@
 				then moved to your vault.
 			</p>
 		{/if}
-		<BridgeFunds initialFlow="deposit" locked />
+		<VaultDepositBridge />
 	{:else}
 		{#if !stacksConnected}
 			<p
