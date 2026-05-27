@@ -68,10 +68,62 @@
 (define-constant OFF_SLOT4        u192)  ;; 32
 (define-constant OFF_SLOT5        u224)  ;; 32
 
-;; EIP-191 personal-sign prefix for a 256-byte payload:
-;;   "\x19" || "Ethereum Signed Message:\n" || "256"
-(define-constant EIP191_PREFIX_256
-  0x19457468657265756d205369676e6564204d6573736167653a0a323536)
+;; EIP-712 typed-data signing constants for EVM controller verification.
+;;
+;; Domain: { name: "BigMarket", version: "1.0.0" }  (no chainId -- replay
+;; protection is provided by the per-controller nonce in the BMP1 message).
+;;
+;; Type:   BMP1Withdraw(bytes payload)
+;;
+;; Digest path:
+;;   1. payload-hash = keccak256(bmp1_message)
+;;   2. struct-hash  = keccak256(WITHDRAW_TYPEHASH || payload-hash)
+;;   3. digest       = keccak256(0x1901 || DOMAIN_SEPARATOR || struct-hash)
+;;
+;; All constants are precomputed off-chain:
+;;   DOMAIN_SEPARATOR  = keccak256(domainTypeHash || keccak256("BigMarket") || keccak256("1.0.0"))
+;;   WITHDRAW_TYPEHASH = keccak256("BMP1Withdraw(bytes payload)")
+
+;; 0x1901 -- EIP-712 two-byte prefix
+(define-constant EIP712_PREFIX 0x1901)
+
+;; keccak256( domainTypeHash || keccak256("BigMarket") || keccak256("1.0.0") )
+;; domainTypeHash = keccak256("EIP712Domain(string name,string version)")
+(define-constant EIP712_DOMAIN_SEPARATOR
+  0x4e3c7155c429f36e33b8498ec258c659f393ec00d8434884b72472304c45681d)
+
+;; keccak256("BMP1Withdraw(address controller,uint256 amount,uint256 nonce,bytes32 bmp1Hash)")
+;;
+;; MetaMask renders each field by name:
+;;   controller --> recognisable 0x EVM address
+;;   amount     --> raw micro-unit integer (e.g. 55000000 for 55 USDCx)
+;;   nonce      --> replay-protection counter
+;;   bmp1Hash   --> keccak256 of the full BMP1 payload (binds the signature)
+;;
+;; Encoding notes (all standard EIP-712 ABI encoding):
+;;   controller: 32 bytes left-padded  <-- exactly the BMP1 controller-address field
+;;   amount:     32-byte uint256       <-- exactly the BMP1 slot3 field (high 16 = 0)
+;;   nonce:      32-byte uint256       <-- BMP1 nonce (buff 16) prepended with 16 zero bytes
+;;   bmp1Hash:   bytes32 as-is
+(define-constant EIP712_WITHDRAW_TYPEHASH
+  0xf1ebe45c9252e59f16c9eaed223a770a5d40b6b8bc14507a83cc68a149d644ba)
+
+;; Stacks / SIP-018 signing constants
+;; SIP-018 structured-data prefix: "SIP018" (6 bytes)
+(define-constant SIP018_PREFIX 0x534950303138)
+
+;; sha256( serializeCV( tupleCV({ name: "BigMarket", version: "1.0.0", chain-id: 1 }) ) )
+;; Mainnet BigMarket domain hash
+(define-constant BMP1_DOMAIN_HASH_MAINNET
+  0x3b14d8330f855c17c2eb445612876cb48d9e298755a180ca23de6f41402fad8c)
+
+;; sha256( serializeCV( tupleCV({ name: "BigMarket", version: "1.0.0", chain-id: 2147483648 }) ) )
+;; Testnet/devnet BigMarket domain hash (chain-id = 0x80000000)
+(define-constant BMP1_DOMAIN_HASH_TESTNET
+  0x450c6f4e56f5336cfeef9b235811015361f8c12a146e35e96783b94b3677f26e)
+
+;; Stacks mainnet standard single-sig address version byte
+(define-constant STACKS_MAINNET_VERSION 0x16)
 
 (define-constant ZERO_32
   0x0000000000000000000000000000000000000000000000000000000000000000)
@@ -310,7 +362,7 @@
                   (<= stacks-block-height expiry))            ERR_EXPIRED)
 
     ;; Signature: verify against the controller address
-    (try! (verify-message-signature chain message signature pubkey controller))
+    (try! (verify-message-signature chain message signature pubkey controller mapped-address))
 
     ;; Effects (before token transfer -- re-entrancy)
     (map-set balances
@@ -342,10 +394,47 @@
     (ok amount)))
 
 ;; ============================================================
+;; Use Case 4: Direct withdrawal for native Stacks controllers
+;;
+;; tx-sender IS the controller identity; no off-chain signature
+;; is required because the Stacks transaction itself is already
+;; authenticated by the user's wallet (Leather / Xverse / etc.).
+;;
+;; Balance key used: (CHAIN_STACKS, hash160(tx-sender), tx-sender, token)
+;; which is exactly the key written by `deposit` for native Stacks users.
+;; ============================================================
+
+;; (define-public (withdraw-direct
+;;     (token     <sip010>)
+;;     (amount    uint)
+;;     (recipient principal))
+;;   (let
+;;     (
+;;       (token-contract     (contract-of token))
+;;       (controller-address (pad-address-20 (principal-to-hash160 tx-sender)))
+;;       (current-balance    (get-balance CHAIN_STACKS controller-address tx-sender token-contract))
+;;     )
+;;     (asserts! (> amount u0)                  ERR_INVALID_AMOUNT)
+;;     (asserts! (check-token token-contract)   ERR_TOKEN_NOT_ALLOWED)
+;;     (asserts! (>= current-balance amount)    ERR_INSUFFICIENT_BALANCE)
+
+    ;;(map-set balances
+    ;;  { controller-chain: CHAIN_STACKS, controller-address: controller-address, mapped-address: tx-sender, token: token-contract }
+    ;;  (- current-balance amount))
+
+    ;;(try! (as-contract? ((with-all-assets-unsafe))
+            ;; Q: CURRENT-CONTRACT OR TX-SENDER? (try! (contract-call? token transfer amount tx-sender recipient none))
+    ;;        true))
+
+    ;; (print { event: "withdraw-direct", token-contract: token-contract, amount: amount,
+    ;;          controller-address: controller-address, recipient: recipient })
+    ;; (ok amount)))
+
+;; ============================================================
 ;; BMP1 message parsing
 ;; ============================================================
 
-(define-private (parse-message (msg (buff 256)))
+(define-private (parse-message (msg (buff 256))) 
   {
     magic:              (msg-slice-8  msg OFF_MAGIC),
     opcode:             (msg-slice-1  msg OFF_OPCODE),
@@ -394,32 +483,72 @@
 
 ;; ============================================================
 ;; Signature verification -- chain dispatch
-;;
-;; Only EVM (CHAIN_EVM) is implemented in this revision. The other arms are
-;; placeholders so future revisions can drop in BTC/Stacks signed-message
-;; digests and ed25519 / secp256r1 verifiers without breaking the public
-;; entrypoint shape.
 ;; ============================================================
 
 (define-private (verify-message-signature
-    (chain      (buff 4))
-    (message    (buff 256))
-    (signature  (buff 65))
-    (pubkey     (buff 64))
-    (controller (buff 32)))
+    (chain          (buff 4))
+    (message        (buff 256)) 
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (controller     (buff 32))
+    (mapped-address principal))
   (if (is-eq chain CHAIN_EVM)
     (verify-evm message signature pubkey controller)
-    ERR_SIG_SCHEME))
+    (if (is-eq chain CHAIN_STACKS)
+      (verify-stacks-sip18 message signature controller mapped-address)
+      ERR_SIG_SCHEME)))
 
-;; EVM secp256k1 + EIP-191 personal_sign verification.
+(define-private (verify-stacks-sip18
+    (message        (buff 256))
+    (signature      (buff 65))
+    (controller     (buff 32))
+    (mapped-address principal))
+  (let
+    (
+      ;; Choose domain hash: mainnet if mapped-address is an SP address.
+      (domain-hash
+        (if (is-eq (get version (unwrap! (principal-destruct? mapped-address) ERR_INVALID_ADDRESS))
+                   STACKS_MAINNET_VERSION)
+          BMP1_DOMAIN_HASH_MAINNET
+          BMP1_DOMAIN_HASH_TESTNET))
+      ;; sha256 of the serialised Clarity tuple { payload: message }
+      ;; Clarity's to-consensus-buff? matches @stacks/transactions serializeCV.
+      (msg-cv-hash
+        (sha256 (unwrap! (to-consensus-buff? { payload: message }) ERR_SIG_VERIFICATION)))
+      ;; SIP-018 digest: sha256("SIP018" || domain_hash || msg_cv_hash)
+      (digest
+        (sha256 (concat SIP018_PREFIX (concat domain-hash msg-cv-hash))))
+      ;; Recover the compressed public key (33 bytes) from the secp256k1 signature
+      (recovered
+        (unwrap! (secp256k1-recover? digest signature) ERR_SIG_VERIFICATION))
+      ;; Stacks controller address = hash160(compressed-pubkey)
+      (derived-addr  (hash160 recovered))
+      (expected-addr (low-20-of-32 controller))
+    )
+    (asserts! (is-eq derived-addr expected-addr) ERR_ADDRESS_MISMATCH)
+    (ok true)))
+
+;; EVM secp256k1 + EIP-712 structured-data verification.
+;;
+;; MetaMask shows named fields (controller, amount, nonce, bmp1Hash) instead of
+;; raw bytes.  The struct fields are lifted directly from the parsed BMP1 message
+;; so no auxiliary helpers or extra caller-supplied data are needed:
+;;
+;;   controller  <-- BMP1 controller-address  (buff 32, already EIP-712 address-encoded)
+;;   amount      <-- BMP1 slot3               (buff 32, already EIP-712 uint256-encoded)
+;;   nonce       <-- BMP1 nonce prepended with 16 zero bytes  -->  (buff 32) uint256
+;;   bmp1Hash    <-- keccak256(message)        (buff 32)
 ;;
 ;; Trust path:
-;;   1. Compute digest = keccak256( "\x19Ethereum Signed Message:\n256" || msg )
-;;   2. Recover the compressed pubkey from the signature
-;;   3. Recompress the supplied uncompressed pubkey and compare -- this proves
-;;      the caller-supplied uncompressed pubkey is the signer's
-;;   4. Derive the standard EVM address keccak256(uncompressed)[12:32] and
-;;      compare against the last 20 bytes of the controller address slot
+;;   1. Parse the BMP1 message to extract nonce (buff 16) and slot3 (buff 32)
+;;   2. nonce32  = 0x000...000 (16 bytes) || nonce (16 bytes)  -->  uint256 encoding
+;;   3. bmp1Hash = keccak256(message)
+;;   4. struct-encoded = WITHDRAW_TYPEHASH || controller || slot3 || nonce32 || bmp1Hash  (160 bytes)
+;;   5. struct-hash  = keccak256(struct-encoded)
+;;   6. digest       = keccak256(0x1901 || DOMAIN_SEPARATOR || struct-hash)
+;;   7. Recover compressed pubkey from signature against digest
+;;   8. Recompress supplied uncompressed pubkey and compare --> proves pubkey is signer's
+;;   9. Derive EVM address keccak256(uncompressed)[12:32] and compare with controller
 (define-private (verify-evm
     (message    (buff 256))
     (signature  (buff 65))
@@ -427,7 +556,17 @@
     (controller (buff 32)))
   (let
     (
-      (digest         (keccak256 (concat EIP191_PREFIX_256 message)))
+      (parsed         (parse-message message))
+      (bmp1-hash      (keccak256 message))
+      ;; Zero-pad the 16-byte BMP1 nonce to 32 bytes for EIP-712 uint256 encoding
+      (nonce32        (concat 0x00000000000000000000000000000000 (get nonce parsed)))
+      ;; Build the 160-byte EIP-712 struct encoding
+      (struct-encoded (concat EIP712_WITHDRAW_TYPEHASH
+                       (concat controller
+                         (concat (get slot3 parsed)
+                           (concat nonce32 bmp1-hash)))))
+      (struct-hash    (keccak256 struct-encoded))
+      (digest         (keccak256 (concat EIP712_PREFIX (concat EIP712_DOMAIN_SEPARATOR struct-hash))))
       (recovered      (unwrap! (secp256k1-recover? digest signature) ERR_SIG_VERIFICATION))
       (recompressed   (compress-pubkey pubkey))
       (derived-addr   (evm-address-from-pubkey pubkey))

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { walletState } from '@bigmarket/bm-common';
 	import VaultWithdrawBridge from './VaultWithdrawBridge.svelte';
+	import VaultWithdrawStacks from './VaultWithdrawStacks.svelte';
+	import VaultRelayAdmin from './VaultRelayAdmin.svelte';
 
 	type ControllerChain = 'evm' | 'stacks';
 
@@ -114,16 +116,21 @@
 			</p>
 		{/if}
 		<VaultWithdrawBridge />
+		<VaultRelayAdmin />
 	{:else}
-		<!-- Stacks withdrawal: coming soon -->
+	{#if !stacksConnected}
 		<p
 			class="rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/10 dark:text-amber-300"
 		>
-			{#if !stacksConnected}
-				Connect a <strong>Stacks wallet</strong> to withdraw USDCx to a Stacks address.
-			{:else}
-				Direct withdrawal to a Stacks address is coming soon.
-			{/if}
+			Connect a <strong>Stacks wallet</strong> (Leather or Xverse) to withdraw USDCx directly to
+			any Stacks address.
 		</p>
+	{:else}
+		<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+			Withdraw USDCx from your vault balance to any Stacks address. Your wallet authorises the
+			transaction directly — no relayer or bridge required.
+		</p>
+	{/if}
+	<VaultWithdrawStacks />
 	{/if}
 </div>

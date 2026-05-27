@@ -43,6 +43,9 @@ async function getWalletSession(bmApiUrl?: string) {
 
   const sol = session.addresses?.solana ?? null;
   const evm = session.addresses?.ethereum ?? null;
+  const stx = session.addresses?.stacks ?? null;
+  const btc = session.addresses?.bitcoin ?? null;
+  const ord = session.addresses?.ordinal ?? null;
 
   if (current.chain === "solana" && !mappedAddress && sol && bmApiUrl) {
     const result = await getCreateMappedStacksAddress(bmApiUrl, "solana", sol);
@@ -50,17 +53,14 @@ async function getWalletSession(bmApiUrl?: string) {
   }
 
   if (current.chain === "ethereum" && !mappedAddress && evm && bmApiUrl) {
-    const result = await getCreateMappedStacksAddress(
-      bmApiUrl,
-      "ethereum",
-      evm,
-    );
+    const result = await getCreateMappedStacksAddress(bmApiUrl, "evm", evm);
     mappedAddress = result.mappedAddress;
   }
 
-  const stx = session.addresses?.stacks ?? null;
-  const btc = session.addresses?.bitcoin ?? null;
-  const ord = session.addresses?.ordinal ?? null;
+  if (current.chain === "stacks" && !mappedAddress && stx && bmApiUrl) {
+    const result = await getCreateMappedStacksAddress(bmApiUrl, "stacks", stx);
+    mappedAddress = result.mappedAddress;
+  }
 
   const accounts: WalletAccount[] = [
     ...(sol
@@ -69,26 +69,29 @@ async function getWalletSession(bmApiUrl?: string) {
             chain: "solana" as const,
             address: sol,
             type: "sol",
-            mappedAddress:
-              current.chain === "solana" || current.chain === "ethereum"
-                ? mappedAddress
-                : undefined,
+            mappedAddress: current.chain === "solana" ? mappedAddress : undefined,
           },
         ]
       : []),
-    ...(stx ? [{ chain: "stacks" as const, address: stx, type: "stx" }] : []),
-    ...(btc ? [{ chain: "stacks" as const, address: btc, type: "btc" }] : []),
-    ...(ord
-      ? [{ chain: "stacks" as const, address: ord, type: "ordinal" }]
+    ...(stx
+      ? [
+          {
+            chain: "stacks" as const,
+            address: stx,
+            type: "stx",
+            mappedAddress: current.chain === "stacks" ? mappedAddress : undefined,
+          },
+        ]
       : []),
+    ...(btc ? [{ chain: "stacks" as const, address: btc, type: "btc" }] : []),
+    ...(ord ? [{ chain: "stacks" as const, address: ord, type: "ordinal" }] : []),
     ...(evm
       ? [
           {
             chain: "ethereum" as const,
             address: evm,
             type: "eth",
-            mappedAddress:
-              current.chain === "ethereum" ? mappedAddress : undefined,
+            mappedAddress: current.chain === "ethereum" ? mappedAddress : undefined,
           },
         ]
       : []),
@@ -208,6 +211,11 @@ export function getStxAddress(): string {
   return (
     s.accounts.find((a: WalletAccount) => a.type === "stx")?.address ?? "?"
   );
+}
+
+/** Returns the mapped relay Stacks address for the active account (all chains). */
+export function getMappedAddress(): string {
+  return get(walletState).activeAccount?.mappedAddress ?? "";
 }
 
 export function getBtcAddress(): string {

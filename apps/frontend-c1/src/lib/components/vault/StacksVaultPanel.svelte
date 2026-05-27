@@ -17,7 +17,6 @@
 	import {
 		appConfigStore,
 		daoConfigStore,
-		getCreateMappedStacksAddress,
 		getStxAddress,
 		initWallet,
 		requireAppConfig,
@@ -25,8 +24,9 @@
 		userWalletStore,
 		walletState
 	} from '@bigmarket/bm-common';
-	import { fmtMicroToStx, requestMappedDepositToVault } from '@bigmarket/bm-utilities';
+	import { fmtMicroToStx } from '@bigmarket/bm-utilities';
 	import DepositAction from './DepositAction.svelte';
+	import MappedSweepPanel from './MappedSweepPanel.svelte';
 	import type { WalletAccount } from '@bigmarket/bm-types';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
@@ -49,13 +49,12 @@
 		)
 	);
 
-	// ── loaded state ─────────────────────────────────────────────────────────
-	let loading = $state(false);
-	let mappedAddress = $state('');
-	let mappedBalance = $state<bigint | null>(null);
-	let errorMsg = $state<string | null>(null);
+	// Mapped relay address — populated in walletState by initWallet
+	const mappedAddress = $derived($walletState.activeAccount?.mappedAddress ?? '');
 
 	// ── action state ─────────────────────────────────────────────────────────
+	let errorMsg = $state<string | null>(null);
+
 	type Path = 'direct' | 'relay';
 	let path = $state<Path>('direct');
 
@@ -86,11 +85,6 @@
 		return null;
 	});
 
-	// Relay: sweep mapped → vault
-	let sweepBusy = $state(false);
-	let sweepTxHash = $state<string | null>(null);
-	let sweepError = $state<string | null>(null);
-
 	// ── derived capability flags ──────────────────────────────────────────────
 	const canDirectDeposit = $derived(stacksConnected && !directBusy && walletBalance > 0n);
 	const canRelayTransfer = $derived(
@@ -101,13 +95,6 @@
 			relayAmountMicro !== null &&
 			relayAmountMicro > 0n &&
 			relayAmountError === null
-	);
-	const canSweep = $derived(
-		stacksConnected &&
-			!sweepBusy &&
-			mappedAddress.length > 0 &&
-			mappedBalance !== null &&
-			mappedBalance > 0n
 	);
 
 	const directExplorerUrl = $derived(
@@ -124,44 +111,8 @@
 				)
 			: null
 	);
-	const sweepExplorerUrl = $derived(
-		sweepTxHash
-			? stacks.explorerTxUrl(appConfig.VITE_NETWORK, appConfig.VITE_STACKS_EXPLORER, sweepTxHash)
-			: null
-	);
 
 	onMount(() => void initWallet(appConfig.VITE_BIGMARKET_API));
-
-	$effect(() => {
-		if (stacksConnected && stxAddress) void loadAll();
-	});
-
-	// ── data loading ─────────────────────────────────────────────────────────
-
-	async function loadAll() {
-		loading = true;
-		errorMsg = null;
-		try {
-			const vault = stacks.createVaultClient(daoConfig);
-
-			// Resolve mapped/relay address
-			const mapping = await getCreateMappedStacksAddress(
-				appConfig.VITE_BIGMARKET_API,
-				'stacks',
-				stxAddress
-			);
-			mappedAddress = mapping.mappedAddress?.trim() ?? '';
-
-			// Only fetch relay/mapped balance — vault balance is shown by the page-level VaultBalanceSummary
-			mappedBalance = mappedAddress
-				? await vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress)
-				: 0n;
-		} catch (e) {
-			errorMsg = e instanceof Error ? e.message : String(e);
-		} finally {
-			loading = false;
-		}
-	}
 
 	// ── actions ───────────────────────────────────────────────────────────────
 
@@ -180,7 +131,6 @@
 			});
 			if (!result.success) throw new Error(result.error ?? 'Deposit failed');
 			directTxHash = result.txid ?? null;
-			await loadAll();
 		} catch (e) {
 			directError = e instanceof Error ? e.message : String(e);
 		} finally {
@@ -220,34 +170,13 @@
 				body: JSON.stringify({ sourceTxHash: relayTransferTxHash })
 			});
 
-			relayRawInput = '';
-			await loadAll();
-		} catch (e) {
-			relayTransferError = e instanceof Error ? e.message : String(e);
-		} finally {
-			relayTransferBusy = false;
-		}
+		relayRawInput = '';
+	} catch (e) {
+		relayTransferError = e instanceof Error ? e.message : String(e);
+	} finally {
+		relayTransferBusy = false;
 	}
-
-	async function sweepToVault() {
-		if (!canSweep) return;
-		sweepBusy = true;
-		sweepError = null;
-		sweepTxHash = null;
-		try {
-			const result = await requestMappedDepositToVault(
-				appConfig.VITE_BIGMARKET_API,
-				'stacks',
-				stxAddress
-			);
-			sweepTxHash = result.txid;
-			await loadAll();
-		} catch (e) {
-			sweepError = e instanceof Error ? e.message : String(e);
-		} finally {
-			sweepBusy = false;
-		}
-	}
+}
 
 	const tabBase = 'flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer';
 	const tabActive = 'bg-green-500 text-white shadow-sm';
@@ -288,7 +217,7 @@
 				class="{tabBase} {path === 'relay' ? tabActive : tabInactive}"
 				onclick={() => (path = 'relay')}
 			>
-				Via relay address
+				Via mapped address
 			</button>
 		</div>
 
@@ -314,10 +243,10 @@
 				the balance and deposit it into the vault, crediting your source address.
 			</p>
 
-			<!-- Step 1: Transfer to relay address -->
+			<!-- Step 1: Transfer to mapped address -->
 			<div class="space-y-2 rounded-md border border-neutral-200 p-3 dark:border-neutral-600">
 				<p class="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-					Step 1 — Transfer wallet → relay address
+					Step 1 — Transfer wallet → mapped address
 				</p>
 				<div class="flex gap-2">
 					<input
@@ -369,61 +298,15 @@
 					disabled={!canRelayTransfer}
 					class="w-full cursor-pointer"
 				>
-					{relayTransferBusy ? 'Submitting…' : 'Transfer to relay address'}
+					{relayTransferBusy ? 'Submitting…' : 'Transfer to mapped address'}
 				</Button>
 			</div>
 
-			<!-- Step 2: Sweep relay → vault -->
-			<div class="space-y-2 rounded-md border border-neutral-200 p-3 dark:border-neutral-600">
-				<p class="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-					Step 2 — Sweep relay address → vault
-					{#if mappedBalance !== null && mappedBalance > 0n}
-						<span class="ml-1 text-emerald-600 dark:text-emerald-400"
-							>({fmtMicroToStx(Number(mappedBalance), 6)} USDCx ready)</span
-						>
-					{/if}
-				</p>
-				<p class="text-[11px] text-neutral-500 dark:text-neutral-400">
-					Triggers the relayer to sweep all USDCx on the relay address into your vault. The vault
-					balance above will reflect the sweep once confirmed.
-				</p>
-				{#if sweepError}
-					<p class="text-xs text-red-700 dark:text-red-300">{sweepError}</p>
-				{/if}
-				{#if sweepTxHash}
-					<p class="text-xs text-emerald-700 dark:text-emerald-300">
-						Sweep submitted.
-						{#if sweepExplorerUrl}
-							<a
-								class="font-mono break-all underline"
-								href={sweepExplorerUrl}
-								target="_blank"
-								rel="noreferrer">{sweepTxHash}</a
-							>
-						{:else}
-							<span class="font-mono break-all">{sweepTxHash}</span>
-						{/if}
-					</p>
-				{/if}
-				<Button
-					type="button"
-					onclick={sweepToVault}
-					disabled={!canSweep}
-					class="w-full cursor-pointer"
-				>
-					{sweepBusy ? 'Sweeping…' : 'Sweep relay balance to vault'}
-				</Button>
-			</div>
-		{/if}
-
-		<!-- Refresh -->
-		<button
-			type="button"
-			onclick={() => void loadAll()}
-			disabled={loading}
-			class="text-xs text-neutral-500 underline hover:text-neutral-700 disabled:cursor-not-allowed dark:text-neutral-400 dark:hover:text-neutral-200"
-		>
-			{loading ? 'Refreshing…' : 'Refresh balances'}
-		</button>
+			<!-- Step 2: Sweep mapped → vault -->
+			<p class="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+				Step 2 — Sweep mapped address → vault
+			</p>
+		<MappedSweepPanel sourceChain="stacks" sourceAddress={stxAddress} />
+	{/if}
 	{/if}
 </div>
