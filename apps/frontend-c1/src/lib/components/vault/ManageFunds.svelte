@@ -5,7 +5,6 @@
 	import {
 		appConfigStore,
 		daoConfigStore,
-		getCreateMappedStacksAddress,
 		initWallet,
 		requireAppConfig,
 		requireDaoConfig,
@@ -48,7 +47,8 @@
 
 	const apiSourceAddress = $derived(sourceIdentity?.address ?? '');
 
-	let mappedAddress = $state('');
+	// Mapped address comes from walletState (populated by initWallet)
+	const mappedAddress = $derived($walletState.activeAccount?.mappedAddress ?? '');
 
 	const canDepositViaWallet = $derived(
 		mappedAddress.length > 0 &&
@@ -101,16 +101,6 @@
 		}
 	});
 
-	async function resolveMappedAddress() {
-		if (!apiSourceChain || !apiSourceAddress) return '';
-		const result = await getCreateMappedStacksAddress(
-			appConfig.VITE_BIGMARKET_API,
-			apiSourceChain,
-			apiSourceAddress
-		);
-		return result.mappedAddress?.trim() ?? '';
-	}
-
 	async function refreshBalances() {
 		if (!stacksConnected || !sourceIdentity) return;
 
@@ -119,9 +109,8 @@
 		txHash = null;
 
 		try {
-			mappedAddress = await resolveMappedAddress();
 			if (!mappedAddress) {
-				throw new Error('Could not resolve mapped Stacks address');
+				throw new Error('Mapped Stacks address not yet available — please wait for wallet to load');
 			}
 
 			const vault = stacks.createVaultClient(daoConfig);

@@ -140,6 +140,29 @@ export async function getBigRPostConditionNft(
   return postConditionForNFT;
 }
 
+/**
+ * Post-condition for vault `withdraw-direct`.
+ * The vault CONTRACT principal sends exactly `microAmount` of `token` to the recipient.
+ */
+export function pcForWithdraw(
+  token: string,
+  vaultPrincipal: string,
+  microAmount: number,
+): Array<PostCondition> {
+  if (!isSTX(token)) {
+    const formattedToken = (token.split(".")[0] +
+      "." +
+      token.split(".")[1]) as `${string}.${string}`;
+    const tokenName = getFungibleTokenName(token);
+    return [
+      Pc.principal(vaultPrincipal)
+        .willSendEq(microAmount)
+        .ft(formattedToken, tokenName),
+    ];
+  }
+  return [Pc.principal(vaultPrincipal).willSendEq(microAmount).ustx()];
+}
+
 export function pcForDeposit(
   token: string,
   senderAddress: string,

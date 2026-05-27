@@ -33,7 +33,7 @@ import { runBatchClaimSweepJob } from './routes/reputation/reputation-helper.js'
 import { runSweepSubmittedIntentsJob } from './routes/cross-chain/crossChainScheduler.js';
 import { startUICacheWarming } from './routes/cache/cache_utils.js';
 import { initWebsocket } from './lib/websockets/init.js';
-
+import { crossChainProtocolRoutes } from './routes/cross-chain/crossChainMessageProtocolRoutes.js';
 if (process.env.NODE_ENV === 'development') {
 	dotenv.config();
 }
@@ -95,7 +95,7 @@ app.use('/bigmarket-api/reputation', reputationRoutes);
 // app.use('/bigmarket-api/clarity-bitcoin', clarityBitcoinRoutes);
 app.use('/bigmarket-api/auth', authRoutes);
 app.use('/bigmarket-api/cross-chain', crossChainRoutes);
-
+app.use('/bigmarket-api/cross-chain/protocol', crossChainProtocolRoutes);
 app.use('/bigmarket-api/disputes', disputeRoutes);
 app.use('/bigmarket-api/transactions', transactionRoutes);
 app.use('/health', healthRoutes);
@@ -144,7 +144,9 @@ async function connectToMongoCloud() {
 	runBatchClaimSweepJob.start();
 	if (CONFIG.network === 'devnet') {
 		runSweepSubmittedIntentsJob.start();
-		console.log('[cross-chain sweep] 10-second sweep job started (devnet)');
+		console.log(`[cross-chain sweep] 10-second sweep job started network ${CONFIG.network}`);
+	} else {
+		console.log(`[cross-chain no sweep] 10-second sweep job not started network ${CONFIG.network}`);
 	}
 	startUICacheWarming(); // runs ui caching every 25s
 

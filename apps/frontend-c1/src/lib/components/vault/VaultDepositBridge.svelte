@@ -49,7 +49,7 @@
 
 			const base = {
 				amount: amount.trim(),
-				sourceAddress: mappedStx,
+				sourceAddress: ethAddress,
 				sourceChain: ChainSymbol.ETH,
 				destinationChain: ChainSymbol.STX,
 				tokenSymbol,

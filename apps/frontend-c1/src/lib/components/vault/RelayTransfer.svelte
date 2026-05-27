@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button } from '@bigmarket/bm-ui';
 	import { stacks } from '@bigmarket/sdk';
-	import { getCreateMappedStacksAddress, walletState } from '@bigmarket/bm-common';
+	import { walletState } from '@bigmarket/bm-common';
 	import { fmtMicroToStx } from '@bigmarket/bm-utilities';
 	import type { AppConfig, DaoConfig, WalletAccount } from '@bigmarket/bm-types';
 
@@ -15,11 +15,11 @@
 
 	const MICRO = 1_000_000n;
 
-	let mappedAddress = $state('');
+	// Mapped address comes from walletState (populated by initWallet)
+	const mappedAddress = $derived($walletState.activeAccount?.mappedAddress ?? '');
 	let stxAddress = $derived(
 		$walletState.accounts.find((a: WalletAccount) => a.type === 'stx')?.address ?? ''
 	);
-	let resolving = $state(false);
 	let busy = $state(false);
 	let txHash = $state<string | null>(null);
 	let intentId = $state<string | null>(null);
@@ -46,7 +46,6 @@
 		stxAddress.length > 0 &&
 			mappedAddress.length > 0 &&
 			!busy &&
-			!resolving &&
 			walletBalance > 0n &&
 			amountMicro !== null &&
 			amountMicro > 0n &&
@@ -58,28 +57,6 @@
 			? stacks.explorerTxUrl(appConfig.VITE_NETWORK, appConfig.VITE_STACKS_EXPLORER, txHash)
 			: null
 	);
-
-	$effect(() => {
-		if (stxAddress) void resolveMappedAddress();
-	});
-
-	async function resolveMappedAddress() {
-		resolving = true;
-		errorMsg = null;
-		try {
-			const result = await getCreateMappedStacksAddress(
-				appConfig.VITE_BIGMARKET_API,
-				'stacks',
-				stxAddress
-			);
-			mappedAddress = result.mappedAddress?.trim() ?? '';
-		} catch (e) {
-			errorMsg = e instanceof Error ? e.message : String(e);
-			mappedAddress = '';
-		} finally {
-			resolving = false;
-		}
-	}
 
 	function setMax() {
 		rawInput = (Number(walletBalance) / Number(MICRO)).toFixed(6).replace(/\.?0+$/, '');
@@ -141,19 +118,17 @@
 			>devnet : {intentId}</span
 		>
 		<h3 class="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
-			Transfer to relay address
+			Transfer to mapped address
 		</h3>
 	</div>
 	<p class="text-[11px] leading-relaxed text-neutral-600 dark:text-neutral-400">
-		Sends USDCx from your wallet to the mapped relay address. The server relayer will detect the
-		balance and sweep it into your vault, crediting your Stacks address.
+		Sends USDCx from your wallet to the mapped address. The server relayer will detect the balance
+		and sweep it into your vault, crediting your Stacks address.
 	</p>
 
-	{#if resolving}
-		<p class="text-xs text-neutral-500 dark:text-neutral-400">Resolving relay address…</p>
-	{:else if mappedAddress}
+	{#if mappedAddress}
 		<div class="font-mono text-[11px] text-neutral-600 dark:text-neutral-400">
-			<span class="text-neutral-500 dark:text-neutral-500">Relay address</span>
+			<span class="text-neutral-500 dark:text-neutral-500">Mapped address</span>
 			<span class="mt-0.5 block break-all">{mappedAddress}</span>
 		</div>
 	{/if}
@@ -173,7 +148,7 @@
 				step="any"
 				placeholder="0.000000"
 				bind:value={rawInput}
-				disabled={!mappedAddress || busy || resolving}
+				disabled={!mappedAddress || busy}
 				class="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder-neutral-500"
 			/>
 			<button
@@ -214,6 +189,6 @@
 		disabled={!canTransfer}
 		class="w-full cursor-pointer"
 	>
-		{busy ? 'Submitting…' : 'Transfer to relay address'}
+		{busy ? 'Submitting…' : 'Transfer to mapped address'}
 	</Button>
 </div>

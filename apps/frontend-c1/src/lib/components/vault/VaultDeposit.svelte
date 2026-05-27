@@ -2,6 +2,7 @@
 	import { walletState } from '@bigmarket/bm-common';
 	import VaultDepositBridge from './VaultDepositBridge.svelte';
 	import StacksVaultPanel from './StacksVaultPanel.svelte';
+	import MappedSweepPanel from './MappedSweepPanel.svelte';
 
 	type ControllerChain = 'evm' | 'stacks';
 
@@ -113,11 +114,17 @@
 			</p>
 		{:else}
 			<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-				Deposit USDC from Ethereum via AllBridge. USDCx lands on your mapped relay address and is
-				then moved to your vault.
+				Deposit USDC from Ethereum via AllBridge. USDCx lands on your mapped relay address, then
+				sweep it into the vault below.
 			</p>
 		{/if}
 		<VaultDepositBridge />
+		{#if evmConnected}
+			{@const ethAddress = $walletState.accounts.find((a) => a.type === 'eth')?.address ?? ''}
+			{#if ethAddress}
+				<MappedSweepPanel sourceChain="evm" sourceAddress={ethAddress} />
+			{/if}
+		{/if}
 	{:else}
 		{#if !stacksConnected}
 			<p

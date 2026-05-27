@@ -16,13 +16,20 @@ import {
 } from "@stacks/transactions";
 import { callContract } from "./tx.js";
 import { callContractReadOnly } from "./utils/contract.js";
-import { pcForDeposit } from "./utils/postConditions.js";
+import { pcForDeposit, pcForWithdraw } from "./utils/postConditions.js";
 import {
   vaultChainIdBuffer,
   vaultChainIdCV,
   vaultUserAddressBuffer,
+  VAULT_CHAIN_ID,
 } from "./utils/vaultIdentity.js";
 import { STACKS_DEVNET, STACKS_MAINNET, STACKS_TESTNET } from "@stacks/network";
+import {
+  buildBmp1Message,
+  amountToSlot,
+  BMP1_OPCODES,
+  BMP1_CHAINS,
+} from "../../protocol/bmp1.js";
 
 export function resolveStacksNetwork(network: string) {
   if (network === "testnet") return STACKS_TESTNET;
@@ -32,7 +39,7 @@ export function resolveStacksNetwork(network: string) {
 
 export function normalizeVaultSourceChain(sourceChain: string): VaultUserChain {
   const s = sourceChain.toLowerCase();
-  if (s === "eth" || s === "ethereum") return "evm";
+  if (s === "eth" || s === "ethereum" || s === "evm") return "evm";
   if (s === "sol" || s === "solana") return "solana";
   if (s === "stx" || s === "stacks") return "stacks";
   throw new Error(`Unsupported source chain: ${sourceChain}`);
@@ -72,7 +79,8 @@ export function createVaultClient(daoConfig: DaoConfig) {
         functionName: "get-balance",
         functionArgs: [`0x${serializeCV(principalCV(owner))}`],
       });
-      return BigInt(res?.value?.value || 0);
+      const val = BigInt(res?.value?.value || 0);
+      return BigInt(val);
     },
 
     /**
@@ -146,6 +154,106 @@ export function createVaultClient(daoConfig: DaoConfig) {
           principalCV(params.senderStxAddress),
           principalCV(params.recipientStxAddress),
           noneCV(),
+        ],
+        postConditions,
+        "deny",
+      );
+    },
+
+    /**
+     * Fetch the current withdrawal nonce for a controller identity from the vault.
+     * Must be embedded in the BMP1 message to prevent replay.
+     */
+    async getWithdrawNonce(
+      stacksApi: string,
+      userChain: VaultUserChain,
+      sourceAddress: string,
+    ): Promise<bigint> {
+      const chain = normalizeVaultSourceChain(userChain);
+      const chainArg = `0x${serializeCV(bufferCV(vaultChainIdBuffer(chain)))}`;
+      const addrArg = `0x${serializeCV(bufferCV(vaultUserAddressBuffer(chain, sourceAddress)))}`;
+
+      const res = await callContractReadOnly(stacksApi, {
+        contractAddress: deployer,
+        contractName: vaultName,
+        functionName: "get-nonce",
+        functionArgs: [chainArg, addrArg],
+      });
+      return BigInt(res?.value ?? 0);
+    },
+
+    /**
+     * Build a 256-byte BMP1 withdrawal message ready for signing.
+     *
+     * Slot layout for OP_WITHDRAW:
+     *   slot0 = keccak256( to-consensus-buff?(token-contract) )
+     *   slot1 = keccak256( to-consensus-buff?(mapped-address) )
+     *   slot2 = keccak256( to-consensus-buff?(recipient) )
+     *   slot3 = amountToSlot(amountMicro)
+     *   slot4 = amountToSlot(expiryBlock)  — 0 means no expiry
+     *
+     * Callers must supply the keccak256 commitment bytes (use
+     * `keccak_256(hexToBytes(serializeCV(principalCV(addr))))` from @noble/hashes).
+     */
+    buildWithdrawBmp1(params: {
+      userChain: VaultUserChain;
+      sourceAddress: string;
+      nonce: bigint;
+      tokenPrincipalCommit: Uint8Array;
+      mappedAddressCommit: Uint8Array;
+      recipientCommit: Uint8Array;
+      amountMicro: bigint;
+      expiryBlock?: bigint;
+    }): Uint8Array {
+      const chain = normalizeVaultSourceChain(params.userChain);
+      return buildBmp1Message({
+        opcode: BMP1_OPCODES.WITHDRAW,
+        chain: BMP1_CHAINS[chain],
+        controllerAddress: vaultUserAddressBuffer(chain, params.sourceAddress),
+        nonce: params.nonce,
+        slots: [
+          params.tokenPrincipalCommit,
+          params.mappedAddressCommit,
+          params.recipientCommit,
+          amountToSlot(params.amountMicro),
+          amountToSlot(params.expiryBlock ?? 0n),
+        ],
+      });
+    },
+
+    /**
+     * Call vault `withdraw-direct`: the tx-sender (Leather / Xverse) IS the
+     * controller, so no off-chain signature is required.
+     *
+     * Post-condition: the vault contract sends exactly `amountMicro` USDCx
+     * to `recipientStxAddress`.
+     */
+    withdrawDirect(params: {
+      amountMicro: bigint;
+      /** Stacks principal that receives the tokens (may equal senderStxAddress). */
+      recipientStxAddress: string;
+      senderStxAddress: string;
+    }) {
+      const amount = params.amountMicro;
+      if (amount <= 0n)
+        throw new Error("Withdraw amount must be greater than zero");
+
+      const vaultPrincipal = `${deployer}.${vaultName}`;
+      const postConditions = pcForWithdraw(
+        usdcx,
+        vaultPrincipal,
+        Number(amount),
+      );
+
+      return callContract(
+        deployer,
+        vaultName,
+        network,
+        "withdraw-direct",
+        [
+          contractPrincipalCV(usdcxAddr, usdcxContractName),
+          uintCV(amount),
+          principalCV(params.recipientStxAddress),
         ],
         postConditions,
         "deny",

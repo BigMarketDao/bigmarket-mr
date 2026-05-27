@@ -12,5 +12,7 @@ export type WalletState = {
   chain: Chain;
   accounts: WalletAccount[];
   activeAccount?: WalletAccount;
+  /** EVM wallet USDC balance in micro-units (6 dp), serialised as string for localStorage. */
+  ethUsdcBalance?: string;
   raw?: unknown;
 };

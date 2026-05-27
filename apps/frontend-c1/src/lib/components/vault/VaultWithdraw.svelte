@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { walletState } from '@bigmarket/bm-common';
 	import VaultWithdrawBridge from './VaultWithdrawBridge.svelte';
+	import VaultWithdrawStacks from './VaultWithdrawStacks.svelte';
+	import MappedSweepPanel from './MappedSweepPanel.svelte';
+	import VaultRelayAdmin from './VaultRelayAdmin.svelte';
+	import type { WalletAccount } from '@bigmarket/bm-types';
 
 	type ControllerChain = 'evm' | 'stacks';
 
@@ -14,6 +18,11 @@
 	);
 	const stacksConnected = $derived(
 		$walletState.status === 'connected' && $walletState.chain === 'stacks'
+	);
+
+	// ETH address for MappedSweepPanel — needed to sweep mapped balance back to vault
+	const ethAddress = $derived(
+		$walletState.accounts.find((a: WalletAccount) => a.type === 'eth')?.address ?? ''
 	);
 </script>
 
@@ -108,22 +117,31 @@
 				message with MetaMask; the relayer then moves USDCx from the vault to Ethereum via AllBridge.
 			</p>
 		{:else}
-			<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-				Sign a withdrawal with MetaMask. The vault verifies your secp256k1 signature and releases
-				USDCx to your relay address. AllBridge then bridges it back to Ethereum as USDC.
-			</p>
+		<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+			Sign a withdrawal with MetaMask. The vault verifies your secp256k1 signature and releases
+			USDCx to your mapped Stacks address. Use AllBridge (or the sweep panel below on
+			devnet/testnet) to move it back to Ethereum.
+		</p>
 		{/if}
 		<VaultWithdrawBridge />
+		{#if evmConnected && ethAddress}
+			<MappedSweepPanel sourceChain="evm" sourceAddress={ethAddress} />
+		{/if}
+		<VaultRelayAdmin />
 	{:else}
-		<!-- Stacks withdrawal: coming soon -->
+	{#if !stacksConnected}
 		<p
 			class="rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/10 dark:text-amber-300"
 		>
-			{#if !stacksConnected}
-				Connect a <strong>Stacks wallet</strong> to withdraw USDCx to a Stacks address.
-			{:else}
-				Direct withdrawal to a Stacks address is coming soon.
-			{/if}
+			Connect a <strong>Stacks wallet</strong> (Leather or Xverse) to withdraw USDCx directly to
+			any Stacks address.
 		</p>
+	{:else}
+		<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+			Withdraw USDCx from your vault balance to any Stacks address. Your wallet authorises the
+			transaction directly — no relayer or bridge required.
+		</p>
+	{/if}
+	<VaultWithdrawStacks />
 	{/if}
 </div>

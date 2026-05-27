@@ -82,6 +82,10 @@ export type AddressObject = {
   ordinal: string;
   sBTCBalance: number;
   tokenBalances?: TokenBalances;
+  /** Token balances for the mapped relay address.
+   *  For Stacks users this is a separate ephemeral relay address.
+   *  For EVM/Solana users this is the same as tokenBalances (the relay IS their Stacks address). */
+  mappedTokenBalances?: TokenBalances;
   walletBalances?: WalletBalances;
   stxBalance?: number;
   bnsNameInfo?: any;
