@@ -31,11 +31,29 @@ const OP_WITHDRAW = 0x01;
 const OP_BUY_SHARES = 0x02;
 const BMP1_VERSION = 0x01;
 
-// "\x19Ethereum Signed Message:\n256"
-const EIP191_PREFIX_256 = new Uint8Array([
-	0x19, 0x45, 0x74, 0x68, 0x65, 0x72, 0x65, 0x75, 0x6d, 0x20, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x20, 0x4d, 0x65, 0x73,
-	0x73, 0x61, 0x67, 0x65, 0x3a, 0x0a, 0x32, 0x35, 0x36
+// EIP-712 constants — must match bme050-0-vault.clar exactly.
+// keccak256("BMP1Withdraw(address controller,uint256 amount,uint256 nonce,bytes32 bmp1Hash)")
+const EIP712_TYPEHASH = new Uint8Array([
+	0xf1, 0xeb, 0xe4, 0x5c, 0x92, 0x52, 0xe5, 0x9f, 0x16, 0xc9, 0xea, 0xed, 0x22, 0x3a, 0x77, 0x0a,
+	0x5d, 0x40, 0xb6, 0xb8, 0xbc, 0x14, 0x50, 0x7a, 0x83, 0xcc, 0x68, 0xa1, 0x49, 0xd6, 0x44, 0xba
 ]);
+// keccak256(domainTypeHash || keccak256("BigMarket") || keccak256("1.0.0"))
+const EIP712_DOMAIN_SEP = new Uint8Array([
+	0x4e, 0x3c, 0x71, 0x55, 0xc4, 0x29, 0xf3, 0x6e, 0x33, 0xb8, 0x49, 0x8e, 0xc2, 0x58, 0xc6, 0x59,
+	0xf3, 0x93, 0xec, 0x00, 0xd8, 0x43, 0x48, 0x84, 0xb7, 0x24, 0x72, 0x30, 0x4c, 0x45, 0x68, 0x1d
+]);
+
+/** Compute the EIP-712 digest for BMP1Withdraw — mirrors verify-evm in the vault contract. */
+function eip712Digest(message: Uint8Array): Uint8Array {
+	const bmp1Hash     = keccak_256(message);
+	const controller   = message.slice(16, 48);   // OFF_CONTROLLER
+	const slot3        = message.slice(160, 192);  // OFF_SLOT3 (amount)
+	const nonce16      = message.slice(48, 64);    // OFF_NONCE
+	const nonce32      = concatBytes(new Uint8Array(16), nonce16);
+	const structEncoded = concatBytes(EIP712_TYPEHASH, controller, slot3, nonce32, bmp1Hash);
+	const structHash   = keccak_256(structEncoded);
+	return keccak_256(concatBytes(new Uint8Array([0x19, 0x01]), EIP712_DOMAIN_SEP, structHash));
+}
 
 /** Errors from bme050-0-vault.clar */
 const ERR_INVALID_AMOUNT = 7101;
@@ -159,12 +177,12 @@ function buildBmp1(opts: BuildMessageOpts): Uint8Array {
 }
 
 function signEvm(message: Uint8Array, privKey: Uint8Array): Uint8Array {
-	const digest = keccak_256(concatBytes(EIP191_PREFIX_256, message));
+	const digest = eip712Digest(message);
 	const [sig, recovery] = secp.signSync(digest, privKey, { der: false, recovered: true, canonical: true });
-	// 64-byte compact (r || s) || 1-byte recovery
+	// Clarity secp256k1-recover? expects R(32) || S(32) || V(1) = RSV format
 	const out = new Uint8Array(65);
-	out.set(sig, 0);
-	out[64] = recovery;
+	out.set(sig, 0);   // R || S (compact 64 bytes)
+	out[64] = recovery; // V (0 or 1) as last byte
 	return out;
 }
 

@@ -11,6 +11,7 @@
 	import {
 		appConfigStore,
 		daoConfigStore,
+		fetchEvmUsdcBalance,
 		initWallet,
 		requireAppConfig,
 		requireDaoConfig,
@@ -46,22 +47,27 @@
 
 	const usdcxKey = $derived(`${daoConfig.VITE_DAO_DEPLOYER}.usdcx::usdcx-token`);
 
-	// Wallet USDCx (Stacks wallet address, from tokenBalances)
-	const walletUsdcx = $derived(
-		isStacksConnected
-			? BigInt($userWalletStore.tokenBalances?.fungible_tokens[usdcxKey]?.balance || 0)
-			: null
-	);
-
-	// ── balances (vault via contract, mapped via token API) ──────────────────
+	// ── balances (vault via contract, wallet + mapped via token API) ─────────
 	let loading = $state(false);
 	let vaultBalance = $state<bigint | null>(null);
+	let walletUsdcxLive = $state<bigint | null>(null);
 	let mappedUsdcxLive = $state<bigint | null>(null);
 
-	// Fall back to store value until a live fetch completes
+	// Fall back to store values until a live fetch has completed
+	const walletUsdcx = $derived(
+		isStacksConnected
+			? (walletUsdcxLive ??
+					BigInt($userWalletStore.tokenBalances?.fungible_tokens[usdcxKey]?.balance || 0))
+			: null
+	);
 	const mappedUsdcx = $derived(
 		mappedUsdcxLive ??
 			BigInt($userWalletStore.mappedTokenBalances?.fungible_tokens[usdcxKey]?.balance || 0)
+	);
+
+	// EVM wallet's USDC balance on Ethereum (micro-units, 6 dp) — persisted in walletState
+	const ethUsdcx = $derived(
+		isEvmConnected ? BigInt($walletState.ethUsdcBalance ?? '0') : null
 	);
 
 	const fmt = (v: bigint | null) => (v === null ? '—' : fmtMicroToStx(Number(v), 6));
@@ -77,8 +83,9 @@
 		try {
 			const vault = stacks.createVaultClient(daoConfig);
 			if (isStacksConnected && stxAddress) {
-				[vaultBalance, mappedUsdcxLive] = await Promise.all([
+				[vaultBalance, walletUsdcxLive, mappedUsdcxLive] = await Promise.all([
 					vault.getVaultUsdcxBalance(appConfig.VITE_STACKS_API, 'stacks', stxAddress, stxAddress),
+					vault.getUsdcxBalance(appConfig.VITE_STACKS_API, stxAddress),
 					mappedAddress
 						? vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress)
 						: Promise.resolve(0n)
@@ -88,6 +95,8 @@
 					vault.getVaultUsdcxBalance(appConfig.VITE_STACKS_API, 'evm', ethAddress, mappedAddress),
 					vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress)
 				]);
+				// Fetch Ethereum USDC balance via MetaMask eth_call and persist in walletState
+				await fetchEvmUsdcBalance(ethAddress);
 			}
 		} catch {
 			// silently ignore — user can click refresh
@@ -114,10 +123,10 @@
 					</span>
 				{/if}
 			</div>
-		<button
-			type="button"
-			onclick={() => void loadAll()}
-			disabled={loading}
+			<button
+				type="button"
+				onclick={() => void loadAll()}
+				disabled={loading}
 				class="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-neutral-600 disabled:cursor-wait dark:hover:text-neutral-200"
 				title="Refresh balances"
 			>
@@ -164,63 +173,63 @@
 				</p>
 			</div>
 
-			<!-- Wallet USDCx (Stacks only; show N/A for EVM) -->
-			<div
-				class="col-span-1 rounded-md border border-neutral-200 bg-neutral-50/80 p-2.5 dark:border-neutral-600 dark:bg-neutral-900/40"
-			>
-				<p class="text-[10px] text-neutral-500 dark:text-neutral-400">
-					{isStacksConnected ? 'Wallet USDCx' : 'Wallet USDC'}
-				</p>
-				<p class="mt-0.5 text-base font-semibold text-neutral-900 dark:text-neutral-100">
-					{loading ? '…' : isStacksConnected ? fmt(walletUsdcx) : '—'}
-				</p>
-				{#if $walletState.chain === 'ethereum'}
-					<p class="mt-0.5 text-[9px] text-neutral-400">
-						{$walletState.accounts.find((a) => a.type === 'eth')?.address ?? ''}
-					</p>
-				{:else}
-					<p class="mt-0.5 font-mono text-[9px] text-neutral-400">
-						<a
-							class="flex items-center gap-1 rounded-md px-3 py-1 text-community hover:bg-community-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-							href={stacks.explorerAddressUrl(
-								appConfig.VITE_NETWORK,
-								appConfig.VITE_STACKS_EXPLORER,
-								`${stxAddress}`
-							)}
-							target="_blank"
-						>
-							<ExternalLink class="h-4 w-4" />
-							{truncate(stxAddress, 10)}
-						</a>
-					</p>
-				{/if}
-			</div>
-
-		<!-- Mapped address USDCx -->
+		<!-- Wallet token balance (USDCx on Stacks, USDC on Ethereum) -->
 		<div
 			class="col-span-1 rounded-md border border-neutral-200 bg-neutral-50/80 p-2.5 dark:border-neutral-600 dark:bg-neutral-900/40"
 		>
-			<p class="text-[10px] text-neutral-500 dark:text-neutral-400">Mapped USDCx</p>
-			<p class="mt-0.5 text-base font-semibold text-neutral-900 dark:text-neutral-100">
-				{loading ? '…' : fmt(mappedUsdcx)}
+			<p class="text-[10px] text-neutral-500 dark:text-neutral-400">
+				{isStacksConnected ? 'Wallet USDCx' : 'Wallet USDC (ETH)'}
 			</p>
-			{#if mappedAddress}
+			<p class="mt-0.5 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+				{loading ? '…' : isStacksConnected ? fmt(walletUsdcx) : fmt(ethUsdcx)}
+			</p>
+			{#if isEvmConnected}
+				<p class="mt-0.5 font-mono text-[9px] text-neutral-400 truncate" title={ethAddress}>
+					{truncate(ethAddress, 10)}
+				</p>
+			{:else}
 				<p class="mt-0.5 font-mono text-[9px] text-neutral-400">
 					<a
 						class="flex items-center gap-1 rounded-md px-3 py-1 text-community hover:bg-community-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 						href={stacks.explorerAddressUrl(
 							appConfig.VITE_NETWORK,
 							appConfig.VITE_STACKS_EXPLORER,
-							mappedAddress
+							`${stxAddress}`
 						)}
 						target="_blank"
 					>
 						<ExternalLink class="h-4 w-4" />
-						{truncate(mappedAddress, 10)}
+						{truncate(stxAddress, 10)}
 					</a>
 				</p>
 			{/if}
 		</div>
+
+			<!-- Mapped address USDCx -->
+			<div
+				class="col-span-1 rounded-md border border-neutral-200 bg-neutral-50/80 p-2.5 dark:border-neutral-600 dark:bg-neutral-900/40"
+			>
+				<p class="text-[10px] text-neutral-500 dark:text-neutral-400">Mapped USDCx</p>
+				<p class="mt-0.5 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+					{loading ? '…' : fmt(mappedUsdcx)}
+				</p>
+				{#if mappedAddress}
+					<p class="mt-0.5 font-mono text-[9px] text-neutral-400">
+						<a
+							class="flex items-center gap-1 rounded-md px-3 py-1 text-community hover:bg-community-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+							href={stacks.explorerAddressUrl(
+								appConfig.VITE_NETWORK,
+								appConfig.VITE_STACKS_EXPLORER,
+								mappedAddress
+							)}
+							target="_blank"
+						>
+							<ExternalLink class="h-4 w-4" />
+							{truncate(mappedAddress, 10)}
+						</a>
+					</p>
+				{/if}
+			</div>
 		</div>
 	</div>
 {/if}

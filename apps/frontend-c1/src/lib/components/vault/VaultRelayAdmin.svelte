@@ -1,10 +1,24 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Button } from '@bigmarket/bm-ui';
-	import { appConfigStore, requireAppConfig, daoConfigStore, requireDaoConfig } from '@bigmarket/bm-common';
+	import { stacks } from '@bigmarket/sdk';
+	import {
+		appConfigStore,
+		requireAppConfig,
+		walletState,
+		daoConfigStore,
+		requireDaoConfig
+	} from '@bigmarket/bm-common';
+	import type { WalletAccount } from '@bigmarket/bm-types';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
+
+	// EVM controller address — the server derives the mapped Stacks key from this
+	const ethAddress = $derived(
+		$walletState.accounts.find((a: WalletAccount) => a.type === 'eth')?.address ?? ''
+	);
+	const mappedAddress = $derived($walletState.activeAccount?.mappedAddress ?? '');
 
 	let relayAddress = $state<string | null>(null);
 	let balanceMicro = $state<bigint | null>(null);
@@ -22,25 +36,25 @@
 		balanceMicro !== null ? (Number(balanceMicro) / 1_000_000).toFixed(6) + ' USDCx' : '—'
 	);
 
-	const relayUrl = $derived(`${appConfig.VITE_BIGMARKET_API}/cross-chain/protocol/relay-info`);
 	const sweepUrl = $derived(`${appConfig.VITE_BIGMARKET_API}/cross-chain/protocol/sweep-relay`);
 
 	const canSweep = $derived(
 		!sweeping &&
 			balanceMicro !== null &&
 			balanceMicro > 0n &&
+			ethAddress.length > 0 &&
 			/^S[TP][A-Z0-9]{38,39}$/.test(recipientInput.trim())
 	);
 
 	async function load() {
+		if (!mappedAddress) return;
 		loading = true;
 		errorMsg = null;
 		try {
-			const res = await fetch(relayUrl);
-			if (!res.ok) throw new Error(await res.text());
-			const data = (await res.json()) as { relayAddress: string; balanceMicro: string };
-			relayAddress = data.relayAddress;
-			balanceMicro = BigInt(data.balanceMicro);
+			// Show the user's mapped address (derived server-side from ethAddress)
+			relayAddress = mappedAddress;
+			const vault = stacks.createVaultClient(daoConfig);
+			balanceMicro = await vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress);
 		} catch (e) {
 			errorMsg = e instanceof Error ? e.message : String(e);
 		} finally {
@@ -49,16 +63,18 @@
 	}
 
 	async function sweep() {
-		if (!canSweep) return;
+		if (!canSweep || !ethAddress) return;
 		sweeping = true;
 		sweepTxid = null;
 		errorMsg = null;
 		try {
-			const body: Record<string, string> = { recipientAddress: recipientInput.trim() };
+			// Pass controllerAddress so the API derives the correct mapped private key
+			const body: Record<string, string> = {
+				controllerAddress: ethAddress,
+				recipientAddress: recipientInput.trim()
+			};
 			if (amountInput.trim()) {
-				body.amountMicro = String(
-					BigInt(Math.round(Number(amountInput.trim()) * 1_000_000))
-				);
+				body.amountMicro = String(BigInt(Math.round(Number(amountInput.trim()) * 1_000_000)));
 			}
 			const res = await fetch(sweepUrl, {
 				method: 'POST',
@@ -113,10 +129,10 @@
 	</button>
 
 	{#if open}
-		<div class="space-y-4 border-t border-amber-200 px-4 pb-4 pt-3 dark:border-amber-700/40">
+		<div class="space-y-4 border-t border-amber-200 px-4 pt-3 pb-4 dark:border-amber-700/40">
 			<p class="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
-				After an EVM vault withdrawal, USDCx lands at the relay address. On devnet/testnet
-				AllBridge is unavailable — use this panel to manually drain the relay to any Stacks address.
+				After an EVM vault withdrawal, USDCx lands at the relay address. On devnet/testnet AllBridge
+				is unavailable — use this panel to manually drain the relay to any Stacks address.
 			</p>
 
 			<!-- Relay address + balance -->
@@ -190,7 +206,7 @@
 				{/if}
 
 				{#if sweepTxid}
-					<p class="break-all text-[11px] text-emerald-700 dark:text-emerald-400">
+					<p class="text-[11px] break-all text-emerald-700 dark:text-emerald-400">
 						Swept. txid: <span class="font-mono">{sweepTxid}</span>
 					</p>
 				{/if}

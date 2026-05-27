@@ -89,21 +89,43 @@ export async function withdrawFromVault(body: WithdrawFromVaultRequest): Promise
 }
 
 /**
- * Returns the relay address (server wallet's Stacks address) and its
+ * Resolve the Stacks address and its private key for a given controller.
+ *
+ * When `controllerAddress` is supplied (an EVM or other cross-chain address)
+ * the mapped Stacks address is derived deterministically from the server
+ * walletKey + controllerAddress — exactly the same derivation used by
+ * createStacksWallet / depositMappedBalanceToVault.
+ *
+ * When `controllerAddress` is omitted the server's own wallet address is
+ * returned (backward-compatible path).
+ */
+function resolveMappedKey(config: ReturnType<typeof getConfig>, controllerAddress?: string): {
+	address: string;
+	privateKey: string;
+} {
+	if (controllerAddress) {
+		const privateKey = stacks.deriveStacksPrivateKey(config.walletKey, controllerAddress);
+		const address = getAddressFromPrivateKey(privateKey, config.network as any);
+		return { address, privateKey };
+	}
+	return { address: getAddressFromPrivateKey(config.walletKey, config.network as any), privateKey: config.walletKey };
+}
+
+/**
+ * Returns the mapped Stacks address for a given EVM controller and its
  * current USDCx balance in micro-units.
  *
- * The relay address is the destination for EVM vault withdrawals: after
- * the vault releases USDCx to the relay, AllBridge is used to bridge
- * the funds on to Ethereum.  On devnet/testnet use `POST /sweep-relay`
- * to manually drain the relay for demo purposes.
+ * Pass `controllerAddress` (the ETH 0x… address) to get the derived mapped
+ * address that received the vault withdrawal.  Omit it to fall back to the
+ * server's own relay wallet (used for deposit-side sweep flows).
  */
-export async function getRelayInfo(): Promise<{ relayAddress: string; balanceMicro: string }> {
+export async function getRelayInfo(controllerAddress?: string): Promise<{ relayAddress: string; balanceMicro: string }> {
 	const config = getConfig();
 	const daoConfig = getDaoConfig();
 
 	if (!config.walletKey) throw new Error('Server walletKey is not configured.');
 
-	const relayAddress = getAddressFromPrivateKey(config.walletKey, config.network as any);
+	const { address: relayAddress } = resolveMappedKey(config, controllerAddress);
 
 	const vault = stacks.createVaultClient(daoConfig);
 	const balance = await vault.getUsdcxBalance(config.stacksApi, relayAddress);
@@ -112,16 +134,17 @@ export async function getRelayInfo(): Promise<{ relayAddress: string; balanceMic
 }
 
 /**
- * Manually transfer USDCx from the server relay address to a Stacks
- * recipient.
+ * Manually transfer USDCx from the controller's mapped Stacks address to
+ * any Stacks recipient.
  *
- * Used for demos on devnet/testnet where AllBridge is unavailable.
- * On mainnet this endpoint is still useful as an emergency drain, but
- * the normal path uses AllBridge directly after an EVM vault withdrawal.
+ * `controllerAddress` must be the EVM (0x…) address whose mapped Stacks
+ * address holds the funds — the server derives the corresponding private key
+ * via deriveStacksPrivateKey(walletKey, controllerAddress).
  *
- * If `amountMicro` is omitted the entire relay balance is swept.
+ * If `amountMicro` is omitted the entire balance is swept.
  */
 export async function sweepRelayAddress(body: {
+	controllerAddress: string;
 	recipientAddress: string;
 	amountMicro?: string;
 }): Promise<{ txid: string; relayAddress: string; amount: string }> {
@@ -129,18 +152,19 @@ export async function sweepRelayAddress(body: {
 	const daoConfig = getDaoConfig();
 
 	if (!config.walletKey) throw new Error('Server walletKey is not configured.');
+	if (!body.controllerAddress) throw new Error('controllerAddress is required');
 
-	const relayAddress = getAddressFromPrivateKey(config.walletKey, config.network as any);
+	const { address: relayAddress, privateKey } = resolveMappedKey(config, body.controllerAddress);
 
 	const vault = stacks.createVaultClient(daoConfig);
 	const balance = await vault.getUsdcxBalance(config.stacksApi, relayAddress);
 	const amount = body.amountMicro ? BigInt(body.amountMicro) : balance;
 
 	if (amount <= 0n) {
-		throw new Error(`No USDCx balance to sweep at relay address ${relayAddress}`);
+		throw new Error(`No USDCx balance to sweep at mapped address ${relayAddress}`);
 	}
 	if (amount > balance) {
-		throw new Error(`Requested ${amount} but relay only holds ${balance} micro-USDCx`);
+		throw new Error(`Requested ${amount} but ${relayAddress} only holds ${balance} micro-USDCx`);
 	}
 
 	const usdcxAddr = daoConfig.VITE_USDCX_CONTRACT_ADDRESS;
@@ -157,13 +181,13 @@ export async function sweepRelayAddress(body: {
 			standardPrincipalCV(body.recipientAddress),
 			noneCV(),
 		],
-		senderKey: config.walletKey,
+		senderKey: privateKey,           // mapped address's own key, not server key
 		network,
 		postConditionMode: PostConditionMode.Allow,
 		postConditions: [],
 	});
 
 	const txid = await broadcast(tx, 'sweep-relay');
-	console.log(`[sweep-relay] ${amount} USDCx sent from ${relayAddress} → ${body.recipientAddress}`);
+	console.log(`[sweep-relay] ${amount} USDCx from ${relayAddress} → ${body.recipientAddress}`);
 	return { txid, relayAddress, amount: amount.toString() };
 }

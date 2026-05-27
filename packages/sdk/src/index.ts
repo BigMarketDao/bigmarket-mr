@@ -1,5 +1,6 @@
 export * as wallet from "./wallet/index.js";
 export * as stacks from "./chains/stacks/index.js";
+export { getEvmUsdcBalance } from "./chains/ethereum/balance.js";
 export * as protocol from "./protocol/bmp1.js";
 export {
   requestWithdrawSignatureStacks,

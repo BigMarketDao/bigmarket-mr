@@ -2,7 +2,9 @@
 	import { walletState } from '@bigmarket/bm-common';
 	import VaultWithdrawBridge from './VaultWithdrawBridge.svelte';
 	import VaultWithdrawStacks from './VaultWithdrawStacks.svelte';
+	import MappedSweepPanel from './MappedSweepPanel.svelte';
 	import VaultRelayAdmin from './VaultRelayAdmin.svelte';
+	import type { WalletAccount } from '@bigmarket/bm-types';
 
 	type ControllerChain = 'evm' | 'stacks';
 
@@ -16,6 +18,11 @@
 	);
 	const stacksConnected = $derived(
 		$walletState.status === 'connected' && $walletState.chain === 'stacks'
+	);
+
+	// ETH address for MappedSweepPanel — needed to sweep mapped balance back to vault
+	const ethAddress = $derived(
+		$walletState.accounts.find((a: WalletAccount) => a.type === 'eth')?.address ?? ''
 	);
 </script>
 
@@ -110,12 +117,16 @@
 				message with MetaMask; the relayer then moves USDCx from the vault to Ethereum via AllBridge.
 			</p>
 		{:else}
-			<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-				Sign a withdrawal with MetaMask. The vault verifies your secp256k1 signature and releases
-				USDCx to your relay address. AllBridge then bridges it back to Ethereum as USDC.
-			</p>
+		<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+			Sign a withdrawal with MetaMask. The vault verifies your secp256k1 signature and releases
+			USDCx to your mapped Stacks address. Use AllBridge (or the sweep panel below on
+			devnet/testnet) to move it back to Ethereum.
+		</p>
 		{/if}
 		<VaultWithdrawBridge />
+		{#if evmConnected && ethAddress}
+			<MappedSweepPanel sourceChain="evm" sourceAddress={ethAddress} />
+		{/if}
 		<VaultRelayAdmin />
 	{:else}
 	{#if !stacksConnected}

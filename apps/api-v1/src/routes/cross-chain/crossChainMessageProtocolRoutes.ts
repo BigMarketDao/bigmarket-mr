@@ -17,14 +17,16 @@ router.post('/withdraw-from-vault', async (req, res) => {
 });
 
 /**
- * GET /cross-chain/protocol/relay-info
+ * GET /cross-chain/protocol/relay-info?controllerAddress=0x…
  *
- * Returns the server relay address (the Stacks address derived from walletKey)
- * and its current USDCx balance in micro-units.
+ * Returns the mapped Stacks address for `controllerAddress` and its current
+ * USDCx balance.  Pass the EVM (0x…) address of the user whose mapped Stacks
+ * address received the vault withdrawal.
  */
-router.get('/relay-info', async (_req, res) => {
+router.get('/relay-info', async (req, res) => {
 	try {
-		const info = await getRelayInfo();
+		const controllerAddress = req.query.controllerAddress as string | undefined;
+		const info = await getRelayInfo(controllerAddress);
 		res.json(info);
 	} catch (err: any) {
 		console.error('GET /bigmarket-api/cross-chain/protocol/relay-info failed', err);
@@ -35,23 +37,28 @@ router.get('/relay-info', async (_req, res) => {
 /**
  * POST /cross-chain/protocol/sweep-relay
  *
- * Body: { recipientAddress: string, amountMicro?: string }
+ * Body: { controllerAddress: string, recipientAddress: string, amountMicro?: string }
  *
- * Transfers USDCx from the server relay address to any Stacks address.
- * Used on devnet/testnet where AllBridge is unavailable — manually
- * complete an EVM withdrawal demo by draining the relay to a test address.
- * Omitting amountMicro sweeps the entire relay balance.
+ * Transfers USDCx from the mapped Stacks address of `controllerAddress` to
+ * `recipientAddress`.  The server derives the mapped private key from
+ * walletKey + controllerAddress (same derivation as createStacksWallet).
+ * Used on devnet/testnet where AllBridge is unavailable.
+ * Omitting amountMicro sweeps the entire balance.
  */
 router.post('/sweep-relay', async (req, res) => {
 	try {
-		const { recipientAddress, amountMicro } = req.body as {
+		const { controllerAddress, recipientAddress, amountMicro } = req.body as {
+			controllerAddress: string;
 			recipientAddress: string;
 			amountMicro?: string;
 		};
+		if (!controllerAddress) {
+			return res.status(400).json({ error: 'controllerAddress is required' });
+		}
 		if (!recipientAddress) {
 			return res.status(400).json({ error: 'recipientAddress is required' });
 		}
-		const result = await sweepRelayAddress({ recipientAddress, amountMicro });
+		const result = await sweepRelayAddress({ controllerAddress, recipientAddress, amountMicro });
 		res.json(result);
 	} catch (err: any) {
 		console.error('POST /bigmarket-api/cross-chain/protocol/sweep-relay failed', err);

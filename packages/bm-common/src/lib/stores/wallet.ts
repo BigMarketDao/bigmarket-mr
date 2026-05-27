@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import type { Chain, WalletAccount, WalletState } from "@bigmarket/bm-types";
-import { wallet } from "@bigmarket/sdk";
+import { wallet, getEvmUsdcBalance } from "@bigmarket/sdk";
 import { userWalletStore } from "./ui/userWalletStore.js";
 import { persisted } from "svelte-local-storage-store";
 
@@ -162,6 +162,20 @@ export async function disconnectWallet() {
 }
 
 // ---- ON-CHAIN DATA ----
+
+/**
+ * Read the connected EVM wallet's USDC balance (6 dp micro-units) via
+ * MetaMask's eth_call and persist it in walletState.ethUsdcBalance.
+ *
+ * No-ops silently when MetaMask is unavailable or the current chain has no
+ * known USDC contract.
+ */
+export async function fetchEvmUsdcBalance(ethAddress: string): Promise<void> {
+  if (!browser) return;
+  const balance = await getEvmUsdcBalance(ethAddress);
+  walletState.update((s) => ({ ...s, ethUsdcBalance: balance.toString() }));
+}
+
 export async function fetchWalletData(stacksApi: string): Promise<void> {
   if (!browser) return;
   const stxAddr = getStxAddress();

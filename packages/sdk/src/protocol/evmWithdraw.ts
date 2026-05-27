@@ -56,8 +56,9 @@ export type SignedEvmWithdrawMessage = {
   /** Raw 256-byte BMP1 message. */
   message: Uint8Array;
   /**
-   * 65-byte RSV signature from MetaMask eth_signTypedData_v4 (EIP-712).
-   * Last byte is the recovery id (0 or 1, already normalised from v=27/28).
+   * 65-byte signature in R(32) || S(32) || V(1) order (RSV), V normalised to 0 or 1.
+   * This is what Clarity's secp256k1-recover? expects.
+   * NOTE: noble/secp256k1 recoverPublicKey needs V||R||S (VRS); they are different orderings.
    */
   signature: Uint8Array;
   /**
@@ -172,11 +173,16 @@ export async function requestWithdrawSignatureEvm(
   // Normalise V: some wallets return 0/1, others 27/28
   const v = rawSig[64] >= 27 ? rawSig[64] - 27 : rawSig[64];
 
-  // Both noble/secp256k1 v3 'recovered' format AND Clarity's secp256k1-recover?
-  // expect V(1) || R(32) || S(32) — recovery byte FIRST.
+  // noble/secp256k1 v3 recoverPublicKey needs V(1) || R(32) || S(32) = VRS format.
   const vrsSig = new Uint8Array(65);
   vrsSig[0] = v;
-  vrsSig.set(rawSig.slice(0, 64), 1); // R + S after the recovery byte
+  vrsSig.set(rawSig.slice(0, 64), 1);
+
+  // Clarity's secp256k1-recover? expects R(32) || S(32) || V(1) = RSV format
+  // (same byte order MetaMask emits, but with V normalised to 0 or 1).
+  const rsvSig = new Uint8Array(65);
+  rsvSig.set(rawSig.slice(0, 64), 0); // R + S
+  rsvSig[64] = v;                     // normalised V as last byte
 
   // ── Reproduce the EIP-712 digest for public key recovery ────────────────
   // Must exactly mirror verify-evm in bme050-0-vault.clar.
@@ -219,15 +225,15 @@ export async function requestWithdrawSignatureEvm(
 
   const { recoverPublicKey, Point } = await import("@noble/secp256k1");
 
-  // noble/secp256k1 v3 'recovered' format is V(1) || R(32) || S(32) — vrsSig is already in this order
+  // noble/secp256k1 v3 recoverPublicKey requires VRS format
   const compressedKey = recoverPublicKey(vrsSig, digest, {
     prehash: false,
   }); // 33 bytes (compressed)
   const uncompressedKey = Point.fromBytes(compressedKey).toBytes(false); // 65 bytes (04||X||Y)
   const pubkey64 = uncompressedKey.slice(1); // 64 bytes X||Y
 
-  // vrsSig (V || R || S) is what Clarity's secp256k1-recover? expects on-chain
-  return { message: bmp1, signature: vrsSig, pubkey64 };
+  // rsvSig (R || S || V) is what Clarity's secp256k1-recover? expects on-chain
+  return { message: bmp1, signature: rsvSig, pubkey64 };
 }
 
 /**
