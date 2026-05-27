@@ -362,7 +362,7 @@
                   (<= stacks-block-height expiry))            ERR_EXPIRED)
 
     ;; Signature: verify against the controller address
-    (try! (verify-message-signature chain message signature pubkey controller mapped-address))
+    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract recipient))
 
     ;; Effects (before token transfer -- re-entrancy)
     (map-set balances
@@ -491,18 +491,46 @@
     (signature      (buff 65))
     (pubkey         (buff 64))
     (controller     (buff 32))
-    (mapped-address principal))
+    (mapped-address principal)
+    (token-contract principal)
+    (recipient      principal))
   (if (is-eq chain CHAIN_EVM)
     (verify-evm message signature pubkey controller)
     (if (is-eq chain CHAIN_STACKS)
-      (verify-stacks-sip18 message signature controller mapped-address)
+      (verify-stacks-sip18 message signature controller mapped-address token-contract recipient)
       ERR_SIG_SCHEME)))
 
+;; SIP-018 structured-data verification for Stacks-native controllers.
+;;
+;; The wallet (Leather / Xverse) displays a human-readable tuple instead of
+;; a raw binary blob.  The signed message is:
+;;
+;;   {
+;;     amount:    uint           -- micro-units being withdrawn
+;;     bmp1-hash: (buff 32)      -- sha256(message) binding to the full BMP1
+;;     nonce:     uint           -- per-controller replay-protection counter
+;;     operation: (string-ascii) -- always "withdraw"
+;;     recipient: principal      -- destination Stacks address
+;;     token:     principal      -- SIP-010 token contract
+;;   }
+;;
+;; Clarity's to-consensus-buff? serialises tuple keys in lexicographic order,
+;; which matches @stacks/transactions serializeCV on the TypeScript side.
+;;
+;; Trust path:
+;;   1. Parse the BMP1 message to extract amount and nonce.
+;;   2. Compute sha256(message) as the bmp1-hash binding.
+;;   3. Serialise the human-readable tuple and sha256 it --> msg-cv-hash.
+;;   4. SIP-018 digest: sha256("SIP018" || domain-hash || msg-cv-hash).
+;;   5. Recover the compressed pubkey from the secp256k1 signature.
+;;   6. Derive hash160(pubkey) and compare with the BMP1 controller field.
 (define-private (verify-stacks-sip18
     (message        (buff 256))
     (signature      (buff 65))
     (controller     (buff 32))
-    (mapped-address principal))
+    (mapped-address principal)
+    (token-contract principal)
+    (recipient      principal))
   (let
     (
       ;; Choose domain hash: mainnet if mapped-address is an SP address.
@@ -511,10 +539,25 @@
                    STACKS_MAINNET_VERSION)
           BMP1_DOMAIN_HASH_MAINNET
           BMP1_DOMAIN_HASH_TESTNET))
-      ;; sha256 of the serialised Clarity tuple { payload: message }
-      ;; Clarity's to-consensus-buff? matches @stacks/transactions serializeCV.
+      (parsed  (parse-message message))
+      (amount  (slot-low-uint (get slot3 parsed)))
+      (nonce   (buff-to-uint-be (get nonce parsed)))
+      ;; sha256 of the full BMP1 payload -- cryptographic binding
+      (bmp1-hash (sha256 message))
+      ;; Human-readable message tuple -- must exactly match the TypeScript SDK's
+      ;; buildWithdrawMessageCv tuple (same keys, same value types, same order).
+      ;; Clarity serialises tuple keys lexicographically (amount < bmp1-hash <
+      ;; nonce < operation < recipient < token), which is the same order used
+      ;; by @stacks/transactions serializeCV.
       (msg-cv-hash
-        (sha256 (unwrap! (to-consensus-buff? { payload: message }) ERR_SIG_VERIFICATION)))
+        (sha256 (unwrap! (to-consensus-buff? {
+          amount:    amount,
+          bmp1-hash: bmp1-hash,
+          nonce:     nonce,
+          operation: "withdraw",
+          recipient: recipient,
+          token:     token-contract
+        }) ERR_SIG_VERIFICATION)))
       ;; SIP-018 digest: sha256("SIP018" || domain_hash || msg_cv_hash)
       (digest
         (sha256 (concat SIP018_PREFIX (concat domain-hash msg-cv-hash))))

@@ -3,6 +3,7 @@ import * as secp from '@noble/secp256k1';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { hmac } from '@noble/hashes/hmac';
 import { sha256 } from '@noble/hashes/sha256';
+import { ripemd160 } from '@noble/hashes/ripemd160';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { alice, betty, bob, constructDao, deployer, passProposalByCoreVote, tom } from '../dao_helpers';
 
@@ -53,6 +54,101 @@ function eip712Digest(message: Uint8Array): Uint8Array {
 	const structEncoded = concatBytes(EIP712_TYPEHASH, controller, slot3, nonce32, bmp1Hash);
 	const structHash   = keccak_256(structEncoded);
 	return keccak_256(concatBytes(new Uint8Array([0x19, 0x01]), EIP712_DOMAIN_SEP, structHash));
+}
+
+// ── SIP-018 signing constants ─────────────────────────────────────────────────
+// ASCII "SIP018" prefix used in the SIP-018 structured-data digest.
+const SIP018_PREFIX = new Uint8Array([0x53, 0x49, 0x50, 0x30, 0x31, 0x38]);
+
+// sha256(serializeCV({ name: "BigMarket", version: "1.0.0", chain-id: 2147483648 }))
+// Simnet addresses are ST... (testnet version byte) so always use the testnet domain hash.
+const BMP1_DOMAIN_HASH_TESTNET = new Uint8Array([
+	0x45, 0x0c, 0x6f, 0x4e, 0x56, 0xf5, 0x33, 0x6c, 0xfe, 0xef, 0x9b, 0x23, 0x58, 0x11, 0x01, 0x53,
+	0x61, 0xf8, 0xc1, 0x2a, 0x14, 0x6e, 0x35, 0xe9, 0x67, 0x83, 0xb9, 0x4b, 0x36, 0x77, 0xf2, 0x6e,
+]);
+
+type StacksKey = {
+	privKey: Uint8Array;
+	/** Compressed secp256k1 public key (33 bytes). */
+	compressed: Uint8Array;
+	/** hash160(compressed) = ripemd160(sha256(compressed)) — 20 bytes. */
+	hash160Bytes: Uint8Array;
+	/** Left-padded 32-byte controller slot. */
+	controller32: Uint8Array;
+};
+
+/**
+ * Build a StacksKey from a raw 32-byte private key.
+ * The key must match an account address whose hash160 is known — in tests we
+ * use the well-known simnet wallet keys from Devnet.toml.
+ */
+function stacksKeyFromPriv(privHex: string): StacksKey {
+	const privKey = Buffer.from(privHex, 'hex');
+	const compressed = secp.getPublicKey(privKey, true); // 33 bytes
+	const hash160Bytes = ripemd160(sha256(compressed));
+	return { privKey, compressed, hash160Bytes, controller32: padAddress20(hash160Bytes) };
+}
+
+/**
+ * alice's key from Devnet.toml wallet_1.
+ * Address: ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5
+ */
+function aliceStacksKey(): StacksKey {
+	return stacksKeyFromPriv('7287ba251d44a4d3fd9276c88ce34c5c52a038955511cccaf77e61068649c178');
+}
+
+/**
+ * Compute the SIP-018 digest for the human-readable BMP1Withdraw tuple.
+ *
+ * The tuple matches `buildWithdrawMessageCv` in the TypeScript SDK and is
+ * reconstructed by `verify-stacks-sip18` in the vault contract.
+ *
+ * Key ordering (lexicographic): amount < bmp1-hash < nonce < operation < recipient < token.
+ */
+function sip18WithdrawDigest(
+	message: Uint8Array,
+	tokenCV: ReturnType<typeof contractPrincipalCV>,
+	recipientCV: ReturnType<typeof principalCV>,
+	amount: bigint | number,
+	nonce: bigint | number,
+): Uint8Array {
+	const amt = typeof amount === 'bigint' ? amount : BigInt(amount);
+	const nc  = typeof nonce  === 'bigint' ? nonce  : BigInt(nonce);
+	const bmp1Hash = sha256(message);
+
+	const messageTuple = Cl.tuple({
+		amount:    Cl.uint(amt),
+		'bmp1-hash': Cl.buffer(bmp1Hash),
+		nonce:     Cl.uint(nc),
+		operation: Cl.stringAscii('withdraw'),
+		recipient: recipientCV,
+		token:     tokenCV,
+	});
+
+	const msgCvHash = sha256(serializeCVBytes(messageTuple));
+	return sha256(concatBytes(SIP018_PREFIX, BMP1_DOMAIN_HASH_TESTNET, msgCvHash));
+}
+
+/**
+ * Sign a BMP1 message for CHAIN_STACKS verification.
+ *
+ * Returns a 65-byte RSV secp256k1 signature — the same format expected by
+ * `secp256k1-recover?` in the vault contract.
+ */
+function signStacks(
+	message: Uint8Array,
+	key: StacksKey,
+	tokenCV: ReturnType<typeof contractPrincipalCV>,
+	recipientCV: ReturnType<typeof principalCV>,
+	amount: bigint | number,
+	nonce: bigint | number,
+): Uint8Array {
+	const digest = sip18WithdrawDigest(message, tokenCV, recipientCV, amount, nonce);
+	const [sig, recovery] = secp.signSync(digest, key.privKey, { der: false, recovered: true, canonical: true });
+	const out = new Uint8Array(65);
+	out.set(sig, 0);
+	out[64] = recovery;
+	return out;
 }
 
 /** Errors from bme050-0-vault.clar */
@@ -731,5 +827,119 @@ describe('vault — withdraw (Use Case 3: signed BMP1 message)', () => {
 		});
 		const r = callWithdraw(tom, mats);
 		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_SIG_SCHEME)));
+	});
+});
+
+describe('vault — withdraw (CHAIN_STACKS, SIP-018 human-readable tuple)', () => {
+	/**
+	 * For CHAIN_STACKS withdrawals the user calls `deposit` directly (tx-sender IS
+	 * the controller).  The contract keys the balance as:
+	 *   (CHAIN_STACKS, pad-address-20(hash160(tx-sender)), tx-sender, token)
+	 * The signed BMP1 must embed the same pad-address-20(hash160) as the
+	 * controller field so `verify-stacks-sip18` can recover and compare.
+	 */
+	async function setupStacksCreditedVault(amount: bigint): Promise<{ key: StacksKey }> {
+		await setupVault();
+		const key = aliceStacksKey();
+		// alice deposits directly — credits (CHAIN_STACKS, alice-hash160, alice, sbtc)
+		const r = callDeposit(alice, amount);
+		expect(r.result).toEqual(Cl.ok(Cl.uint(amount)));
+		return { key };
+	}
+
+	it('ok: Stacks SIP-018 signed withdraw debits the balance and pays the recipient', async () => {
+		const { key } = await setupStacksCreditedVault(1_000_000n);
+		const tokenCV   = contractPrincipalCV(deployer, sbtcName);
+		const mappedCV  = principalCV(alice);
+		const recipientCV = principalCV(betty);
+
+		// Build BMP1 for CHAIN_STACKS — controller32 is alice's hash160 padded to 32 bytes
+		const message = buildBmp1({
+			chain:        CHAIN_STACKS,
+			controller32: key.controller32,
+			nonce:        0n,
+			slot0:        commitPrincipal(tokenCV),
+			slot1:        commitPrincipal(mappedCV),
+			slot2:        commitPrincipal(recipientCV),
+			slot3:        slotLowUint(400_000n),
+			slot4:        slotLowUint(0n),
+		});
+
+		const signature = signStacks(message, key, tokenCV, recipientCV, 400_000n, 0n);
+
+		const recipientBefore = getSbtcBalance(betty);
+		const vaultBefore     = getSbtcBalance(`${deployer}.${vault}`);
+
+		const r = simnet.callPublicFn(
+			vault, 'withdraw',
+			[
+				Cl.buffer(message),
+				Cl.buffer(signature),
+				Cl.buffer(new Uint8Array(64)), // pubkey unused for CHAIN_STACKS
+				tokenCV, mappedCV, recipientCV,
+			],
+			tom,
+		);
+		expect(r.result).toEqual(Cl.ok(Cl.uint(400_000)));
+
+		expect(getBalance(CHAIN_STACKS, key.controller32, alice)).toBe(600_000n);
+		expect(getNonce(CHAIN_STACKS, key.controller32)).toBe(1n);
+		expect(getSbtcBalance(betty)).toBe(recipientBefore + 400_000n);
+		expect(getSbtcBalance(`${deployer}.${vault}`)).toBe(vaultBefore - 400_000n);
+	});
+
+	it('err: CHAIN_STACKS signature with wrong amount fails sig verification', async () => {
+		const { key } = await setupStacksCreditedVault(500_000n);
+		const tokenCV     = contractPrincipalCV(deployer, sbtcName);
+		const mappedCV    = principalCV(alice);
+		const recipientCV = principalCV(betty);
+
+		const message = buildBmp1({
+			chain:        CHAIN_STACKS,
+			controller32: key.controller32,
+			nonce:        0n,
+			slot0:        commitPrincipal(tokenCV),
+			slot1:        commitPrincipal(mappedCV),
+			slot2:        commitPrincipal(recipientCV),
+			slot3:        slotLowUint(100_000n),
+			slot4:        slotLowUint(0n),
+		});
+
+		// Sign for amount=100_000 but BMP1 slot3 also encodes 100_000 — they match.
+		// To produce a mismatch, sign for amount=999 (digest differs from message).
+		const badSignature = signStacks(message, key, tokenCV, recipientCV, 999n, 0n);
+
+		const r = simnet.callPublicFn(
+			vault, 'withdraw',
+			[Cl.buffer(message), Cl.buffer(badSignature), Cl.buffer(new Uint8Array(64)), tokenCV, mappedCV, recipientCV],
+			tom,
+		);
+		// The recovered key won't hash to alice's address
+		expect(r.result.type).toBe(ClarityType.ResponseErr);
+	});
+
+	it('err: CHAIN_STACKS withdraw with wrong nonce in message fails', async () => {
+		const { key } = await setupStacksCreditedVault(500_000n);
+		const tokenCV     = contractPrincipalCV(deployer, sbtcName);
+		const mappedCV    = principalCV(alice);
+		const recipientCV = principalCV(betty);
+
+		// Sign and submit nonce=0 successfully
+		const msg0 = buildBmp1({
+			chain: CHAIN_STACKS, controller32: key.controller32, nonce: 0n,
+			slot0: commitPrincipal(tokenCV), slot1: commitPrincipal(mappedCV),
+			slot2: commitPrincipal(recipientCV), slot3: slotLowUint(100_000n), slot4: slotLowUint(0n),
+		});
+		expect(simnet.callPublicFn(vault, 'withdraw',
+			[Cl.buffer(msg0), Cl.buffer(signStacks(msg0, key, tokenCV, recipientCV, 100_000n, 0n)),
+			 Cl.buffer(new Uint8Array(64)), tokenCV, mappedCV, recipientCV], tom,
+		).result).toEqual(Cl.ok(Cl.uint(100_000)));
+
+		// Replay nonce=0 should fail
+		const r = simnet.callPublicFn(vault, 'withdraw',
+			[Cl.buffer(msg0), Cl.buffer(signStacks(msg0, key, tokenCV, recipientCV, 100_000n, 0n)),
+			 Cl.buffer(new Uint8Array(64)), tokenCV, mappedCV, recipientCV], tom,
+		);
+		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_INVALID_NONCE)));
 	});
 });

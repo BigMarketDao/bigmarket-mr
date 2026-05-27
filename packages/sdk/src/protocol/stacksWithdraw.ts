@@ -26,6 +26,38 @@ import {
 } from "@stacks/transactions";
 import { createVaultClient } from "../chains/stacks/vault.js";
 
+/**
+ * SIP-018 human-readable withdraw message (matches verify-stacks-sip18 in the vault contract).
+ *
+ * The wallet (Leather/Xverse) will display named fields instead of a raw binary blob:
+ *   amount     — micro-units being withdrawn (e.g. 200000000)
+ *   bmp1-hash  — sha256 of the full BMP1 message (cryptographic binding)
+ *   nonce      — replay-protection counter
+ *   operation  — always "withdraw"
+ *   recipient  — destination Stacks address
+ *   token      — the SIP-010 token contract principal
+ *
+ * The contract reconstructs the same tuple from its function arguments +
+ * the parsed BMP1 message and verifies the SIP-018 signature against it.
+ */
+function buildWithdrawMessageCv(params: {
+  usdcxAddr: string;
+  usdcxName: string;
+  recipientAddress: string;
+  amountMicro: bigint;
+  nonce: bigint;
+  bmp1Hash: Uint8Array;
+}) {
+  return tupleCV({
+    amount: uintCV(params.amountMicro),
+    "bmp1-hash": bufferCV(params.bmp1Hash),
+    nonce: uintCV(params.nonce),
+    operation: stringAsciiCV("withdraw"),
+    recipient: principalCV(params.recipientAddress),
+    token: contractPrincipalCV(params.usdcxAddr, params.usdcxName),
+  });
+}
+
 export type StacksWithdrawParams = {
   daoConfig: DaoConfig;
   /** BigMarket API base URL used by the relay step (e.g. http://localhost:3020/bigmarket-api). */
@@ -88,13 +120,16 @@ export async function requestWithdrawSignatureStacks(
   const { daoConfig, stacksApi, stxAddress, amountMicro, recipientAddress } =
     params;
 
-  // ── Build keccak256 commitments for the BMP1 slots ──────────────────────
-  // Dynamic import so the heavy @noble/hashes bundle is only loaded when needed.
-  const { keccak_256 } = await import("@noble/hashes/sha3");
+  // ── Dynamic imports (heavy bundles, tree-shaken at call-time) ────────────
+  const [{ keccak_256 }, { sha256 }] = await Promise.all([
+    import("@noble/hashes/sha3"),
+    import("@noble/hashes/sha256"),
+  ]);
 
-  const tokenPrincipal = `${daoConfig.VITE_USDCX_CONTRACT_ADDRESS}.${daoConfig.VITE_USDCX_CONTRACT_NAME}`;
-  const [usdcxAddr, usdcxName] = tokenPrincipal.split(".");
+  const usdcxAddr = daoConfig.VITE_USDCX_CONTRACT_ADDRESS;
+  const usdcxName = daoConfig.VITE_USDCX_CONTRACT_NAME;
 
+  // ── Build keccak256 commitments for the BMP1 commitment slots ────────────
   const tokenCommit = keccak_256(
     hexToBytes(serializeCV(contractPrincipalCV(usdcxAddr, usdcxName))),
   );
@@ -120,11 +155,22 @@ export async function requestWithdrawSignatureStacks(
     amountMicro,
   });
 
-  // ── Sign with stx_signStructuredMessage (SIP-018) ────────────────────────
-  const chainId =
-    daoConfig.VITE_NETWORK === "mainnet" ? 1 : 2147483648;
+  // ── Build human-readable SIP-018 message tuple ───────────────────────────
+  // sha256(bmp1) binds the signature to the full BMP1 payload while letting
+  // the wallet show named fields (amount, nonce, token, recipient) instead
+  // of a raw 256-byte binary blob.
+  const bmp1Hash = sha256(bmp1);
 
-  const messageCv = tupleCV({ payload: bufferCV(bmp1) });
+  const chainId = daoConfig.VITE_NETWORK === "mainnet" ? 1 : 2147483648;
+
+  const messageCv = buildWithdrawMessageCv({
+    usdcxAddr,
+    usdcxName,
+    recipientAddress,
+    amountMicro,
+    nonce,
+    bmp1Hash,
+  });
   const domainCv = tupleCV({
     name: stringAsciiCV("BigMarket"),
     version: stringAsciiCV("1.0.0"),
