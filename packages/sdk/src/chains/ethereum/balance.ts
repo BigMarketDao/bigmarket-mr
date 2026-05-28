@@ -23,20 +23,26 @@ function usdcContractAddress(chainId: number): string | undefined {
  * Read the ERC-20 USDC balance for `ethAddress` on whatever network
  * MetaMask is currently connected to.
  *
- * Returns 0n if MetaMask is not available, the USDC contract is not
- * known for the current chain, or the call fails.
+ * Returns `null` when the balance cannot be determined (MetaMask not
+ * available, unsupported chain, or any call error) so callers can
+ * distinguish "fetch failed" from "balance is genuinely 0".
+ *
+ * Returns `0n` only when the on-chain call succeeds and the contract
+ * reports a zero balance.
  *
  * USDC uses 6 decimal places on all supported chains.
  */
-export async function getEvmUsdcBalance(ethAddress: string): Promise<bigint> {
+export async function getEvmUsdcBalance(
+  ethAddress: string,
+): Promise<bigint | null> {
   try {
     const provider = findMetaMask();
-    if (!provider) return 0n;
+    if (!provider) return null;
 
     const chainIdHex = await provider.request<string>({ method: "eth_chainId" });
     const chainId = parseInt(chainIdHex, 16);
     const contract = usdcContractAddress(chainId);
-    if (!contract) return 0n;
+    if (!contract) return null;
 
     // ERC-20 balanceOf(address) — selector 0x70a08231
     const paddedAddr = ethAddress.toLowerCase().replace(/^0x/, "").padStart(64, "0");
@@ -50,6 +56,6 @@ export async function getEvmUsdcBalance(ethAddress: string): Promise<bigint> {
     if (!result || result === "0x" || result === "0x0") return 0n;
     return BigInt(result);
   } catch {
-    return 0n;
+    return null;
   }
 }

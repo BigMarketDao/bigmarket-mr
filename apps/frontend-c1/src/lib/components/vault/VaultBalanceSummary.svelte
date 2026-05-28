@@ -66,17 +66,38 @@
 	);
 
 	// EVM wallet's USDC balance on Ethereum (micro-units, 6 dp) — persisted in walletState
-	const ethUsdcx = $derived(
-		isEvmConnected ? BigInt($walletState.ethUsdcBalance ?? '0') : null
-	);
+	const ethUsdcx = $derived(isEvmConnected ? BigInt($walletState.ethUsdcBalance ?? '0') : null);
 
 	const fmt = (v: bigint | null) => (v === null ? '—' : fmtMicroToStx(Number(v), 6));
 
-	onMount(() => void initWallet(appConfig.VITE_BIGMARKET_API));
+	// Track which ETH address we last fetched so we only hit MetaMask once per
+	// connected address. Tab clicks don't change ethAddress so they won't trigger
+	// a re-fetch; explicit Refresh always re-fetches via refreshAll().
+	let lastFetchedEthAddr = $state('');
+
+	$effect(() => {
+		if (isEvmConnected && ethAddress && ethAddress !== lastFetchedEthAddr) {
+			lastFetchedEthAddr = ethAddress;
+			void fetchEvmUsdcBalance(ethAddress);
+		}
+	});
+
+	onMount(async () => {
+		await initWallet(appConfig.VITE_BIGMARKET_API);
+		void loadAll();
+	});
 
 	$effect(() => {
 		if (anyConnected) void loadAll();
 	});
+
+	// Called by the Refresh button — always re-fetches the EVM balance too.
+	async function refreshAll() {
+		if (isEvmConnected && ethAddress) {
+			await fetchEvmUsdcBalance(ethAddress);
+		}
+		await loadAll();
+	}
 
 	async function loadAll() {
 		loading = true;
@@ -90,13 +111,15 @@
 						? vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress)
 						: Promise.resolve(0n)
 				]);
-			} else if (isEvmConnected && ethAddress && mappedAddress) {
-				[vaultBalance, mappedUsdcxLive] = await Promise.all([
-					vault.getVaultUsdcxBalance(appConfig.VITE_STACKS_API, 'evm', ethAddress, mappedAddress),
-					vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress)
-				]);
-				// Fetch Ethereum USDC balance via MetaMask eth_call and persist in walletState
-				await fetchEvmUsdcBalance(ethAddress);
+			} else if (isEvmConnected && ethAddress) {
+				// EVM wallet USDC is handled by the address-tracking $effect above.
+				// loadAll only needs to fetch on-chain data (vault + mapped address).
+				if (mappedAddress) {
+					[vaultBalance, mappedUsdcxLive] = await Promise.all([
+						vault.getVaultUsdcxBalance(appConfig.VITE_STACKS_API, 'evm', ethAddress, mappedAddress),
+						vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress)
+					]);
+				}
 			}
 		} catch {
 			// silently ignore — user can click refresh
@@ -125,7 +148,7 @@
 			</div>
 			<button
 				type="button"
-				onclick={() => void loadAll()}
+				onclick={() => void refreshAll()}
 				disabled={loading}
 				class="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-neutral-600 disabled:cursor-wait dark:hover:text-neutral-200"
 				title="Refresh balances"
@@ -173,37 +196,37 @@
 				</p>
 			</div>
 
-		<!-- Wallet token balance (USDCx on Stacks, USDC on Ethereum) -->
-		<div
-			class="col-span-1 rounded-md border border-neutral-200 bg-neutral-50/80 p-2.5 dark:border-neutral-600 dark:bg-neutral-900/40"
-		>
-			<p class="text-[10px] text-neutral-500 dark:text-neutral-400">
-				{isStacksConnected ? 'Wallet USDCx' : 'Wallet USDC (ETH)'}
-			</p>
-			<p class="mt-0.5 text-base font-semibold text-neutral-900 dark:text-neutral-100">
-				{loading ? '…' : isStacksConnected ? fmt(walletUsdcx) : fmt(ethUsdcx)}
-			</p>
-			{#if isEvmConnected}
-				<p class="mt-0.5 font-mono text-[9px] text-neutral-400 truncate" title={ethAddress}>
-					{truncate(ethAddress, 10)}
+			<!-- Wallet token balance (USDCx on Stacks, USDC on Ethereum) -->
+			<div
+				class="col-span-1 rounded-md border border-neutral-200 bg-neutral-50/80 p-2.5 dark:border-neutral-600 dark:bg-neutral-900/40"
+			>
+				<p class="text-[10px] text-neutral-500 dark:text-neutral-400">
+					{isStacksConnected ? 'Wallet USDCx' : 'Wallet USDC (ETH)'}
 				</p>
-			{:else}
-				<p class="mt-0.5 font-mono text-[9px] text-neutral-400">
-					<a
-						class="flex items-center gap-1 rounded-md px-3 py-1 text-community hover:bg-community-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-						href={stacks.explorerAddressUrl(
-							appConfig.VITE_NETWORK,
-							appConfig.VITE_STACKS_EXPLORER,
-							`${stxAddress}`
-						)}
-						target="_blank"
-					>
-						<ExternalLink class="h-4 w-4" />
-						{truncate(stxAddress, 10)}
-					</a>
+				<p class="mt-0.5 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+					{loading ? '…' : isStacksConnected ? fmt(walletUsdcx) : fmt(ethUsdcx)}
 				</p>
-			{/if}
-		</div>
+				{#if isEvmConnected}
+					<p class="mt-0.5 truncate font-mono text-[9px] text-neutral-400" title={ethAddress}>
+						{truncate(ethAddress, 10)}
+					</p>
+				{:else}
+					<p class="mt-0.5 font-mono text-[9px] text-neutral-400">
+						<a
+							class="flex items-center gap-1 rounded-md px-3 py-1 text-community hover:bg-community-soft focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+							href={stacks.explorerAddressUrl(
+								appConfig.VITE_NETWORK,
+								appConfig.VITE_STACKS_EXPLORER,
+								`${stxAddress}`
+							)}
+							target="_blank"
+						>
+							<ExternalLink class="h-4 w-4" />
+							{truncate(stxAddress, 10)}
+						</a>
+					</p>
+				{/if}
+			</div>
 
 			<!-- Mapped address USDCx -->
 			<div

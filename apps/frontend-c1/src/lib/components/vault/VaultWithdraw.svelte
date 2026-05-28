@@ -8,6 +8,8 @@
 
 	type ControllerChain = 'evm' | 'stacks';
 
+	let showWithdrawDebug = $state(false);
+
 	// Auto-select Stacks if already connected, otherwise default to EVM
 	let chain = $state<ControllerChain>(
 		$walletState.status === 'connected' && $walletState.chain === 'stacks' ? 'stacks' : 'evm'
@@ -109,39 +111,58 @@
 
 	<!-- Context panel -->
 	{#if chain === 'evm'}
-		{#if !evmConnected}
-			<p
-				class="rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/10 dark:text-amber-300"
-			>
-				Connect <strong>MetaMask</strong> to withdraw USDC to Ethereum. You will sign an authorisation
-				message with MetaMask; the relayer then moves USDCx from the vault to Ethereum via AllBridge.
+		{#if evmConnected}
+			<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+				Sign a withdrawal with MetaMask. The vault verifies your secp256k1 signature and releases
+				USDCx to your mapped Stacks address, from where AllBridge bridges it back to Ethereum.
 			</p>
-		{:else}
-		<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-			Sign a withdrawal with MetaMask. The vault verifies your secp256k1 signature and releases
-			USDCx to your mapped Stacks address. Use AllBridge (or the sweep panel below on
-			devnet/testnet) to move it back to Ethereum.
-		</p>
 		{/if}
 		<VaultWithdrawBridge />
-		{#if evmConnected && ethAddress}
-			<MappedSweepPanel sourceChain="evm" sourceAddress={ethAddress} />
+
+		<!-- Debug toggle -->
+		<div class="flex justify-end">
+			<button
+				type="button"
+				onclick={() => (showWithdrawDebug = !showWithdrawDebug)}
+				class="flex items-center gap-1 text-[10px] text-neutral-400 transition-colors hover:text-neutral-600 dark:hover:text-neutral-300"
+				title="Toggle relay debug panels"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 16 16"
+					fill="currentColor"
+					class="h-3 w-3 {showWithdrawDebug ? 'text-amber-500' : ''}"
+				>
+					<path
+						fill-rule="evenodd"
+						d="M6.455 1.45A.5.5 0 0 1 6.952 1h2.096a.5.5 0 0 1 .497.45l.186 1.858a4.996 4.996 0 0 1 1.466.848l1.703-.769a.5.5 0 0 1 .639.206l1.047 1.814a.5.5 0 0 1-.14.656l-1.517 1.09a5.026 5.026 0 0 1 0 1.694l1.516 1.09a.5.5 0 0 1 .141.656l-1.047 1.814a.5.5 0 0 1-.639.206l-1.703-.768a4.996 4.996 0 0 1-1.466.847l-.186 1.858a.5.5 0 0 1-.497.45H6.952a.5.5 0 0 1-.497-.45l-.186-1.858a4.996 4.996 0 0 1-1.466-.848l-1.703.769a.5.5 0 0 1-.639-.206L1.414 10.86a.5.5 0 0 1 .14-.656l1.517-1.09a5.025 5.025 0 0 1 0-1.694L1.554 6.33a.5.5 0 0 1-.14-.656L2.46 3.86a.5.5 0 0 1 .639-.206l1.703.769a4.996 4.996 0 0 1 1.466-.848L6.455 1.45ZM8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"
+						clip-rule="evenodd"
+					/>
+				</svg>
+				<span class={showWithdrawDebug ? 'text-amber-500' : ''}>debug</span>
+			</button>
+		</div>
+
+		{#if showWithdrawDebug}
+			<div
+				class="space-y-3 rounded-md border border-dashed border-amber-300 bg-amber-50/40 p-3 dark:border-amber-700/50 dark:bg-amber-900/10"
+			>
+				<p class="text-[11px] text-amber-700 dark:text-amber-400">
+					Debug: manually sweep the mapped address or relay into the vault / a Stacks address.
+				</p>
+				{#if evmConnected && ethAddress}
+					<MappedSweepPanel sourceChain="evm" sourceAddress={ethAddress} />
+				{/if}
+				<VaultRelayAdmin />
+			</div>
 		{/if}
-		<VaultRelayAdmin />
 	{:else}
-	{#if !stacksConnected}
-		<p
-			class="rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/10 dark:text-amber-300"
-		>
-			Connect a <strong>Stacks wallet</strong> (Leather or Xverse) to withdraw USDCx directly to
-			any Stacks address.
-		</p>
-	{:else}
-		<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-			Withdraw USDCx from your vault balance to any Stacks address. Your wallet authorises the
-			transaction directly — no relayer or bridge required.
-		</p>
-	{/if}
-	<VaultWithdrawStacks />
+		{#if stacksConnected}
+			<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+				Withdraw USDCx from your vault balance to any Stacks address. Your wallet authorises the
+				transaction directly — no relayer or bridge required.
+			</p>
+		{/if}
+		<VaultWithdrawStacks />
 	{/if}
 </div>

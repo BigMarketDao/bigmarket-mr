@@ -177,7 +177,7 @@
 						: 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400'}"
 			>
 				<span class="font-semibold">2</span>
-				<span>Relay to server</span>
+				<span>Bridge funds to Ethereum</span>
 			</div>
 		</div>
 

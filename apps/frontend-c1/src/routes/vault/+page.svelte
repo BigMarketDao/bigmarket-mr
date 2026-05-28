@@ -7,7 +7,7 @@
 	import VaultBalanceSummary from '$lib/components/vault/VaultBalanceSummary.svelte';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
-
+	let componentKey = $state(0);
 	let panel = $state<'deposit' | 'withdraw'>('deposit');
 
 	onMount(() => {
@@ -33,7 +33,9 @@
 		<div class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 			<div class="mb-6 space-y-4">
 				<!-- Balance summary — visible whenever any wallet is connected -->
-				<VaultBalanceSummary />
+				{#key componentKey}
+					<VaultBalanceSummary />
+				{/key}
 
 				<!-- Top-level Deposit / Withdraw tabs -->
 				<div
@@ -45,7 +47,10 @@
 						role="tab"
 						aria-selected={panel === 'deposit'}
 						class="{tabBase} {panel === 'deposit' ? tabActive : tabInactive}"
-						onclick={() => (panel = 'deposit')}
+						onclick={() => {
+							panel = 'deposit';
+							componentKey++;
+						}}
 					>
 						Deposit
 					</button>
@@ -54,7 +59,10 @@
 						role="tab"
 						aria-selected={panel === 'withdraw'}
 						class="{tabBase} {panel === 'withdraw' ? tabActive : tabInactive}"
-						onclick={() => (panel = 'withdraw')}
+						onclick={() => {
+							panel = 'withdraw';
+							componentKey++;
+						}}
 					>
 						Withdraw
 					</button>

@@ -69,7 +69,8 @@ async function getWalletSession(bmApiUrl?: string) {
             chain: "solana" as const,
             address: sol,
             type: "sol",
-            mappedAddress: current.chain === "solana" ? mappedAddress : undefined,
+            mappedAddress:
+              current.chain === "solana" ? mappedAddress : undefined,
           },
         ]
       : []),
@@ -79,19 +80,23 @@ async function getWalletSession(bmApiUrl?: string) {
             chain: "stacks" as const,
             address: stx,
             type: "stx",
-            mappedAddress: current.chain === "stacks" ? mappedAddress : undefined,
+            mappedAddress:
+              current.chain === "stacks" ? mappedAddress : undefined,
           },
         ]
       : []),
     ...(btc ? [{ chain: "stacks" as const, address: btc, type: "btc" }] : []),
-    ...(ord ? [{ chain: "stacks" as const, address: ord, type: "ordinal" }] : []),
+    ...(ord
+      ? [{ chain: "stacks" as const, address: ord, type: "ordinal" }]
+      : []),
     ...(evm
       ? [
           {
             chain: "ethereum" as const,
             address: evm,
             type: "eth",
-            mappedAddress: current.chain === "ethereum" ? mappedAddress : undefined,
+            mappedAddress:
+              current.chain === "ethereum" ? mappedAddress : undefined,
           },
         ]
       : []),
@@ -118,7 +123,10 @@ async function refreshWalletState(bmApiUrl?: string): Promise<void> {
   const current = get(walletState);
   const session = await getWalletSession(bmApiUrl);
   if (session?.connected && session?.accounts?.length > 0) {
+    // Spread current first so cached fields (e.g. ethUsdcBalance) survive the
+    // refresh. Session fields (accounts, activeAccount) override as expected.
     walletState.set({
+      ...current,
       status: "connected",
       chain: current.chain,
       ...session,
@@ -167,12 +175,15 @@ export async function disconnectWallet() {
  * Read the connected EVM wallet's USDC balance (6 dp micro-units) via
  * MetaMask's eth_call and persist it in walletState.ethUsdcBalance.
  *
- * No-ops silently when MetaMask is unavailable or the current chain has no
- * known USDC contract.
+ * Only updates the store when the fetch succeeds (non-null result).
+ * A null result means MetaMask was unavailable, the chain is unsupported,
+ * or the call failed — in those cases the previously stored value is kept
+ * so a temporary unavailability does not zero out a known balance.
  */
 export async function fetchEvmUsdcBalance(ethAddress: string): Promise<void> {
   if (!browser) return;
   const balance = await getEvmUsdcBalance(ethAddress);
+  if (balance === null) return;
   walletState.update((s) => ({ ...s, ethUsdcBalance: balance.toString() }));
 }
 

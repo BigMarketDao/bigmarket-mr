@@ -16,6 +16,7 @@
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 
 	let amount = $state('');
+	//let tokenSymbol = $state<'USDC' | 'USDT'>('USDC');
 	/**
 	 * Two-step flow state:
 	 *   idle     → user fills form
@@ -114,6 +115,10 @@
 	class="w-full space-y-5 rounded-lg border border-neutral-200 bg-neutral-50/80 p-5 dark:border-neutral-700 dark:bg-neutral-900/40"
 >
 	{#if !connected}
+		<p class="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
+			Withdraw USDCx from your vault balance. Sign the withdrawal message in your wallet, the USDC
+			is bridged back to your ethereum address.
+		</p>
 		<p class="text-sm text-amber-800 dark:text-amber-200">
 			Connect <strong>MetaMask</strong> to withdraw USDCx to Ethereum.
 		</p>

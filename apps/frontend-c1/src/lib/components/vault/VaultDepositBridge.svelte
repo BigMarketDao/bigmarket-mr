@@ -18,7 +18,9 @@
 	const explorerOrigin = $derived(
 		appConfig.VITE_NETWORK === 'mainnet' ? 'https://etherscan.io' : 'https://sepolia.etherscan.io'
 	);
-	const explorerApproveTxUrl = $derived(approveTxHash ? `${explorerOrigin}/tx/${approveTxHash}` : null);
+	const explorerApproveTxUrl = $derived(
+		approveTxHash ? `${explorerOrigin}/tx/${approveTxHash}` : null
+	);
 	const explorerTxUrl = $derived(txHash ? `${explorerOrigin}/tx/${txHash}` : null);
 
 	const mappedStx = $derived($walletState.activeAccount?.mappedAddress?.trim() ?? '');
@@ -32,7 +34,11 @@
 	);
 
 	const canSubmit = $derived(
-		ready && !busy && amount.trim().length > 0 && Number(amount) > 0 && Number.isFinite(Number(amount))
+		ready &&
+			!busy &&
+			amount.trim().length > 0 &&
+			Number(amount) > 0 &&
+			Number.isFinite(Number(amount))
 	);
 
 	onMount(() => void initWallet(appConfig.VITE_BIGMARKET_API));
@@ -77,8 +83,7 @@
 	class="w-full space-y-5 rounded-lg border border-neutral-200 bg-neutral-50/80 p-5 dark:border-neutral-700 dark:bg-neutral-900/40"
 >
 	<p class="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
-		Send {tokenSymbol} from Ethereum (MetaMask) to your mapped BigMarket Stacks address via
-		AllBridge.
+		Deposit {tokenSymbol} to your vault then participate by buying or selling market shares in BigMarket.
 	</p>
 
 	{#if $walletState.status !== 'connected'}
@@ -91,8 +96,8 @@
 		</p>
 	{:else if !mappedStx}
 		<p class="text-sm text-amber-800 dark:text-amber-200">
-			No mapped Stacks address found. Ensure the API can resolve your Ethereum address, then
-			refresh or reconnect.
+			No mapped Stacks address found. Ensure the API can resolve your Ethereum address, then refresh
+			or reconnect.
 		</p>
 	{:else}
 		<!-- Address summary -->
@@ -111,7 +116,10 @@
 
 		<!-- Token selector -->
 		<div class="space-y-1">
-			<label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300" for="bm-db-token">
+			<label
+				class="block text-xs font-medium text-neutral-700 dark:text-neutral-300"
+				for="bm-db-token"
+			>
 				Token
 			</label>
 			<select
@@ -126,7 +134,10 @@
 
 		<!-- Amount -->
 		<div class="space-y-1">
-			<label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300" for="bm-db-amount">
+			<label
+				class="block text-xs font-medium text-neutral-700 dark:text-neutral-300"
+				for="bm-db-amount"
+			>
 				Amount
 			</label>
 			<input
@@ -149,7 +160,12 @@
 			<p class="text-xs text-neutral-700 dark:text-neutral-300">
 				Approval tx:
 				{#if explorerApproveTxUrl}
-					<a class="font-mono break-all underline" href={explorerApproveTxUrl} target="_blank" rel="noreferrer">
+					<a
+						class="font-mono break-all underline"
+						href={explorerApproveTxUrl}
+						target="_blank"
+						rel="noreferrer"
+					>
 						{approveTxHash}
 					</a>
 				{:else}
@@ -163,7 +179,12 @@
 			<p class="text-xs text-emerald-800 dark:text-emerald-200">
 				Bridge transaction sent.
 				{#if explorerTxUrl}
-					<a class="font-mono break-all underline" href={explorerTxUrl} target="_blank" rel="noreferrer">
+					<a
+						class="font-mono break-all underline"
+						href={explorerTxUrl}
+						target="_blank"
+						rel="noreferrer"
+					>
 						{txHash}
 					</a>
 				{:else}
