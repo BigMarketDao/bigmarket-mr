@@ -330,7 +330,7 @@ Stacks mainnet/testnet. Bitcoin settlement via PoX. Testnet currently active.
 
 ### Cross-chain plans
 - Phase 3 roadmap: Wormhole attestation for Solana → Stacks deposit flow
-- Expansion to Solana and Sui mentioned in `docs/project-plan.md:98–116`
+- Expansion to Solana and Sui mentioned in `docs/project/project-plan.md:98–116`
 - Not yet implemented
 
 ---
@@ -369,7 +369,7 @@ Reputation rewards: **10,000 BIG per epoch** (~monthly) distributed from a pool.
 | **Market creation fee (STX amount)** | Contract param exists (`bme022-gating`) | Exact amount not hardcoded; DAO-configurable. No default value found |
 | **Full token allocation (98.5% of supply)** | `bme000-governance.clar` only defines team vesting | Community, treasury, liquidity mining, public sale breakdown not found |
 | **Exact BIGR reward points per action** | Each extension mints independently | No central reward table; exact points per trade/LP/vote not documented |
-| **AI market generator** | `docs/project-plan.md`, site copy | No contract or API implementation found; off-chain only |
+| **AI market generator** | `docs/project/project-plan.md`, site copy | No contract or API implementation found; off-chain only |
 | **Buyback mechanism** | Mentioned in marketing context | No dedicated contract; not implemented |
 | **Tier weight values** | `bme030-reputation.clar:29` (max tier = 20) | Actual weights per tier are DAO-configurable; no defaults found |
 | **BIG staking / yield** | Implied by "staking rewards" in marketing | No staking contract found in codebase |
@@ -377,7 +377,7 @@ Reputation rewards: **10,000 BIG per epoch** (~monthly) distributed from a pool.
 | **Early contributor bonus** | Referenced in some docs | No contract found |
 | **Pyth oracle mainnet addresses** | Scalar markets reference Pyth | External dependency; mainnet config not in repo |
 | **40/30/20/10% fee split** | Appears in external marketing | **NOT verified in contracts** — actual split is 30% LP / 70% treasury from 1% protocol fee |
-| **Cross-chain (Solana/Sui)** | `docs/project-plan.md:98–116` | Phase 3 roadmap; not implemented |
+| **Cross-chain (Solana/Sui)** | `docs/project/project-plan.md:98–116` | Phase 3 roadmap; not implemented |
 | **P2P share marketplace** | `bme040-0-shares-marketplace.clar` | Contract exists but no docs or UI found |
 
 ---
