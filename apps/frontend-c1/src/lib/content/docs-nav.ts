@@ -19,7 +19,12 @@ export const docsNav: DocSection[] = [
 			'What BigMarket is, how it works, and everything you need before your first prediction.',
 		pages: [
 			{ slug: 'overview', title: 'Overview', file: 'overview.md' },
-			{ slug: 'bigmarket-101', title: 'BigMarket 101', file: 'bigmarket-101.md' }
+			{ slug: 'bigmarket-101', title: 'BigMarket 101', file: 'bigmarket-101.md' },
+			{
+				slug: 'deposit-and-withdraw',
+				title: 'Deposit and Withdraw',
+				file: 'deposit-and-withdraw.md'
+			}
 		]
 	},
 	{

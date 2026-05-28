@@ -9,8 +9,7 @@
 		exchangeRatesStore,
 		marketSystemCategoriesStore,
 		requireAppConfig,
-		userWalletStore,
-		walletState
+		userWalletStore
 	} from '@bigmarket/bm-common';
 	import { daoConfigStore } from '@bigmarket/bm-common';
 	import type { AppConfig, DaoConfig } from '@bigmarket/bm-types';
@@ -95,7 +94,6 @@
 		await loadSystemData(data);
 		await initWallet(data?.appConfig?.VITE_BIGMARKET_API);
 		await loadWalletData();
-		console.log('$walletState', $walletState);
 		console.log('$userWalletStore', $userWalletStore);
 		// await Promise.all([loadSystemData(data), initWallet(data?.appConfig?.VITE_BIGMARKET_API).then(loadWalletData)]);
 
@@ -109,9 +107,9 @@
 	<!-- Splash screen -->
 	<div
 		id="splash-screen"
-		class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background"
+		class="fixed inset-0 z-[9999] flex h-full w-full flex-col items-center justify-center bg-background"
 	>
-		<img src="/splash.png" alt="BigMarket loading..." class="h-full w-full opacity-80" />
+		<img src="/splash.png" alt="BigMarket loading..." class="h-[120%] w-full opacity-80" />
 		<p class="mt-4 font-sans text-sm text-muted-foreground">Loading BigMarket...</p>
 	</div>
 {:else}
