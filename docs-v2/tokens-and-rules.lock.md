@@ -20,29 +20,29 @@ All values are aliases to existing Skeleton `nouveau` primitives in `packages/bm
 
 ### 1.1 Surfaces (Wave 1)
 
-| Token | Light value | Dark value |
-|---|---|---|
-| `--color-card` | `var(--color-surface-50)` | `var(--color-surface-900)` |
-| `--color-card-foreground` | `var(--color-surface-950)` | `var(--color-surface-50)` |
-| `--color-popover` | `#fff` (literal — popover always opaque white in light) | `var(--color-surface-900)` |
-| `--color-popover-foreground` | `var(--color-surface-950)` | `var(--color-surface-50)` |
-| `--color-input` | `var(--color-surface-200)` | `var(--color-surface-800)` |
-| `--color-overlay` | `rgba(0, 0, 0, 0.4)` | `rgba(0, 0, 0, 0.65)` |
+| Token                        | Light value                                             | Dark value                 |
+| ---------------------------- | ------------------------------------------------------- | -------------------------- |
+| `--color-card`               | `var(--color-surface-50)`                               | `var(--color-surface-900)` |
+| `--color-card-foreground`    | `var(--color-surface-950)`                              | `var(--color-surface-50)`  |
+| `--color-popover`            | `#fff` (literal — popover always opaque white in light) | `var(--color-surface-900)` |
+| `--color-popover-foreground` | `var(--color-surface-950)`                              | `var(--color-surface-50)`  |
+| `--color-input`              | `var(--color-surface-200)`                              | `var(--color-surface-800)` |
+| `--color-overlay`            | `rgba(0, 0, 0, 0.4)`                                    | `rgba(0, 0, 0, 0.65)`      |
 
 **Tailwind utility names emitted:** `bg-card`, `text-card-foreground`, `bg-popover`, `text-popover-foreground`, `border-input`, `bg-overlay`.
 
-> **`--color-input` is the BORDER color, not the input background.** This matches the shadcn convention (`--input` = border) and the existing `bm-ui` primitives (`packages/bm-ui/src/lib/components/ui/input/input.svelte`, `popover-content.svelte`, `select-trigger.svelte`, `checkbox.svelte`, `switch.svelte`, `badge-variants.ts`, `button-variants.ts`, `tabs-trigger.svelte`) which already use `border-input`. The input *background* is the page background or `bg-card` — no separate token is needed today.
+> **`--color-input` is the BORDER color, not the input background.** This matches the shadcn convention (`--input` = border) and the existing `bm-ui` primitives (`packages/bm-ui/src/lib/components/ui/input/input.svelte`, `popover-content.svelte`, `select-trigger.svelte`, `checkbox.svelte`, `switch.svelte`, `badge-variants.ts`, `button-variants.ts`, `tabs-trigger.svelte`) which already use `border-input`. The input _background_ is the page background or `bg-card` — no separate token is needed today.
 
 ### 1.2 Status quad (Wave 2 minimum — needed for badges, deltas, banners)
 
 For each of `success`, `warning`, `info`, `destructive`, `accent`:
 
-| Suffix | Light value | Dark value |
-|---|---|---|
-| `--color-{role}` | `var(--color-{primitive}-500)` | `var(--color-{primitive}-400)` |
-| `--color-{role}-foreground` | `var(--color-{primitive}-contrast-500)` | `var(--color-{primitive}-contrast-400)` |
-| `--color-{role}-soft` | `color-mix(in oklab, var(--color-{primitive}-500) 12%, transparent)` | `color-mix(in oklab, var(--color-{primitive}-400) 18%, transparent)` |
-| `--color-{role}-border` | `var(--color-{primitive}-300)` | `var(--color-{primitive}-700)` |
+| Suffix                      | Light value                                                          | Dark value                                                           |
+| --------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `--color-{role}`            | `var(--color-{primitive}-500)`                                       | `var(--color-{primitive}-400)`                                       |
+| `--color-{role}-foreground` | `var(--color-{primitive}-contrast-500)`                              | `var(--color-{primitive}-contrast-400)`                              |
+| `--color-{role}-soft`       | `color-mix(in oklab, var(--color-{primitive}-500) 12%, transparent)` | `color-mix(in oklab, var(--color-{primitive}-400) 18%, transparent)` |
+| `--color-{role}-border`     | `var(--color-{primitive}-300)`                                       | `var(--color-{primitive}-700)`                                       |
 
 Primitive mapping:
 
@@ -54,35 +54,35 @@ Primitive mapping:
 
 ### 1.3 Community
 
-| Token | Light | Dark |
-|---|---|---|
-| `--color-community` | `var(--color-tertiary-500)` | `var(--color-tertiary-400)` |
-| `--color-community-foreground` | `var(--color-tertiary-contrast-500)` | `var(--color-tertiary-contrast-400)` |
-| `--color-community-soft` | `color-mix(in oklab, var(--color-tertiary-500) 12%, transparent)` | `color-mix(in oklab, var(--color-tertiary-400) 18%, transparent)` |
-| `--color-community-border` | `var(--color-tertiary-300)` | `var(--color-tertiary-700)` |
+| Token                          | Light                                                             | Dark                                                              |
+| ------------------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `--color-community`            | `var(--color-tertiary-500)`                                       | `var(--color-tertiary-400)`                                       |
+| `--color-community-foreground` | `var(--color-tertiary-contrast-500)`                              | `var(--color-tertiary-contrast-400)`                              |
+| `--color-community-soft`       | `color-mix(in oklab, var(--color-tertiary-500) 12%, transparent)` | `color-mix(in oklab, var(--color-tertiary-400) 18%, transparent)` |
+| `--color-community-border`     | `var(--color-tertiary-300)`                                       | `var(--color-tertiary-700)`                                       |
 
 ### 1.4 Prediction domain
 
-| Token | Light | Dark | Notes |
-|---|---|---|---|
-| `--color-price-up` | `var(--color-success-500)` | `var(--color-success-400)` | aliases `success` value but **never share the name** |
-| `--color-price-up-foreground` | `var(--color-success-contrast-500)` | `var(--color-success-contrast-400)` | |
-| `--color-price-up-soft` | `color-mix(in oklab, var(--color-success-500) 12%, transparent)` | `color-mix(in oklab, var(--color-success-400) 18%, transparent)` | |
-| `--color-price-down` | `var(--color-error-500)` | `var(--color-error-400)` | aliases `destructive` value but **never share the name** |
-| `--color-price-down-foreground` | `var(--color-error-contrast-500)` | `var(--color-error-contrast-400)` | |
-| `--color-price-down-soft` | `color-mix(in oklab, var(--color-error-500) 12%, transparent)` | `color-mix(in oklab, var(--color-error-400) 18%, transparent)` | |
-| `--color-price-neutral` | `var(--color-muted-foreground)` | `var(--color-muted-foreground)` | re-uses muted foreground |
-| `--color-live-indicator` | `var(--color-error-500)` | `var(--color-error-400)` | red dot — pulse only when actually live (see §3) |
-| `--color-selected` | `var(--color-secondary-500)` | `var(--color-secondary-400)` | cobalt — used as a ring on colored cards |
+| Token                           | Light                                                            | Dark                                                             | Notes                                                    |
+| ------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------- |
+| `--color-price-up`              | `var(--color-success-500)`                                       | `var(--color-success-400)`                                       | aliases `success` value but **never share the name**     |
+| `--color-price-up-foreground`   | `var(--color-success-contrast-500)`                              | `var(--color-success-contrast-400)`                              |                                                          |
+| `--color-price-up-soft`         | `color-mix(in oklab, var(--color-success-500) 12%, transparent)` | `color-mix(in oklab, var(--color-success-400) 18%, transparent)` |                                                          |
+| `--color-price-down`            | `var(--color-error-500)`                                         | `var(--color-error-400)`                                         | aliases `destructive` value but **never share the name** |
+| `--color-price-down-foreground` | `var(--color-error-contrast-500)`                                | `var(--color-error-contrast-400)`                                |                                                          |
+| `--color-price-down-soft`       | `color-mix(in oklab, var(--color-error-500) 12%, transparent)`   | `color-mix(in oklab, var(--color-error-400) 18%, transparent)`   |                                                          |
+| `--color-price-neutral`         | `var(--color-muted-foreground)`                                  | `var(--color-muted-foreground)`                                  | re-uses muted foreground                                 |
+| `--color-live-indicator`        | `var(--color-error-500)`                                         | `var(--color-error-400)`                                         | red dot — pulse only when actually live (see §3)         |
+| `--color-selected`              | `var(--color-secondary-500)`                                     | `var(--color-secondary-400)`                                     | cobalt — used as a ring on colored cards                 |
 
 ### 1.5 Outcome series (starter 1..4 only)
 
-| Token | Light | Dark |
-|---|---|---|
-| `--color-outcome-1` | `var(--color-warning-500)` | `var(--color-warning-400)` |
-| `--color-outcome-2` | `var(--color-success-500)` | `var(--color-success-400)` |
+| Token               | Light                        | Dark                         |
+| ------------------- | ---------------------------- | ---------------------------- |
+| `--color-outcome-1` | `var(--color-warning-500)`   | `var(--color-warning-400)`   |
+| `--color-outcome-2` | `var(--color-success-500)`   | `var(--color-success-400)`   |
 | `--color-outcome-3` | `var(--color-secondary-500)` | `var(--color-secondary-400)` |
-| `--color-outcome-4` | `var(--color-tertiary-500)` | `var(--color-tertiary-400)` |
+| `--color-outcome-4` | `var(--color-tertiary-500)`  | `var(--color-tertiary-400)`  |
 
 **For 5+ outcomes today:** display the top 4 outcomes with these tokens and a "+N more" pill in `muted-foreground`. Algorithmic generation is deferred to a later wave.
 
@@ -92,14 +92,14 @@ Primitive mapping:
 
 The homepage build prompt MAY add **one** helper file (`packages/bm-utilities/src/lib/format-extras.ts`) that wraps these rules — but it is not required. If the prompt inlines the formatters, that is fine for v1.
 
-| Surface | Rule | Example |
-|---|---|---|
-| Probability (binary / categorical / scalar) | `XX% chance` for whole numbers; `<1% chance` and `>99% chance` at extremes | `42% chance` |
-| Signed change | `▲ +X.X%` (`price-up`) or `▼ X.X%` (`price-down`) — always colored; `flat` returns `0.0%` muted | `▲ +3.4%` |
-| Compact currency | ≤999 = full digits with locale separators; ≥1,000 = compact (`$1.5K`, `$1.2M`, `$3.4B`) | `$1.5K` |
-| Crypto amount | `X.XXXX sBTC` max 4 decimals, trailing zeros trimmed (use existing `trimTrailingZeros`) | `0.012 sBTC` |
-| Time / countdown | Relative `Ends in 2:34` under 1h; `Ends in Xd Yh` over 1h; absolute UTC for resolved | `Ends in 6d 4h` |
-| Address | `0xABCD…WXYZ` (4 + 4 chars, ellipsis between), `font-mono tabular-nums`, copy on click | `ST1H…QXY8` |
+| Surface                                     | Rule                                                                                            | Example         |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------- | --------------- |
+| Probability (binary / categorical / scalar) | `XX% chance` for whole numbers; `<1% chance` and `>99% chance` at extremes                      | `42% chance`    |
+| Signed change                               | `▲ +X.X%` (`price-up`) or `▼ X.X%` (`price-down`) — always colored; `flat` returns `0.0%` muted | `▲ +3.4%`       |
+| Compact currency                            | ≤999 = full digits with locale separators; ≥1,000 = compact (`$1.5K`, `$1.2M`, `$3.4B`)         | `$1.5K`         |
+| Crypto amount                               | `X.XXXX sBTC` max 4 decimals, trailing zeros trimmed (use existing `trimTrailingZeros`)         | `0.012 sBTC`    |
+| Time / countdown                            | Relative `Ends in 2:34` under 1h; `Ends in Xd Yh` over 1h; absolute UTC for resolved            | `Ends in 6d 4h` |
+| Address                                     | `0xABCD…WXYZ` (4 + 4 chars, ellipsis between), `font-mono tabular-nums`, copy on click          | `ST1H…QXY8`     |
 
 **Mandatory CSS rule:** every element rendering a price / percent / balance / countdown / address wraps in `tabular-nums`. Crypto addresses additionally use `font-mono`.
 
@@ -118,7 +118,9 @@ The homepage build prompt MAY add **one** helper file (`packages/bm-utilities/sr
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -153,22 +155,22 @@ The homepage build prompt MAY add **one** helper file (`packages/bm-utilities/sr
 - ❌ `¢` numeric format. Anywhere.
 - ❌ `dark:bg-*` on Tier-1 utilities — use a token whose `.dark` override does the work.
 - ❌ Decorative infinite animations (aurora, shimmer skeletons over 600 ms). Motion is affordance, not decoration.
-- ❌ Binding `price-down` to the `destructive` *name*. Values may match; names never collide.
+- ❌ Binding `price-down` to the `destructive` _name_. Values may match; names never collide.
 - ❌ Touching `<script>` blocks that own state / stores / SDK / API / events. Behavior preservation per `PROMPTS.md` guardrails.
 
 ---
 
 ## 5. What this file does NOT cover (and the doc that does, when you need it)
 
-| Concern | Owner doc |
-|---|---|
-| Trade widget anatomy / pre-flight modal | (deferred; not needed for homepage or market-detail-view-only) |
-| Order book real-vs-recent-trades decision | (deferred; defaults to **collapsed** on market detail) |
-| Wallet modal welcome shape | (deferred; existing `ConnectLanes.svelte` keeps working) |
-| Charts library (ApexCharts) | [`design/skeleton-theme-nouveau.md`](./design/skeleton-theme-nouveau.md) §Charts |
-| Chart-structure tokens (`chart-grid`, etc.) | deferred; charts render with existing ad-hoc colors for v1; tracked as tech debt |
-| Six-variant Button (adding `tertiary` + `soft`) | deferred — current 5 variants are enough for homepage + market detail |
-| Toasts / notifications | (deferred — `TxModal.svelte` keeps working) |
-| Skeletons / empty states beyond inline muted text | (deferred — splash + small per-card loading is enough) |
+| Concern                                           | Owner doc                                                                        |
+| ------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Trade widget anatomy / pre-flight modal           | (deferred; not needed for homepage or market-detail-view-only)                   |
+| Order book real-vs-recent-trades decision         | (deferred; defaults to **collapsed** on market detail)                           |
+| Wallet modal welcome shape                        | (deferred; existing `ConnectLanes.svelte` keeps working)                         |
+| Charts library (ApexCharts)                       | [`design/skeleton-theme-nouveau.md`](./design/skeleton-theme-nouveau.md) §Charts |
+| Chart-structure tokens (`chart-grid`, etc.)       | deferred; charts render with existing ad-hoc colors for v1; tracked as tech debt |
+| Six-variant Button (adding `tertiary` + `soft`)   | deferred — current 5 variants are enough for homepage + market detail            |
+| Toasts / notifications                            | (deferred — `TxModal.svelte` keeps working)                                      |
+| Skeletons / empty states beyond inline muted text | (deferred — splash + small per-card loading is enough)                           |
 
 When you need any of the deferred surfaces, write a 30-minute spec doc against the working code, **then** rebuild — do not improvise.

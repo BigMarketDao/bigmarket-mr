@@ -172,17 +172,23 @@ export async function disconnectWallet() {
 // ---- ON-CHAIN DATA ----
 
 /**
- * Read the connected EVM wallet's USDC balance (6 dp micro-units) via
- * MetaMask's eth_call and persist it in walletState.ethUsdcBalance.
+ * Read the connected EVM wallet's USDC balance (6 dp micro-units) and
+ * persist it in walletState.ethUsdcBalance.
  *
- * Only updates the store when the fetch succeeds (non-null result).
- * A null result means MetaMask was unavailable, the chain is unsupported,
- * or the call failed — in those cases the previously stored value is kept
- * so a temporary unavailability does not zero out a known balance.
+ * Pass `appNetwork` ("mainnet" | "testnet" | "devnet") so the call is
+ * routed to the correct EVM chain regardless of which network MetaMask
+ * is currently on.
+ *
+ * Only updates the store when the fetch succeeds (non-null result) so a
+ * temporary unavailability or wrong-network response never zeros out a
+ * previously known balance.
  */
-export async function fetchEvmUsdcBalance(ethAddress: string): Promise<void> {
+export async function fetchEvmUsdcBalance(
+  ethAddress: string,
+  appNetwork?: string,
+): Promise<void> {
   if (!browser) return;
-  const balance = await getEvmUsdcBalance(ethAddress);
+  const balance = await getEvmUsdcBalance(ethAddress, appNetwork);
   if (balance === null) return;
   walletState.update((s) => ({ ...s, ethUsdcBalance: balance.toString() }));
 }

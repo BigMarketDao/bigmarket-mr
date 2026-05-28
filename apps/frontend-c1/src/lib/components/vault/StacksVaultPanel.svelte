@@ -64,12 +64,26 @@
 	let directTxHash = $state<string | null>(null);
 	let directError = $state<string | null>(null);
 
-	// Relay: transfer wallet → mapped
+	// Relay: transfer wallet → any Stacks address (defaults to mapped/relay address)
 	let relayTransferBusy = $state(false);
 	let relayTransferTxHash = $state<string | null>(null);
 	let relayTransferError = $state<string | null>(null);
 	let relayRawInput = $state('');
+	let relayRecipientInput = $state('');
 	const MICRO = 1_000_000n;
+
+	// Keep the recipient input in sync with mappedAddress when it hasn't been
+	// manually edited (i.e. is blank or still equals the previous mapped value).
+	$effect(() => {
+		if (mappedAddress && !relayRecipientInput) {
+			relayRecipientInput = mappedAddress;
+		}
+	});
+
+	const relayRecipient = $derived(relayRecipientInput.trim() || mappedAddress);
+	const relayRecipientIsRelay = $derived(
+		relayRecipient === mappedAddress && mappedAddress.length > 0
+	);
 
 	const relayAmountMicro = $derived.by((): bigint | null => {
 		const t = (relayRawInput + '').trim();
@@ -85,17 +99,26 @@
 			return `Exceeds wallet balance of ${fmtMicroToStx(Number(walletBalance), 6)} USDCx.`;
 		return null;
 	});
+	const relayRecipientError = $derived.by((): string | null => {
+		const r = relayRecipientInput.trim();
+		if (!r) return null;
+		if (!r.startsWith('ST') && !r.startsWith('SP'))
+			return 'Must be a valid Stacks address (ST… or SP…).';
+		if (r.length < 30) return 'Address looks too short.';
+		return null;
+	});
 
 	// ── derived capability flags ──────────────────────────────────────────────
 	const canDirectDeposit = $derived(stacksConnected && !directBusy && walletBalance > 0n);
 	const canRelayTransfer = $derived(
 		stacksConnected &&
 			!relayTransferBusy &&
-			mappedAddress.length > 0 &&
+			relayRecipient.length > 0 &&
 			walletBalance > 0n &&
 			relayAmountMicro !== null &&
 			relayAmountMicro > 0n &&
-			relayAmountError === null
+			relayAmountError === null &&
+			relayRecipientError === null
 	);
 
 	const directExplorerUrl = $derived(
@@ -145,31 +168,37 @@
 		relayTransferError = null;
 		relayTransferTxHash = null;
 		try {
-			// Register intent so the relayer/cron can sweep
-			const intentRes = await fetch(`${appConfig.VITE_BIGMARKET_API}/cross-chain/intents`, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ sourceChain: 'stacks', sourceAddress: stxAddress })
-			});
-			if (!intentRes.ok) throw new Error(await intentRes.text());
-			const { intentId } = await intentRes.json();
+			let intentId: string | null = null;
 
-			// Transfer USDCx from wallet to relay (mapped) address
+			// Only register a relay intent when sending to the mapped relay address
+			if (relayRecipientIsRelay) {
+				const intentRes = await fetch(`${appConfig.VITE_BIGMARKET_API}/cross-chain/intents`, {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ sourceChain: 'stacks', sourceAddress: stxAddress })
+				});
+				if (!intentRes.ok) throw new Error(await intentRes.text());
+				intentId = (await intentRes.json()).intentId;
+			}
+
+			// Transfer USDCx from wallet to recipient
 			const vault = stacks.createVaultClient(daoConfig);
 			const result = await vault.transferUsdcxTo({
 				amountMicro: relayAmountMicro,
 				senderStxAddress: stxAddress,
-				recipientStxAddress: mappedAddress
+				recipientStxAddress: relayRecipient
 			});
 			if (!result.success) throw new Error(result.error ?? 'Transfer failed');
 			relayTransferTxHash = result.txid ?? null;
 
 			// Mark intent as submitted so the cron sweep picks it up
-			await fetch(`${appConfig.VITE_BIGMARKET_API}/cross-chain/intents/${intentId}/submitted`, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ sourceTxHash: relayTransferTxHash })
-			});
+			if (intentId) {
+				await fetch(`${appConfig.VITE_BIGMARKET_API}/cross-chain/intents/${intentId}/submitted`, {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ sourceTxHash: relayTransferTxHash })
+				});
+			}
 
 			relayRawInput = '';
 		} catch (e) {
@@ -240,15 +269,44 @@
 				class="space-y-3 rounded-md border border-dashed border-amber-300 bg-amber-50/40 p-3 dark:border-amber-700/50 dark:bg-amber-900/10"
 			>
 				<p class="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
-					Debug: transfer USDCx to the relay (mapped) address. The sweep cron will detect the
-					balance and deposit it into the vault, crediting your source address.
+					Debug: transfer USDCx from your wallet to any Stacks address. Defaults to the relay
+					(mapped) address — when used that way the sweep cron will detect the balance and deposit
+					it into the vault, crediting your source address.
 				</p>
 
-				<!-- Step 1: Transfer to mapped address -->
+				<!-- Transfer form -->
 				<div class="space-y-2">
 					<p class="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
-						Step 1 — Transfer wallet → mapped address
+						Transfer USDCx from wallet
 					</p>
+
+					<!-- Recipient address -->
+					<div class="space-y-1">
+						<label class="text-[10px] text-neutral-500 dark:text-neutral-400" for="relay-recipient">
+							Recipient (Stacks address)
+						</label>
+						<input
+							id="relay-recipient"
+							type="text"
+							placeholder="ST… or SP…"
+							bind:value={relayRecipientInput}
+							disabled={relayTransferBusy}
+							class="w-full rounded-md border border-neutral-300 bg-white px-3 py-1.5 font-mono text-[11px] text-neutral-900 placeholder-neutral-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100"
+						/>
+						{#if relayRecipientError}
+							<p class="text-[11px] text-red-600 dark:text-red-400">{relayRecipientError}</p>
+						{:else if relayRecipientIsRelay}
+							<p class="text-[11px] text-amber-600 dark:text-amber-400">
+								→ relay address (sweep step below applies)
+							</p>
+						{:else if relayRecipientInput.trim()}
+							<p class="text-[11px] text-neutral-500 dark:text-neutral-400">
+								→ direct transfer, no sweep needed
+							</p>
+						{/if}
+					</div>
+
+					<!-- Amount -->
 					<div class="flex gap-2">
 						<input
 							type="number"
@@ -299,15 +357,17 @@
 						disabled={!canRelayTransfer}
 						class="w-full cursor-pointer text-xs"
 					>
-						{relayTransferBusy ? 'Submitting…' : 'Transfer to mapped address'}
+						{relayTransferBusy ? 'Submitting…' : 'Transfer USDCx'}
 					</Button>
 				</div>
 
-				<!-- Step 2: Sweep mapped → vault -->
-				<p class="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
-					Step 2 — Sweep mapped address → vault
-				</p>
-				<MappedSweepPanel sourceChain="stacks" sourceAddress={stxAddress} />
+				<!-- Step 2: Sweep mapped → vault (only relevant when recipient = relay address) -->
+				{#if relayRecipientIsRelay}
+					<p class="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
+						Sweep mapped address → vault
+					</p>
+					<MappedSweepPanel sourceChain="stacks" sourceAddress={stxAddress} />
+				{/if}
 			</div>
 		{/if}
 	{/if}

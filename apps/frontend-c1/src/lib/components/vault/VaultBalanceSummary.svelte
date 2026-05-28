@@ -78,7 +78,7 @@
 	$effect(() => {
 		if (isEvmConnected && ethAddress && ethAddress !== lastFetchedEthAddr) {
 			lastFetchedEthAddr = ethAddress;
-			void fetchEvmUsdcBalance(ethAddress);
+			void fetchEvmUsdcBalance(ethAddress, appConfig.VITE_NETWORK);
 		}
 	});
 
@@ -94,7 +94,7 @@
 	// Called by the Refresh button — always re-fetches the EVM balance too.
 	async function refreshAll() {
 		if (isEvmConnected && ethAddress) {
-			await fetchEvmUsdcBalance(ethAddress);
+			await fetchEvmUsdcBalance(ethAddress, appConfig.VITE_NETWORK);
 		}
 		await loadAll();
 	}
