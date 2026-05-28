@@ -90,6 +90,14 @@ export type WithdrawFromVaultRequest = {
   stxAddress: string;
   /** Destination Stacks address for the withdrawn tokens. */
   recipientAddress: string;
+  /**
+   * EVM (0x…) address of the user whose mapped Stacks address holds the funds.
+   * When present the server derives the mapped private key via
+   * deriveStacksPrivateKey(walletKey, controllerAddress) and uses it as the
+   * tx senderKey instead of the global walletKey.
+   * Omit for Stacks-native withdrawals where the server's walletKey is the relay.
+   */
+  controllerAddress?: string;
 };
 
 export type SignedWithdrawMessage = {

@@ -257,6 +257,9 @@ export async function relayEvmWithdrawToServer(
     // the user's mapped Stacks address (the server holds its private key)
     stxAddress: params.mappedAddress,
     recipientAddress: params.mappedAddress,
+    // Tells the server to derive senderKey = deriveStacksPrivateKey(walletKey, ethAddress)
+    // rather than using the global walletKey as the tx fee-payer.
+    controllerAddress: params.ethAddress,
   };
 
   const url = `${params.apiBaseUrl}/cross-chain/protocol/withdraw-from-vault`;

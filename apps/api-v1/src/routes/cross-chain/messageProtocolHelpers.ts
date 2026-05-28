@@ -42,23 +42,25 @@ async function broadcast(tx: Awaited<ReturnType<typeof makeContractCall>>, label
 }
 
 /**
- * Server-side relayer for Stacks vault withdrawals (SIP-18 signed BMP1 path).
+ * Server-side relayer for Stacks vault withdrawals (SIP-18 / EIP-712 BMP1 path).
  *
- * Receives the user's signed BMP1 withdrawal message (produced by the
- * frontend after stx_signStructuredMessage) and broadcasts a Stacks
- * transaction to the vault's `withdraw` function using the server's
- * own private key (CONFIG.walletKey).
+ * Receives the user's signed BMP1 withdrawal message and broadcasts the
+ * vault `withdraw` call.  The vault contract verifies the user's secp256k1
+ * signature — the tx-sender is only a fee-payer.
  *
- * The tx-sender (server key) is irrelevant to withdrawal authorisation —
- * the vault contract verifies the user's secp256k1 signature against the
- * BMP1 message. This allows the user to withdraw without needing STX
- * for gas or a second wallet popup.
+ * For EVM withdrawals `body.controllerAddress` (the ETH 0x… address) is used
+ * to derive the mapped Stacks private key via deriveStacksPrivateKey so the
+ * mapped address signs (and pays fees for) its own withdrawal transaction.
+ * For Stacks-native withdrawals the field is absent and the server's global
+ * walletKey is used as the relay fee-payer.
  */
 export async function withdrawFromVault(body: WithdrawFromVaultRequest): Promise<{ txid: string }> {
 	const config = getConfig();
 	const daoConfig = getDaoConfig();
 
 	if (!config.walletKey) throw new Error('Server walletKey is not configured.');
+
+	const { privateKey: senderKey } = resolveMappedKey(config, body.controllerAddress);
 
 	const network = resolveNetwork(config.network);
 	const deployer = daoConfig.VITE_DAO_DEPLOYER;
@@ -78,7 +80,7 @@ export async function withdrawFromVault(body: WithdrawFromVaultRequest): Promise
 			principalCV(body.stxAddress),
 			principalCV(body.recipientAddress),
 		],
-		senderKey: config.walletKey,
+		senderKey,
 		network,
 		postConditionMode: PostConditionMode.Allow,
 		postConditions: [],
