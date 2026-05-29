@@ -834,6 +834,7 @@ export function createMarketsClient(daoConfig: DaoConfig) {
       token: string,
       stacksHiroKey?: string,
     ): Promise<number> {
+      // contractAddress must be the deployer ST address (not deployer.contractName).
       const data = {
         contractAddress,
         contractName,
@@ -841,9 +842,12 @@ export function createMarketsClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(principalCV(token))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      if (!result) return -1;
-      console.log("--------> fetchTokenMinimumSeed: result: ", result);
-      return Number(result.value?.value?.value || -1);
+      if (!result?.success) return -1;
+      // (ok (some uint)) via cvToJSON: result.value = optional node, .value.value = uint string
+      const inner = result.value?.value;
+      if (inner == null) return -1;
+      const n = Number(typeof inner === "object" ? inner.value : inner);
+      return Number.isFinite(n) && n >= 0 ? n : -1;
     },
 
     async fetchIsAllowedToken(

@@ -5,6 +5,7 @@ import {
 	countCreateMarketEvents,
 	fetchActiveMarketCategories,
 	fetchAllowedTokens,
+	fetchAllAllowedTokens,
 	fetchMarket,
 	fetchMarketClaims,
 	fetchMarketLiquidityEvents,
@@ -87,7 +88,7 @@ router.get('/markets/leader-board', async (req, res) => {
 });
 
 router.get('/markets/allowed-tokens', async (req, res) => {
-	const polls = await fetchAllowedTokens(1);
+	const polls = await fetchAllAllowedTokens();
 	res.json(polls);
 });
 

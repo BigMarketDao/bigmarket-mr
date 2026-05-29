@@ -95,6 +95,8 @@
 		await initWallet(data?.appConfig?.VITE_BIGMARKET_API);
 		await loadWalletData();
 		console.log('$userWalletStore', $userWalletStore);
+		console.log('$daoOverviewStore', $daoOverviewStore);
+		console.log('$allowedTokenStore', $allowedTokenStore);
 		// await Promise.all([loadSystemData(data), initWallet(data?.appConfig?.VITE_BIGMARKET_API).then(loadWalletData)]);
 
 		ready = true;
