@@ -25,12 +25,12 @@ export function generateMerkleTreeUsingStandardPrincipal(
   const leaves = addresses.map((address) => {
     const [version, hash160] = c32addressDecode(address);
     const hashBytes = hexToBytes(hash160);
-    console.log(
-      "generateMerkleTreeUsingStandardPrincipal ===> " +
-        address +
-        " ===> " +
-        bytesToHex(hashSha256Sync(hashBytes)),
-    );
+    // console.log(
+    //   "generateMerkleTreeUsingStandardPrincipal ===> " +
+    //     address +
+    //     " ===> " +
+    //     bytesToHex(hashSha256Sync(hashBytes)),
+    // );
     return hashSha256Sync(hashBytes);
   });
   const tree = new MerkleTree(leaves, hashSha256Sync);

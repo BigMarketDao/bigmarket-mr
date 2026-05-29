@@ -5,6 +5,7 @@ import { getGovernanceData, isExecutiveTeamMember, isExtension } from './extensi
 import { getDaoConfig } from '../../../lib/config_dao.js';
 import { coordinators } from '../../../lib/config.js';
 import { updateUICache } from '../../cache/cache_utils.js';
+import { updateDaoOverview } from '../../predictions/markets_helper.js';
 
 const router = express.Router();
 
@@ -20,6 +21,7 @@ router.post('/extensions/:daoContractId', async (req, res, next) => {
 			await readDaoEvents(true, req.params.daoContractId);
 			console.debug('post(/extensions/:daoContractId: dao' + req.params.daoContractId);
 			await readDaoExtensionEvents(true, req.params.daoContractId);
+			await updateDaoOverview();
 			const events = await fetchBaseDaoEvents();
 			// await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DAO_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);
 			// await readScalarEvents(false, getDaoConfig().VITE_DAO_DEPLOYER + '.bigmarket-dao', getDaoConfig().VITE_DAO_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_SCALAR);
@@ -37,6 +39,7 @@ router.post('/latest-events/:daoContractId', async (req, res, next) => {
 		await readDaoEvents(true, req.params.daoContractId);
 		console.debug('post(/latest-events/:daoContractId: dao' + req.params.daoContractId);
 		await readDaoExtensionEvents(true, req.params.daoContractId);
+		await updateDaoOverview();
 		await updateUICache();
 		//const events = await fetchBaseDaoEvents();
 		// await readPredictionEvents(false, req.params.daoContractId, getDaoConfig().VITE_DAO_DEPLOYER + '.' + getDaoConfig().VITE_DAO_MARKET_PREDICTING);

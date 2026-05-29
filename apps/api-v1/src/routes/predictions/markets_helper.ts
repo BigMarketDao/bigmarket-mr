@@ -96,36 +96,40 @@ export async function updateDaoOverview(address?: string) {
 // 		//console.log('readMinTokenLiquidity: saved: ' + atok);
 // 	}
 // }
-export async function readMinTokenLiquidity(deployer: string, contractName: string) {
-	const tokens1 = await fetchAllowedTokens(1);
+/** Read on-chain min seed for one token and persist it on the matching allowed-token event. */
+export async function refreshTokenMinLiquidity(deployer: string, contractName: string, token: string): Promise<number> {
+	let l = await stacks.createMarketsClient(getDaoConfig()).fetchTokenMinimumSeed(getConfig().stacksApi, deployer, contractName, token, getConfig().stacksHiroKey);
+	if (l === -1) {
+		l = readMinTokenLiquidityToken(contractName, token);
+	}
 
-	for (const t of tokens1) {
-		let l = await stacks.createMarketsClient(getDaoConfig()).fetchTokenMinimumSeed(getConfig().stacksApi, `${deployer}.${contractName}`, contractName, t.token, getConfig().stacksHiroKey);
-		console.log('--------> readMinTokenLiquidity: l: ', l, t.token);
-		if (l === -1) {
-			l = readMinTokenLiquidityToken(contractName, t.token);
-		}
+	const atok = await daoEventCollection.findOne({
+		event: 'allowed-token',
+		token,
+		extension: `${deployer}.${contractName}`
+	});
 
-		const atok = await daoEventCollection.findOne({
-			event: 'allowed-token',
-			token: t.token,
-			extension: `${deployer}.${contractName}`
-		});
-
-		if (!atok) {
-			console.log('readMinTokenLiquidity: no allowed-token event found for', t.token);
-			continue;
-		}
-
+	if (atok) {
 		atok.minLiquidity = l;
 		await saveOrUpdateEvent(atok as unknown as BasicEvent);
+	}
+
+	return l;
+}
+
+export async function readMinTokenLiquidity(deployer: string, contractName: string) {
+	// Tokens for this extension — not marketType 1 only (scalar tokens are marketType 2).
+	const tokens = await daoEventCollection.find({ event: 'allowed-token', extension: `${deployer}.${contractName}`, allowed: true }).toArray();
+
+	for (const t of tokens) {
+		const l = await refreshTokenMinLiquidity(deployer, contractName, t.token);
+		console.log('readMinTokenLiquidity:', contractName, t.token, l);
 	}
 }
 
 export async function readMinTokenLiquidity2(deployer: string, contractName: string, token: string) {
-	const atok = (await daoEventCollection.findOne({ event: 'allowed-token', token: token, extension: `${deployer}.${contractName}` })) as unknown as TokenPermissionEvent;
-	if (!atok) return -1;
-	return atok.minLiquidity || -1;
+	// Always refresh from chain so new tokens are not stuck at stale DB/cache values.
+	return refreshTokenMinLiquidity(deployer, contractName, token);
 }
 
 export function readMinTokenLiquidityToken(contractName: string, token: string): number {
@@ -362,6 +366,10 @@ export async function updateAllowedTokensEvent(marketType: number, result: any, 
 	const sip10Data = await getSip10Properties(getConfig().stacksApi, contractEvent);
 	contractEvent.sip10Data = sip10Data;
 	await saveOrUpdateEvent(contractEvent);
+
+	const [extDeployer, ...extNameParts] = basicEvent.extension.split('.');
+	await refreshTokenMinLiquidity(extDeployer, extNameParts.join('.'), token);
+
 	return contractEvent;
 }
 
@@ -540,10 +548,35 @@ export async function updateMarketStakeEvent(marketType: number, result: any, ba
 // (print {event: "market-stake", market-id: market-id, index: index, category: category, amount: amount-less-fee, voter: tx-sender})
 // (print {event: "market-stake", market-id: market-id, index: index, amount: amount-shares, cost: cost, fee: fee, voter: tx-sender})
 
+function mergeAllowedTokensByToken(tokens: TokenPermissionEvent[]): TokenPermissionEvent[] {
+	const map = new Map<string, TokenPermissionEvent>();
+	for (const t of tokens) {
+		if (!t.allowed) continue;
+		const existing = map.get(t.token);
+		if (!existing) {
+			map.set(t.token, { ...t });
+			continue;
+		}
+		const minLiquidity = Math.max(existing.minLiquidity || 0, t.minLiquidity || 0);
+		map.set(t.token, {
+			...existing,
+			minLiquidity,
+			sip10Data: existing.sip10Data ?? t.sip10Data
+		});
+	}
+	return Array.from(map.values());
+}
+
 export async function fetchAllowedTokens(marketType: number): Promise<Array<TokenPermissionEvent>> {
 	const result = await daoEventCollection.find({ event: 'allowed-token', marketType }).toArray();
 
 	return result as unknown as Array<TokenPermissionEvent>;
+}
+
+/** All allowed tokens across market types, merged by token with max minLiquidity. */
+export async function fetchAllAllowedTokens(): Promise<Array<TokenPermissionEvent>> {
+	const result = await daoEventCollection.find({ event: 'allowed-token', allowed: true }).toArray();
+	return mergeAllowedTokensByToken(result as unknown as TokenPermissionEvent[]);
 }
 
 export async function fetchActiveMarketCategories(): Promise<Array<MarketCategory>> {

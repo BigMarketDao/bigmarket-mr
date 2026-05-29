@@ -8,7 +8,22 @@ import {
 } from '@bigmarket/bm-common';
 
 function dedupeBy<T, K extends keyof T>(arr: T[], key: K): T[] {
-	return Array.from(new Map(arr.map((item) => [item[key], item])).values());
+	const map = new Map<unknown, T>();
+	for (const item of arr) {
+		const k = item[key];
+		const existing = map.get(k);
+		if (!existing) {
+			map.set(k, item);
+			continue;
+		}
+		// When the same token appears on categorical + scalar, keep the higher minLiquidity.
+		const a = item as { minLiquidity?: number };
+		const b = existing as { minLiquidity?: number };
+		if ((a.minLiquidity ?? 0) > (b.minLiquidity ?? 0)) {
+			map.set(k, item);
+		}
+	}
+	return Array.from(map.values());
 }
 
 export async function loadSystemData(data: LayoutData) {
