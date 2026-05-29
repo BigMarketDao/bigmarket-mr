@@ -77,8 +77,8 @@ const BMP1_MAGIC = new TextEncoder().encode("BMP1MSG\0");
  * Build a 256-byte BMP1 message ready to be signed.
  *
  * For EVM: sign with MetaMask `eth_sign` (raw hash, NOT personal_sign) or
- * personal_sign if the contract verifies via EIP-191.
- * Currently the vault contract uses EIP-191 personal_sign with 256-byte payload.
+ * personal_sign if the contract verifies via EIP-712.
+ * Currently the vault contract uses EIP-712 personal_sign with 256-byte payload.
  */
 export function buildBmp1Message(params: Bmp1MessageParams): Uint8Array {
   const msg = new Uint8Array(256); // zero-initialised

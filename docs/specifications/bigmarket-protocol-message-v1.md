@@ -64,7 +64,7 @@ The first 0x40 bytes are the **envelope**. The next 0xC0 bytes are the
 ### Commitments
 
 To keep the body fixed-length while still committing to variable-length
-Stacks principals, the body uses *commitments* rather than the principals
+Stacks principals, the body uses _commitments_ rather than the principals
 themselves:
 
 ```
@@ -137,7 +137,7 @@ Two mechanisms, both required:
 1. **Nonce** at offset 0x30 must equal the current
    `(get-nonce controller-chain controller-address)`. The vault
    increments this nonce on every successful state-changing call from
-   this controller, across *all* opcodes.
+   this controller, across _all_ opcodes.
 2. **Expiry** (when non-zero) must be ≥ `stacks-block-height`.
 
 Because the nonce is per-controller and shared across opcodes, the
@@ -149,13 +149,13 @@ The same 256-byte payload is signed using each chain's native message
 flow. The verifier reconstructs the chain-specific digest before
 recovery / verification.
 
-| chain        | curve     | digest                                                    | signature                          |
-| ------------ | --------- | --------------------------------------------------------- | ---------------------------------- |
-| `CHAIN_EVM`  | secp256k1 | `keccak256("\x19Ethereum Signed Message:\n256" \|\| msg)` | 65 bytes `r \|\| s \|\| v`         |
-| `CHAIN_BTC`  | secp256k1 | `dsha256("\x18Bitcoin Signed Message:\n" \|\| varint(256) \|\| msg)` | 65 bytes recoverable |
-| `CHAIN_STX`  | secp256k1 | Stacks signed-structured-data envelope over `msg`         | 65 bytes recoverable               |
-| `CHAIN_SOL`  | ed25519   | `msg` (raw bytes)                                         | 64 bytes `R \|\| s`                |
-| `CHAIN_P256` | secp256r1 | WebAuthn-wrapped over `msg`                               | scheme-specific                    |
+| chain        | curve     | digest                                                               | signature                  |
+| ------------ | --------- | -------------------------------------------------------------------- | -------------------------- |
+| `CHAIN_EVM`  | secp256k1 | `keccak256("\x19Ethereum Signed Message:\n256" \|\| msg)`            | 65 bytes `r \|\| s \|\| v` |
+| `CHAIN_BTC`  | secp256k1 | `dsha256("\x18Bitcoin Signed Message:\n" \|\| varint(256) \|\| msg)` | 65 bytes recoverable       |
+| `CHAIN_STX`  | secp256k1 | Stacks signed-structured-data envelope over `msg`                    | 65 bytes recoverable       |
+| `CHAIN_SOL`  | ed25519   | `msg` (raw bytes)                                                    | 64 bytes `R \|\| s`        |
+| `CHAIN_P256` | secp256r1 | WebAuthn-wrapped over `msg`                                          | scheme-specific            |
 
 > **This revision implements `CHAIN_EVM` only.** The other chain ids
 > are accepted in the envelope but the on-chain verifier currently
@@ -196,23 +196,27 @@ reused by the buy / sell / claim entrypoints when they are added.
 
 Errors specific to message handling:
 
-| code  | constant               | meaning                                          |
-| ----- | ---------------------- | ------------------------------------------------ |
-| u7110 | ERR_MSG_MAGIC          | magic prefix != `BMP1MSG\0`                      |
-| u7111 | ERR_MSG_VERSION        | version != 0x01                                  |
-| u7112 | ERR_MSG_OPCODE         | opcode does not match the entrypoint             |
-| u7113 | ERR_TOKEN_COMMIT       | slot0 != keccak256(consensus(token))             |
-| u7114 | ERR_MAPPED_COMMIT      | slot1 != keccak256(consensus(mapped-address))    |
-| u7115 | ERR_RECIPIENT_COMMIT   | slot2 != keccak256(consensus(recipient))         |
-| u7116 | ERR_EXPIRED            | expiry < stacks-block-height                     |
-| u7117 | ERR_PUBKEY_MISMATCH    | supplied pubkey does not match recovered pubkey  |
-| u7118 | ERR_SIG_SCHEME         | controller-chain not implemented yet             |
+| code  | constant             | meaning                                         |
+| ----- | -------------------- | ----------------------------------------------- |
+| u7110 | ERR_MSG_MAGIC        | magic prefix != `BMP1MSG\0`                     |
+| u7111 | ERR_MSG_VERSION      | version != 0x01                                 |
+| u7112 | ERR_MSG_OPCODE       | opcode does not match the entrypoint            |
+| u7113 | ERR_TOKEN_COMMIT     | slot0 != keccak256(consensus(token))            |
+| u7114 | ERR_MAPPED_COMMIT    | slot1 != keccak256(consensus(mapped-address))   |
+| u7115 | ERR_RECIPIENT_COMMIT | slot2 != keccak256(consensus(recipient))        |
+| u7116 | ERR_EXPIRED          | expiry < stacks-block-height                    |
+| u7117 | ERR_PUBKEY_MISMATCH  | supplied pubkey does not match recovered pubkey |
+| u7118 | ERR_SIG_SCHEME       | controller-chain not implemented yet            |
 
 ## Reference encoder (TypeScript)
 
 ```ts
 import { keccak_256 } from "@noble/hashes/sha3";
-import { serializeCV, principalCV, contractPrincipalCV } from "@stacks/transactions";
+import {
+  serializeCV,
+  principalCV,
+  contractPrincipalCV,
+} from "@stacks/transactions";
 
 const CHAIN_EVM = "0x00000001";
 
@@ -253,19 +257,19 @@ export function encodeWithdrawMessage(params: {
 }): Uint8Array {
   const buf = new Uint8Array(256);
   buf.set(MAGIC, 0x00);
-  buf[0x08] = 0x01;                        // opcode = WITHDRAW
-  buf[0x09] = 0x01;                        // version
+  buf[0x08] = 0x01; // opcode = WITHDRAW
+  buf[0x09] = 0x01; // version
   // flags 0x0A..0x0B left zero
-  buf.set(Buffer.from(CHAIN_EVM.slice(2), "hex"), 0x0C);
+  buf.set(Buffer.from(CHAIN_EVM.slice(2), "hex"), 0x0c);
   buf.set(padHexAddress(params.evmAddress), 0x10);
   buf.set(u128be(params.nonce), 0x30);
-  buf.set(commit(params.tokenPrincipal),     0x40);
-  buf.set(commit(params.mappedPrincipal),    0x60);
+  buf.set(commit(params.tokenPrincipal), 0x40);
+  buf.set(commit(params.mappedPrincipal), 0x60);
   buf.set(commit(params.recipientPrincipal), 0x80);
   // slot3: amount (low 16 of 32)
-  buf.set(u128be(params.amount), 0xA0 + 16);
+  buf.set(u128be(params.amount), 0xa0 + 16);
   // slot4: expiry (low 16 of 32)
-  buf.set(u128be(params.expiryBlock), 0xC0 + 16);
+  buf.set(u128be(params.expiryBlock), 0xc0 + 16);
   // slot5 reserved (already zero)
   return buf;
 }
@@ -275,7 +279,6 @@ To sign as an EVM user via wallet-connect / MetaMask:
 
 ```ts
 const message = encodeWithdrawMessage({...});
-// EIP-191 personal_sign over the raw 256-byte payload
 const signatureHex = await wallet.signMessage({ raw: message });
 ```
 
@@ -287,9 +290,9 @@ contractCall({
   contractName: "bme050-0-vault",
   functionName: "withdraw",
   functionArgs: [
-    bufferCV(message),                   // (buff 256)
-    bufferCV(hexToBytes(signatureHex)),  // (buff 65)
-    bufferCV(uncompressedPubkey),        // (buff 64)  X || Y
+    bufferCV(message), // (buff 256)
+    bufferCV(hexToBytes(signatureHex)), // (buff 65)
+    bufferCV(uncompressedPubkey), // (buff 64)  X || Y
     contractPrincipalCV(tokenAddr, tokenName),
     standardPrincipalCV(mappedAddress),
     standardPrincipalCV(recipient),

@@ -70,7 +70,7 @@ export type SignedEvmWithdrawMessage = {
 
 /**
  * Step 1: build the BMP1 message, sign it with MetaMask (personal_sign /
- * EIP-191), and recover the caller's uncompressed secp256k1 public key.
+ * EIP-712), and recover the caller's uncompressed secp256k1 public key.
  */
 export async function requestWithdrawSignatureEvm(
   params: EvmWithdrawParams,
@@ -113,9 +113,7 @@ export async function requestWithdrawSignatureEvm(
   // ── Sign with MetaMask eth_signTypedData_v4 (EIP-712) ────────────────────
   // MetaMask renders: "BigMarket · BMP1Withdraw · payload: 0x424d50…"
   // — far more readable than raw personal_sign bytes.
-  const { getMetaMask } = await import(
-    "../chains/ethereum/injected.js"
-  );
+  const { getMetaMask } = await import("../chains/ethereum/injected.js");
   const provider = getMetaMask();
 
   // ── Parse BMP1 fields for EIP-712 typed data ────────────────────────────
@@ -128,10 +126,10 @@ export async function requestWithdrawSignatureEvm(
   //   [64-95] slot0 (token commit)  ...
   //   [160-191] slot3 (amount, uint256-compatible: high 16 = 0, low 16 = value)
 
-  const bmp1Hash = keccak_256(bmp1);                // bytes32 — binds the signature to the full BMP1
-  const controllerBytes = bmp1.slice(16, 48);       // (buff 32) — EIP-712 address encoding
-  const amountSlot = bmp1.slice(160, 192);          // (buff 32) — EIP-712 uint256 encoding
-  const nonceBuff16 = bmp1.slice(48, 64);           // (buff 16) from BMP1
+  const bmp1Hash = keccak_256(bmp1); // bytes32 — binds the signature to the full BMP1
+  const controllerBytes = bmp1.slice(16, 48); // (buff 32) — EIP-712 address encoding
+  const amountSlot = bmp1.slice(160, 192); // (buff 32) — EIP-712 uint256 encoding
+  const nonceBuff16 = bmp1.slice(48, 64); // (buff 16) from BMP1
 
   // The EIP-712 typed-data message (what MetaMask displays):
   //   controller → recognisable 0x ETH address
@@ -182,7 +180,7 @@ export async function requestWithdrawSignatureEvm(
   // (same byte order MetaMask emits, but with V normalised to 0 or 1).
   const rsvSig = new Uint8Array(65);
   rsvSig.set(rawSig.slice(0, 64), 0); // R + S
-  rsvSig[64] = v;                     // normalised V as last byte
+  rsvSig[64] = v; // normalised V as last byte
 
   // ── Reproduce the EIP-712 digest for public key recovery ────────────────
   // Must exactly mirror verify-evm in bme050-0-vault.clar.
