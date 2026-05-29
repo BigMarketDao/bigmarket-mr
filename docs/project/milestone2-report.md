@@ -1,4 +1,4 @@
-# Milestone 2 Report
+# BigMarket: Milestone 2 Report
 
 **Reporting period:** week ending 28 May 2026  
 **Status:** Delivered on testnet; user-facing flows operational with ongoing hardening
