@@ -1,16 +1,24 @@
 <script lang="ts">
-  import { type StoredOpinionPoll, type TokenPermissionEvent } from '@bigmarket/bm-types';
-  import { Coins } from 'lucide-svelte';
-  import { ParaContainer, Banner } from '@bigmarket/bm-ui';
-  import { fmtMicroToStx, fmtStxMicro, getMarketToken, getMarketTokenEvent } from '@bigmarket/bm-utilities';
-  import type { ValidationResult } from './app/validation';
-  import { allowedTokenStore } from '@bigmarket/bm-common';
-  import { marketDataToTupleCV } from '@bigmarket/sdk/dist/chains/stacks';
+  import {
+    type StoredOpinionPoll,
+    type TokenPermissionEvent,
+  } from "@bigmarket/bm-types";
+  import { Coins } from "lucide-svelte";
+  import { ParaContainer, Banner } from "@bigmarket/bm-ui";
+  import {
+    fmtMicroToStx,
+    fmtStxMicro,
+    getMarketToken,
+    getMarketTokenEvent,
+  } from "@bigmarket/bm-utilities";
+  import type { ValidationResult } from "./app/validation";
+  import { allowedTokenStore } from "@bigmarket/bm-common";
+  import { marketDataToTupleCV } from "@bigmarket/sdk/dist/chains/stacks";
 
   const {
     template,
     validation,
-    testIdPrefix = 'market-mgt:liqsel'
+    testIdPrefix = "market-mgt:liqsel",
   } = $props<{
     template: StoredOpinionPoll;
     validation: ValidationResult;
@@ -19,15 +27,14 @@
 
   // ✅ reactive token metadata
   const sip10Data = $derived(
-    getMarketToken(template?.token, $allowedTokenStore)
+    getMarketToken(template?.token, $allowedTokenStore),
   );
   const tokenEvent: TokenPermissionEvent | null = $derived(
-    getMarketTokenEvent(template?.token, $allowedTokenStore)
+    getMarketTokenEvent(template?.token, $allowedTokenStore),
   );
-  
 
   // ✅ local editable state
-  let liquidityUi = $state<number>(Number(fmtMicroToStx(template.liquidity)));
+  let liquidityUi = $derived<number>(Number(fmtMicroToStx(template.liquidity)));
 
   // ✅ sync FROM template → UI
   // $effect(() => {
@@ -47,12 +54,12 @@
   // ✅ derived validation (no recompute spam)
   const localLiquidityError = $derived(
     liquidityUi === null || liquidityUi === undefined
-      ? 'Liquidity is required.'
+      ? "Liquidity is required."
       : Number.isNaN(liquidityUi)
-        ? 'Liquidity must be a number.'
+        ? "Liquidity must be a number."
         : liquidityUi <= 0
-          ? 'Liquidity must be greater than 0.'
-          : null
+          ? "Liquidity must be greater than 0."
+          : null,
   );
 </script>
 
@@ -66,10 +73,10 @@
     </div>
   </label>
 
-  <ParaContainer >
-  <div data-testid={`${testIdPrefix}:help`}>
-    Enter how much {sip10Data.symbol} you want to seed the market with.
-  </div>
+  <ParaContainer>
+    <div data-testid={`${testIdPrefix}:help`}>
+      Enter how much {sip10Data.symbol} you want to seed the market with.
+    </div>
   </ParaContainer>
 
   <ParaContainer>
@@ -89,8 +96,8 @@
         focus-visible:ring-ring
         ${
           !localLiquidityError && !validation?.errors?.liquidity
-            ? 'border-border focus-visible:border-ring'
-            : 'border-destructive-border focus-visible:border-destructive'
+            ? "border-border focus-visible:border-ring"
+            : "border-destructive-border focus-visible:border-destructive"
         }`}
       placeholder={`Enter the amount of ${sip10Data.symbol} to seed market`}
       bind:value={liquidityUi}
@@ -111,7 +118,12 @@
   </div>
 
   <div class="text-xs text-muted-foreground">
-    {fmtMicroToStx(liquidityUi * Math.pow(10, sip10Data.decimals), sip10Data.decimals)} {sip10Data.symbol}
-    Minimum allowed: {((tokenEvent?.minLiquidity || -1))} {sip10Data.symbol}
+    {fmtMicroToStx(
+      liquidityUi * Math.pow(10, sip10Data.decimals),
+      sip10Data.decimals,
+    )}
+    {sip10Data.symbol}
+    Minimum allowed: {tokenEvent?.minLiquidity || 100}
+    {sip10Data.symbol}
   </div>
 </div>

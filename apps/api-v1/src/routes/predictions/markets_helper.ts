@@ -85,18 +85,6 @@ export async function updateDaoOverview(address?: string) {
 	}
 }
 
-// export async function readMinTokenLiquidity(deployer: string, contractName: string) {
-// 	const tokens1 = await fetchAllowedTokens(1);
-// 	for (let t of tokens1) {
-// 		let l = await stacks.createMarketsClient(getDaoConfig()).fetchTokenMinimumSeed(getConfig().stacksApi, `${deployer}.${contractName}`, contractName, t.token, getConfig().stacksHiroKey);
-// 		if (l === -1) l = readMinTokenLiquidityToken(contractName, t.token);
-// 		const atok = (await daoEventCollection.findOne({ event: 'allowed-token', token: t.token, extension: `${deployer}.${contractName}` })) as unknown as TokenPermissionEvent;
-// 		atok.minLiquidity = l;
-// 		await saveOrUpdateEvent(atok);
-// 		//console.log('readMinTokenLiquidity: saved: ' + atok);
-// 	}
-// }
-/** Read on-chain min seed for one token and persist it on the matching allowed-token event. */
 export async function refreshTokenMinLiquidity(deployer: string, contractName: string, token: string): Promise<number> {
 	let l = await stacks.createMarketsClient(getDaoConfig()).fetchTokenMinimumSeed(getConfig().stacksApi, deployer, contractName, token, getConfig().stacksHiroKey);
 	if (l === -1) {
@@ -159,7 +147,7 @@ export function readMinTokenLiquidityToken(contractName: string, token: string):
 		else if (token === `${getDaoConfig().VITE_USDH_FULL_CONTRACT}`) return 100000000;
 		else if (token === `${getDaoConfig().VITE_SBTC_DEPLOYER}.sbtc-token`) return 100000000;
 	}
-	return 0;
+	return 1000000;
 	// }
 }
 

@@ -111,6 +111,7 @@
     $exchangeRatesStore,
     100,
     $selectedCurrency.code,
+    market.marketData.token,
   );
   let payouts = $derived(
     calculatePayoutCategorical(
