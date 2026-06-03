@@ -30,6 +30,8 @@ const ZERO_32 = new Uint8Array(32);
 const BMP1_MAGIC = new Uint8Array([0x42, 0x4d, 0x50, 0x31, 0x4d, 0x53, 0x47, 0x00]);
 const OP_WITHDRAW = 0x01;
 const OP_BUY_SHARES = 0x02;
+const OP_SELL_SHARES = 0x03;
+const OP_CLAIM_WINNINGS = 0x04;
 const BMP1_VERSION = 0x01;
 
 // EIP-712 constants — must match bme050-0-vault.clar exactly.
@@ -1273,6 +1275,244 @@ describe('vault — buy-shares (Use Case 4: signed BMP1 + scalar market)', () =>
 		expect(callBuyShares(tom, buildBuyShares({ key, mapped, market: marketScalar, marketId: 0, outcomeIndex: 1, maxCost: 500_000n, minShares: 1n, nonce: 0n }), marketScalar).result).toEqual(Cl.ok(Cl.uint(1)));
 		const replay = buildBuyShares({ key, mapped, market: marketScalar, marketId: 0, outcomeIndex: 1, maxCost: 500_000n, minShares: 1n, nonce: 0n });
 		expect(callBuyShares(tom, replay, marketScalar).result).toEqual(Cl.error(Cl.uint(ERR_INVALID_NONCE)));
+	});
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Use Case 5/6: sell-shares & claim-winnings via signed BMP1
+//
+// Both mirror buy-shares but bring funds INTO the vault: the market refunds the
+// net proceeds to the vault (payee = contract-caller), and the vault re-credits
+// the controller ledger. sell uses OP_SELL_SHARES with slot4 = min-refund (high)
+// || shares-in (low); claim uses OP_CLAIM_WINNINGS with only market-id in slot2.
+// ════════════════════════════════════════════════════════════════════════════
+
+function buildSellShares(args: {
+	key: EvmKey;
+	tokenName?: string;
+	mapped: string;
+	market: string;
+	marketId: bigint | number;
+	outcomeIndex: bigint | number;
+	minRefund: bigint | number;
+	sharesIn: bigint | number;
+	nonce?: bigint | number;
+	expiry?: bigint | number;
+	chain?: Uint8Array;
+	overrides?: Partial<BuildMessageOpts>;
+}): BuySharesMaterials {
+	const tokenName = args.tokenName ?? sbtcName;
+	const tokenCV = contractPrincipalCV(deployer, tokenName);
+	const mappedCV = principalCV(args.mapped);
+	const marketCV = contractPrincipalCV(deployer, args.market);
+
+	const message = buildBmp1({
+		opcode: OP_SELL_SHARES,
+		chain: args.chain ?? CHAIN_EVM,
+		controller32: args.key.controller32,
+		nonce: args.nonce ?? 0n,
+		slot0: commitPrincipal(tokenCV),
+		slot1: commitPrincipal(mappedCV),
+		slot2: slotHighLow(args.outcomeIndex, args.marketId),
+		slot3: commitPrincipal(marketCV),
+		slot4: slotHighLow(args.minRefund, args.sharesIn),
+		slot5: slotLowUint(args.expiry ?? 0n),
+		...(args.overrides ?? {})
+	});
+
+	const signature = signEvm(message, args.key.privKey);
+	return { message, signature, pubkey: args.key.uncompressed, tokenCV, mappedCV, marketCV };
+}
+
+function buildClaimWinnings(args: {
+	key: EvmKey;
+	tokenName?: string;
+	mapped: string;
+	market: string;
+	marketId: bigint | number;
+	nonce?: bigint | number;
+	expiry?: bigint | number;
+	chain?: Uint8Array;
+	overrides?: Partial<BuildMessageOpts>;
+}): BuySharesMaterials {
+	const tokenName = args.tokenName ?? sbtcName;
+	const tokenCV = contractPrincipalCV(deployer, tokenName);
+	const mappedCV = principalCV(args.mapped);
+	const marketCV = contractPrincipalCV(deployer, args.market);
+
+	const message = buildBmp1({
+		opcode: OP_CLAIM_WINNINGS,
+		chain: args.chain ?? CHAIN_EVM,
+		controller32: args.key.controller32,
+		nonce: args.nonce ?? 0n,
+		slot0: commitPrincipal(tokenCV),
+		slot1: commitPrincipal(mappedCV),
+		slot2: slotLowUint(args.marketId),
+		slot3: commitPrincipal(marketCV),
+		slot5: slotLowUint(args.expiry ?? 0n),
+		...(args.overrides ?? {})
+	});
+
+	const signature = signEvm(message, args.key.privKey);
+	return { message, signature, pubkey: args.key.uncompressed, tokenCV, mappedCV, marketCV };
+}
+
+function callVaultMarketFn(fn: string, sender: string, mats: BuySharesMaterials, marketName: string) {
+	return simnet.callPublicFn(
+		vault,
+		fn,
+		[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketName)],
+		sender
+	);
+}
+
+/** Resolve a categorical market to `category` and pass the dispute window. */
+function resolveCategorical(marketId: number, category: string) {
+	simnet.mineEmptyBlocks(288);
+	const r = simnet.callPublicFn(marketPredicting, 'resolve-market', [Cl.uint(marketId), Cl.stringAscii(category)], bob);
+	expect(r.result.type).toBe(ClarityType.ResponseOk);
+	simnet.mineEmptyBlocks(288);
+	const u = simnet.callPublicFn(marketPredicting, 'resolve-market-undisputed', [Cl.uint(marketId)], bob);
+	expect(u.result).toEqual(Cl.ok(Cl.bool(true)));
+}
+
+describe('vault — sell-shares (Use Case 5: signed BMP1 brings proceeds back to the vault)', () => {
+	it('ok: sell debits the beneficiary shares and credits the vault ledger', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		// First buy so the beneficiary owns shares to sell (nonce 0 -> 1)
+		expect(callBuyShares(tom, buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 2_000_000n, minShares: 1n, nonce: 0n }), marketPredicting).result).toEqual(Cl.ok(Cl.uint(1)));
+		const sharesOwned = getStakeAt(marketPredicting, 0, mapped, 1);
+		expect(sharesOwned).toBeGreaterThan(0n);
+		const ledgerAfterBuy = getBalance(CHAIN_EVM, key.controller32, mapped);
+
+		// Sell half the shares back (nonce 1 -> 2)
+		const sharesIn = sharesOwned / 2n;
+		const mats = buildSellShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, minRefund: 1n, sharesIn, nonce: 1n });
+		const r = callVaultMarketFn('sell-shares', tom, mats, marketPredicting);
+		expect(r.result.type).toBe(ClarityType.ResponseOk);
+		const netRefund = BigInt((r.result as any).value.value);
+		expect(netRefund).toBeGreaterThan(0n);
+
+		// Ledger credited by the net refund, nonce advanced, shares reduced
+		expect(getBalance(CHAIN_EVM, key.controller32, mapped)).toBe(ledgerAfterBuy + netRefund);
+		expect(getNonce(CHAIN_EVM, key.controller32)).toBe(2n);
+		expect(getStakeAt(marketPredicting, 0, mapped, 1)).toBe(sharesOwned - sharesIn);
+	});
+
+	it('ok: sell on the scalar market credits the vault ledger', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketScalar, credit: 5_000_000n });
+		expect(callBuyShares(tom, buildBuyShares({ key, mapped, market: marketScalar, marketId: 0, outcomeIndex: 1, maxCost: 2_000_000n, minShares: 1n, nonce: 0n }), marketScalar).result).toEqual(Cl.ok(Cl.uint(1)));
+		const sharesOwned = getStakeAt(marketScalar, 0, mapped, 1);
+		const ledgerAfterBuy = getBalance(CHAIN_EVM, key.controller32, mapped);
+
+		const mats = buildSellShares({ key, mapped, market: marketScalar, marketId: 0, outcomeIndex: 1, minRefund: 1n, sharesIn: sharesOwned, nonce: 1n });
+		const r = callVaultMarketFn('sell-shares', tom, mats, marketScalar);
+		expect(r.result.type).toBe(ClarityType.ResponseOk);
+		const netRefund = BigInt((r.result as any).value.value);
+		expect(getBalance(CHAIN_EVM, key.controller32, mapped)).toBe(ledgerAfterBuy + netRefund);
+		expect(getStakeAt(marketScalar, 0, mapped, 1)).toBe(0n);
+	});
+
+	it('err: opcode must be OP_SELL_SHARES', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		const mats = buildSellShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, minRefund: 1n, sharesIn: 1_000n, overrides: { opcode: OP_BUY_SHARES } });
+		expect(callVaultMarketFn('sell-shares', tom, mats, marketPredicting).result).toEqual(Cl.error(Cl.uint(ERR_MSG_OPCODE)));
+	});
+
+	it('err: market-commit mismatch when the payload binds a different market', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		const mats = buildSellShares({ key, mapped, market: marketScalar, marketId: 0, outcomeIndex: 1, minRefund: 1n, sharesIn: 1_000n });
+		const r = simnet.callPublicFn(
+			vault,
+			'sell-shares',
+			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketPredicting)],
+			tom
+		);
+		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_MARKET_COMMIT)));
+	});
+
+	it('err: replaying the same nonce is rejected', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		expect(callBuyShares(tom, buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 2_000_000n, minShares: 1n, nonce: 0n }), marketPredicting).result).toEqual(Cl.ok(Cl.uint(1)));
+		const shares = getStakeAt(marketPredicting, 0, mapped, 1);
+		expect(callVaultMarketFn('sell-shares', tom, buildSellShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, minRefund: 1n, sharesIn: shares / 4n, nonce: 1n }), marketPredicting).result.type).toBe(ClarityType.ResponseOk);
+		// Re-submitting nonce 1 must fail
+		const replay = buildSellShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, minRefund: 1n, sharesIn: shares / 4n, nonce: 1n });
+		expect(callVaultMarketFn('sell-shares', tom, replay, marketPredicting).result).toEqual(Cl.error(Cl.uint(ERR_INVALID_NONCE)));
+	});
+});
+
+describe('vault — claim-winnings (Use Case 6: signed BMP1 brings winnings back to the vault)', () => {
+	it('ok: claim pays the resolved winnings into the vault ledger and zeroes the position', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		// Buy the 'yay' outcome (index 1) that the market will resolve to (nonce 0 -> 1)
+		expect(callBuyShares(tom, buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 2_000_000n, minShares: 1n, nonce: 0n }), marketPredicting).result).toEqual(Cl.ok(Cl.uint(1)));
+		expect(getStakeAt(marketPredicting, 0, mapped, 1)).toBeGreaterThan(0n);
+		const ledgerAfterBuy = getBalance(CHAIN_EVM, key.controller32, mapped);
+
+		resolveCategorical(0, 'yay');
+
+		// Claim winnings (nonce 1 -> 2)
+		const mats = buildClaimWinnings({ key, mapped, market: marketPredicting, marketId: 0, nonce: 1n });
+		const r = callVaultMarketFn('claim-winnings', tom, mats, marketPredicting);
+		expect(r.result.type).toBe(ClarityType.ResponseOk);
+		const netRefund = BigInt((r.result as any).value.value);
+		expect(netRefund).toBeGreaterThan(0n);
+
+		// Winnings credited to the vault ledger, nonce advanced, position zeroed
+		expect(getBalance(CHAIN_EVM, key.controller32, mapped)).toBe(ledgerAfterBuy + netRefund);
+		expect(getNonce(CHAIN_EVM, key.controller32)).toBe(2n);
+		expect(getStakeAt(marketPredicting, 0, mapped, 1)).toBe(0n);
+	});
+
+	it('ok: winnings can be withdrawn from the vault after claiming', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		expect(callBuyShares(tom, buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 2_000_000n, minShares: 1n, nonce: 0n }), marketPredicting).result).toEqual(Cl.ok(Cl.uint(1)));
+		resolveCategorical(0, 'yay');
+		expect(callVaultMarketFn('claim-winnings', tom, buildClaimWinnings({ key, mapped, market: marketPredicting, marketId: 0, nonce: 1n }), marketPredicting).result.type).toBe(ClarityType.ResponseOk);
+
+		const ledger = getBalance(CHAIN_EVM, key.controller32, mapped);
+		expect(ledger).toBeGreaterThan(0n);
+
+		// Withdraw the credited proceeds to betty (nonce 2 -> 3)
+		const recipientBefore = getSbtcBalance(betty);
+		const mats = buildWithdraw({ key, mapped, recipient: betty, amount: ledger, nonce: 2n });
+		const w = callWithdraw(tom, mats);
+		expect(w.result).toEqual(Cl.ok(Cl.uint(Number(ledger))));
+		expect(getSbtcBalance(betty)).toBe(recipientBefore + ledger);
+		expect(getBalance(CHAIN_EVM, key.controller32, mapped)).toBe(0n);
+	});
+
+	it('err: opcode must be OP_CLAIM_WINNINGS', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		const mats = buildClaimWinnings({ key, mapped, market: marketPredicting, marketId: 0, overrides: { opcode: OP_WITHDRAW } });
+		expect(callVaultMarketFn('claim-winnings', tom, mats, marketPredicting).result).toEqual(Cl.error(Cl.uint(ERR_MSG_OPCODE)));
+	});
+
+	it('err: claiming an unresolved market propagates the market error', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		expect(callBuyShares(tom, buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 2_000_000n, minShares: 1n, nonce: 0n }), marketPredicting).result).toEqual(Cl.ok(Cl.uint(1)));
+		// Market not concluded -> err-market-not-concluded (u10009) bubbles up from the market
+		const mats = buildClaimWinnings({ key, mapped, market: marketPredicting, marketId: 0, nonce: 1n });
+		expect(callVaultMarketFn('claim-winnings', tom, mats, marketPredicting).result).toEqual(Cl.error(Cl.uint(10009)));
+	});
+});
+
+describe('prediction market — sell-vault / claim-winnings-vault (trait gate)', () => {
+	it('err: sell-vault rejects non-DAO/extension callers on both markets', async () => {
+		await setupVault();
+		createCategoricalSbtcMarket();
+		expect(
+			simnet.callPublicFn(marketPredicting, 'sell-vault', [principalCV(bob), Cl.uint(0), Cl.uint(1), Cl.uint(1), Cl.principal(sbtcToken), Cl.uint(1_000)], alice).result
+		).toEqual(Cl.error(Cl.uint(10000)));
+	});
+
+	it('err: claim-winnings-vault rejects non-DAO/extension callers on the scalar market', async () => {
+		await setupVault();
+		createScalarSbtcMarket();
+		expect(
+			simnet.callPublicFn(marketScalar, 'claim-winnings-vault', [principalCV(bob), Cl.uint(0), Cl.principal(sbtcToken)], alice).result
+		).toEqual(Cl.error(Cl.uint(10000)));
 	});
 });
 

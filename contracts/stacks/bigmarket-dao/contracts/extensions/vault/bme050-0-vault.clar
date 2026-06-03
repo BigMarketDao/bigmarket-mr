@@ -476,6 +476,147 @@
     (ok outcome-index)))
 
 ;; ============================================================
+;; Use Case 5: Sell shares via signed BMP1 + prediction-market-trait
+;;
+;; Mirror of buy-shares. The shares being sold are owned by `mapped-address`
+;; (the beneficiary) inside the market extension. The market refunds the net
+;; proceeds to this vault (it passes contract-caller as the payee), and the
+;; vault re-credits the controller ledger so the proceeds can later be
+;; withdrawn. No vault-ledger debit happens here -- selling brings funds in.
+;;
+;; BMP1 OP_SELL_SHARES body:
+;;   slot0  keccak256(consensus(token))
+;;   slot1  keccak256(consensus(mapped-address))
+;;   slot2  outcome-index (high 16) || market-id (low 16)
+;;   slot3  keccak256(consensus(market-extension-principal))
+;;   slot4  min-refund (high 16) || shares-in (low 16)
+;;   slot5  expiry (low 16)
+;; ============================================================
+
+(define-public (sell-shares
+    (message        (buff 256))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (token          <sip010>)
+    (mapped-address principal)
+    (market         <prediction-market-trait>))
+  (let
+    (
+      (token-contract   (contract-of token))
+      (market-contract  (contract-of market))
+      (parsed           (parse-message message))
+      (chain            (get controller-chain parsed))
+      (controller       (get controller-address parsed))
+      (nonce            (buff-to-uint-be (get nonce parsed)))
+      (market-id        (slot-low-uint (get slot2 parsed)))
+      (outcome-index    (slot-high-uint (get slot2 parsed)))
+      (min-refund       (slot-high-uint (get slot4 parsed)))
+      (shares-in        (slot-low-uint (get slot4 parsed)))
+      (expiry           (slot-low-uint (get slot5 parsed)))
+      (token-commit     (keccak256 (unwrap-panic (to-consensus-buff? token-contract))))
+      (mapped-commit    (keccak256 (unwrap-panic (to-consensus-buff? mapped-address))))
+      (market-commit    (keccak256 (unwrap-panic (to-consensus-buff? market-contract))))
+      (current-nonce    (get-nonce chain controller))
+    )
+    (asserts! (is-eq (get magic   parsed) BMP1_MAGIC)           ERR_MSG_MAGIC)
+    (asserts! (is-eq (get version parsed) BMP1_VERSION)         ERR_MSG_VERSION)
+    (asserts! (is-eq (get opcode  parsed) OP_SELL_SHARES)        ERR_MSG_OPCODE)
+    (asserts! (check-chain chain)                               ERR_UNSUPPORTED_CHAIN)
+    (asserts! (check-address chain controller)                  ERR_INVALID_ADDRESS)
+    (asserts! (> shares-in u0)                                  ERR_INVALID_AMOUNT)
+    (asserts! (check-token token-contract)                      ERR_TOKEN_NOT_ALLOWED)
+    (asserts! (is-eq (get slot0 parsed) token-commit)          ERR_TOKEN_COMMIT)
+    (asserts! (is-eq (get slot1 parsed) mapped-commit)           ERR_MAPPED_COMMIT)
+    (asserts! (is-eq (get slot3 parsed) market-commit)          ERR_MARKET_COMMIT)
+    (asserts! (is-eq nonce current-nonce)                       ERR_INVALID_NONCE)
+    (asserts! (or (is-eq expiry u0) (<= stacks-block-height expiry)) ERR_EXPIRED)
+    ;; TODO: dedicated BMP1SellShares EIP-712 / SIP-018 tuple (not withdraw tuple)
+    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address))
+    (map-set withdrawal-nonces { controller-chain: chain, controller-address: controller } (+ current-nonce u1))
+    ;; Market refunds the net proceeds to this vault (payee = contract-caller).
+    (let ((net-refund (try! (contract-call? market sell-vault mapped-address market-id min-refund outcome-index token shares-in))))
+      (credit-balance chain controller mapped-address token-contract net-refund)
+      (print {
+        event: "sell-shares",
+        market: market-contract,
+        market-id: market-id,
+        outcome-index: outcome-index,
+        shares-in: shares-in,
+        min-refund: min-refund,
+        net-refund: net-refund,
+        mapped-address: mapped-address,
+        controller-chain: chain,
+        controller-address: controller
+      })
+      (ok net-refund))))
+
+;; ============================================================
+;; Use Case 6: Claim winnings via signed BMP1 + prediction-market-trait
+;;
+;; Mirror of sell-shares. The winning shares are owned by `mapped-address`; the
+;; resolved market pays the net winnings to this vault, which re-credits the
+;; controller ledger. No outcome-index is needed -- the market uses its own
+;; resolved outcome.
+;;
+;; BMP1 OP_CLAIM_WINNINGS body:
+;;   slot0  keccak256(consensus(token))
+;;   slot1  keccak256(consensus(mapped-address))
+;;   slot2  market-id (low 16)
+;;   slot3  keccak256(consensus(market-extension-principal))
+;;   slot5  expiry (low 16)
+;; ============================================================
+
+(define-public (claim-winnings
+    (message        (buff 256))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (token          <sip010>)
+    (mapped-address principal)
+    (market         <prediction-market-trait>))
+  (let
+    (
+      (token-contract   (contract-of token))
+      (market-contract  (contract-of market))
+      (parsed           (parse-message message))
+      (chain            (get controller-chain parsed))
+      (controller       (get controller-address parsed))
+      (nonce            (buff-to-uint-be (get nonce parsed)))
+      (market-id        (slot-low-uint (get slot2 parsed)))
+      (expiry           (slot-low-uint (get slot5 parsed)))
+      (token-commit     (keccak256 (unwrap-panic (to-consensus-buff? token-contract))))
+      (mapped-commit    (keccak256 (unwrap-panic (to-consensus-buff? mapped-address))))
+      (market-commit    (keccak256 (unwrap-panic (to-consensus-buff? market-contract))))
+      (current-nonce    (get-nonce chain controller))
+    )
+    (asserts! (is-eq (get magic   parsed) BMP1_MAGIC)           ERR_MSG_MAGIC)
+    (asserts! (is-eq (get version parsed) BMP1_VERSION)         ERR_MSG_VERSION)
+    (asserts! (is-eq (get opcode  parsed) OP_CLAIM_WINNINGS)     ERR_MSG_OPCODE)
+    (asserts! (check-chain chain)                               ERR_UNSUPPORTED_CHAIN)
+    (asserts! (check-address chain controller)                  ERR_INVALID_ADDRESS)
+    (asserts! (check-token token-contract)                      ERR_TOKEN_NOT_ALLOWED)
+    (asserts! (is-eq (get slot0 parsed) token-commit)          ERR_TOKEN_COMMIT)
+    (asserts! (is-eq (get slot1 parsed) mapped-commit)           ERR_MAPPED_COMMIT)
+    (asserts! (is-eq (get slot3 parsed) market-commit)          ERR_MARKET_COMMIT)
+    (asserts! (is-eq nonce current-nonce)                       ERR_INVALID_NONCE)
+    (asserts! (or (is-eq expiry u0) (<= stacks-block-height expiry)) ERR_EXPIRED)
+    ;; TODO: dedicated BMP1ClaimWinnings EIP-712 / SIP-018 tuple (not withdraw tuple)
+    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address))
+    (map-set withdrawal-nonces { controller-chain: chain, controller-address: controller } (+ current-nonce u1))
+    ;; Market pays the net winnings to this vault (payee = contract-caller).
+    (let ((net-refund (try! (contract-call? market claim-winnings-vault mapped-address market-id token))))
+      (credit-balance chain controller mapped-address token-contract net-refund)
+      (print {
+        event: "claim-winnings",
+        market: market-contract,
+        market-id: market-id,
+        net-refund: net-refund,
+        mapped-address: mapped-address,
+        controller-chain: chain,
+        controller-address: controller
+      })
+      (ok net-refund))))
+
+;; ============================================================
 ;; BMP1 message parsing
 ;; ============================================================
 

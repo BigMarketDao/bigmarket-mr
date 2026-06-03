@@ -723,7 +723,18 @@
 
 ;; Sell shares of a category back to the CPMM, receive tokens minus fee.
 ;; Mirror of predict-category: inverse curve via cpmm-refund.
-(define-public (sell-category (market-id uint) (min-refund uint) (index uint) (token <ft-token>) (shares-in uint))
+;; CPMM sell core: `beneficiary` owns/sells the shares; `payee` receives the
+;; refund. Native: both tx-sender. Vault path: beneficiary = mapped-address,
+;; payee = contract-caller (bme050-0-vault). Returns the net refund so the vault
+;; relay can credit its ledger. See bme024-0-market-predicting for full notes.
+(define-private (sell-category-core
+    (beneficiary principal)
+    (payee principal)
+    (market-id uint)
+    (min-refund uint)
+    (index uint)
+    (token <ft-token>)
+    (shares-in uint))
   (let (
         (md (unwrap! (map-get? markets market-id) err-market-not-found))
         (categories (get categories md))
@@ -733,9 +744,9 @@
         (selected-pool (unwrap! (element-at? stake-list index) err-category-not-found))
         (total-pool (fold + stake-list u0))
         (other-pool (- total-pool selected-pool))
-        (user-stake-list (unwrap! (map-get? stake-balances {market-id: market-id, user: tx-sender}) err-user-not-staked))
+        (user-stake-list (unwrap! (map-get? stake-balances {market-id: market-id, user: beneficiary}) err-user-not-staked))
         (user-shares (unwrap! (element-at? user-stake-list index) err-category-not-found))
-        (user-token-list (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? token-balances {market-id: market-id, user: tx-sender})))
+        (user-token-list (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? token-balances {market-id: market-id, user: beneficiary})))
         (user-tokens (unwrap! (element-at? user-token-list index) err-category-not-found))
         (gross-refund (unwrap! (cpmm-refund selected-pool other-pool shares-in) err-arithmetic))
         (fee (/ (* gross-refund (var-get dev-fee-bips)) u10000))
@@ -743,7 +754,6 @@
         (multisig-fee (- fee lp-fee))
         (net-refund (if (> gross-refund fee) (- gross-refund fee) u0))
         (market-end (+ (get market-start md) (get market-duration md)))
-        (original-sender tx-sender)
   )
     (asserts! (is-eq (get market-mechanism md) MECHANISM_AMM) err-sell-not-permitted)
     (asserts! (< index (len categories)) err-category-not-found)
@@ -757,7 +767,7 @@
     (asserts! (>= net-refund min-refund) err-slippage-too-high)
     (asserts! (>= selected-token-pool gross-refund) err-insufficient-contract-balance)
 
-    ;; --- Token Transfers (contract -> dev-fund, contract -> seller) ---
+    ;; --- Token Transfers (contract -> dev-fund, contract -> payee) ---
     ;; Only multisig-fee leaves the vault; lp-fee stays inside and is tracked
     ;; via accumulated-lp-fees on the market record.
     (try! (as-contract? ((with-all-assets-unsafe))
@@ -766,7 +776,7 @@
           (try! (contract-call? token transfer multisig-fee tx-sender (var-get dev-fund) none))
           true
         )
-        (try! (contract-call? token transfer net-refund tx-sender original-sender none))
+        (try! (contract-call? token transfer net-refund tx-sender payee none))
         true
       )
     ))
@@ -790,11 +800,18 @@
       (user-token-updated (unwrap! (replace-at? user-token-list index user-token-new) err-category-not-found))
       (user-stake-updated (unwrap! (replace-at? user-stake-list index (- user-shares shares-in)) err-category-not-found))
     )
-      (map-set stake-balances {market-id: market-id, user: tx-sender} user-stake-updated)
-      (map-set token-balances {market-id: market-id, user: tx-sender} user-token-updated)
-      (print {event: "market-unstake", market-id: market-id, index: index, shares-in: shares-in, refund: net-refund, fee: fee, lp-fee: lp-fee, multisig-fee: multisig-fee, seller: tx-sender, min-refund: min-refund})
-      (ok index)
+      (map-set stake-balances {market-id: market-id, user: beneficiary} user-stake-updated)
+      (map-set token-balances {market-id: market-id, user: beneficiary} user-token-updated)
+      (print {event: "market-unstake", market-id: market-id, index: index, shares-in: shares-in, refund: net-refund, fee: fee, lp-fee: lp-fee, multisig-fee: multisig-fee, seller: beneficiary, payee: payee, min-refund: min-refund})
+      (ok net-refund)
     )
+  )
+)
+
+(define-public (sell-category (market-id uint) (min-refund uint) (index uint) (token <ft-token>) (shares-in uint))
+  (begin
+    (try! (sell-category-core tx-sender tx-sender market-id min-refund index token shares-in))
+    (ok index)
   )
 )
 
@@ -1128,19 +1145,21 @@
 )
 
 ;; Proportional payout with market fee only
-(define-public (claim-winnings (market-id uint) (token <ft-token>))
+;; CPMM claim core: `beneficiary` owns the winning shares; `payee` receives the
+;; net payout. Native: both tx-sender. Vault path: beneficiary = mapped-address,
+;; payee = contract-caller (bme050-0-vault). Returns the net refund.
+(define-private (claim-winnings-core (beneficiary principal) (payee principal) (market-id uint) (token <ft-token>))
   (let (
     (md (unwrap! (map-get? markets market-id) err-market-not-found))
     (index-won (unwrap! (get outcome md) err-market-not-concluded))
     (marketfee-bips (get market-fee-bips md))
     (treasury (get treasury md))
-    (original-sender tx-sender)
 
     ;; user may have acquired shares via p2p and so have no entry under token-balances
-    (user-token-list (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? token-balances {market-id: market-id, user: tx-sender})))
+    (user-token-list (default-to (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0) (map-get? token-balances {market-id: market-id, user: beneficiary})))
     (user-tokens (unwrap! (element-at? user-token-list index-won) err-user-not-staked))
 
-    (user-stake-list (unwrap! (map-get? stake-balances {market-id: market-id, user: tx-sender}) err-user-not-staked))
+    (user-stake-list (unwrap! (map-get? stake-balances {market-id: market-id, user: beneficiary}) err-user-not-staked))
     (user-shares (unwrap! (element-at? user-stake-list index-won) err-user-not-staked))
 
     (stake-list (get stakes md))
@@ -1154,7 +1173,7 @@
     (gross-refund-scaled (if (> winning-pool u0)
         (/ (* (* user-shares total-token-pool) SCALE) winning-pool)
         u0))
-    (gross-refund (/ gross-refund-scaled SCALE))   
+    (gross-refund (/ gross-refund-scaled SCALE))
 
     (marketfee (/ (* gross-refund marketfee-bips) u10000))
     (net-refund (- gross-refund marketfee))
@@ -1173,17 +1192,21 @@
           (try! (contract-call? token transfer marketfee tx-sender treasury none))
           true
         )
-        (try! (contract-call? token transfer net-refund tx-sender original-sender none))
+        (try! (contract-call? token transfer net-refund tx-sender payee none))
         true
       )
     ))
     ;; Zero out stake
-    (map-set token-balances {market-id: market-id, user: tx-sender} (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0))
-    (map-set stake-balances {market-id: market-id, user: tx-sender} (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0))
-    (try! (contract-call? .bme030-0-reputation-token mint tx-sender u1 u10))
-    (print {event: "claim-winnings", market-id: market-id, index-won: index-won, claimer: tx-sender, user-tokens: user-tokens, user-shares: user-shares, refund: net-refund, marketfee: marketfee, winning-pool: winning-pool, total-pool: total-share-pool})
+    (map-set token-balances {market-id: market-id, user: beneficiary} (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0))
+    (map-set stake-balances {market-id: market-id, user: beneficiary} (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0))
+    (try! (contract-call? .bme030-0-reputation-token mint beneficiary u1 u10))
+    (print {event: "claim-winnings", market-id: market-id, index-won: index-won, claimer: beneficiary, payee: payee, user-tokens: user-tokens, user-shares: user-shares, refund: net-refund, marketfee: marketfee, winning-pool: winning-pool, total-pool: total-share-pool})
     (ok net-refund)
   )
+)
+
+(define-public (claim-winnings (market-id uint) (token <ft-token>))
+  (claim-winnings-core tx-sender tx-sender market-id token)
 )
 
 (define-read-only (get-expected-payout (market-id uint) (index uint) (user principal))
@@ -1437,7 +1460,9 @@
 )
 
 
-;; TODO: sell-category-core + claim-winnings-vault (same pattern as categorical)
+;; Vault relay (trait: sell-vault). The vault holds the shares under
+;; `beneficiary` (= mapped-address) and receives the refund as `contract-caller`
+;; so it can re-credit its ledger. Returns the net refund.
 (define-public (sell-vault
     (beneficiary principal)
     (market-id uint)
@@ -1447,15 +1472,17 @@
     (shares-in uint))
   (begin
     (try! (is-dao-or-extension))
-    err-vault-only))
+    (sell-category-core beneficiary contract-caller market-id min-refund index token shares-in)))
 
+;; Vault relay (trait: claim-winnings-vault). Winnings for `beneficiary` are
+;; paid to `contract-caller` (the vault) for re-credit. Returns the net refund.
 (define-public (claim-winnings-vault
     (beneficiary principal)
     (market-id uint)
     (token <ft-token>))
   (begin
     (try! (is-dao-or-extension))
-    err-vault-only))
+    (claim-winnings-core beneficiary contract-caller market-id token)))
 
 ;; --- Extension callback
 
