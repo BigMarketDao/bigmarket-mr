@@ -190,7 +190,7 @@
     if (template.marketType === 2) onRegenerate(template, 2);
     template.liquidity =
       $allowedTokenStore.find((o) => o.token === template.token)
-        ?.minLiquidity || 0;
+        ?.minLiquidity || 100000000;
     //currentStep = 2;
     //nextStep();
   }
@@ -274,7 +274,7 @@
   onMount(async () => {
     template.liquidity =
       $allowedTokenStore.find((o) => o.token === template.token)
-        ?.minLiquidity || 0;
+        ?.minLiquidity || 100000000;
     currentStep = forceStep || 0;
     inited = true;
   });
@@ -293,10 +293,7 @@
     {/if}
 
     <!-- Tabs -->
-    <div
-      class="mb-6 border-b border-border"
-      data-testid="market-mgt:steps"
-    >
+    <div class="mb-6 border-b border-border" data-testid="market-mgt:steps">
       <nav
         class="scrollbar-hide -mb-px flex space-x-4 overflow-x-auto sm:space-x-8"
       >
@@ -372,9 +369,7 @@
           testIdPrefix={"market-mgt:liqsel"}
         />
       {:else if currentStep === 3}
-        <div
-          class="rounded-lg border border-border bg-muted p-6"
-        >
+        <div class="rounded-lg border border-border bg-muted p-6">
           <h3 class="mb-4 text-lg font-medium text-foreground">
             Market Creation Process
           </h3>
@@ -396,9 +391,7 @@
     </div>
 
     <!-- Nav buttons -->
-    <div
-      class="flex justify-between border-t border-border pt-6"
-    >
+    <div class="flex justify-between border-t border-border pt-6">
       <button
         type="button"
         data-testid="market-mgt:prev"

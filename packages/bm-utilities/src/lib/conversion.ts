@@ -29,6 +29,16 @@ export function convertSip10ToBtc(
   return parseFloat(amountNative.toFixed(sip10Data.decimals)); //fmtStxMicro(amountNative, sip10Data.decimals);
 }
 
+function isStxToken(token: string): boolean {
+  return token.toLowerCase().includes("stx");
+}
+
+/** USD-pegged SIP-10 tokens where ~1 USD ≈ 1 token unit. */
+function isUsdPeggedToken(token: string): boolean {
+  const t = token.toLowerCase();
+  return t.includes("usdc") || t.includes("usdh");
+}
+
 function convertFiatToStx(
   amountUsd: number,
   rate: ExchangeRate,
@@ -43,15 +53,28 @@ function convertFiatToStx(
   if (asMicro) {
     return Math.round(stx * 1e6); // for contract calls
   }
-  return parseFloat(stx.toFixed(6)); // for UI
+  return parseFloat(stx.toFixed(6)); // for UI — human STX, not micro
 }
 
+/**
+ * Convert a fiat amount to human-readable native token units for staking UI.
+ *
+ * Returns **human** amounts (e.g. 2.5 STX, 1.0 USDCx) — not micro-units.
+ * Call `fmtStxMicro()` when you need micro for contract calls.
+ */
 export function convertFiatToNative(
   exchangeRates: ExchangeRate[],
   amountFiat: number,
   currency: string,
+  marketToken?: string,
 ): number {
   const rate = exchangeRates.find((c) => c.currency === currency);
   if (!rate) return 0;
+
+  // USD-pegged market token: $1 quick-buy ≈ 1 token unit
+  if (marketToken && !isStxToken(marketToken) && isUsdPeggedToken(marketToken)) {
+    return parseFloat(amountFiat.toFixed(6));
+  }
+
   return convertFiatToStx(amountFiat, rate);
 }

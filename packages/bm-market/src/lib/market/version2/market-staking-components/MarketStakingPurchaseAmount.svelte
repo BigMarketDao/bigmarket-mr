@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { slide } from 'svelte/transition';
+  import { slide } from "svelte/transition";
   import {
     allowedTokenStore,
     daoOverviewStore,
@@ -7,9 +7,9 @@
     selectedCurrency,
     shareCosts,
     stakeAmount,
-  } from '@bigmarket/bm-common';
-  import type { MarketData, Sip10Data } from '@bigmarket/bm-types';
-  import { Banner } from '@bigmarket/bm-ui';
+  } from "@bigmarket/bm-common";
+  import type { MarketData, Sip10Data } from "@bigmarket/bm-types";
+  import { Banner } from "@bigmarket/bm-ui";
   import {
     convertFiatToNative,
     estimateMaxSpendIncludingFee,
@@ -18,8 +18,8 @@
     getMarketToken,
     getRate,
     toFiat,
-  } from '@bigmarket/bm-utilities';
-  import { onMount } from 'svelte';
+  } from "@bigmarket/bm-utilities";
+  import { onMount } from "svelte";
 
   const MIN_BALANCE_MICRO = 2000000;
 
@@ -30,7 +30,7 @@
     connected,
     totalBalanceUToken,
     userStakeAtIndex,
-    outcomeSide = 'other',
+    outcomeSide = "other",
     doBuy,
     doSell,
   } = $props<{
@@ -40,19 +40,19 @@
     connected: boolean;
     totalBalanceUToken: number;
     userStakeAtIndex: number;
-    outcomeSide?: 'yes' | 'no' | 'other';
+    outcomeSide?: "yes" | "no" | "other";
     doBuy: (index: number) => void;
     doSell: (index: number) => void;
   }>();
 
   let sip10Data: Sip10Data = $derived(
     getMarketToken(marketData.token, $allowedTokenStore) || {
-      symbol: '',
+      symbol: "",
       decimals: 0,
-      name: '',
+      name: "",
       balance: 0,
       totalSupply: 0,
-      tokenUri: '',
+      tokenUri: "",
     },
   );
 
@@ -60,18 +60,26 @@
   let errorMessage: string | undefined = $state(undefined);
   let presetSelected = $state(1);
   let inputAmount = $state(1);
-  let tradeMode = $state<'buy' | 'sell'>('buy');
+  let tradeMode = $state<"buy" | "sell">("buy");
 
   let hasPosition = $derived(userStakeAtIndex > 0);
   let decimals = $derived(sip10Data?.decimals ?? 0);
   let amountMicro = $derived(fmtStxMicro(Number(inputAmount) || 0, decimals));
-  let humanStakeTotal = $derived(fmtMicroToStxNumber(userStakeAtIndex, decimals));
-  let humanBalanceTotal = $derived(fmtMicroToStxNumber(totalBalanceUToken, decimals));
+  let humanStakeTotal = $derived(
+    fmtMicroToStxNumber(userStakeAtIndex, decimals),
+  );
+  let humanBalanceTotal = $derived(
+    fmtMicroToStxNumber(totalBalanceUToken, decimals),
+  );
 
   let fiatEquivalent = $derived(
-    tradeMode === 'buy' && amountMicro > 0
-      ? toFiat(getRate($exchangeRatesStore, $selectedCurrency.code), amountMicro, sip10Data)
-      : '',
+    tradeMode === "buy" && amountMicro > 0
+      ? toFiat(
+          getRate($exchangeRatesStore, $selectedCurrency.code),
+          amountMicro,
+          sip10Data,
+        )
+      : "",
   );
 
   function roundHuman(n: number): number {
@@ -81,15 +89,15 @@
   }
 
   $effect(() => {
-    if (!hasPosition) tradeMode = 'buy';
+    if (!hasPosition) tradeMode = "buy";
   });
 
-  function setTradeMode(mode: 'buy' | 'sell'): void {
-    if (!hasPosition && mode === 'sell') return;
+  function setTradeMode(mode: "buy" | "sell"): void {
+    if (!hasPosition && mode === "sell") return;
     if (tradeMode === mode) return;
     tradeMode = mode;
     errorMessage = undefined;
-    if (mode === 'sell') {
+    if (mode === "sell") {
       inputAmount = roundHuman(humanStakeTotal) || 0;
       presetSelected = inputAmount;
     } else {
@@ -100,7 +108,7 @@
   }
 
   function handlePresetAmount(val: number): void {
-    inputAmount = roundHuman(val) || (tradeMode === 'sell' ? 0 : 1);
+    inputAmount = roundHuman(val) || (tradeMode === "sell" ? 0 : 1);
     presetSelected = inputAmount;
     handleInput();
   }
@@ -108,19 +116,19 @@
   function handleInput(): void {
     const micro = fmtStxMicro(Number(inputAmount) || 0, decimals);
 
-    if (tradeMode === 'sell') {
+    if (tradeMode === "sell") {
       if (micro <= 0) {
-        errorMessage = 'Enter shares to sell';
+        errorMessage = "Enter shares to sell";
       } else if (micro > userStakeAtIndex) {
-        errorMessage = 'Cannot sell more shares than you own';
+        errorMessage = "Cannot sell more shares than you own";
       } else {
         errorMessage = undefined;
       }
     } else {
       if (micro <= 0) {
-        errorMessage = 'Enter an amount';
+        errorMessage = "Enter an amount";
       } else if (micro > totalBalanceUToken) {
-        errorMessage = 'Amount exceeds your balance';
+        errorMessage = "Amount exceeds your balance";
       } else {
         errorMessage = undefined;
       }
@@ -133,39 +141,57 @@
   }
 
   function getQuickBuyOptions(): Array<{ label: string; value: number }> {
-    const quickSpend = estimateMaxSpendIncludingFee(marketData, index, feeBips).maxSpendIncludingFee;
+    const quickSpend = estimateMaxSpendIncludingFee(
+      marketData,
+      index,
+      feeBips,
+    ).maxSpendIncludingFee;
     const quickBuy: Array<{ label: string; value: number }> = [];
     if (index < 0) return quickBuy;
 
     const oneFiatNative = roundHuman(
-      fmtMicroToStxNumber(
-        convertFiatToNative($exchangeRatesStore, 1, $selectedCurrency.code),
-        decimals,
+      convertFiatToNative(
+        $exchangeRatesStore,
+        1,
+        $selectedCurrency.code,
+        marketData.token,
       ),
     );
     const fiveFiatNative = roundHuman(
-      fmtMicroToStxNumber(
-        convertFiatToNative($exchangeRatesStore, 5, $selectedCurrency.code),
-        decimals,
+      convertFiatToNative(
+        $exchangeRatesStore,
+        5,
+        $selectedCurrency.code,
+        marketData.token,
       ),
     );
 
-    if (quickSpend > 1000000 && totalBalanceUToken > 1000000 && oneFiatNative > 0) {
-      quickBuy.push({ label: '$1', value: oneFiatNative });
+    if (
+      quickSpend > 1000000 &&
+      totalBalanceUToken > 1000000 &&
+      oneFiatNative > 0
+    ) {
+      quickBuy.push({ label: "$1", value: oneFiatNative });
     }
-    if (quickSpend > 5000000 && totalBalanceUToken > 5000000 && fiveFiatNative > 0) {
-      quickBuy.push({ label: '$5', value: fiveFiatNative });
+    if (
+      quickSpend > 5000000 &&
+      totalBalanceUToken > 5000000 &&
+      fiveFiatNative > 0
+    ) {
+      quickBuy.push({ label: "$5", value: fiveFiatNative });
     }
 
     if (totalBalanceUToken > quickSpend) {
       quickBuy.push({
-        label: 'All in',
+        label: "All in",
         value: roundHuman(fmtMicroToStxNumber(quickSpend, decimals)),
       });
     } else if (totalBalanceUToken > 2000000) {
       quickBuy.push({
-        label: 'All in',
-        value: roundHuman(fmtMicroToStxNumber(totalBalanceUToken - 1000000, decimals)),
+        label: "All in",
+        value: roundHuman(
+          fmtMicroToStxNumber(totalBalanceUToken - 1000000, decimals),
+        ),
       });
     }
 
@@ -177,10 +203,10 @@
     if (total <= 0 || index < 0) return [];
     const pct = (p: number) => roundHuman(total * p);
     return [
-      { label: '25%', value: pct(0.25) },
-      { label: '50%', value: pct(0.5) },
-      { label: '75%', value: pct(0.75) },
-      { label: 'All in', value: roundHuman(total) },
+      { label: "25%", value: pct(0.25) },
+      { label: "50%", value: pct(0.5) },
+      { label: "75%", value: pct(0.75) },
+      { label: "All in", value: roundHuman(total) },
     ];
   }
 
@@ -189,30 +215,31 @@
   }
 
   function submitTrade(): void {
-    if (tradeMode === 'sell') doSell(index);
+    if (tradeMode === "sell") doSell(index);
     else doBuy(index);
   }
 
   let canSubmit = $derived(
     connected &&
       amountMicro > 0 &&
-      (tradeMode === 'sell'
+      (tradeMode === "sell"
         ? userStakeAtIndex > 0 && amountMicro <= userStakeAtIndex
-        : totalBalanceUToken > MIN_BALANCE_MICRO && amountMicro <= totalBalanceUToken),
+        : totalBalanceUToken > MIN_BALANCE_MICRO &&
+          amountMicro <= totalBalanceUToken),
   );
 
   let ctaLabel = $derived(
-    tradeMode === 'sell'
-      ? 'Sell shares'
-      : outcomeSide === 'yes'
-        ? 'Bet Yes'
-        : outcomeSide === 'no'
-          ? 'Bet No'
-          : 'Place bet',
+    tradeMode === "sell"
+      ? "Sell shares"
+      : outcomeSide === "yes"
+        ? "Buy Yes"
+        : outcomeSide === "no"
+          ? "Buy No"
+          : "Buy shares",
   );
 
   onMount(() => {
-    tradeMode = 'buy';
+    tradeMode = "buy";
     inputAmount = 1;
     presetSelected = 1;
     handleInput();
@@ -231,7 +258,7 @@
     <div class="mb-3 grid grid-cols-2 gap-1">
       <button
         type="button"
-        onclick={() => setTradeMode('buy')}
+        onclick={() => setTradeMode("buy")}
         class="rounded-[var(--radius-sm)] px-2 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] {tradeMode ===
         'buy'
           ? 'bg-[var(--color-card)] text-[var(--color-card-foreground)] shadow-sm'
@@ -241,7 +268,7 @@
       </button>
       <button
         type="button"
-        onclick={() => setTradeMode('sell')}
+        onclick={() => setTradeMode("sell")}
         class="rounded-[var(--radius-sm)] px-2 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] {tradeMode ===
         'sell'
           ? 'bg-[var(--color-card)] text-[var(--color-card-foreground)] shadow-sm'
@@ -253,9 +280,11 @@
   {/if}
 
   <div class="mb-3 min-w-0">
-    {#if tradeMode === 'buy'}
+    {#if tradeMode === "buy"}
       {#if totalBalanceUToken > MIN_BALANCE_MICRO}
-        <label class="sr-only" for="stake-input-{index}">Spend amount ({sip10Data.symbol})</label>
+        <label class="sr-only" for="stake-input-{index}"
+          >Spend amount ({sip10Data.symbol})</label
+        >
         <div class="flex min-w-0 items-stretch gap-2">
           <input
             id="stake-input-{index}"
@@ -277,9 +306,13 @@
           </div>
         </div>
         {#if fiatEquivalent}
-          <p class="mt-1 text-xs text-[var(--color-muted-foreground)] tabular-nums">
+          <p
+            class="mt-1 text-xs text-[var(--color-muted-foreground)] tabular-nums"
+          >
             ≈ {fiatEquivalent}
-            {$selectedCurrency.code === 'USD' ? '' : ` ${$selectedCurrency.code}`}
+            {$selectedCurrency.code === "USD"
+              ? ""
+              : ` ${$selectedCurrency.code}`}
           </p>
         {/if}
       {:else if connected}
@@ -312,12 +345,15 @@
         </div>
       </div>
       <p class="mt-1 text-xs text-[var(--color-muted-foreground)]">
-        You hold <span class="font-semibold tabular-nums text-[var(--color-card-foreground)]"
+        You hold <span
+          class="font-semibold tabular-nums text-[var(--color-card-foreground)]"
           >{roundHuman(humanStakeTotal)}</span
         > shares max
       </p>
     {:else}
-      <p class="text-xs text-[var(--color-muted-foreground)]">No shares to sell for this outcome.</p>
+      <p class="text-xs text-[var(--color-muted-foreground)]">
+        No shares to sell for this outcome.
+      </p>
     {/if}
   </div>
 
@@ -325,7 +361,7 @@
     This is {Math.round(probability)}% of the current pool
   </p>
 
-  {#if tradeMode === 'buy' && totalBalanceUToken > MIN_BALANCE_MICRO}
+  {#if tradeMode === "buy" && totalBalanceUToken > MIN_BALANCE_MICRO}
     <div class="mb-3 flex min-w-0 flex-wrap gap-1">
       {#each getQuickBuyOptions() as option}
         <button
@@ -341,7 +377,7 @@
         </button>
       {/each}
     </div>
-  {:else if tradeMode === 'sell' && userStakeAtIndex > 0}
+  {:else if tradeMode === "sell" && userStakeAtIndex > 0}
     <div class="mb-3 flex min-w-0 flex-wrap gap-1">
       {#each getQuickSellOptions() as option}
         <button

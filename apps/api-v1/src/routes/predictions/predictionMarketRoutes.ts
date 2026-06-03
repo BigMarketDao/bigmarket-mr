@@ -14,7 +14,6 @@ import {
 	fetchMarketVotes,
 	findOpinionPollByTitle,
 	readMinTokenLiquidity2,
-	readMinTokenLiquidityToken,
 	updateDaoOverview
 } from './markets_helper.js';
 import type { PredictionMarketEventChain } from '@bigmarket/bm-types';

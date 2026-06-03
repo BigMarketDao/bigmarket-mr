@@ -41,6 +41,18 @@ export function fmtMicroToStx(
   return (amount / conv).toFixed(decimals);
 }
 
+export function fmtMicroToStxTo2Decimals(
+  amount: number,
+  decimals?: number,
+  currencyCode?: string,
+): string {
+  const conv = Number(`1e${decimals}`);
+  if (!decimals) {
+    return String(amount / 1e6);
+  }
+  return (amount / conv).toFixed(2);
+}
+
 export function bitcoinToSats(amountBtc: number) {
   return Math.round(amountBtc * btcPrecision);
 }

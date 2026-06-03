@@ -37,7 +37,7 @@ router.post('/extensions/:daoContractId', async (req, res, next) => {
 router.post('/latest-events/:daoContractId', async (req, res, next) => {
 	try {
 		await readDaoEvents(true, req.params.daoContractId);
-		console.debug('post(/latest-events/:daoContractId: dao' + req.params.daoContractId);
+		// console.debug('post(/latest-events/:daoContractId: dao' + req.params.daoContractId);
 		await readDaoExtensionEvents(true, req.params.daoContractId);
 		await updateDaoOverview();
 		await updateUICache();

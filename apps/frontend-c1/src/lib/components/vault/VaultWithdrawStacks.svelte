@@ -68,7 +68,8 @@
 				stacksApi: appConfig.VITE_STACKS_API,
 				stxAddress,
 				amountMicro,
-				recipientAddress: resolvedRecipient
+				recipientAddress: resolvedRecipient,
+				controllerAddress: stxAddress
 			};
 			signed = await requestWithdrawSignatureStacks(params);
 			console.log('requestWithdrawSignatureStacks signed', signed);
@@ -94,7 +95,8 @@
 				stacksApi: appConfig.VITE_STACKS_API,
 				stxAddress,
 				amountMicro,
-				recipientAddress: resolvedRecipient
+				recipientAddress: resolvedRecipient,
+				controllerAddress: stxAddress
 			};
 			console.log('relayWithdrawToServer params', params);
 			const result = await relayWithdrawToServer(params, signed);

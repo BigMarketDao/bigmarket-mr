@@ -1,19 +1,7 @@
 import type { WithdrawFromVaultRequest } from '@bigmarket/sdk';
 import { stacks } from '@bigmarket/sdk';
 import { hexToBytes } from '@stacks/common';
-import {
-	broadcastTransaction,
-	bufferCV,
-	contractPrincipalCV,
-	getAddressFromPrivateKey,
-	makeContractCall,
-	noneCV,
-	PostConditionMode,
-	principalCV,
-	serializeTransaction,
-	standardPrincipalCV,
-	uintCV,
-} from '@stacks/transactions';
+import { broadcastTransaction, bufferCV, contractPrincipalCV, getAddressFromPrivateKey, makeContractCall, noneCV, PostConditionMode, principalCV, serializeTransaction, sponsorTransaction, standardPrincipalCV, uintCV } from '@stacks/transactions';
 import { STACKS_DEVNET, STACKS_MAINNET, STACKS_TESTNET } from '@stacks/network';
 import { getConfig } from '../../lib/config.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
@@ -31,10 +19,7 @@ async function broadcast(tx: Awaited<ReturnType<typeof makeContractCall>>, label
 	const result = await broadcastTransaction({ transaction: tx, network: resolveNetwork(getConfig().network) });
 
 	if ('error' in result) {
-		throw new Error(
-			`broadcast failed: ${(result as any).error}` +
-				((result as any).reason ? ` — ${(result as any).reason}` : '')
-		);
+		throw new Error(`broadcast failed: ${(result as any).error}` + ((result as any).reason ? ` — ${(result as any).reason}` : ''));
 	}
 
 	console.log(`[${label}] txid:`, result.txid);
@@ -60,7 +45,7 @@ export async function withdrawFromVault(body: WithdrawFromVaultRequest): Promise
 
 	if (!config.walletKey) throw new Error('Server walletKey is not configured.');
 
-	const { privateKey: senderKey } = resolveMappedKey(config, body.controllerAddress);
+	const { privateKey: senderKey } = resolveMappedKey(config, body.stxAddress);
 
 	const network = resolveNetwork(config.network);
 	const deployer = daoConfig.VITE_DAO_DEPLOYER;
@@ -72,21 +57,21 @@ export async function withdrawFromVault(body: WithdrawFromVaultRequest): Promise
 		contractAddress: deployer,
 		contractName: vaultName,
 		functionName: 'withdraw',
-		functionArgs: [
-			bufferCV(hexToBytes(body.message)),
-			bufferCV(hexToBytes(body.signature)),
-			bufferCV(hexToBytes(body.pubkey)),
-			contractPrincipalCV(usdcxAddr, usdcxName),
-			principalCV(body.stxAddress),
-			principalCV(body.recipientAddress),
-		],
+		functionArgs: [bufferCV(hexToBytes(body.message)), bufferCV(hexToBytes(body.signature)), bufferCV(hexToBytes(body.pubkey)), contractPrincipalCV(usdcxAddr, usdcxName), principalCV(body.stxAddress), principalCV(body.recipientAddress)],
 		senderKey,
 		network,
 		postConditionMode: PostConditionMode.Allow,
 		postConditions: [],
+		sponsored: true // important
+	});
+	const sponsoredTx = await sponsorTransaction({
+		transaction: tx,
+		sponsorPrivateKey: getConfig().walletKey, // different wallet pays fee
+		fee: 1000n // sponsor fee in micro-STX
+		//sponsorNonce // nonce of sponsor address
 	});
 
-	const txid = await broadcast(tx, 'withdraw-relayer');
+	const txid = await broadcast(sponsoredTx, 'withdraw-relayer');
 	return { txid };
 }
 
@@ -101,7 +86,10 @@ export async function withdrawFromVault(body: WithdrawFromVaultRequest): Promise
  * When `controllerAddress` is omitted the server's own wallet address is
  * returned (backward-compatible path).
  */
-function resolveMappedKey(config: ReturnType<typeof getConfig>, controllerAddress?: string): {
+function resolveMappedKey(
+	config: ReturnType<typeof getConfig>,
+	controllerAddress?: string
+): {
 	address: string;
 	privateKey: string;
 } {
@@ -145,11 +133,7 @@ export async function getRelayInfo(controllerAddress?: string): Promise<{ relayA
  *
  * If `amountMicro` is omitted the entire balance is swept.
  */
-export async function sweepRelayAddress(body: {
-	controllerAddress: string;
-	recipientAddress: string;
-	amountMicro?: string;
-}): Promise<{ txid: string; relayAddress: string; amount: string }> {
+export async function sweepRelayAddress(body: { controllerAddress: string; recipientAddress: string; amountMicro?: string }): Promise<{ txid: string; relayAddress: string; amount: string }> {
 	const config = getConfig();
 	const daoConfig = getDaoConfig();
 
@@ -177,19 +161,20 @@ export async function sweepRelayAddress(body: {
 		contractAddress: usdcxAddr,
 		contractName: usdcxName,
 		functionName: 'transfer',
-		functionArgs: [
-			uintCV(amount),
-			standardPrincipalCV(relayAddress),
-			standardPrincipalCV(body.recipientAddress),
-			noneCV(),
-		],
-		senderKey: privateKey,           // mapped address's own key, not server key
+		functionArgs: [uintCV(amount), standardPrincipalCV(relayAddress), standardPrincipalCV(body.recipientAddress), noneCV()],
+		senderKey: privateKey, // mapped address's own key, not server key
 		network,
 		postConditionMode: PostConditionMode.Allow,
 		postConditions: [],
+		sponsored: true
+	});
+	const sponsoredTx = await sponsorTransaction({
+		transaction: tx,
+		sponsorPrivateKey: getConfig().walletKey, // different wallet pays fee
+		fee: 1000n
 	});
 
-	const txid = await broadcast(tx, 'sweep-relay');
+	const txid = await broadcast(sponsoredTx, 'sweep-relay');
 	console.log(`[sweep-relay] ${amount} USDCx from ${relayAddress} → ${body.recipientAddress}`);
 	return { txid, relayAddress, amount: amount.toString() };
 }
