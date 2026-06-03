@@ -5,7 +5,7 @@ import { hmac } from '@noble/hashes/hmac';
 import { sha256 } from '@noble/hashes/sha256';
 import { ripemd160 } from '@noble/hashes/ripemd160';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { alice, betty, bob, constructDao, deployer, passProposalByCoreVote, tom } from '../dao_helpers';
+import { alice, betty, bob, BTCUSD, constructDao, deployer, metadataHash, passProposalByCoreVote, tom } from '../dao_helpers';
 
 // Provide a synchronous HMAC-SHA256 for @noble/secp256k1@1.x signSync().
 beforeAll(() => {
@@ -941,5 +941,364 @@ describe('vault — withdraw (CHAIN_STACKS, SIP-018 human-readable tuple)', () =
 			 Cl.buffer(new Uint8Array(64)), tokenCV, mappedCV, recipientCV], tom,
 		);
 		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_INVALID_NONCE)));
+	});
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Use Case 4: buy-shares via signed BMP1 + prediction-market-trait
+//
+// The relayer submits (message, signature, pubkey, token, mapped, market). The
+// vault verifies the controller signature, debits its ledger for `max-cost`,
+// bumps the nonce, and relays into the market extension via `predict-vault`.
+// `mapped-address` is both the vault balance key AND the beneficiary that owns
+// the resulting shares / BIGR.
+//
+// BMP1 OP_BUY_SHARES body:
+//   slot0  keccak256(consensus(token))
+//   slot1  keccak256(consensus(mapped-address))
+//   slot2  outcome-index (high 16) || market-id (low 16)
+//   slot3  keccak256(consensus(market-extension-principal))
+//   slot4  max-cost (high 16) || min-shares (low 16)
+//   slot5  expiry (low 16)
+// ════════════════════════════════════════════════════════════════════════════
+
+const marketPredicting = 'bme024-0-market-predicting';
+const marketScalar = 'bme024-0-market-scalar-pyth';
+const gating = `${deployer}.bme022-0-market-gating`;
+const sbtcToken = `${deployer}.${sbtcName}`;
+
+const ERR_MARKET_COMMIT = 7119;
+
+/** Pack two u128 big-endian values into a single 32-byte slot (high 16 || low 16). */
+function slotHighLow(high: bigint | number, low: bigint | number): Uint8Array {
+	return concatBytes(uintToBe16(high), uintToBe16(low));
+}
+
+type BuySharesMaterials = {
+	message: Uint8Array;
+	signature: Uint8Array;
+	pubkey: Uint8Array;
+	tokenCV: ReturnType<typeof contractPrincipalCV>;
+	mappedCV: ReturnType<typeof principalCV>;
+	marketCV: ReturnType<typeof contractPrincipalCV>;
+};
+
+function buildBuyShares(args: {
+	key: EvmKey;
+	tokenName?: string;
+	mapped: string;
+	market: string;
+	marketId: bigint | number;
+	outcomeIndex: bigint | number;
+	maxCost: bigint | number;
+	minShares: bigint | number;
+	nonce?: bigint | number;
+	expiry?: bigint | number;
+	chain?: Uint8Array;
+	overrides?: Partial<BuildMessageOpts>;
+}): BuySharesMaterials {
+	const tokenName = args.tokenName ?? sbtcName;
+	const tokenCV = contractPrincipalCV(deployer, tokenName);
+	const mappedCV = principalCV(args.mapped);
+	const marketCV = contractPrincipalCV(deployer, args.market);
+
+	const message = buildBmp1({
+		opcode: OP_BUY_SHARES,
+		chain: args.chain ?? CHAIN_EVM,
+		controller32: args.key.controller32,
+		nonce: args.nonce ?? 0n,
+		slot0: commitPrincipal(tokenCV),
+		slot1: commitPrincipal(mappedCV),
+		slot2: slotHighLow(args.outcomeIndex, args.marketId),
+		slot3: commitPrincipal(marketCV),
+		slot4: slotHighLow(args.maxCost, args.minShares),
+		slot5: slotLowUint(args.expiry ?? 0n),
+		...(args.overrides ?? {})
+	});
+
+	const signature = signEvm(message, args.key.privKey);
+	return { message, signature, pubkey: args.key.uncompressed, tokenCV, mappedCV, marketCV };
+}
+
+function callBuyShares(sender: string, mats: BuySharesMaterials, marketName: string) {
+	return simnet.callPublicFn(
+		vault,
+		'buy-shares',
+		[
+			Cl.buffer(mats.message),
+			Cl.buffer(mats.signature),
+			Cl.buffer(mats.pubkey),
+			mats.tokenCV,
+			mats.mappedCV,
+			contractPrincipalCV(deployer, marketName)
+		],
+		sender
+	);
+}
+
+/** Create a binary sBTC market on the categorical extension. */
+function createCategoricalSbtcMarket(creator = deployer) {
+	const r = simnet.callPublicFn(
+		marketPredicting,
+		'create-market',
+		[
+			Cl.list([Cl.stringAscii('nay'), Cl.stringAscii('yay')]),
+			Cl.none(),
+			Cl.principal(sbtcToken),
+			Cl.bufferFromHex(metadataHash()),
+			Cl.list([]),
+			Cl.principal(gating),
+			Cl.none(),
+			Cl.none(),
+			Cl.uint(100_000_000),
+			Cl.none(),
+			Cl.none()
+		],
+		creator
+	);
+	expect(r.result).toEqual(Cl.ok(Cl.uint(0)));
+	return r;
+}
+
+/** Create a binary sBTC scalar market on the pyth extension. */
+function createScalarSbtcMarket(creator = deployer) {
+	const r = simnet.callPublicFn(
+		marketScalar,
+		'create-market',
+		[
+			Cl.none(),
+			Cl.principal(sbtcToken),
+			Cl.bufferFromHex(metadataHash()),
+			Cl.list([]),
+			Cl.principal(gating),
+			Cl.none(),
+			Cl.none(),
+			Cl.bufferFromHex(BTCUSD),
+			Cl.uint(100_000_000),
+			Cl.none(),
+			Cl.none()
+		],
+		creator
+	);
+	expect(r.result).toEqual(Cl.ok(Cl.uint(0)));
+	return r;
+}
+
+/** Read the beneficiary's share balance for a single outcome index. */
+function getStakeAt(marketName: string, marketId: number, user: string, index: number): bigint {
+	const { result } = simnet.callReadOnlyFn(marketName, 'get-stake-balances', [Cl.uint(marketId), principalCV(user)], alice);
+	if (result.type !== ClarityType.ResponseOk) throw new Error(`get-stake-balances not ok: ${result.type}`);
+	const list = (result as any).value; // listCV
+	return BigInt(list.value[index].value);
+}
+
+/**
+ * Stand up the vault + an sBTC market and credit an EVM controller slot so the
+ * vault holds enough sBTC to relay a buy. `mapped` is the beneficiary that owns
+ * the resulting shares.
+ */
+async function setupBuySharesVault(args: { marketName: string; credit: bigint; mapped?: string; seed?: number }): Promise<{ key: EvmKey; mapped: string }> {
+	await setupVault();
+	if (args.marketName === marketScalar) {
+		createScalarSbtcMarket();
+	} else {
+		createCategoricalSbtcMarket();
+	}
+	const mapped = args.mapped ?? alice;
+	const key = newEvmKey(args.seed ?? 21);
+	// alice acts as the relayer that sweeps the bridged sBTC into the vault.
+	const credit = callDepositFor({ sender: alice, amount: args.credit, controller32: key.controller32, mapped, intent: intentId(args.seed ?? 21) });
+	expect(credit.result).toEqual(Cl.ok(Cl.uint(args.credit)));
+	return { key, mapped };
+}
+
+describe('vault — buy-shares (Use Case 4: signed BMP1 + categorical market)', () => {
+	it('ok: signed buy debits the vault ledger, bumps the nonce and credits the beneficiary', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		const vaultBefore = getBalance(CHAIN_EVM, key.controller32, mapped);
+
+		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n, nonce: 0n });
+		const r = callBuyShares(tom, mats, marketPredicting);
+		// buy-shares returns the outcome-index that was bought
+		expect(r.result).toEqual(Cl.ok(Cl.uint(1)));
+
+		// Vault ledger debited by max-cost, nonce advanced
+		expect(getBalance(CHAIN_EVM, key.controller32, mapped)).toBe(vaultBefore - 1_000_000n);
+		expect(getNonce(CHAIN_EVM, key.controller32)).toBe(1n);
+
+		// Beneficiary (mapped-address) now owns shares in the bought outcome
+		expect(getStakeAt(marketPredicting, 0, mapped, 1)).toBeGreaterThan(0n);
+	});
+
+	it('ok: a second buy consumes the next nonce', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		expect(callBuyShares(tom, buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 500_000n, minShares: 1n, nonce: 0n }), marketPredicting).result).toEqual(Cl.ok(Cl.uint(1)));
+		expect(callBuyShares(tom, buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 0, maxCost: 500_000n, minShares: 1n, nonce: 1n }), marketPredicting).result).toEqual(Cl.ok(Cl.uint(0)));
+		expect(getNonce(CHAIN_EVM, key.controller32)).toBe(2n);
+	});
+
+	it('err: BMP1 magic is enforced', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n, overrides: { magic: new Uint8Array(8) } });
+		expect(callBuyShares(tom, mats, marketPredicting).result).toEqual(Cl.error(Cl.uint(ERR_MSG_MAGIC)));
+	});
+
+	it('err: BMP1 version mismatch', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n, overrides: { version: 0x02 } });
+		expect(callBuyShares(tom, mats, marketPredicting).result).toEqual(Cl.error(Cl.uint(ERR_MSG_VERSION)));
+	});
+
+	it('err: opcode must be OP_BUY_SHARES', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n, overrides: { opcode: OP_WITHDRAW } });
+		expect(callBuyShares(tom, mats, marketPredicting).result).toEqual(Cl.error(Cl.uint(ERR_MSG_OPCODE)));
+	});
+
+	it('err: unsupported source chain id', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n, chain: CHAIN_BAD });
+		expect(callBuyShares(tom, mats, marketPredicting).result).toEqual(Cl.error(Cl.uint(ERR_UNSUPPORTED_CHAIN)));
+	});
+
+	it('err: zero max-cost rejected', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 0n, minShares: 1n });
+		expect(callBuyShares(tom, mats, marketPredicting).result).toEqual(Cl.error(Cl.uint(ERR_INVALID_AMOUNT)));
+	});
+
+	it('err: token-commit must match the token passed', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n });
+		// Pass wrapped-stx as the token param while the payload commits to sbtc
+		const r = simnet.callPublicFn(
+			vault,
+			'buy-shares',
+			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), wrappedStxTrait(), mats.mappedCV, contractPrincipalCV(deployer, marketPredicting)],
+			tom
+		);
+		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_TOKEN_COMMIT)));
+	});
+
+	it('err: mapped-commit mismatch when wrong mapped principal is passed', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n });
+		const r = simnet.callPublicFn(
+			vault,
+			'buy-shares',
+			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, principalCV(bob), contractPrincipalCV(deployer, marketPredicting)],
+			tom
+		);
+		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_MAPPED_COMMIT)));
+	});
+
+	it('err: market-commit mismatch when the payload binds a different market', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		// Payload commits to the scalar market, but we pass the categorical market as the trait ref
+		const mats = buildBuyShares({ key, mapped, market: marketScalar, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n });
+		const r = simnet.callPublicFn(
+			vault,
+			'buy-shares',
+			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketPredicting)],
+			tom
+		);
+		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_MARKET_COMMIT)));
+	});
+
+	it('err: insufficient balance when max-cost exceeds the vault credit', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 500_000n });
+		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n });
+		expect(callBuyShares(tom, mats, marketPredicting).result).toEqual(Cl.error(Cl.uint(ERR_INSUFFICIENT_BALANCE)));
+	});
+
+	it('err: wrong nonce is rejected (replay protection)', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		expect(callBuyShares(tom, buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 500_000n, minShares: 1n, nonce: 0n }), marketPredicting).result).toEqual(Cl.ok(Cl.uint(1)));
+		const replay = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 500_000n, minShares: 1n, nonce: 0n });
+		expect(callBuyShares(tom, replay, marketPredicting).result).toEqual(Cl.error(Cl.uint(ERR_INVALID_NONCE)));
+	});
+
+	it('err: expired message rejected when expiry < current stacks block height', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		simnet.mineEmptyBlocks(5);
+		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n, expiry: 1n });
+		expect(callBuyShares(tom, mats, marketPredicting).result).toEqual(Cl.error(Cl.uint(ERR_EXPIRED)));
+	});
+
+	it('err: pubkey mismatch when payload signed by a different controller', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketPredicting, credit: 5_000_000n });
+		const attacker = newEvmKey(98);
+		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n });
+		// Re-sign with the attacker key but keep the legitimate controller pubkey
+		const badSig = signEvm(mats.message, attacker.privKey);
+		const r = simnet.callPublicFn(
+			vault,
+			'buy-shares',
+			[Cl.buffer(mats.message), Cl.buffer(badSig), Cl.buffer(key.uncompressed), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketPredicting)],
+			tom
+		);
+		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_PUBKEY_MISMATCH)));
+	});
+});
+
+describe('vault — buy-shares (Use Case 4: signed BMP1 + scalar market)', () => {
+	it('ok: signed buy relays into the scalar pyth market and credits the beneficiary', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketScalar, credit: 5_000_000n });
+		const vaultBefore = getBalance(CHAIN_EVM, key.controller32, mapped);
+
+		const mats = buildBuyShares({ key, mapped, market: marketScalar, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n, nonce: 0n });
+		const r = callBuyShares(tom, mats, marketScalar);
+		expect(r.result).toEqual(Cl.ok(Cl.uint(1)));
+
+		expect(getBalance(CHAIN_EVM, key.controller32, mapped)).toBe(vaultBefore - 1_000_000n);
+		expect(getNonce(CHAIN_EVM, key.controller32)).toBe(1n);
+
+		expect(getStakeAt(marketScalar, 0, mapped, 1)).toBeGreaterThan(0n);
+	});
+
+	it('err: market-commit mismatch when the payload binds the categorical market', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketScalar, credit: 5_000_000n });
+		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n });
+		const r = simnet.callPublicFn(
+			vault,
+			'buy-shares',
+			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketScalar)],
+			tom
+		);
+		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_MARKET_COMMIT)));
+	});
+
+	it('err: wrong nonce is rejected (replay protection)', async () => {
+		const { key, mapped } = await setupBuySharesVault({ marketName: marketScalar, credit: 5_000_000n });
+		expect(callBuyShares(tom, buildBuyShares({ key, mapped, market: marketScalar, marketId: 0, outcomeIndex: 1, maxCost: 500_000n, minShares: 1n, nonce: 0n }), marketScalar).result).toEqual(Cl.ok(Cl.uint(1)));
+		const replay = buildBuyShares({ key, mapped, market: marketScalar, marketId: 0, outcomeIndex: 1, maxCost: 500_000n, minShares: 1n, nonce: 0n });
+		expect(callBuyShares(tom, replay, marketScalar).result).toEqual(Cl.error(Cl.uint(ERR_INVALID_NONCE)));
+	});
+});
+
+describe('prediction market — predict-vault (trait gate)', () => {
+	it('err: predict-vault on categorical market rejects non-DAO/extension callers', async () => {
+		await setupVault();
+		createCategoricalSbtcMarket();
+		// alice is neither the DAO nor an enabled extension -> ERR_UNAUTHORISED (u10000)
+		const r = simnet.callPublicFn(
+			marketPredicting,
+			'predict-vault',
+			[principalCV(bob), Cl.uint(0), Cl.uint(1), Cl.uint(1), Cl.principal(sbtcToken), Cl.uint(1_000_000)],
+			alice
+		);
+		expect(r.result).toEqual(Cl.error(Cl.uint(10000)));
+	});
+
+	it('err: predict-vault on scalar market rejects non-DAO/extension callers', async () => {
+		await setupVault();
+		createScalarSbtcMarket();
+		const r = simnet.callPublicFn(
+			marketScalar,
+			'predict-vault',
+			[principalCV(bob), Cl.uint(0), Cl.uint(1), Cl.uint(1), Cl.principal(sbtcToken), Cl.uint(1_000_000)],
+			alice
+		);
+		expect(r.result).toEqual(Cl.error(Cl.uint(10000)));
 	});
 });

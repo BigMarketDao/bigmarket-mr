@@ -459,7 +459,9 @@
       { controller-chain: chain, controller-address: controller, mapped-address: mapped-address, token: token-contract }
       (- current-balance max-cost))
     (map-set withdrawal-nonces { controller-chain: chain, controller-address: controller } (+ current-nonce u1))
-    (try! (contract-call? market predict-vault mapped-address market-id min-shares outcome-index token max-cost))
+    (try! (as-contract? ((with-all-assets-unsafe))
+            (try! (contract-call? market predict-vault mapped-address market-id min-shares outcome-index token max-cost))
+            true))
     (print {
       event: "buy-shares",
       market: market-contract,
