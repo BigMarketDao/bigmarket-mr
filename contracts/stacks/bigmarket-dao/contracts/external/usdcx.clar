@@ -11,7 +11,7 @@
 (define-fungible-token usdcx-token)
 
 (define-data-var token-name (string-ascii 32) "usdcx-token")
-(define-data-var token-symbol (string-ascii 11) "usdcx-token")
+(define-data-var token-symbol (string-ascii 11) "USDCx")
 (define-data-var token-uri (optional (string-utf8 256)) (some u"https://usdcx-token.net"))
 (define-data-var token-decimals uint u6)
 

@@ -48,10 +48,6 @@
 					enabled: true,
 				}
 				{
-					extension: .bme023-0-market-bitcoin,
-					enabled: true,
-				}
-				{
 					extension: .bme024-0-market-predicting,
 					enabled: true,
 				}
@@ -211,19 +207,6 @@
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-price-band-width
 			0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace u1000
 		))
-
-		(try! (contract-call? .bme023-0-market-bitcoin set-resolution-agent
-			'ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG
-		))
-		(try! (contract-call? .bme023-0-market-bitcoin set-dev-fund
-			'ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC
-		))
-		(try! (contract-call? .bme023-0-market-bitcoin set-dao-treasury .bme006-0-treasury))
-		(try! (contract-call? .bme023-0-market-bitcoin set-creation-gated true))
-		(try! (contract-call? .bme023-0-market-bitcoin set-market-fee-bips-max u300))
-		(try! (contract-call? .bme023-0-market-bitcoin set-market-create-fee u1000000))
-		(try! (contract-call? .bme023-0-market-bitcoin set-dev-fee-bips u100))
-		(try! (contract-call? .bme023-0-market-bitcoin set-dispute-window-length u24))
 
 		(try! (contract-call? .bme021-0-market-voting set-voting-duration u24))
 		;; (try! (contract-call? .bme010-0-token-sale initialize-ido))
