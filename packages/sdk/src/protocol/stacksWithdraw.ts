@@ -73,6 +73,7 @@ export type StacksWithdrawParams = {
    * Equals stxAddress for a self-withdrawal.
    */
   recipientAddress: string;
+  controllerAddress?: string;
 };
 
 /**
@@ -224,6 +225,7 @@ export async function relayWithdrawToServer(
     pubkey: bytesToHex(signed.pubkey64),
     stxAddress: params.stxAddress,
     recipientAddress: params.recipientAddress,
+    controllerAddress: params.controllerAddress,
   };
 
   const url = `${params.apiBaseUrl}/cross-chain/protocol/withdraw-from-vault`;
