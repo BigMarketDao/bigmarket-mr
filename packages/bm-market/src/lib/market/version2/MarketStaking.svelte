@@ -44,6 +44,7 @@
     estimateMaxSpendIncludingFee,
     fmtMicroToStx,
     fmtMicroToStxNumber,
+    fmtMicroToStxTo2Decimals,
     fmtStxMicro,
     getCategoryLabel,
     getMarketToken,
@@ -413,7 +414,7 @@
   <section class={PANEL_SHELL} aria-label="Trade panel">
     <div class="mb-4">
       <h3 class="text-xl font-bold" style="font-family: var(--font-heading)">
-        Place your bet
+        Make a prediction
       </h3>
     </div>
     {#if !connected}
@@ -467,12 +468,12 @@
                 <div
                   class="inline-flex items-center rounded-full border border-[var(--color-success-border)] bg-[var(--color-success-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-success)]"
                 >
-                  You own <span class="tabular-nums"
-                    >{fmtMicroToStx(
+                  You own : <span class="tabular-nums"
+                    >{fmtMicroToStxTo2Decimals(
                       getUserStakeAtIndex(selectedIndex),
                       sip10Data.decimals,
                     )}</span
-                  > shares
+                  >
                 </div>
               </div>
             {/if}
@@ -581,12 +582,12 @@
                   <div
                     class="inline-flex items-center rounded-full border border-[var(--color-success-border)] bg-[var(--color-success-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-success)]"
                   >
-                    You own <span class="tabular-nums"
-                      >{fmtMicroToStx(
+                    You own : <span class="tabular-nums"
+                      >{fmtMicroToStxTo2Decimals(
                         getUserStakeAtIndex(index),
                         sip10Data.decimals,
                       )}</span
-                    > shares
+                    >
                   </div>
                 </div>
               {/if}
@@ -601,12 +602,12 @@
                     <div
                       class="inline-flex items-center rounded-full border border-[var(--color-success-border)] bg-[var(--color-success-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-success)]"
                     >
-                      You own <span class="tabular-nums"
-                        >{fmtMicroToStx(
+                      You own : <span class="tabular-nums"
+                        >{fmtMicroToStxTo2Decimals(
                           getUserStakeAtIndex(index),
                           sip10Data.decimals,
                         )}</span
-                      > shares
+                      >
                     </div>
                   </div>
                 {/if}
