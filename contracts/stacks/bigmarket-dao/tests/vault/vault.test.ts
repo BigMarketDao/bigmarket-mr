@@ -131,6 +131,63 @@ function sip18WithdrawDigest(
 	return sha256(concatBytes(SIP018_PREFIX, BMP1_DOMAIN_HASH_TESTNET, msgCvHash));
 }
 
+function readSlotLow(slot: Uint8Array): bigint {
+	let v = 0n;
+	for (let i = 16; i < 32; i++) v = (v << 8n) + BigInt(slot[i]!);
+	return v;
+}
+
+function readSlotHigh(slot: Uint8Array): bigint {
+	let v = 0n;
+	for (let i = 0; i < 16; i++) v = (v << 8n) + BigInt(slot[i]!);
+	return v;
+}
+
+function nonceFromBmp1Message(message: Uint8Array): bigint {
+	let n = 0n;
+	for (let i = 48; i < 64; i++) n = (n << 8n) + BigInt(message[i]!);
+	return n;
+}
+
+function sip18BuySharesDigest(
+	message: Uint8Array,
+	tokenCV: ReturnType<typeof contractPrincipalCV>,
+	mappedCV: ReturnType<typeof principalCV>,
+): Uint8Array {
+	const bmp1Hash = sha256(message);
+	const slot2 = message.slice(128, 160);
+	const slot4 = message.slice(192, 224);
+	const slot5 = message.slice(224, 256);
+	const messageTuple = Cl.tuple({
+		'bmp1-hash': Cl.buffer(bmp1Hash),
+		expiry: Cl.uint(readSlotLow(slot5)),
+		'mapped-address': mappedCV,
+		'market-id': Cl.uint(readSlotLow(slot2)),
+		'max-cost': Cl.uint(readSlotHigh(slot4)),
+		'min-shares': Cl.uint(readSlotLow(slot4)),
+		nonce: Cl.uint(nonceFromBmp1Message(message)),
+		operation: Cl.stringAscii('buy-shares'),
+		'outcome-index': Cl.uint(readSlotHigh(slot2)),
+		token: tokenCV,
+	});
+	const msgCvHash = sha256(serializeCVBytes(messageTuple));
+	return sha256(concatBytes(SIP018_PREFIX, BMP1_DOMAIN_HASH_TESTNET, msgCvHash));
+}
+
+function signStacksBuy(
+	message: Uint8Array,
+	key: StacksKey,
+	tokenCV: ReturnType<typeof contractPrincipalCV>,
+	mappedCV: ReturnType<typeof principalCV>,
+): Uint8Array {
+	const digest = sip18BuySharesDigest(message, tokenCV, mappedCV);
+	const [sig, recovery] = secp.signSync(digest, key.privKey, { der: false, recovered: true, canonical: true });
+	const out = new Uint8Array(65);
+	out.set(sig, 0);
+	out[64] = recovery;
+	return out;
+}
+
 /**
  * Sign a BMP1 message for CHAIN_STACKS verification.
  *
@@ -1022,6 +1079,42 @@ function buildBuyShares(args: {
 	return { message, signature, pubkey: args.key.uncompressed, tokenCV, mappedCV, marketCV };
 }
 
+function buildBuySharesStacks(args: {
+	key: StacksKey;
+	tokenName?: string;
+	mapped: string;
+	market: string;
+	marketId: bigint | number;
+	outcomeIndex: bigint | number;
+	maxCost: bigint | number;
+	minShares: bigint | number;
+	nonce?: bigint | number;
+	expiry?: bigint | number;
+	overrides?: Partial<BuildMessageOpts>;
+}): BuySharesMaterials {
+	const tokenName = args.tokenName ?? sbtcName;
+	const tokenCV = contractPrincipalCV(deployer, tokenName);
+	const mappedCV = principalCV(args.mapped);
+	const marketCV = contractPrincipalCV(deployer, args.market);
+
+	const message = buildBmp1({
+		opcode: OP_BUY_SHARES,
+		chain: CHAIN_STACKS,
+		controller32: args.key.controller32,
+		nonce: args.nonce ?? 0n,
+		slot0: commitPrincipal(tokenCV),
+		slot1: commitPrincipal(mappedCV),
+		slot2: slotHighLow(args.outcomeIndex, args.marketId),
+		slot3: commitPrincipal(marketCV),
+		slot4: slotHighLow(args.maxCost, args.minShares),
+		slot5: slotLowUint(args.expiry ?? 0n),
+		...(args.overrides ?? {})
+	});
+
+	const signature = signStacksBuy(message, args.key, tokenCV, mappedCV);
+	return { message, signature, pubkey: new Uint8Array(64), tokenCV, mappedCV, marketCV };
+}
+
 function callBuyShares(sender: string, mats: BuySharesMaterials, marketName: string) {
 	return simnet.callPublicFn(
 		vault,
@@ -1113,6 +1206,89 @@ async function setupBuySharesVault(args: { marketName: string; credit: bigint; m
 	expect(credit.result).toEqual(Cl.ok(Cl.uint(args.credit)));
 	return { key, mapped };
 }
+
+async function setupStacksBuySharesVault(args: {
+	marketName: string;
+	credit: bigint;
+}): Promise<{ key: StacksKey; mapped: string }> {
+	await setupVault();
+	if (args.marketName === marketScalar) {
+		createScalarSbtcMarket();
+	} else {
+		createCategoricalSbtcMarket();
+	}
+	const key = aliceStacksKey();
+	const mapped = alice;
+	expect(callDeposit(alice, args.credit).result).toEqual(Cl.ok(Cl.uint(args.credit)));
+	return { key, mapped };
+}
+
+describe('vault — buy-shares (CHAIN_STACKS, SIP-018 buy-shares tuple)', () => {
+	it('ok: Stacks SIP-018 signed buy debits ledger and credits beneficiary shares', async () => {
+		const { key, mapped } = await setupStacksBuySharesVault({
+			marketName: marketPredicting,
+			credit: 5_000_000n,
+		});
+		const vaultBefore = getBalance(CHAIN_STACKS, key.controller32, mapped);
+
+		const mats = buildBuySharesStacks({
+			key,
+			mapped,
+			market: marketPredicting,
+			marketId: 0,
+			outcomeIndex: 1,
+			maxCost: 1_000_000n,
+			minShares: 1n,
+			nonce: 0n,
+		});
+		const r = callBuyShares(tom, mats, marketPredicting);
+		expect(r.result).toEqual(Cl.ok(Cl.uint(1)));
+		expect(getBalance(CHAIN_STACKS, key.controller32, mapped)).toBe(vaultBefore - 1_000_000n);
+		expect(getNonce(CHAIN_STACKS, key.controller32)).toBe(1n);
+		expect(getStakeAt(marketPredicting, 0, mapped, 1)).toBeGreaterThan(0n);
+	});
+
+	it('err: withdraw SIP-018 tuple does not verify a buy-shares BMP1', async () => {
+		const { key, mapped } = await setupStacksBuySharesVault({
+			marketName: marketPredicting,
+			credit: 5_000_000n,
+		});
+		const mats = buildBuySharesStacks({
+			key,
+			mapped,
+			market: marketPredicting,
+			marketId: 0,
+			outcomeIndex: 1,
+			maxCost: 1_000_000n,
+			minShares: 1n,
+			nonce: 0n,
+		});
+		const tokenCV = mats.tokenCV;
+		const mappedCV = mats.mappedCV;
+		const badSig = signStacks(
+			mats.message,
+			key,
+			tokenCV,
+			mappedCV,
+			readSlotLow(mats.message.slice(160, 192)),
+			0n,
+		);
+		const r = simnet.callPublicFn(
+			vault,
+			'buy-shares',
+			[
+				Cl.buffer(mats.message),
+				Cl.buffer(badSig),
+				Cl.buffer(new Uint8Array(64)),
+				tokenCV,
+				mappedCV,
+				contractPrincipalCV(deployer, marketPredicting),
+			],
+			tom,
+		);
+		expect(r.result.type).toBe(ClarityType.ResponseErr);
+	});
+});
 
 describe('vault — buy-shares (Use Case 4: signed BMP1 + categorical market)', () => {
 	it('ok: signed buy debits the vault ledger, bumps the nonce and credits the beneficiary', async () => {

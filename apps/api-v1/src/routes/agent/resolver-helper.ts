@@ -1,4 +1,5 @@
-import { fetchStacksInfo, getStacksNetwork, PredictionMarketCreateEvent, ScalarMarketDataItem, StacksInfo } from '@mijoco/stx_helpers/dist/index.js';
+import { fetchStacksInfo, PredictionMarketCreateEvent, ScalarMarketDataItem, StacksInfo } from '@mijoco/stx_helpers/dist/index.js';
+import { fetchWalletKeyNonce, resolveStacksNetwork } from '../../lib/stacks_tx.js';
 import { getConfig } from '../../lib/config.js';
 import { daoEventCollection, marketLlmLogsCollection } from '../../lib/data/db_models.js';
 import { fetchMarket } from '../predictions/markets_helper.js';
@@ -101,7 +102,8 @@ function hashJsonObject(obj: any): Uint8Array {
 async function resolveCategoricalMarket(data: MarketLLMRequest, outcomeIndex: number) {
 	const market = await fetchMarket(data.market_id, data.market_type);
 	console.log('resolveCategoricalMarket: market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name + ' outcome=' + outcomeIndex);
-	const network = getStacksNetwork(getConfig().network);
+	const network = resolveStacksNetwork();
+	const nonce = await fetchWalletKeyNonce();
 	data.llmId = DEEPSEEK_ID;
 	const metadataHash = bufferCV(hashJsonObject(data));
 	const dataTx = {
@@ -110,11 +112,12 @@ async function resolveCategoricalMarket(data: MarketLLMRequest, outcomeIndex: nu
 		contractName: getDaoConfig().VITE_DAO_RESOLUTION_COORDINATOR,
 		functionName: 'signal-resolution',
 		functionArgs: [Cl.uint(market.marketId), Cl.stringAscii(market.marketData.categories[outcomeIndex] as string), metadataHash],
-		senderKey: getConfig().walletKey
+		senderKey: getConfig().walletKey,
+		nonce
 	};
 	console.log('resolveCategoricalMarket: dataTx: ', dataTx);
 	const transaction = await makeContractCall(dataTx);
-	const txResult = await broadcastTransaction({ transaction });
+	const txResult = await broadcastTransaction({ transaction, network });
 	console.log('resolveCategoricalMarket: tx sent: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name, txResult);
 }
 

@@ -453,7 +453,6 @@
     (asserts! (>= current-balance max-cost)                     ERR_INSUFFICIENT_BALANCE)
     (asserts! (is-eq nonce current-nonce)                       ERR_INVALID_NONCE)
     (asserts! (or (is-eq expiry u0) (<= stacks-block-height expiry)) ERR_EXPIRED)
-    ;; TODO: dedicated BMP1BuyShares EIP-712 / SIP-018 tuple (not withdraw tuple)
     (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address))
     (map-set balances
       { controller-chain: chain, controller-address: controller, mapped-address: mapped-address, token: token-contract }
@@ -530,7 +529,6 @@
     (asserts! (is-eq (get slot3 parsed) market-commit)          ERR_MARKET_COMMIT)
     (asserts! (is-eq nonce current-nonce)                       ERR_INVALID_NONCE)
     (asserts! (or (is-eq expiry u0) (<= stacks-block-height expiry)) ERR_EXPIRED)
-    ;; TODO: dedicated BMP1SellShares EIP-712 / SIP-018 tuple (not withdraw tuple)
     (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address))
     (map-set withdrawal-nonces { controller-chain: chain, controller-address: controller } (+ current-nonce u1))
     ;; Market refunds the net proceeds to this vault (payee = contract-caller).
@@ -599,7 +597,6 @@
     (asserts! (is-eq (get slot3 parsed) market-commit)          ERR_MARKET_COMMIT)
     (asserts! (is-eq nonce current-nonce)                       ERR_INVALID_NONCE)
     (asserts! (or (is-eq expiry u0) (<= stacks-block-height expiry)) ERR_EXPIRED)
-    ;; TODO: dedicated BMP1ClaimWinnings EIP-712 / SIP-018 tuple (not withdraw tuple)
     (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address))
     (map-set withdrawal-nonces { controller-chain: chain, controller-address: controller } (+ current-nonce u1))
     ;; Market pays the net winnings to this vault (payee = contract-caller).
@@ -687,54 +684,42 @@
       ERR_SIG_SCHEME)))
 
 ;; SIP-018 structured-data verification for Stacks-native controllers.
-;;
-;; The wallet (Leather / Xverse) displays a human-readable tuple instead of
-;; a raw binary blob.  The signed message is:
-;;
-;;   {
-;;     amount:    uint           -- micro-units being withdrawn
-;;     bmp1-hash: (buff 32)      -- sha256(message) binding to the full BMP1
-;;     nonce:     uint           -- per-controller replay-protection counter
-;;     operation: (string-ascii) -- always "withdraw"
-;;     recipient: principal      -- destination Stacks address
-;;     token:     principal      -- SIP-010 token contract
-;;   }
-;;
-;; Clarity's to-consensus-buff? serialises tuple keys in lexicographic order,
-;; which matches @stacks/transactions serializeCV on the TypeScript side.
-;;
-;; Trust path:
-;;   1. Parse the BMP1 message to extract amount and nonce.
-;;   2. Compute sha256(message) as the bmp1-hash binding.
-;;   3. Serialise the human-readable tuple and sha256 it --> msg-cv-hash.
-;;   4. SIP-018 digest: sha256("SIP018" || domain-hash || msg-cv-hash).
-;;   5. Recover the compressed pubkey from the secp256k1 signature.
-;;   6. Derive hash160(pubkey) and compare with the BMP1 controller field.
-(define-private (verify-stacks-sip18
+;; Opcode-specific human-readable tuples (see SDK stacksSip18.ts).
+
+;; Mapped-address is validated before signature verify in each entrypoint.
+(define-private (stacks-sip18-domain-hash (mapped-address principal))
+  (if (is-eq (get version (unwrap-panic (principal-destruct? mapped-address))) STACKS_MAINNET_VERSION)
+    BMP1_DOMAIN_HASH_MAINNET
+    BMP1_DOMAIN_HASH_TESTNET))
+
+(define-private (verify-stacks-sip18-recover
+    (domain-hash (buff 32))
+    (msg-cv-hash (buff 32))
+    (signature   (buff 65))
+    (controller  (buff 32)))
+  (let
+    (
+      (digest       (sha256 (concat SIP018_PREFIX (concat domain-hash msg-cv-hash))))
+      (recovered    (unwrap! (secp256k1-recover? digest signature) ERR_SIG_VERIFICATION))
+      (derived-addr (hash160 recovered))
+      (expected-addr (low-20-of-32 controller))
+    )
+    (asserts! (is-eq derived-addr expected-addr) ERR_ADDRESS_MISMATCH)
+    (ok true)))
+
+(define-private (verify-stacks-withdraw
     (message        (buff 256))
     (signature      (buff 65))
     (controller     (buff 32))
-    (mapped-address principal)
     (token-contract principal)
-    (recipient      principal))
+    (recipient      principal)
+    (domain-hash    (buff 32)))
   (let
     (
-      ;; Choose domain hash: mainnet if mapped-address is an SP address.
-      (domain-hash
-        (if (is-eq (get version (unwrap! (principal-destruct? mapped-address) ERR_INVALID_ADDRESS))
-                   STACKS_MAINNET_VERSION)
-          BMP1_DOMAIN_HASH_MAINNET
-          BMP1_DOMAIN_HASH_TESTNET))
-      (parsed  (parse-message message))
-      (amount  (slot-low-uint (get slot3 parsed)))
-      (nonce   (buff-to-uint-be (get nonce parsed)))
-      ;; sha256 of the full BMP1 payload -- cryptographic binding
+      (parsed    (parse-message message))
+      (amount    (slot-low-uint (get slot3 parsed)))
+      (nonce     (buff-to-uint-be (get nonce parsed)))
       (bmp1-hash (sha256 message))
-      ;; Human-readable message tuple -- must exactly match the TypeScript SDK's
-      ;; buildWithdrawMessageCv tuple (same keys, same value types, same order).
-      ;; Clarity serialises tuple keys lexicographically (amount < bmp1-hash <
-      ;; nonce < operation < recipient < token), which is the same order used
-      ;; by @stacks/transactions serializeCV.
       (msg-cv-hash
         (sha256 (unwrap! (to-consensus-buff? {
           amount:    amount,
@@ -744,18 +729,124 @@
           recipient: recipient,
           token:     token-contract
         }) ERR_SIG_VERIFICATION)))
-      ;; SIP-018 digest: sha256("SIP018" || domain_hash || msg_cv_hash)
-      (digest
-        (sha256 (concat SIP018_PREFIX (concat domain-hash msg-cv-hash))))
-      ;; Recover the compressed public key (33 bytes) from the secp256k1 signature
-      (recovered
-        (unwrap! (secp256k1-recover? digest signature) ERR_SIG_VERIFICATION))
-      ;; Stacks controller address = hash160(compressed-pubkey)
-      (derived-addr  (hash160 recovered))
-      (expected-addr (low-20-of-32 controller))
     )
-    (asserts! (is-eq derived-addr expected-addr) ERR_ADDRESS_MISMATCH)
-    (ok true)))
+    (verify-stacks-sip18-recover domain-hash msg-cv-hash signature controller)))
+
+(define-private (verify-stacks-buy-shares
+    (message        (buff 256))
+    (signature      (buff 65))
+    (controller     (buff 32))
+    (mapped-address principal)
+    (token-contract principal)
+    (domain-hash    (buff 32)))
+  (let
+    (
+      (parsed        (parse-message message))
+      (nonce         (buff-to-uint-be (get nonce parsed)))
+      (market-id     (slot-low-uint (get slot2 parsed)))
+      (outcome-index (slot-high-uint (get slot2 parsed)))
+      (max-cost      (slot-high-uint (get slot4 parsed)))
+      (min-shares    (slot-low-uint (get slot4 parsed)))
+      (expiry        (slot-low-uint (get slot5 parsed)))
+      (bmp1-hash     (sha256 message))
+      (msg-cv-hash
+        (sha256 (unwrap! (to-consensus-buff? {
+          bmp1-hash:     bmp1-hash,
+          expiry:        expiry,
+          mapped-address: mapped-address,
+          market-id:     market-id,
+          max-cost:      max-cost,
+          min-shares:    min-shares,
+          nonce:         nonce,
+          operation:     "buy-shares",
+          outcome-index: outcome-index,
+          token:         token-contract
+        }) ERR_SIG_VERIFICATION)))
+    )
+    (verify-stacks-sip18-recover domain-hash msg-cv-hash signature controller)))
+
+(define-private (verify-stacks-sell-shares
+    (message        (buff 256))
+    (signature      (buff 65))
+    (controller     (buff 32))
+    (mapped-address principal)
+    (token-contract principal)
+    (domain-hash    (buff 32)))
+  (let
+    (
+      (parsed        (parse-message message))
+      (nonce         (buff-to-uint-be (get nonce parsed)))
+      (market-id     (slot-low-uint (get slot2 parsed)))
+      (outcome-index (slot-high-uint (get slot2 parsed)))
+      (min-refund    (slot-high-uint (get slot4 parsed)))
+      (shares-in     (slot-low-uint (get slot4 parsed)))
+      (expiry        (slot-low-uint (get slot5 parsed)))
+      (bmp1-hash     (sha256 message))
+      (msg-cv-hash
+        (sha256 (unwrap! (to-consensus-buff? {
+          bmp1-hash:     bmp1-hash,
+          expiry:        expiry,
+          mapped-address: mapped-address,
+          market-id:     market-id,
+          min-refund:    min-refund,
+          nonce:         nonce,
+          operation:     "sell-shares",
+          outcome-index: outcome-index,
+          shares-in:     shares-in,
+          token:         token-contract
+        }) ERR_SIG_VERIFICATION)))
+    )
+    (verify-stacks-sip18-recover domain-hash msg-cv-hash signature controller)))
+
+(define-private (verify-stacks-claim-winnings
+    (message        (buff 256))
+    (signature      (buff 65))
+    (controller     (buff 32))
+    (mapped-address principal)
+    (token-contract principal)
+    (domain-hash    (buff 32)))
+  (let
+    (
+      (parsed    (parse-message message))
+      (nonce     (buff-to-uint-be (get nonce parsed)))
+      (market-id (slot-low-uint (get slot2 parsed)))
+      (expiry    (slot-low-uint (get slot5 parsed)))
+      (bmp1-hash (sha256 message))
+      (msg-cv-hash
+        (sha256 (unwrap! (to-consensus-buff? {
+          bmp1-hash:     bmp1-hash,
+          expiry:        expiry,
+          mapped-address: mapped-address,
+          market-id:     market-id,
+          nonce:         nonce,
+          operation:     "claim-winnings",
+          token:         token-contract
+        }) ERR_SIG_VERIFICATION)))
+    )
+    (verify-stacks-sip18-recover domain-hash msg-cv-hash signature controller)))
+
+(define-private (verify-stacks-sip18
+    (message        (buff 256))
+    (signature      (buff 65))
+    (controller     (buff 32))
+    (mapped-address principal)
+    (token-contract principal)
+    (recipient      principal))
+  (let
+    (
+      (parsed      (parse-message message))
+      (opcode      (get opcode parsed))
+      (domain-hash (stacks-sip18-domain-hash mapped-address))
+    )
+    (if (is-eq opcode OP_WITHDRAW)
+      (verify-stacks-withdraw message signature controller token-contract recipient domain-hash)
+      (if (is-eq opcode OP_BUY_SHARES)
+        (verify-stacks-buy-shares message signature controller mapped-address token-contract domain-hash)
+        (if (is-eq opcode OP_SELL_SHARES)
+          (verify-stacks-sell-shares message signature controller mapped-address token-contract domain-hash)
+          (if (is-eq opcode OP_CLAIM_WINNINGS)
+            (verify-stacks-claim-winnings message signature controller mapped-address token-contract domain-hash)
+            ERR_MSG_OPCODE))))))
 
 ;; EVM secp256k1 + EIP-712 structured-data verification.
 ;;

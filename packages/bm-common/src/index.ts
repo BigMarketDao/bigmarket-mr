@@ -1,4 +1,5 @@
 export * from "./lib/stores/wallet.js";
+export * from "./lib/vault/usdcx.js";
 export * from "./lib/stores/txModal.js";
 export * from "./lib/stores/watchTxResult.js";
 export * from "./lib/stores/ui/exchangeRatesStore.js";

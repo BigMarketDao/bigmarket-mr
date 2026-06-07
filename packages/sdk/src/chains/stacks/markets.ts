@@ -45,6 +45,7 @@ import {
   REMOVE_LIQUIDITY_TIER,
   SELLING_TIER,
   STAKING_TIER,
+  CLAIMING_TIER,
 } from "@bigmarket/bm-utilities";
 import {
   getBigRPostConditionNft,
@@ -309,6 +310,51 @@ export function createMarketsClient(daoConfig: DaoConfig) {
         daoConfig.VITE_NETWORK,
         functionName,
         functionArgs,
+        postConditions,
+        "deny",
+      );
+    },
+
+    async claimWinnings(
+      sender: string,
+      contractAddress: string,
+      contractName: string,
+      marketId: number,
+      tokenPrincipal: string,
+      tierBalance?: number,
+    ) {
+      const postConditions: PostCondition[] = [];
+      const bigrPc = await getBigRPostConditionNft(
+        daoConfig.VITE_DAO_DEPLOYER,
+        daoConfig.VITE_DAO_REPUTATION_TOKEN,
+        CLAIMING_TIER,
+        sender,
+        tierBalance || 0,
+      );
+      if (bigrPc) postConditions.push(bigrPc);
+
+      if (!isSTX(tokenPrincipal)) {
+        const formattedToken = tokenPrincipal as `${string}.${string}`;
+        const tokenName = getFungibleTokenName(tokenPrincipal);
+        postConditions.push(
+          Pc.principal(`${contractAddress}.${contractName}`)
+            .willSendGte(1)
+            .ft(formattedToken, tokenName),
+        );
+      } else {
+        postConditions.push(
+          Pc.principal(`${contractAddress}.${contractName}`)
+            .willSendGte(1)
+            .ustx(),
+        );
+      }
+
+      return callContract(
+        contractAddress,
+        contractName,
+        daoConfig.VITE_NETWORK,
+        "claim-winnings",
+        [Cl.uint(marketId), Cl.principal(tokenPrincipal)],
         postConditions,
         "deny",
       );

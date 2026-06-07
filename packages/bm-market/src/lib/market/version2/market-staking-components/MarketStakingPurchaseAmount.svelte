@@ -20,6 +20,10 @@
     toFiat,
   } from "@bigmarket/bm-utilities";
   import { onMount } from "svelte";
+  import {
+    VAULT_DEPOSIT_PATH,
+    VAULT_TOP_UP_MESSAGE,
+  } from "../../../app/stakeExecution.js";
 
   const MIN_BALANCE_MICRO = 2000000;
 
@@ -31,6 +35,7 @@
     totalBalanceUToken,
     userStakeAtIndex,
     outcomeSide = "other",
+    isVaultMarket = false,
     doBuy,
     doSell,
   } = $props<{
@@ -41,6 +46,7 @@
     totalBalanceUToken: number;
     userStakeAtIndex: number;
     outcomeSide?: "yes" | "no" | "other";
+    isVaultMarket?: boolean;
     doBuy: (index: number) => void;
     doSell: (index: number) => void;
   }>();
@@ -128,7 +134,9 @@
       if (micro <= 0) {
         errorMessage = "Enter an amount";
       } else if (micro > totalBalanceUToken) {
-        errorMessage = "Amount exceeds your balance";
+        errorMessage = isVaultMarket
+          ? VAULT_TOP_UP_MESSAGE
+          : "Amount exceeds your balance";
       } else {
         errorMessage = undefined;
       }
@@ -315,12 +323,6 @@
               : ` ${$selectedCurrency.code}`}
           </p>
         {/if}
-      {:else if connected}
-        <Banner
-          bannerType="warning"
-          clazz="!rounded-lg !p-2 [&_span]:!text-[11px] [&_span]:!leading-snug [&_.flex]:!gap-2"
-          message={`Balance too low — mint ${sip10Data.symbol}`}
-        />
       {/if}
     {:else if userStakeAtIndex > 0}
       <label class="sr-only" for="sell-input-{index}">Shares to sell</label>
@@ -396,12 +398,20 @@
   {/if}
 
   {#if errorMessage && connected}
-    <div class="mb-3 min-w-0">
+    <div class="mb-3 min-w-0 space-y-1">
       <Banner
         bannerType="error"
         clazz="!rounded-lg !p-2 [&_span]:!text-[11px] [&_span]:!leading-snug [&_.flex]:!gap-2"
         message={errorMessage}
       />
+      {#if isVaultMarket && errorMessage === VAULT_TOP_UP_MESSAGE}
+        <a
+          href={VAULT_DEPOSIT_PATH}
+          class="text-xs font-semibold text-[var(--color-primary)] underline"
+        >
+          Deposit to vault
+        </a>
+      {/if}
     </div>
   {/if}
 

@@ -1,10 +1,12 @@
-import type { WithdrawFromVaultRequest } from '@bigmarket/sdk';
+import type { VaultMarketOpRequest, WithdrawFromVaultRequest } from '@bigmarket/sdk';
 import { stacks } from '@bigmarket/sdk';
 import { hexToBytes } from '@stacks/common';
 import { broadcastTransaction, bufferCV, contractPrincipalCV, getAddressFromPrivateKey, makeContractCall, noneCV, PostConditionMode, principalCV, serializeTransaction, sponsorTransaction, standardPrincipalCV, uintCV } from '@stacks/transactions';
 import { STACKS_DEVNET, STACKS_MAINNET, STACKS_TESTNET } from '@stacks/network';
 import { getConfig } from '../../lib/config.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
+import { readDaoEventsInternal } from '../dao/events/dao_events_helper.js';
+import { readDaoExtensionEvents } from '../dao/events/dao_events_extension_helper.js';
 
 function resolveNetwork(network: string) {
 	if (network === 'testnet') return STACKS_TESTNET;
@@ -53,7 +55,8 @@ export async function withdrawFromVault(body: WithdrawFromVaultRequest): Promise
 	const usdcxAddr = daoConfig.VITE_USDCX_CONTRACT_ADDRESS;
 	const usdcxName = daoConfig.VITE_USDCX_CONTRACT_NAME;
 
-	const tx = await makeContractCall({
+	const devnet = getConfig().network === 'devnet';
+	let tx = await makeContractCall({
 		contractAddress: deployer,
 		contractName: vaultName,
 		functionName: 'withdraw',
@@ -62,16 +65,73 @@ export async function withdrawFromVault(body: WithdrawFromVaultRequest): Promise
 		network,
 		postConditionMode: PostConditionMode.Allow,
 		postConditions: [],
-		sponsored: true // important
+		sponsored: !devnet // important
 	});
-	const sponsoredTx = await sponsorTransaction({
-		transaction: tx,
-		sponsorPrivateKey: getConfig().walletKey, // different wallet pays fee
-		fee: 1000n // sponsor fee in micro-STX
-		//sponsorNonce // nonce of sponsor address
+	if (!devnet) {
+		tx = await sponsorTransaction({
+			transaction: tx,
+			sponsorPrivateKey: config.walletKey,
+			fee: 1000n
+		});
+	}
+
+	const txid = await broadcast(tx, 'withdraw-relayer');
+	//readDaoEventsInternal(`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`);
+	return { txid };
+}
+
+const VAULT_MARKET_FUNCTIONS = {
+	'buy-shares': 'buy-shares',
+	'sell-shares': 'sell-shares',
+	'claim-winnings': 'claim-winnings'
+} as const;
+
+/**
+ * Relay a signed BMP1 vault market operation (buy / sell / claim) in one tx.
+ */
+export async function executeVaultMarketOp(body: VaultMarketOpRequest): Promise<{ txid: string }> {
+	const config = getConfig();
+	const daoConfig = getDaoConfig();
+
+	if (!config.walletKey) throw new Error('Server walletKey is not configured.');
+
+	const fn = VAULT_MARKET_FUNCTIONS[body.operation];
+	if (!fn) throw new Error(`Unknown vault market operation: ${body.operation}`);
+
+	const { privateKey: senderKey } = resolveMappedKey(config, body.controllerAddress);
+
+	const network = resolveNetwork(config.network);
+	const deployer = daoConfig.VITE_DAO_DEPLOYER;
+	const vaultName = daoConfig.VITE_DAO_VAULT;
+	const [tokenAddr, tokenName] = body.tokenContract.split('.');
+	const [marketAddr, marketName] = body.marketExtension.split('.');
+
+	if (!tokenAddr || !tokenName || !marketAddr || !marketName) {
+		throw new Error('Invalid tokenContract or marketExtension principal');
+	}
+	const devnet = getConfig().network === 'devnet';
+	let tx = await makeContractCall({
+		contractAddress: deployer,
+		contractName: vaultName,
+		functionName: fn,
+		functionArgs: [bufferCV(hexToBytes(body.message)), bufferCV(hexToBytes(body.signature)), bufferCV(hexToBytes(body.pubkey)), contractPrincipalCV(tokenAddr, tokenName), principalCV(body.mappedAddress), contractPrincipalCV(marketAddr, marketName)],
+		senderKey,
+		network,
+		postConditionMode: PostConditionMode.Allow,
+		postConditions: [],
+		sponsored: !devnet
 	});
 
-	const txid = await broadcast(sponsoredTx, 'withdraw-relayer');
+	if (!devnet) {
+		tx = await sponsorTransaction({
+			transaction: tx,
+			sponsorPrivateKey: config.walletKey,
+			fee: 1000n
+		});
+	}
+
+	const txid = await broadcast(tx, `vault-market-${body.operation}`);
+	//readDaoEventsInternal(`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`);
 	return { txid };
 }
 
@@ -157,7 +217,8 @@ export async function sweepRelayAddress(body: { controllerAddress: string; recip
 	const usdcxName = daoConfig.VITE_USDCX_CONTRACT_NAME;
 	const network = resolveNetwork(config.network);
 
-	const tx = await makeContractCall({
+	const devnet = getConfig().network === 'devnet';
+	let tx = await makeContractCall({
 		contractAddress: usdcxAddr,
 		contractName: usdcxName,
 		functionName: 'transfer',
@@ -166,15 +227,17 @@ export async function sweepRelayAddress(body: { controllerAddress: string; recip
 		network,
 		postConditionMode: PostConditionMode.Allow,
 		postConditions: [],
-		sponsored: true
+		sponsored: !devnet // important
 	});
-	const sponsoredTx = await sponsorTransaction({
-		transaction: tx,
-		sponsorPrivateKey: getConfig().walletKey, // different wallet pays fee
-		fee: 1000n
-	});
-
-	const txid = await broadcast(sponsoredTx, 'sweep-relay');
+	if (!devnet) {
+		tx = await sponsorTransaction({
+			transaction: tx,
+			sponsorPrivateKey: config.walletKey,
+			fee: 1000n
+		});
+	}
+	const txid = await broadcast(tx, 'sweep-relay');
+	//await readDaoExtensionEvents(false,`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`);
 	console.log(`[sweep-relay] ${amount} USDCx from ${relayAddress} → ${body.recipientAddress}`);
 	return { txid, relayAddress, amount: amount.toString() };
 }

@@ -2,9 +2,8 @@
 	/**
 	 * Page-level balance summary — always visible when any wallet is connected.
 	 *
-	 * Vault balance is fetched on-demand via SDK.
-	 * Mapped address and its USDCx balance come from the persisted stores
-	 * populated by initWallet + loadWalletData in layout.svelte.
+	 * Vault USDCx is fetched on-chain with `resolveVaultUsdcxBalanceIdentity` and
+	 * mirrored to `userWalletStore` for market staking.
 	 */
 	import { onMount } from 'svelte';
 	import { stacks } from '@bigmarket/sdk';
@@ -13,19 +12,21 @@
 		daoConfigStore,
 		fetchEvmUsdcBalance,
 		initWallet,
+		refreshVaultUsdcxBalance,
 		requireAppConfig,
 		requireDaoConfig,
+		resolveVaultUsdcxBalanceIdentity,
 		userWalletStore,
 		walletState
 	} from '@bigmarket/bm-common';
 	import { fmtMicroToStx, truncate } from '@bigmarket/bm-utilities';
 	import type { WalletAccount } from '@bigmarket/bm-types';
 	import { ExternalLink } from 'lucide-svelte';
+	import { isCoordinator } from '$lib/core/tools/security';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	const daoConfig = $derived(requireDaoConfig($daoConfigStore));
 
-	// ── connected wallet identity ─────────────────────────────────────────────
 	const isStacksConnected = $derived(
 		$walletState.status === 'connected' && $walletState.chain === 'stacks'
 	);
@@ -42,18 +43,17 @@
 	);
 	const controllerLabel = $derived(isStacksConnected ? stxAddress : ethAddress);
 
-	// Mapped address — populated in walletState by initWallet for all chains
 	const mappedAddress = $derived($walletState.activeAccount?.mappedAddress ?? '');
+
+	const vaultIdentityReady = $derived(resolveVaultUsdcxBalanceIdentity($walletState) !== null);
 
 	const usdcxKey = $derived(`${daoConfig.VITE_DAO_DEPLOYER}.usdcx::usdcx-token`);
 
-	// ── balances (vault via contract, wallet + mapped via token API) ─────────
 	let loading = $state(false);
-	let vaultBalance = $state<bigint | null>(null);
+	let vaultBalanceLive = $state<bigint | null>(null);
 	let walletUsdcxLive = $state<bigint | null>(null);
 	let mappedUsdcxLive = $state<bigint | null>(null);
 
-	// Fall back to store values until a live fetch has completed
 	const walletUsdcx = $derived(
 		isStacksConnected
 			? (walletUsdcxLive ??
@@ -65,15 +65,14 @@
 			BigInt($userWalletStore.mappedTokenBalances?.fungible_tokens[usdcxKey]?.balance || 0)
 	);
 
-	// EVM wallet's USDC balance on Ethereum (micro-units, 6 dp) — persisted in walletState
 	const ethUsdcx = $derived(isEvmConnected ? BigInt($walletState.ethUsdcBalance ?? '0') : null);
+
+	const vaultBalance = $derived(vaultBalanceLive);
 
 	const fmt = (v: bigint | null) => (v === null ? '—' : fmtMicroToStx(Number(v), 6));
 
-	// Track which ETH address we last fetched so we only hit MetaMask once per
-	// connected address. Tab clicks don't change ethAddress so they won't trigger
-	// a re-fetch; explicit Refresh always re-fetches via refreshAll().
 	let lastFetchedEthAddr = $state('');
+	let lastVaultLoadKey = $state('');
 
 	$effect(() => {
 		if (isEvmConnected && ethAddress && ethAddress !== lastFetchedEthAddr) {
@@ -82,47 +81,67 @@
 		}
 	});
 
-	onMount(async () => {
-		await initWallet(appConfig.VITE_BIGMARKET_API);
+	$effect(() => {
+		const key = `${$walletState.chain}:${stxAddress}:${ethAddress}:${mappedAddress}:${vaultIdentityReady}`;
+		if (!anyConnected || !vaultIdentityReady || key === lastVaultLoadKey) return;
+		lastVaultLoadKey = key;
 		void loadAll();
 	});
 
-	$effect(() => {
-		if (anyConnected) void loadAll();
+	onMount(async () => {
+		await initWallet(appConfig.VITE_BIGMARKET_API);
+		if (vaultIdentityReady) void loadAll();
 	});
 
-	// Called by the Refresh button — always re-fetches the EVM balance too.
 	async function refreshAll() {
 		if (isEvmConnected && ethAddress) {
 			await fetchEvmUsdcBalance(ethAddress, appConfig.VITE_NETWORK);
 		}
+		lastVaultLoadKey = '';
 		await loadAll();
 	}
 
+	async function loadVaultBalance(): Promise<void> {
+		const micro = await refreshVaultUsdcxBalance();
+		if (micro !== null) {
+			vaultBalanceLive = micro;
+		}
+	}
+
 	async function loadAll() {
+		if (!vaultIdentityReady) return;
+
 		loading = true;
 		try {
 			const vault = stacks.createVaultClient(daoConfig);
+			const vaultFetch = loadVaultBalance();
+
 			if (isStacksConnected && stxAddress) {
-				[vaultBalance, walletUsdcxLive, mappedUsdcxLive] = await Promise.all([
-					vault.getVaultUsdcxBalance(appConfig.VITE_STACKS_API, 'stacks', stxAddress, stxAddress),
-					vault.getUsdcxBalance(appConfig.VITE_STACKS_API, stxAddress),
-					mappedAddress
-						? vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress)
-						: Promise.resolve(0n)
+				await Promise.all([
+					vaultFetch,
+					vault
+						.getUsdcxBalance(appConfig.VITE_STACKS_API, stxAddress)
+						.then((b) => (walletUsdcxLive = b)),
+					mappedAddress && mappedAddress !== stxAddress
+						? vault
+								.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress)
+								.then((b) => (mappedUsdcxLive = b))
+						: vault
+								.getUsdcxBalance(appConfig.VITE_STACKS_API, stxAddress)
+								.then((b) => (mappedUsdcxLive = b))
 				]);
-			} else if (isEvmConnected && ethAddress) {
-				// EVM wallet USDC is handled by the address-tracking $effect above.
-				// loadAll only needs to fetch on-chain data (vault + mapped address).
-				if (mappedAddress) {
-					[vaultBalance, mappedUsdcxLive] = await Promise.all([
-						vault.getVaultUsdcxBalance(appConfig.VITE_STACKS_API, 'evm', ethAddress, mappedAddress),
-						vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress)
-					]);
-				}
+			} else if (isEvmConnected && ethAddress && mappedAddress) {
+				await Promise.all([
+					vaultFetch,
+					vault
+						.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress)
+						.then((b) => (mappedUsdcxLive = b))
+				]);
+			} else {
+				await vaultFetch;
 			}
 		} catch {
-			// silently ignore — user can click refresh
+			// user can retry via Refresh
 		} finally {
 			loading = false;
 		}
@@ -133,7 +152,6 @@
 	<div
 		class="rounded-lg border border-neutral-200 bg-white/70 px-4 py-3 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/50"
 	>
-		<!-- header row -->
 		<div class="mb-2.5 flex items-center justify-between">
 			<div class="flex items-center gap-1.5">
 				<span class="h-2 w-2 rounded-full bg-green-500"></span>
@@ -149,11 +167,10 @@
 			<button
 				type="button"
 				onclick={() => void refreshAll()}
-				disabled={loading}
+				disabled={loading || !vaultIdentityReady}
 				class="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-neutral-600 disabled:cursor-wait dark:hover:text-neutral-200"
 				title="Refresh balances"
 			>
-				<!-- refresh icon -->
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="0 0 16 16"
@@ -170,15 +187,13 @@
 			</button>
 		</div>
 
-		<!-- balance tiles -->
-		<div class="grid grid-cols-1 gap-2 md:grid-cols-3">
-			<!-- Vault (primary) -->
+		<div class="grid grid-cols-1 gap-2 md:grid-cols-2">
 			<div
 				class="col-span-1 rounded-md border border-green-200 bg-green-50/60 p-2.5 dark:border-green-700/60 dark:bg-green-900/10"
 			>
 				<p class="text-[10px] text-neutral-500 dark:text-neutral-400">Vault USDCx</p>
 				<p class="mt-0.5 text-base font-semibold text-neutral-900 dark:text-neutral-100">
-					{loading ? '…' : fmt(vaultBalance)}
+					{loading && vaultBalance === null ? '…' : fmt(vaultBalance)}
 				</p>
 				<p class="mt-0.5 font-mono text-[9px] text-neutral-400">
 					<a
@@ -196,7 +211,6 @@
 				</p>
 			</div>
 
-			<!-- Wallet token balance (USDCx on Stacks, USDC on Ethereum) -->
 			<div
 				class="col-span-1 rounded-md border border-neutral-200 bg-neutral-50/80 p-2.5 dark:border-neutral-600 dark:bg-neutral-900/40"
 			>
@@ -227,12 +241,14 @@
 					</p>
 				{/if}
 			</div>
-
-			<!-- Mapped address USDCx -->
+		</div>
+		{#if isCoordinator($walletState.activeAccount?.address ?? '')}
 			<div
-				class="col-span-1 rounded-md border border-neutral-200 bg-neutral-50/80 p-2.5 dark:border-neutral-600 dark:bg-neutral-900/40"
+				class="col-span-1 mt-5 rounded-md border border-neutral-200 bg-neutral-50/80 p-2.5 dark:border-neutral-600 dark:bg-neutral-900/40"
 			>
-				<p class="text-[10px] text-neutral-500 dark:text-neutral-400">Mapped USDCx</p>
+				<p class="text-[10px] text-neutral-500 dark:text-neutral-400">
+					Mapped USDCx - relay address used to in deposits and withdrawals
+				</p>
 				<p class="mt-0.5 text-base font-semibold text-neutral-900 dark:text-neutral-100">
 					{loading ? '…' : fmt(mappedUsdcx)}
 				</p>
@@ -253,6 +269,6 @@
 					</p>
 				{/if}
 			</div>
-		</div>
+		{/if}
 	</div>
 {/if}

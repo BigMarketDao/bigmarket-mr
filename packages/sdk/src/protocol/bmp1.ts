@@ -19,13 +19,21 @@
  *   [192..223]slot4                   (32 bytes)
  *   [224..255]slot5                   (32 bytes)
  *
- * Opcode-specific slot assignments for OP_WITHDRAW (0x01):
- *   slot0  keccak256(to-consensus-buff? token-principal)
- *   slot1  keccak256(to-consensus-buff? mapped-address)
- *   slot2  keccak256(to-consensus-buff? recipient)
- *   slot3  high-16=0  low-16=amount  (u128 big-endian)
- *   slot4  high-16=0  low-16=expiry  (u128 big-endian, 0 = no expiry)
- *   slot5  reserved / zero
+ * OP_WITHDRAW (0x01):
+ *   slot0  token-commit   slot1  mapped-commit   slot2  recipient-commit
+ *   slot3  amount (low 16)   slot4  expiry (low 16)   slot5  zero
+ *
+ * OP_BUY_SHARES (0x02) / OP_SELL_SHARES (0x03):
+ *   slot0  token-commit   slot1  mapped-commit
+ *   slot2  outcome-index (high 16) || market-id (low 16)
+ *   slot3  market-extension-commit
+ *   slot4  buy: max-cost (high) || min-shares (low)
+ *          sell: min-refund (high) || shares-in (low)
+ *   slot5  expiry (low 16)
+ *
+ * OP_CLAIM_WINNINGS (0x04):
+ *   slot0  token-commit   slot1  mapped-commit
+ *   slot2  market-id (low 16)   slot3  market-extension-commit   slot5  expiry
  */
 
 export const BMP1_OPCODES = {
@@ -115,6 +123,38 @@ export function buildBmp1Message(params: Bmp1MessageParams): Uint8Array {
 export function amountToSlot(value: bigint): Uint8Array {
   const slot = new Uint8Array(32);
   slot.set(bigintTo16BytesBE(value), 16); // low 16 bytes
+  return slot;
+}
+
+/** Decode the high 16 bytes of a 32-byte BMP1 slot as u128 BE (`slot-high-uint` in the vault). */
+export function slotHighUint(slot32: Uint8Array): bigint {
+  if (slot32.length !== 32) {
+    throw new Error("BMP1 slot must be 32 bytes");
+  }
+  let v = 0n;
+  for (let i = 0; i < 16; i++) {
+    v = (v << 8n) + BigInt(slot32[i]!);
+  }
+  return v;
+}
+
+/** Decode the low 16 bytes of a 32-byte BMP1 slot as u128 BE (`slot-low-uint` in the vault). */
+export function slotLowUint(slot32: Uint8Array): bigint {
+  if (slot32.length !== 32) {
+    throw new Error("BMP1 slot must be 32 bytes");
+  }
+  let v = 0n;
+  for (let i = 16; i < 32; i++) {
+    v = (v << 8n) + BigInt(slot32[i]!);
+  }
+  return v;
+}
+
+/** Pack high/low u128 halves into one slot (matches `slot-high-uint` / `slot-low-uint`). */
+export function slotHighLow(high: bigint, low: bigint): Uint8Array {
+  const slot = new Uint8Array(32);
+  slot.set(bigintTo16BytesBE(high), 0);
+  slot.set(bigintTo16BytesBE(low), 16);
   return slot;
 }
 

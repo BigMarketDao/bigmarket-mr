@@ -396,8 +396,16 @@ export function createReputationClient(daoConfig: DaoConfig) {
         );
         return Number(result?.value?.value || result.value || -1);
       } catch (error) {
-        console.error("Error: fetchTokenDecimals: ", error);
-        return -1;
+        //console.error("Error: fetchTokenDecimals: error: ", error);
+        console.error(
+          "Error: fetchTokenDecimals: data: " +
+            data.contractAddress +
+            "." +
+            data.contractName +
+            "." +
+            data.functionName,
+        );
+        return 6;
       }
     },
 

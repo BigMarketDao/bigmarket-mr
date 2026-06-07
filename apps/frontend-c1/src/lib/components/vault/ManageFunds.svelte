@@ -6,8 +6,10 @@
 		appConfigStore,
 		daoConfigStore,
 		initWallet,
+		refreshVaultUsdcxBalance,
 		requireAppConfig,
 		requireDaoConfig,
+		userWalletStore,
 		walletState
 	} from '@bigmarket/bm-common';
 	import { fmtMicroToStx, requestMappedDepositToVault } from '@bigmarket/bm-utilities';
@@ -82,7 +84,11 @@
 	);
 
 	const vaultBalanceDisplay = $derived(
-		vaultBalanceMicro === null ? '—' : fmtMicroToStx(Number(vaultBalanceMicro), 6)
+		$userWalletStore.vaultUsdcxBalanceMicro !== undefined
+			? fmtMicroToStx($userWalletStore.vaultUsdcxBalanceMicro, 6)
+			: vaultBalanceMicro === null
+				? '—'
+				: fmtMicroToStx(Number(vaultBalanceMicro), 6)
 	);
 
 	const explorerTxUrl = $derived(
@@ -115,12 +121,8 @@
 
 			const vault = stacks.createVaultClient(daoConfig);
 			custodyBalanceMicro = await vault.getUsdcxBalance(appConfig.VITE_STACKS_API, mappedAddress);
-			vaultBalanceMicro = await vault.getVaultUsdcxBalance(
-				appConfig.VITE_STACKS_API,
-				sourceIdentity.chain,
-				sourceIdentity.address,
-				mappedAddress
-			);
+			const vaultMicro = await refreshVaultUsdcxBalance();
+			vaultBalanceMicro = vaultMicro ?? 0n;
 		} catch (e) {
 			errorMsg = e instanceof Error ? e.message : String(e);
 			custodyBalanceMicro = null;

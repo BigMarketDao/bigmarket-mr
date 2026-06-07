@@ -13,7 +13,8 @@
 	import {
 		fmtMicroToStxFormatted,
 		fmtMicroToStxNumber,
-		fmtStxMicro
+		fmtStxMicro,
+		getTransaction
 	} from '@bigmarket/bm-utilities';
 	import { stacks } from '@bigmarket/sdk';
 	import { fetchUserBalances } from '$lib/core/app/loaders/walletLoaders';

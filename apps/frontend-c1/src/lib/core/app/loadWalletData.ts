@@ -4,6 +4,7 @@ import {
 	getMappedAddress,
 	getStxAddress,
 	isLoggedIn,
+	readVaultUsdcxBalanceMicro,
 	userReputationStore,
 	userWalletStore,
 	walletState
@@ -43,6 +44,11 @@ export async function loadWalletData() {
 		obj.mappedTokenBalances = await getTokenBalances(appConfig.VITE_STACKS_API, mappedAddr);
 	} else {
 		obj.mappedTokenBalances = obj.tokenBalances;
+	}
+
+	const vaultMicro = await readVaultUsdcxBalanceMicro();
+	if (vaultMicro !== null) {
+		obj.vaultUsdcxBalanceMicro = vaultMicro;
 	}
 
 	userWalletStore.set(obj);

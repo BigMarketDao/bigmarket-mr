@@ -86,6 +86,8 @@ export type AddressObject = {
    *  For Stacks users this is a separate ephemeral relay address.
    *  For EVM/Solana users this is the same as tokenBalances (the relay IS their Stacks address). */
   mappedTokenBalances?: TokenBalances;
+  /** Vault ledger balance for USDCx (micro). Loaded on wallet init; vault path only applies to USDCx markets. */
+  vaultUsdcxBalanceMicro?: number;
   walletBalances?: WalletBalances;
   stxBalance?: number;
   bnsNameInfo?: any;
