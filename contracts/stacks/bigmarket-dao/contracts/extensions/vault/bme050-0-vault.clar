@@ -28,6 +28,7 @@
 
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 (use-trait sip010 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
+(use-trait prediction-market-trait .prediction-market-trait.prediction-market-trait)
 
 ;; ============================================================
 ;; Constants -- chains
@@ -151,6 +152,7 @@
 (define-constant ERR_EXPIRED              (err u7116))
 (define-constant ERR_PUBKEY_MISMATCH      (err u7117))
 (define-constant ERR_SIG_SCHEME           (err u7118))
+(define-constant ERR_MARKET_COMMIT        (err u7119))
 
 ;; ============================================================
 ;; Storage
@@ -394,41 +396,222 @@
     (ok amount)))
 
 ;; ============================================================
-;; Use Case 4: Direct withdrawal for native Stacks controllers
+;; Use Case 4: Buy shares via signed BMP1 + prediction-market-trait
 ;;
-;; tx-sender IS the controller identity; no off-chain signature
-;; is required because the Stacks transaction itself is already
-;; authenticated by the user's wallet (Leather / Xverse / etc.).
+;; Relayer passes the market extension as <prediction-market-trait> so the
+;; vault can call predict-vault on categorical OR scalar with one code path.
+;; Both extensions use uint `index` (trait: predict-vault).
 ;;
-;; Balance key used: (CHAIN_STACKS, hash160(tx-sender), tx-sender, token)
-;; which is exactly the key written by `deposit` for native Stacks users.
+;; BMP1 OP_BUY_SHARES body (v1.1 extends withdraw layout):
+;;   slot0  keccak256(consensus(token))
+;;   slot1  keccak256(consensus(mapped-address))
+;;   slot2  outcome-index (u128 BE, high 16) || market-id (u128 BE, low 16)
+;;   slot3  keccak256(consensus(market-extension-principal))
+;;   slot4  max-cost (high 16) || min-shares (low 16)
+;;   slot5  expiry (low 16); high 16 reserved zero
+;;
+;; Effects: debit vault ledger; market pulls max-cost from contract-caller
+;; (this vault); positions + BIGR go to mapped-address (beneficiary).
 ;; ============================================================
 
-;; (define-public (withdraw-direct
-;;     (token     <sip010>)
-;;     (amount    uint)
-;;     (recipient principal))
-;;   (let
-;;     (
-;;       (token-contract     (contract-of token))
-;;       (controller-address (pad-address-20 (principal-to-hash160 tx-sender)))
-;;       (current-balance    (get-balance CHAIN_STACKS controller-address tx-sender token-contract))
-;;     )
-;;     (asserts! (> amount u0)                  ERR_INVALID_AMOUNT)
-;;     (asserts! (check-token token-contract)   ERR_TOKEN_NOT_ALLOWED)
-;;     (asserts! (>= current-balance amount)    ERR_INSUFFICIENT_BALANCE)
+(define-public (buy-shares
+    (message        (buff 256))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (token          <sip010>)
+    (mapped-address principal)
+    (market         <prediction-market-trait>))
+  (let
+    (
+      (token-contract   (contract-of token))
+      (market-contract  (contract-of market))
+      (parsed           (parse-message message))
+      (chain            (get controller-chain parsed))
+      (controller       (get controller-address parsed))
+      (nonce            (buff-to-uint-be (get nonce parsed)))
+      (market-id        (slot-low-uint (get slot2 parsed)))
+      (outcome-index    (slot-high-uint (get slot2 parsed)))
+      (max-cost         (slot-high-uint (get slot4 parsed)))
+      (min-shares       (slot-low-uint (get slot4 parsed)))
+      (expiry           (slot-low-uint (get slot5 parsed)))
+      (token-commit     (keccak256 (unwrap-panic (to-consensus-buff? token-contract))))
+      (mapped-commit    (keccak256 (unwrap-panic (to-consensus-buff? mapped-address))))
+      (market-commit    (keccak256 (unwrap-panic (to-consensus-buff? market-contract))))
+      (current-balance  (get-balance chain controller mapped-address token-contract))
+      (current-nonce    (get-nonce chain controller))
+    )
+    (asserts! (is-eq (get magic   parsed) BMP1_MAGIC)           ERR_MSG_MAGIC)
+    (asserts! (is-eq (get version parsed) BMP1_VERSION)         ERR_MSG_VERSION)
+    (asserts! (is-eq (get opcode  parsed) OP_BUY_SHARES)         ERR_MSG_OPCODE)
+    (asserts! (check-chain chain)                               ERR_UNSUPPORTED_CHAIN)
+    (asserts! (check-address chain controller)                  ERR_INVALID_ADDRESS)
+    (asserts! (> max-cost u0)                                   ERR_INVALID_AMOUNT)
+    (asserts! (check-token token-contract)                      ERR_TOKEN_NOT_ALLOWED)
+    (asserts! (is-eq (get slot0 parsed) token-commit)          ERR_TOKEN_COMMIT)
+    (asserts! (is-eq (get slot1 parsed) mapped-commit)           ERR_MAPPED_COMMIT)
+    (asserts! (is-eq (get slot3 parsed) market-commit)          ERR_MARKET_COMMIT)
+    (asserts! (>= current-balance max-cost)                     ERR_INSUFFICIENT_BALANCE)
+    (asserts! (is-eq nonce current-nonce)                       ERR_INVALID_NONCE)
+    (asserts! (or (is-eq expiry u0) (<= stacks-block-height expiry)) ERR_EXPIRED)
+    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address))
+    (map-set balances
+      { controller-chain: chain, controller-address: controller, mapped-address: mapped-address, token: token-contract }
+      (- current-balance max-cost))
+    (map-set withdrawal-nonces { controller-chain: chain, controller-address: controller } (+ current-nonce u1))
+    (try! (as-contract? ((with-all-assets-unsafe))
+            (try! (contract-call? market predict-vault mapped-address market-id min-shares outcome-index token max-cost))
+            true))
+    (print {
+      event: "buy-shares",
+      market: market-contract,
+      market-id: market-id,
+      outcome-index: outcome-index,
+      max-cost: max-cost,
+      min-shares: min-shares,
+      mapped-address: mapped-address,
+      controller-chain: chain,
+      controller-address: controller
+    })
+    (ok outcome-index)))
 
-    ;;(map-set balances
-    ;;  { controller-chain: CHAIN_STACKS, controller-address: controller-address, mapped-address: tx-sender, token: token-contract }
-    ;;  (- current-balance amount))
+;; ============================================================
+;; Use Case 5: Sell shares via signed BMP1 + prediction-market-trait
+;;
+;; Mirror of buy-shares. The shares being sold are owned by `mapped-address`
+;; (the beneficiary) inside the market extension. The market refunds the net
+;; proceeds to this vault (it passes contract-caller as the payee), and the
+;; vault re-credits the controller ledger so the proceeds can later be
+;; withdrawn. No vault-ledger debit happens here -- selling brings funds in.
+;;
+;; BMP1 OP_SELL_SHARES body:
+;;   slot0  keccak256(consensus(token))
+;;   slot1  keccak256(consensus(mapped-address))
+;;   slot2  outcome-index (high 16) || market-id (low 16)
+;;   slot3  keccak256(consensus(market-extension-principal))
+;;   slot4  min-refund (high 16) || shares-in (low 16)
+;;   slot5  expiry (low 16)
+;; ============================================================
 
-    ;;(try! (as-contract? ((with-all-assets-unsafe))
-            ;; Q: CURRENT-CONTRACT OR TX-SENDER? (try! (contract-call? token transfer amount tx-sender recipient none))
-    ;;        true))
+(define-public (sell-shares
+    (message        (buff 256))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (token          <sip010>)
+    (mapped-address principal)
+    (market         <prediction-market-trait>))
+  (let
+    (
+      (token-contract   (contract-of token))
+      (market-contract  (contract-of market))
+      (parsed           (parse-message message))
+      (chain            (get controller-chain parsed))
+      (controller       (get controller-address parsed))
+      (nonce            (buff-to-uint-be (get nonce parsed)))
+      (market-id        (slot-low-uint (get slot2 parsed)))
+      (outcome-index    (slot-high-uint (get slot2 parsed)))
+      (min-refund       (slot-high-uint (get slot4 parsed)))
+      (shares-in        (slot-low-uint (get slot4 parsed)))
+      (expiry           (slot-low-uint (get slot5 parsed)))
+      (token-commit     (keccak256 (unwrap-panic (to-consensus-buff? token-contract))))
+      (mapped-commit    (keccak256 (unwrap-panic (to-consensus-buff? mapped-address))))
+      (market-commit    (keccak256 (unwrap-panic (to-consensus-buff? market-contract))))
+      (current-nonce    (get-nonce chain controller))
+    )
+    (asserts! (is-eq (get magic   parsed) BMP1_MAGIC)           ERR_MSG_MAGIC)
+    (asserts! (is-eq (get version parsed) BMP1_VERSION)         ERR_MSG_VERSION)
+    (asserts! (is-eq (get opcode  parsed) OP_SELL_SHARES)        ERR_MSG_OPCODE)
+    (asserts! (check-chain chain)                               ERR_UNSUPPORTED_CHAIN)
+    (asserts! (check-address chain controller)                  ERR_INVALID_ADDRESS)
+    (asserts! (> shares-in u0)                                  ERR_INVALID_AMOUNT)
+    (asserts! (check-token token-contract)                      ERR_TOKEN_NOT_ALLOWED)
+    (asserts! (is-eq (get slot0 parsed) token-commit)          ERR_TOKEN_COMMIT)
+    (asserts! (is-eq (get slot1 parsed) mapped-commit)           ERR_MAPPED_COMMIT)
+    (asserts! (is-eq (get slot3 parsed) market-commit)          ERR_MARKET_COMMIT)
+    (asserts! (is-eq nonce current-nonce)                       ERR_INVALID_NONCE)
+    (asserts! (or (is-eq expiry u0) (<= stacks-block-height expiry)) ERR_EXPIRED)
+    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address))
+    (map-set withdrawal-nonces { controller-chain: chain, controller-address: controller } (+ current-nonce u1))
+    ;; Market refunds the net proceeds to this vault (payee = contract-caller).
+    (let ((net-refund (try! (contract-call? market sell-vault mapped-address market-id min-refund outcome-index token shares-in))))
+      (credit-balance chain controller mapped-address token-contract net-refund)
+      (print {
+        event: "sell-shares",
+        market: market-contract,
+        market-id: market-id,
+        outcome-index: outcome-index,
+        shares-in: shares-in,
+        min-refund: min-refund,
+        net-refund: net-refund,
+        mapped-address: mapped-address,
+        controller-chain: chain,
+        controller-address: controller
+      })
+      (ok net-refund))))
 
-    ;; (print { event: "withdraw-direct", token-contract: token-contract, amount: amount,
-    ;;          controller-address: controller-address, recipient: recipient })
-    ;; (ok amount)))
+;; ============================================================
+;; Use Case 6: Claim winnings via signed BMP1 + prediction-market-trait
+;;
+;; Mirror of sell-shares. The winning shares are owned by `mapped-address`; the
+;; resolved market pays the net winnings to this vault, which re-credits the
+;; controller ledger. No outcome-index is needed -- the market uses its own
+;; resolved outcome.
+;;
+;; BMP1 OP_CLAIM_WINNINGS body:
+;;   slot0  keccak256(consensus(token))
+;;   slot1  keccak256(consensus(mapped-address))
+;;   slot2  market-id (low 16)
+;;   slot3  keccak256(consensus(market-extension-principal))
+;;   slot5  expiry (low 16)
+;; ============================================================
+
+(define-public (claim-winnings
+    (message        (buff 256))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (token          <sip010>)
+    (mapped-address principal)
+    (market         <prediction-market-trait>))
+  (let
+    (
+      (token-contract   (contract-of token))
+      (market-contract  (contract-of market))
+      (parsed           (parse-message message))
+      (chain            (get controller-chain parsed))
+      (controller       (get controller-address parsed))
+      (nonce            (buff-to-uint-be (get nonce parsed)))
+      (market-id        (slot-low-uint (get slot2 parsed)))
+      (expiry           (slot-low-uint (get slot5 parsed)))
+      (token-commit     (keccak256 (unwrap-panic (to-consensus-buff? token-contract))))
+      (mapped-commit    (keccak256 (unwrap-panic (to-consensus-buff? mapped-address))))
+      (market-commit    (keccak256 (unwrap-panic (to-consensus-buff? market-contract))))
+      (current-nonce    (get-nonce chain controller))
+    )
+    (asserts! (is-eq (get magic   parsed) BMP1_MAGIC)           ERR_MSG_MAGIC)
+    (asserts! (is-eq (get version parsed) BMP1_VERSION)         ERR_MSG_VERSION)
+    (asserts! (is-eq (get opcode  parsed) OP_CLAIM_WINNINGS)     ERR_MSG_OPCODE)
+    (asserts! (check-chain chain)                               ERR_UNSUPPORTED_CHAIN)
+    (asserts! (check-address chain controller)                  ERR_INVALID_ADDRESS)
+    (asserts! (check-token token-contract)                      ERR_TOKEN_NOT_ALLOWED)
+    (asserts! (is-eq (get slot0 parsed) token-commit)          ERR_TOKEN_COMMIT)
+    (asserts! (is-eq (get slot1 parsed) mapped-commit)           ERR_MAPPED_COMMIT)
+    (asserts! (is-eq (get slot3 parsed) market-commit)          ERR_MARKET_COMMIT)
+    (asserts! (is-eq nonce current-nonce)                       ERR_INVALID_NONCE)
+    (asserts! (or (is-eq expiry u0) (<= stacks-block-height expiry)) ERR_EXPIRED)
+    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address))
+    (map-set withdrawal-nonces { controller-chain: chain, controller-address: controller } (+ current-nonce u1))
+    ;; Market pays the net winnings to this vault (payee = contract-caller).
+    (let ((net-refund (try! (contract-call? market claim-winnings-vault mapped-address market-id token))))
+      (credit-balance chain controller mapped-address token-contract net-refund)
+      (print {
+        event: "claim-winnings",
+        market: market-contract,
+        market-id: market-id,
+        net-refund: net-refund,
+        mapped-address: mapped-address,
+        controller-chain: chain,
+        controller-address: controller
+      })
+      (ok net-refund))))
 
 ;; ============================================================
 ;; BMP1 message parsing
@@ -501,54 +684,42 @@
       ERR_SIG_SCHEME)))
 
 ;; SIP-018 structured-data verification for Stacks-native controllers.
-;;
-;; The wallet (Leather / Xverse) displays a human-readable tuple instead of
-;; a raw binary blob.  The signed message is:
-;;
-;;   {
-;;     amount:    uint           -- micro-units being withdrawn
-;;     bmp1-hash: (buff 32)      -- sha256(message) binding to the full BMP1
-;;     nonce:     uint           -- per-controller replay-protection counter
-;;     operation: (string-ascii) -- always "withdraw"
-;;     recipient: principal      -- destination Stacks address
-;;     token:     principal      -- SIP-010 token contract
-;;   }
-;;
-;; Clarity's to-consensus-buff? serialises tuple keys in lexicographic order,
-;; which matches @stacks/transactions serializeCV on the TypeScript side.
-;;
-;; Trust path:
-;;   1. Parse the BMP1 message to extract amount and nonce.
-;;   2. Compute sha256(message) as the bmp1-hash binding.
-;;   3. Serialise the human-readable tuple and sha256 it --> msg-cv-hash.
-;;   4. SIP-018 digest: sha256("SIP018" || domain-hash || msg-cv-hash).
-;;   5. Recover the compressed pubkey from the secp256k1 signature.
-;;   6. Derive hash160(pubkey) and compare with the BMP1 controller field.
-(define-private (verify-stacks-sip18
+;; Opcode-specific human-readable tuples (see SDK stacksSip18.ts).
+
+;; Mapped-address is validated before signature verify in each entrypoint.
+(define-private (stacks-sip18-domain-hash (mapped-address principal))
+  (if (is-eq (get version (unwrap-panic (principal-destruct? mapped-address))) STACKS_MAINNET_VERSION)
+    BMP1_DOMAIN_HASH_MAINNET
+    BMP1_DOMAIN_HASH_TESTNET))
+
+(define-private (verify-stacks-sip18-recover
+    (domain-hash (buff 32))
+    (msg-cv-hash (buff 32))
+    (signature   (buff 65))
+    (controller  (buff 32)))
+  (let
+    (
+      (digest       (sha256 (concat SIP018_PREFIX (concat domain-hash msg-cv-hash))))
+      (recovered    (unwrap! (secp256k1-recover? digest signature) ERR_SIG_VERIFICATION))
+      (derived-addr (hash160 recovered))
+      (expected-addr (low-20-of-32 controller))
+    )
+    (asserts! (is-eq derived-addr expected-addr) ERR_ADDRESS_MISMATCH)
+    (ok true)))
+
+(define-private (verify-stacks-withdraw
     (message        (buff 256))
     (signature      (buff 65))
     (controller     (buff 32))
-    (mapped-address principal)
     (token-contract principal)
-    (recipient      principal))
+    (recipient      principal)
+    (domain-hash    (buff 32)))
   (let
     (
-      ;; Choose domain hash: mainnet if mapped-address is an SP address.
-      (domain-hash
-        (if (is-eq (get version (unwrap! (principal-destruct? mapped-address) ERR_INVALID_ADDRESS))
-                   STACKS_MAINNET_VERSION)
-          BMP1_DOMAIN_HASH_MAINNET
-          BMP1_DOMAIN_HASH_TESTNET))
-      (parsed  (parse-message message))
-      (amount  (slot-low-uint (get slot3 parsed)))
-      (nonce   (buff-to-uint-be (get nonce parsed)))
-      ;; sha256 of the full BMP1 payload -- cryptographic binding
+      (parsed    (parse-message message))
+      (amount    (slot-low-uint (get slot3 parsed)))
+      (nonce     (buff-to-uint-be (get nonce parsed)))
       (bmp1-hash (sha256 message))
-      ;; Human-readable message tuple -- must exactly match the TypeScript SDK's
-      ;; buildWithdrawMessageCv tuple (same keys, same value types, same order).
-      ;; Clarity serialises tuple keys lexicographically (amount < bmp1-hash <
-      ;; nonce < operation < recipient < token), which is the same order used
-      ;; by @stacks/transactions serializeCV.
       (msg-cv-hash
         (sha256 (unwrap! (to-consensus-buff? {
           amount:    amount,
@@ -558,18 +729,124 @@
           recipient: recipient,
           token:     token-contract
         }) ERR_SIG_VERIFICATION)))
-      ;; SIP-018 digest: sha256("SIP018" || domain_hash || msg_cv_hash)
-      (digest
-        (sha256 (concat SIP018_PREFIX (concat domain-hash msg-cv-hash))))
-      ;; Recover the compressed public key (33 bytes) from the secp256k1 signature
-      (recovered
-        (unwrap! (secp256k1-recover? digest signature) ERR_SIG_VERIFICATION))
-      ;; Stacks controller address = hash160(compressed-pubkey)
-      (derived-addr  (hash160 recovered))
-      (expected-addr (low-20-of-32 controller))
     )
-    (asserts! (is-eq derived-addr expected-addr) ERR_ADDRESS_MISMATCH)
-    (ok true)))
+    (verify-stacks-sip18-recover domain-hash msg-cv-hash signature controller)))
+
+(define-private (verify-stacks-buy-shares
+    (message        (buff 256))
+    (signature      (buff 65))
+    (controller     (buff 32))
+    (mapped-address principal)
+    (token-contract principal)
+    (domain-hash    (buff 32)))
+  (let
+    (
+      (parsed        (parse-message message))
+      (nonce         (buff-to-uint-be (get nonce parsed)))
+      (market-id     (slot-low-uint (get slot2 parsed)))
+      (outcome-index (slot-high-uint (get slot2 parsed)))
+      (max-cost      (slot-high-uint (get slot4 parsed)))
+      (min-shares    (slot-low-uint (get slot4 parsed)))
+      (expiry        (slot-low-uint (get slot5 parsed)))
+      (bmp1-hash     (sha256 message))
+      (msg-cv-hash
+        (sha256 (unwrap! (to-consensus-buff? {
+          bmp1-hash:     bmp1-hash,
+          expiry:        expiry,
+          mapped-address: mapped-address,
+          market-id:     market-id,
+          max-cost:      max-cost,
+          min-shares:    min-shares,
+          nonce:         nonce,
+          operation:     "buy-shares",
+          outcome-index: outcome-index,
+          token:         token-contract
+        }) ERR_SIG_VERIFICATION)))
+    )
+    (verify-stacks-sip18-recover domain-hash msg-cv-hash signature controller)))
+
+(define-private (verify-stacks-sell-shares
+    (message        (buff 256))
+    (signature      (buff 65))
+    (controller     (buff 32))
+    (mapped-address principal)
+    (token-contract principal)
+    (domain-hash    (buff 32)))
+  (let
+    (
+      (parsed        (parse-message message))
+      (nonce         (buff-to-uint-be (get nonce parsed)))
+      (market-id     (slot-low-uint (get slot2 parsed)))
+      (outcome-index (slot-high-uint (get slot2 parsed)))
+      (min-refund    (slot-high-uint (get slot4 parsed)))
+      (shares-in     (slot-low-uint (get slot4 parsed)))
+      (expiry        (slot-low-uint (get slot5 parsed)))
+      (bmp1-hash     (sha256 message))
+      (msg-cv-hash
+        (sha256 (unwrap! (to-consensus-buff? {
+          bmp1-hash:     bmp1-hash,
+          expiry:        expiry,
+          mapped-address: mapped-address,
+          market-id:     market-id,
+          min-refund:    min-refund,
+          nonce:         nonce,
+          operation:     "sell-shares",
+          outcome-index: outcome-index,
+          shares-in:     shares-in,
+          token:         token-contract
+        }) ERR_SIG_VERIFICATION)))
+    )
+    (verify-stacks-sip18-recover domain-hash msg-cv-hash signature controller)))
+
+(define-private (verify-stacks-claim-winnings
+    (message        (buff 256))
+    (signature      (buff 65))
+    (controller     (buff 32))
+    (mapped-address principal)
+    (token-contract principal)
+    (domain-hash    (buff 32)))
+  (let
+    (
+      (parsed    (parse-message message))
+      (nonce     (buff-to-uint-be (get nonce parsed)))
+      (market-id (slot-low-uint (get slot2 parsed)))
+      (expiry    (slot-low-uint (get slot5 parsed)))
+      (bmp1-hash (sha256 message))
+      (msg-cv-hash
+        (sha256 (unwrap! (to-consensus-buff? {
+          bmp1-hash:     bmp1-hash,
+          expiry:        expiry,
+          mapped-address: mapped-address,
+          market-id:     market-id,
+          nonce:         nonce,
+          operation:     "claim-winnings",
+          token:         token-contract
+        }) ERR_SIG_VERIFICATION)))
+    )
+    (verify-stacks-sip18-recover domain-hash msg-cv-hash signature controller)))
+
+(define-private (verify-stacks-sip18
+    (message        (buff 256))
+    (signature      (buff 65))
+    (controller     (buff 32))
+    (mapped-address principal)
+    (token-contract principal)
+    (recipient      principal))
+  (let
+    (
+      (parsed      (parse-message message))
+      (opcode      (get opcode parsed))
+      (domain-hash (stacks-sip18-domain-hash mapped-address))
+    )
+    (if (is-eq opcode OP_WITHDRAW)
+      (verify-stacks-withdraw message signature controller token-contract recipient domain-hash)
+      (if (is-eq opcode OP_BUY_SHARES)
+        (verify-stacks-buy-shares message signature controller mapped-address token-contract domain-hash)
+        (if (is-eq opcode OP_SELL_SHARES)
+          (verify-stacks-sell-shares message signature controller mapped-address token-contract domain-hash)
+          (if (is-eq opcode OP_CLAIM_WINNINGS)
+            (verify-stacks-claim-winnings message signature controller mapped-address token-contract domain-hash)
+            ERR_MSG_OPCODE))))))
 
 ;; EVM secp256k1 + EIP-712 structured-data verification.
 ;;

@@ -15,48 +15,14 @@
 
 import type { DaoConfig, TxResult } from "@bigmarket/bm-types";
 import { bytesToHex, hexToBytes } from "@stacks/common";
-import {
-  bufferCV,
-  contractPrincipalCV,
-  principalCV,
-  serializeCV,
-  stringAsciiCV,
-  tupleCV,
-  uintCV,
-} from "@stacks/transactions";
+import { contractPrincipalCV, principalCV, serializeCV } from "@stacks/transactions";
 import { createVaultClient } from "../chains/stacks/vault.js";
+import {
+  buildStacksWithdrawMessageCv,
+  stacksBmp1DomainCv,
+} from "./stacksSip18.js";
 
-/**
- * SIP-018 human-readable withdraw message (matches verify-stacks-sip18 in the vault contract).
- *
- * The wallet (Leather/Xverse) will display named fields instead of a raw binary blob:
- *   amount     — micro-units being withdrawn (e.g. 200000000)
- *   bmp1-hash  — sha256 of the full BMP1 message (cryptographic binding)
- *   nonce      — replay-protection counter
- *   operation  — always "withdraw"
- *   recipient  — destination Stacks address
- *   token      — the SIP-010 token contract principal
- *
- * The contract reconstructs the same tuple from its function arguments +
- * the parsed BMP1 message and verifies the SIP-018 signature against it.
- */
-function buildWithdrawMessageCv(params: {
-  usdcxAddr: string;
-  usdcxName: string;
-  recipientAddress: string;
-  amountMicro: bigint;
-  nonce: bigint;
-  bmp1Hash: Uint8Array;
-}) {
-  return tupleCV({
-    amount: uintCV(params.amountMicro),
-    "bmp1-hash": bufferCV(params.bmp1Hash),
-    nonce: uintCV(params.nonce),
-    operation: stringAsciiCV("withdraw"),
-    recipient: principalCV(params.recipientAddress),
-    token: contractPrincipalCV(params.usdcxAddr, params.usdcxName),
-  });
-}
+export { buildStacksWithdrawMessageCv } from "./stacksSip18.js";
 
 export type StacksWithdrawParams = {
   daoConfig: DaoConfig;
@@ -170,9 +136,7 @@ export async function requestWithdrawSignatureStacks(
   // of a raw 256-byte binary blob.
   const bmp1Hash = sha256(bmp1);
 
-  const chainId = daoConfig.VITE_NETWORK === "mainnet" ? 1 : 2147483648;
-
-  const messageCv = buildWithdrawMessageCv({
+  const messageCv = buildStacksWithdrawMessageCv({
     usdcxAddr,
     usdcxName,
     recipientAddress,
@@ -180,11 +144,7 @@ export async function requestWithdrawSignatureStacks(
     nonce,
     bmp1Hash,
   });
-  const domainCv = tupleCV({
-    name: stringAsciiCV("BigMarket"),
-    version: stringAsciiCV("1.0.0"),
-    "chain-id": uintCV(chainId),
-  });
+  const domainCv = stacksBmp1DomainCv(daoConfig);
 
   const { request } = await import("@stacks/connect");
   const result = await request("stx_signStructuredMessage", {

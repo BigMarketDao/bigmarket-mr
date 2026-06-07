@@ -11,7 +11,7 @@
 ;; outcome from at least 2 and up to 10 potential outcomes.
 
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
-(use-trait prediction-market-trait 'SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ.prediction-market-trait.prediction-market-trait)
+(use-trait prediction-market-trait .prediction-market-trait.prediction-market-trait)
 
 (define-constant ERR_UNAUTHORISED (err u2100))
 (define-constant err-poll-already-exists (err u2102))

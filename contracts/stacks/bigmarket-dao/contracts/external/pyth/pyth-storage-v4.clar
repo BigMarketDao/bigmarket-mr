@@ -25,7 +25,7 @@
 
 
     (price (if (is-eq price-feed-id btc-id)
-              9500000000      ;; $95.000000 with expo -8
+              6900000000000   ;; $69,000.00000000 with expo -8
               (if (is-eq price-feed-id eth-id)
                   10500000000  ;; $105.000000
                   (if (is-eq price-feed-id stx-id)

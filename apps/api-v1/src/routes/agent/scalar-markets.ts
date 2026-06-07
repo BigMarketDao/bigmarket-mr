@@ -1,6 +1,7 @@
-import { dataHashSip18, fetchStacksInfo, GateKeeper, getArgsCV, getStacksNetwork, marketDataToTupleCV, PredictionMarketCreateEvent, ScalarMarketDataItem, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
+import { dataHashSip18, fetchStacksInfo, GateKeeper, getArgsCV, marketDataToTupleCV, PredictionMarketCreateEvent, ScalarMarketDataItem, StoredOpinionPoll } from '@mijoco/stx_helpers/dist/index.js';
 import { type StacksInfo } from '@mijoco/stx_helpers/dist/index.js';
 import { getConfig } from '../../lib/config.js';
+import { fetchWalletKeyNonce, resolveStacksNetwork } from '../../lib/stacks_tx.js';
 import { broadcastTransaction, Cl, makeContractCall, PostConditionMode } from '@stacks/transactions';
 import { getDaoConfig } from '../../lib/config_dao.js';
 import { daoEventCollection } from '../../lib/data/db_models.js';
@@ -168,7 +169,7 @@ async function createMarketOnChain(chain: number): Promise<any> {
 	console.log('createMarketOnChain: getArgsCV: meta: ', meta);
 	const market = await convertMarketToLocalFormat(meta, current);
 	await savePoll(market);
-	const network = getStacksNetwork(getConfig().network);
+	const network = resolveStacksNetwork();
 	console.log('createMarketOnChain: network: ' + network);
 	const gateKeeper: GateKeeper = await fetchCreateMarketMerkleInput();
 	console.log('gateKeeper: ', gateKeeper);
@@ -192,6 +193,7 @@ async function createMarketOnChain(chain: number): Promise<any> {
 		endCooling
 	);
 
+	const nonce = await fetchWalletKeyNonce();
 	const transaction = await makeContractCall({
 		postConditions: [],
 		postConditionMode: PostConditionMode.Allow,
@@ -200,9 +202,10 @@ async function createMarketOnChain(chain: number): Promise<any> {
 		functionName: 'create-market',
 		functionArgs: fa,
 		senderKey: getConfig().walletKey,
+		nonce,
 		network
 	});
-	const txResult = await broadcastTransaction({ transaction });
+	const txResult = await broadcastTransaction({ transaction, network });
 	console.log('createMarketOnChain: txResult:', txResult);
 	return txResult;
 }
@@ -252,7 +255,8 @@ function sleep(ms: number) {
 
 export async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {
 	if (market.extension !== `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
-	const network = getStacksNetwork(getConfig().network);
+	const network = resolveStacksNetwork();
+	const nonce = await fetchWalletKeyNonce();
 	console.log('resolveScalarMarketOnChain: resolving market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
 	const transaction = await makeContractCall({
 		network,
@@ -260,15 +264,17 @@ export async function resolveScalarMarketOnChain(market: PredictionMarketCreateE
 		contractName: market.extension.split('.')[1],
 		functionName: 'resolve-market',
 		functionArgs: [Cl.uint(market.marketId)],
-		senderKey: getConfig().walletKey
+		senderKey: getConfig().walletKey,
+		nonce
 	});
-	const txResult = await broadcastTransaction({ transaction });
+	const txResult = await broadcastTransaction({ transaction, network });
 	console.log('resolveScalarMarketOnChain: tx sent: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name, txResult);
 	return market;
 }
 
 async function resolveUndisputedMarketOnChain(market: PredictionMarketCreateEvent) {
-	const network = getStacksNetwork(getConfig().network);
+	const network = resolveStacksNetwork();
+	const nonce = await fetchWalletKeyNonce();
 	console.log('resolveUndisputedScalarMarketOnChain: market: ' + market.marketId + ':' + market.marketType + ' : ' + market.unhashedData.name);
 	const transaction = await makeContractCall({
 		network,
@@ -276,9 +282,10 @@ async function resolveUndisputedMarketOnChain(market: PredictionMarketCreateEven
 		contractName: market.extension.split('.')[1],
 		functionName: 'resolve-market-undisputed',
 		functionArgs: [Cl.uint(market.marketId)],
-		senderKey: getConfig().walletKey
+		senderKey: getConfig().walletKey,
+		nonce
 	});
-	const txResult = await broadcastTransaction({ transaction });
+	const txResult = await broadcastTransaction({ transaction, network });
 	console.log('resolveUndisputedMarketOnChain: tx sent: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name, txResult);
 	return market;
 }

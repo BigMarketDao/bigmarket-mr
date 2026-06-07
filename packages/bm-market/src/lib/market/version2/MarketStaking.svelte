@@ -11,7 +11,10 @@
     selectedCurrency,
     stakeAmount,
     getStxAddress,
+    isVaultControlledToken,
+    refreshVaultUsdcxBalance,
     userWalletStore,
+    walletState,
     bitcoinMode,
   } from "@bigmarket/bm-common";
   import { onMount } from "svelte";
@@ -36,7 +39,6 @@
     MaxBuyable,
     Sip10Data,
     UserStake,
-    MaxSellable,
   } from "@bigmarket/bm-types";
   import {
     calculatePayoutCategorical,
@@ -49,19 +51,25 @@
     getCategoryLabel,
     getMarketToken,
     getRate,
-    getTierBalance,
-    getTokenBalanceMicro,
     isCooling,
     isPostCooling,
     isResolvable,
     isStaking,
     isSTX,
-    STAKING_TIER,
     toFiat,
-    validatePurchaseAgainstMax,
   } from "@bigmarket/bm-utilities";
   import { stacks } from "@bigmarket/sdk";
   import { getSip10PostConditions } from "@bigmarket/sdk/dist/chains/stacks";
+  import {
+    buildStakeExecutionConfig,
+    marketExtensionParts,
+    needsVaultTopUp,
+    runMarketBuy,
+    runMarketSell,
+    spendableBalanceMicro,
+    VAULT_DEPOSIT_PATH,
+    VAULT_TOP_UP_MESSAGE,
+  } from "../../app/stakeExecution.js";
   import MarketStakingPurchaseAmount from "./market-staking-components/MarketStakingPurchaseAmount.svelte";
 
   const { market, userStake, preselectIndex } = $props<{
@@ -86,7 +94,6 @@
         tokenUri: "",
       } as Sip10Data),
   );
-  let totalBalanceUToken: number = $state(0);
   let resolutionAgent: boolean = $derived(
     getStxAddress() === $daoOverviewStore.contractData?.resolutionAgent,
   );
@@ -132,6 +139,60 @@
     // showOnRampModal.set(!$showOnRampModal);
   };
 
+  const stakeExecutionConfig = $derived.by(() => {
+    const token = $allowedTokenStore.find(
+      (t) => t.token === market.marketData.token,
+    );
+    if (!token) return undefined;
+    return buildStakeExecutionConfig({
+      daoConfig,
+      apiBaseUrl: appConfig.VITE_BIGMARKET_API,
+      stacksApi: appConfig.VITE_STACKS_API,
+      wallet: $walletState,
+      market,
+      token,
+      tokenBalances: $userWalletStore.tokenBalances,
+      vaultUsdcxBalanceMicro: $userWalletStore.vaultUsdcxBalanceMicro,
+    });
+  });
+
+  const isVaultMarket = $derived(
+    isVaultControlledToken(market.marketData.token, daoConfig),
+  );
+
+  const totalBalanceUToken = $derived(
+    isLoggedIn() ? spendableBalanceMicro(stakeExecutionConfig) : 0,
+  );
+
+  const showVaultTopUp = $derived(
+    isLoggedIn() &&
+      isVaultMarket &&
+      needsVaultTopUp(stakeExecutionConfig, $shareCosts.userCostMicro),
+  );
+
+  const stakeRunContext = $derived({
+    network: appConfig.VITE_NETWORK,
+    feeBips: $daoOverviewStore.contractData?.devFeeBips || 0,
+    slippage: $shareCosts.slippage,
+    userCostMicro: $shareCosts.userCostMicro,
+    stxAddress: getStxAddress(),
+  });
+
+  const handleStakeTxResult = (result: { success: boolean; txid?: string }) => {
+    if (result.success && result.txid) {
+      showTxModal(result.txid);
+      watchTransaction(
+        appConfig.VITE_BIGMARKET_API,
+        appConfig.VITE_STACKS_API,
+        `${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`,
+        result.txid,
+      );
+      void refreshVaultUsdcxBalance();
+    } else {
+      showTxModal("Unable to process right now");
+    }
+  };
+
   const getUserStakeAtIndex = (index: number): number => {
     return userStake?.stakes[index] || 0;
   };
@@ -156,72 +217,16 @@
       errorMessage = "Please connect your wallet";
       return;
     }
-    if ($shareCosts.userCostMicro <= 0) {
-      errorMessage = `Amount is required`;
+    const outcome = await runMarketBuy(
+      stakeExecutionConfig,
+      index,
+      stakeRunContext,
+    );
+    if (!outcome.ok) {
+      errorMessage = outcome.error;
       return;
     }
-    if (
-      appConfig.VITE_NETWORK !== "devnet" &&
-      $shareCosts.userCostMicro > totalBalanceUToken
-    ) {
-      errorMessage = "Amount exceeds your balance";
-      return;
-    }
-
-    let mult = isSTX(market.marketData.token)
-      ? 1_000_000
-      : Number(`1e${sip10Data?.decimals || 0}`);
-
-    const purchaseInfo = validatePurchaseAgainstMax(
-      {
-        index,
-        totalCost: $shareCosts.userCostMicro,
-        feeBips: $daoOverviewStore.contractData?.devFeeBips || 0,
-        slippage: $shareCosts.slippage,
-      },
-      market.marketData,
-    );
-    const maxShares = await stacks
-      .createMarketsClient(daoConfig)
-      .fetchMaxShares(
-        appConfig.VITE_STACKS_API,
-        market.marketId,
-        index,
-        $shareCosts.userCostMicro,
-        market.extension.split(".")[0],
-        market.extension.split(".")[1],
-      );
-    const token = $allowedTokenStore.find(
-      (t) => t.token === market.marketData.token,
-    )!;
-    const tierBalance = await getTierBalance(
-      appConfig.VITE_BIGMARKET_API,
-      STAKING_TIER,
-      getStxAddress(),
-    );
-
-    const response = await stacks
-      .createMarketsClient(daoConfig)
-      .buyShares(
-        getStxAddress(),
-        market,
-        token,
-        index,
-        $shareCosts.userCostMicro,
-        purchaseInfo.minShares,
-        tierBalance,
-      );
-    if (response.success) {
-      showTxModal(response.txid);
-      watchTransaction(
-        appConfig.VITE_BIGMARKET_API,
-        appConfig.VITE_STACKS_API,
-        `${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_MARKET_VOTING}`,
-        response.txid,
-      );
-    } else {
-      showTxModal("Unable to process right now");
-    }
+    handleStakeTxResult(outcome.result);
   };
 
   const doSell = async (index: number) => {
@@ -231,60 +236,16 @@
       errorMessage = "Please connect your wallet";
       return;
     }
-    if ($shareCosts.userCostMicro <= 0) {
-      errorMessage = `Amount is required`;
+    const outcome = await runMarketSell(
+      stakeExecutionConfig,
+      index,
+      stakeRunContext,
+    );
+    if (!outcome.ok) {
+      errorMessage = outcome.error;
       return;
     }
-    const purchaseInfo = validatePurchaseAgainstMax(
-      {
-        index,
-        totalCost: $shareCosts.userCostMicro,
-        feeBips: $daoOverviewStore.contractData?.devFeeBips || 0,
-        slippage: $shareCosts.slippage,
-      },
-      market.marketData,
-    );
-    const maxSellable: MaxSellable = await stacks
-      .createMarketsClient(daoConfig)
-      .fetchSellRefund(
-        appConfig.VITE_STACKS_API,
-        market.marketId,
-        index,
-        $shareCosts.userCostMicro,
-        market.extension.split(".")[0],
-        market.extension.split(".")[1],
-      );
-    const token = $allowedTokenStore.find(
-      (t) => t.token === market.marketData.token,
-    )!;
-    const tierBalance = await getTierBalance(
-      appConfig.VITE_BIGMARKET_API,
-      STAKING_TIER,
-      getStxAddress(),
-    );
-    const minRefund = Math.floor(maxSellable.refund * $shareCosts.slippage); // 1% slippage tolerance
-
-    const response = await stacks
-      .createMarketsClient(daoConfig)
-      .sellShares(
-        getStxAddress(),
-        market,
-        token,
-        index,
-        maxSellable.sharesIn,
-        minRefund,
-      );
-    if (response.success) {
-      showTxModal(response.txid);
-      watchTransaction(
-        appConfig.VITE_BIGMARKET_API,
-        appConfig.VITE_STACKS_API,
-        `${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO_MARKET_VOTING}`,
-        response.txid,
-      );
-    } else {
-      showTxModal("Unable to process right now");
-    }
+    handleStakeTxResult(outcome.result);
   };
 
   const PANEL_SHELL =
@@ -341,8 +302,8 @@
     // const netSpend = maxSpend * (1 - devFeeBips / 10000); // e.g. *0.98
 
     const numberShares = Number(`1e${sip10Data.decimals}`);
+    const [extensionAddress, extensionName] = marketExtensionParts(market);
     for (let i = 0; i < market.marketData.categories.length; i++) {
-      //costs.push(await getCostPerShare(appConfig.VITE_STACKS_API, market.marketId, i, maxSpend * numberShares, market.extension.split('.')[0], market.extension.split('.')[1]));
       const maxShares = await stacks
         .createMarketsClient(daoConfig)
         .fetchMaxShares(
@@ -350,8 +311,8 @@
           market.marketId,
           i,
           100000000,
-          market.extension.split(".")[0],
-          market.extension.split(".")[1],
+          extensionAddress,
+          extensionName,
         );
       costs.push(maxShares);
       console.log("maxShares: ", maxShares);
@@ -359,15 +320,8 @@
     let slippage = 0.3;
     shareCosts.set({ userCostMicro: 0, costs, sip10Data, slippage });
     if (isLoggedIn()) {
-      const tokenBalances = $userWalletStore.tokenBalances;
-      totalBalanceUToken = getTokenBalanceMicro(
-        market.marketData.token,
-        tokenBalances!,
-      );
       resolutionAgent =
         getStxAddress() === $daoOverviewStore.contractData?.resolutionAgent;
-    } else {
-      totalBalanceUToken = 0;
     }
 
     // Preselect option and focus amount if deep-linked
@@ -433,14 +387,33 @@
     {/if}
 
     <div class="mb-4 space-y-1">
+      {#if showVaultTopUp}
+        <div
+          class="mb-2 rounded-[var(--radius-md)] border border-[var(--color-warning-border)] bg-[var(--color-warning-soft)] px-3 py-2 text-sm text-[var(--color-warning)]"
+        >
+          {VAULT_TOP_UP_MESSAGE}
+          <a
+            href={VAULT_DEPOSIT_PATH}
+            class="ml-1 font-semibold underline hover:opacity-90"
+          >
+            Deposit to vault
+          </a>
+        </div>
+      {/if}
       <p class="text-sm text-[var(--color-muted-foreground)]">
-        Your balance:
+        {isVaultMarket ? "Vault balance" : "Your balance"}:
         <span class="tabular-nums text-[var(--color-card-foreground)]"
           >{balanceHuman}</span
         >
         {sip10Data.symbol} ≈ {balanceFiat}
         {$selectedCurrency.code === "USD" ? "" : ` ${$selectedCurrency.code}`}
       </p>
+      {#if isVaultMarket}
+        <p class="text-xs text-[var(--color-muted-foreground)]">
+          USDCx trades use your vault balance (sign + relay). Wallet USDCx is
+          not spent on this market.
+        </p>
+      {/if}
       <p class="text-sm text-[var(--color-muted-foreground)]">
         Closes in <Countdown
           endBlock={endOfMarket - currentBurnHeight}
@@ -522,6 +495,7 @@
                 {totalBalanceUToken}
                 userStakeAtIndex={getUserStakeAtIndex(selectedIndex)}
                 outcomeSide={outcomeSide(selectedIndex)}
+                {isVaultMarket}
                 {doBuy}
                 {doSell}
               />
@@ -648,6 +622,7 @@
                     {totalBalanceUToken}
                     userStakeAtIndex={getUserStakeAtIndex(index)}
                     outcomeSide="other"
+                    {isVaultMarket}
                     {doBuy}
                     {doSell}
                   />

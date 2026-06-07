@@ -27,6 +27,7 @@ import { STACKS_DEVNET, STACKS_MAINNET, STACKS_TESTNET } from "@stacks/network";
 import {
   buildBmp1Message,
   amountToSlot,
+  slotHighLow,
   BMP1_OPCODES,
   BMP1_CHAINS,
 } from "../../protocol/bmp1.js";
@@ -124,6 +125,35 @@ export function createVaultClient(daoConfig: DaoConfig) {
       return BigInt(res?.value || 0);
     },
 
+    /** Vault ledger balance for an arbitrary whitelisted SIP-010 token. */
+    async getVaultTokenBalance(
+      stacksApi: string,
+      userChain: VaultUserChain,
+      sourceAddress: string,
+      mappedAddress: string,
+      tokenContract: string,
+    ): Promise<bigint> {
+      const chain = normalizeVaultSourceChain(userChain);
+      const [tokenAddr, tokenName] = tokenContract.split(".");
+      const controllerChainArg = `0x${serializeCV(bufferCV(vaultChainIdBuffer(chain)))}`;
+      const controllerAddrArg = `0x${serializeCV(bufferCV(vaultUserAddressBuffer(chain, sourceAddress)))}`;
+      const mappedAddressArg = `0x${serializeCV(principalCV(mappedAddress))}`;
+      const tokenArg = `0x${serializeCV(contractPrincipalCV(tokenAddr, tokenName))}`;
+
+      const res = await callContractReadOnly(stacksApi, {
+        contractAddress: deployer,
+        contractName: vaultName,
+        functionName: "get-balance",
+        functionArgs: [
+          controllerChainArg,
+          controllerAddrArg,
+          mappedAddressArg,
+          tokenArg,
+        ],
+      });
+      return BigInt(res?.value || 0);
+    },
+
     /**
      * SIP-010 transfer: moves USDCx from the user's wallet to any Stacks address.
      * Used to fund a relayer-controlled mapped address before the relayer sweeps to vault.
@@ -164,7 +194,8 @@ export function createVaultClient(daoConfig: DaoConfig) {
      * Fetch the current withdrawal nonce for a controller identity from the vault.
      * Must be embedded in the BMP1 message to prevent replay.
      */
-    async getWithdrawNonce(
+    /** Per-controller nonce shared across all BMP1 vault opcodes. */
+    async getControllerNonce(
       stacksApi: string,
       userChain: VaultUserChain,
       sourceAddress: string,
@@ -180,6 +211,111 @@ export function createVaultClient(daoConfig: DaoConfig) {
         functionArgs: [chainArg, addrArg],
       });
       return BigInt(res?.value ?? 0);
+    },
+
+    /** @deprecated Use getControllerNonce */
+    getWithdrawNonce(
+      stacksApi: string,
+      userChain: VaultUserChain,
+      sourceAddress: string,
+    ) {
+      return this.getControllerNonce(stacksApi, userChain, sourceAddress);
+    },
+
+    buildBuySharesBmp1(params: {
+      userChain: VaultUserChain;
+      sourceAddress: string;
+      nonce: bigint;
+      tokenPrincipalCommit: Uint8Array;
+      mappedAddressCommit: Uint8Array;
+      marketExtensionCommit: Uint8Array;
+      marketId: bigint;
+      outcomeIndex: bigint;
+      maxCostMicro: bigint;
+      minShares: bigint;
+      expiryBlock?: bigint;
+    }): Uint8Array {
+      const chain = normalizeVaultSourceChain(params.userChain);
+      return buildBmp1Message({
+        opcode: BMP1_OPCODES.BUY_SHARES,
+        chain: BMP1_CHAINS[chain],
+        controllerAddress: vaultUserAddressBuffer(
+          chain,
+          params.sourceAddress,
+        ),
+        nonce: params.nonce,
+        slots: [
+          params.tokenPrincipalCommit,
+          params.mappedAddressCommit,
+          slotHighLow(params.outcomeIndex, params.marketId),
+          params.marketExtensionCommit,
+          slotHighLow(params.maxCostMicro, params.minShares),
+          amountToSlot(params.expiryBlock ?? 0n),
+        ],
+      });
+    },
+
+    buildSellSharesBmp1(params: {
+      userChain: VaultUserChain;
+      sourceAddress: string;
+      nonce: bigint;
+      tokenPrincipalCommit: Uint8Array;
+      mappedAddressCommit: Uint8Array;
+      marketExtensionCommit: Uint8Array;
+      marketId: bigint;
+      outcomeIndex: bigint;
+      minRefundMicro: bigint;
+      sharesIn: bigint;
+      expiryBlock?: bigint;
+    }): Uint8Array {
+      const chain = normalizeVaultSourceChain(params.userChain);
+      return buildBmp1Message({
+        opcode: BMP1_OPCODES.SELL_SHARES,
+        chain: BMP1_CHAINS[chain],
+        controllerAddress: vaultUserAddressBuffer(
+          chain,
+          params.sourceAddress,
+        ),
+        nonce: params.nonce,
+        slots: [
+          params.tokenPrincipalCommit,
+          params.mappedAddressCommit,
+          slotHighLow(params.outcomeIndex, params.marketId),
+          params.marketExtensionCommit,
+          slotHighLow(params.minRefundMicro, params.sharesIn),
+          amountToSlot(params.expiryBlock ?? 0n),
+        ],
+      });
+    },
+
+    buildClaimWinningsBmp1(params: {
+      userChain: VaultUserChain;
+      sourceAddress: string;
+      nonce: bigint;
+      tokenPrincipalCommit: Uint8Array;
+      mappedAddressCommit: Uint8Array;
+      marketExtensionCommit: Uint8Array;
+      marketId: bigint;
+      expiryBlock?: bigint;
+    }): Uint8Array {
+      const chain = normalizeVaultSourceChain(params.userChain);
+      return buildBmp1Message({
+        opcode: BMP1_OPCODES.CLAIM_WINNINGS,
+        chain: BMP1_CHAINS[chain],
+        controllerAddress: vaultUserAddressBuffer(
+          chain,
+          params.sourceAddress,
+        ),
+        nonce: params.nonce,
+        slots: [
+          params.tokenPrincipalCommit,
+          params.mappedAddressCommit,
+          amountToSlot(params.marketId),
+          params.marketExtensionCommit,
+          undefined,
+          amountToSlot(params.expiryBlock ?? 0n),
+        ],
+      });
     },
 
     /**

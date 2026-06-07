@@ -191,8 +191,37 @@ pubkey alongside the signature. The contract:
   ...)
 ```
 
-The same envelope shape (`message`, `signature`, `pubkey`) will be
-reused by the buy / sell / claim entrypoints when they are added.
+### Vault market relay (single API)
+
+All three market opcodes share one HTTP handler:
+
+`POST /cross-chain/protocol/vault-market-op`
+
+```json
+{
+  "operation": "buy-shares | sell-shares | claim-winnings",
+  "message": "0x…",
+  "signature": "0x…",
+  "pubkey": "0x…",
+  "mappedAddress": "ST…",
+  "marketExtension": "SP….bme024-0-market-predicting",
+  "tokenContract": "SP….token",
+  "controllerAddress": "0x…"
+}
+```
+
+Clarity entrypoints: `buy-shares`, `sell-shares`, `claim-winnings` on
+`bme050-0-vault`, each taking `(message, signature, pubkey, token, mapped, market-trait)`.
+
+**OP_BUY_SHARES (0x02)** slot layout:
+
+- slot2: outcome-index (high 16) || market-id (low 16)
+- slot3: keccak256(consensus(market-extension))
+- slot4: max-cost (high 16) || min-shares (low 16)
+
+**OP_SELL_SHARES (0x03):** slot4 = min-refund (high) || shares-in (low).
+
+**OP_CLAIM_WINNINGS (0x04):** slot2 = market-id (low 16) only; slot3 = market commit.
 
 Errors specific to message handling:
 

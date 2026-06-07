@@ -39,9 +39,6 @@ contract_id = 'SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1.univ2-share-fee-to'
 contract_id = 'SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1.univ2-share-fee-to-trait'
 
 [[project.requirements]]
-contract_id = "SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ.prediction-market-trait"
-
-[[project.requirements]]
 contract_id = "SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ.governance-token-trait"
 
 [[project.requirements]]
@@ -397,11 +394,6 @@ epoch = 'latest'
 
 [contracts.bme022-0-market-gating]
 path = 'contracts/extensions/bme022-0-market-gating.clar'
-clarity_version = 4
-epoch = 'latest'
-
-[contracts.bme023-0-market-bitcoin]
-path = 'contracts/extensions/linear/bme023-0-market-bitcoin.clar'
 clarity_version = 4
 epoch = 'latest'
 

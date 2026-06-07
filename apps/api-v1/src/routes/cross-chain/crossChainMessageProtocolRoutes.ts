@@ -1,8 +1,36 @@
 import express from 'express';
 import { WithdrawFromVaultRequest } from '@bigmarket/sdk';
-import { withdrawFromVault, getRelayInfo, sweepRelayAddress } from './messageProtocolHelpers.js';
+import { withdrawFromVault, executeVaultMarketOp, getRelayInfo, sweepRelayAddress } from './messageProtocolHelpers.js';
+import type { VaultMarketOpRequest } from '@bigmarket/sdk';
 
 const router = express.Router();
+
+/**
+ * POST /cross-chain/protocol/vault-market-op
+ *
+ * Single audited entrypoint for BMP1 vault market ops:
+ *   operation: buy-shares | sell-shares | claim-winnings
+ */
+router.post('/vault-market-op', async (req, res) => {
+	try {
+		const body = req.body as VaultMarketOpRequest;
+		console.log('POST /cross-chain/protocol/vault-market-op', {
+			operation: body.operation,
+			mappedAddress: body.mappedAddress,
+			marketExtension: body.marketExtension,
+			tokenContract: body.tokenContract,
+			controllerAddress: body.controllerAddress,
+			message: body.message,
+			signature: body.signature,
+			pubkey: body.pubkey
+		});
+		const result = await executeVaultMarketOp(body);
+		res.json(result);
+	} catch (err: any) {
+		console.error('POST /cross-chain/protocol/vault-market-op failed', err);
+		res.status(500).json({ error: err.message ?? 'Vault market operation failed' });
+	}
+});
 
 router.post('/withdraw-from-vault', async (req, res) => {
 	try {

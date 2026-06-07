@@ -8,7 +8,9 @@ import { isExtension } from './extension.js';
 import { daoEventCollection } from '../../../lib/data/db_models.js';
 import { BaseAdminMessage } from './dao_events_types.js';
 import { SignatureData } from '@stacks/connect';
-import { saveDaoEvent } from './dao_events_extension_helper.js';
+import { readDaoExtensionEvents, saveDaoEvent } from './dao_events_extension_helper.js';
+import { updateUICache } from '../../cache/cache_utils.js';
+import { updateDaoOverview } from '../../predictions/markets_helper.js';
 
 export function getC32AddressFromPublicKey(publicKeyHex: string, network: string): string {
 	//console.log("getC32AddressFromPublicKey: auth check");
@@ -41,6 +43,13 @@ export function getStacksAddressFromPost(signature: SignatureData, message: Base
 // 	if (!stacksAddress) return false;
 // 	return true;
 // }
+
+export async function readDaoEventsInternal(daoContractId: string) {
+	await readDaoExtensionEvents(false, daoContractId);
+	await readDaoEvents(false, daoContractId);
+	await updateDaoOverview();
+	await updateUICache();
+}
 
 export async function readDaoEvents(genesis: boolean, daoContractId: string) {
 	const url = getConfig().stacksApi + '/extended/v1/contract/' + daoContractId + '/events?limit=20';

@@ -599,9 +599,9 @@ export const getOutcomeMessageOneWord = (
     } else if (status === "cooling") {
       message = "Cooling";
     } else if (status === "pending") {
-      message = "Resolving";
+      message = "Pending resolution";
     } else if (status === "resolving") {
-      message = `Resolving`;
+      message = `Resolving market`;
     } else if (status === "resolved") {
       message = "Resolved";
     } else if (status === "disputed") {

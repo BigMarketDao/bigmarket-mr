@@ -57,9 +57,10 @@ async function getWalletSession(bmApiUrl?: string) {
     mappedAddress = result.mappedAddress;
   }
 
-  if (current.chain === "stacks" && !mappedAddress && stx && bmApiUrl) {
-    const result = await getCreateMappedStacksAddress(bmApiUrl, "stacks", stx);
-    mappedAddress = result.mappedAddress;
+  // Native Stacks: vault `deposit` credits (controller, mapped) with mapped = STX.
+  // Cross-chain relay mapping is only for EVM/Solana controllers.
+  if (current.chain === "stacks" && stx) {
+    mappedAddress = stx;
   }
 
   const accounts: WalletAccount[] = [
@@ -80,8 +81,7 @@ async function getWalletSession(bmApiUrl?: string) {
             chain: "stacks" as const,
             address: stx,
             type: "stx",
-            mappedAddress:
-              current.chain === "stacks" ? mappedAddress : undefined,
+            mappedAddress: current.chain === "stacks" ? stx : undefined,
           },
         ]
       : []),

@@ -28,9 +28,9 @@
 
 	let market = $derived(data.market);
 	let thread = $derived(data.thread);
-	let userStake: UserStake | null = $state({stakes: []});
-	let userTokens: UserTokens | null = $state({tokens: []});
-	let userLPTokensShares: UserLPShares | null = $state({shares: []});
+	let userStake: UserStake | null = $state({ stakes: [] });
+	let userTokens: UserTokens | null = $state({ tokens: [] });
+	let userLPTokensShares: UserLPShares | null = $state({ shares: 0 });
 	let marketAccounting: PredictionMarketAccounting | null = $state(null);
 	let marketStakes = $derived(data.marketStakes);
 
@@ -66,14 +66,13 @@
 
 	const fetchAccountingData = async () => {
 		marketAccounting = await stacks
-		.createMarketsClient(daoConfig)
-		.fetchMarketAccounting(
-			appConfig.VITE_STACKS_API,
-			market.marketId,
-			market?.extension.split('.')[0],
-			market?.extension.split('.')[1]
-		);
-
+			.createMarketsClient(daoConfig)
+			.fetchMarketAccounting(
+				appConfig.VITE_STACKS_API,
+				market.marketId,
+				market?.extension.split('.')[0],
+				market?.extension.split('.')[1]
+			);
 	};
 
 	// let markets = data.leaderAndMarketsData.markets;
@@ -107,11 +106,7 @@
 	<meta name="description" content="View prediction market details and participate" />
 </svelte:head>
 
-<div
-	data-market-page
-	data-market-id={market?.marketId}
-	data-market-type={market?.marketType}
->
+<div data-market-page data-market-id={market?.marketId} data-market-type={market?.marketType}>
 	<PageContainer>
 		{#if market && thread && userStake && marketAccounting}
 			<MarketContainer

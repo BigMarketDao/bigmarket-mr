@@ -5,6 +5,8 @@
 		bitcoinMode,
 		disconnectWallet,
 		isLoggedIn,
+		isVaultControlledToken,
+		refreshVaultUsdcxBalance,
 		showOnRampModal,
 		userReputationStore,
 		userWalletStore,
@@ -38,7 +40,8 @@
 	const TOKEN_TOOLTIPS: Record<string, string> = {
 		STX: 'Used to pay for actions on BigMarket',
 		BIG: 'Earn it by participating. Use it to vote.',
-		sBTC: 'Bitcoin that works inside apps like BigMarket'
+		sBTC: 'Bitcoin that works inside apps like BigMarket',
+		USDCx: 'Wallet: SIP-010 on Stacks. Vault: used for USDCx market trades (sign + relay).'
 	};
 
 	let {
@@ -138,6 +141,20 @@
 		return getTokenBalanceMicro(token, tokenBalances) || 0;
 	}
 
+	function getVaultUsdcxMicro(): number {
+		return $userWalletStore.vaultUsdcxBalanceMicro ?? 0;
+	}
+
+	function isUsdcxToken(tokenContract: string): boolean {
+		return isVaultControlledToken(tokenContract, daoConfig);
+	}
+
+	$effect(() => {
+		if (isOpen && isLoggedIn()) {
+			void refreshVaultUsdcxBalance();
+		}
+	});
+
 	function formatBalanceDisplay(micro: number, decimals: number, suffix = ''): string {
 		if (!micro) return '—';
 		const formatted = fmtMicroToStx(micro, decimals);
@@ -188,7 +205,8 @@
 	symbol: string,
 	subtitle: string,
 	balance: string,
-	tooltip: string | undefined
+	tooltip: string | undefined,
+	vaultBalance: string | undefined = undefined
 )}
 	<div
 		class="group/token relative flex items-center justify-between rounded-md border-l-2 border-transparent px-3 py-2.5 transition duration-150 ease-out hover:border-l-accent hover:bg-black/5 dark:hover:bg-white/5"
@@ -199,7 +217,14 @@
 				<span class="text-xs text-muted-foreground">{subtitle}</span>
 			{/if}
 		</div>
-		<span class="font-mono text-sm text-foreground">{balance}</span>
+		<div class="flex flex-col items-end gap-0.5">
+			<span class="font-mono text-sm text-foreground" title="Wallet">{balance}</span>
+			{#if vaultBalance}
+				<span class="font-mono text-xs text-muted-foreground" title="Vault"
+					>vault {vaultBalance}</span
+				>
+			{/if}
+		</div>
 		{#if tooltip}
 			<div
 				class="pointer-events-none absolute bottom-full left-3 z-10 mb-1 max-w-[14rem] rounded-lg bg-popover px-2.5 py-1.5 text-xs text-popover-foreground opacity-0 shadow-md ring-1 ring-border transition-opacity duration-150 group-hover/token:opacity-100 dark:bg-card"
@@ -211,12 +236,7 @@
 	</div>
 {/snippet}
 
-{#snippet navItem(
-	NavIcon: typeof Icon,
-	href: string,
-	title: string,
-	subtitle: string
-)}
+{#snippet navItem(NavIcon: typeof Icon, href: string, title: string, subtitle: string)}
 	<a
 		{href}
 		class="group/nav flex w-full cursor-pointer items-start gap-3 rounded-md border-l-2 border-transparent px-3 py-2.5 transition duration-150 ease-out hover:border-l-accent hover:bg-black/5 dark:hover:bg-white/5"
@@ -294,7 +314,7 @@
 										{/if}
 										{#if addressCopied}
 											<span
-												class="pointer-events-none absolute -top-8 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-lg bg-popover px-2 py-1 text-[10px] text-foreground shadow-md ring-1 ring-border dark:bg-card"
+												class="pointer-events-none absolute -top-8 left-1/2 z-20 -translate-x-1/2 rounded-lg bg-popover px-2 py-1 text-[10px] whitespace-nowrap text-foreground shadow-md ring-1 ring-border dark:bg-card"
 											>
 												Copied!
 											</span>
@@ -353,14 +373,21 @@
 						{#each allowedTokens as token (token.token)}
 							{#if token.sip10Data?.symbol !== 'STX' && token.sip10Data?.symbol !== 'BIG'}
 								{@const symbol = token.sip10Data?.symbol ?? ''}
+								{@const decimals = token.sip10Data?.decimals ?? 6}
+								{@const walletBal = formatBalanceDisplay(getBalance(token.token) || 0, decimals)}
+								{@const vaultBal = isUsdcxToken(token.token)
+									? formatBalanceDisplay(getVaultUsdcxMicro(), decimals)
+									: undefined}
 								{@render tokenRow(
 									symbol,
-									symbol === 'sBTC' ? 'Bitcoin on Stacks' : '',
-									formatBalanceDisplay(
-										getBalance(token.token) || 0,
-										token.sip10Data?.decimals ?? 6
-									),
-									TOKEN_TOOLTIPS[symbol]
+									isUsdcxToken(token.token)
+										? 'wallet · vault for markets'
+										: symbol === 'sBTC'
+											? 'Bitcoin on Stacks'
+											: '',
+									walletBal,
+									TOKEN_TOOLTIPS[symbol],
+									isUsdcxToken(token.token) ? vaultBal : undefined
 								)}
 							{/if}
 						{/each}

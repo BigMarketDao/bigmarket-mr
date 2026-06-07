@@ -159,11 +159,6 @@ plan:
       emulated-sender: SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ
       path: .cache/requirements/SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ.hedge-trait.clar
       clarity-version: 3
-    - transaction-type: emulated-contract-publish
-      contract-name: prediction-market-trait
-      emulated-sender: SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ
-      path: .cache/requirements/SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ.prediction-market-trait.clar
-      clarity-version: 3
     epoch: '3.2'
   - id: 5
     transactions:
@@ -181,6 +176,11 @@ plan:
       contract-name: bme000-0-governance-token
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/extensions/bme000-0-governance-token.clar
+      clarity-version: 4
+    - transaction-type: emulated-contract-publish
+      contract-name: prediction-market-trait
+      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+      path: contracts/traits/prediction-market-trait.clar
       clarity-version: 4
     - transaction-type: emulated-contract-publish
       contract-name: univ2-router
@@ -246,11 +246,6 @@ plan:
       contract-name: bme021-0-market-voting
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/extensions/bme021-0-market-voting.clar
-      clarity-version: 4
-    - transaction-type: emulated-contract-publish
-      contract-name: bme023-0-market-bitcoin
-      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
-      path: contracts/extensions/linear/bme023-0-market-bitcoin.clar
       clarity-version: 4
     - transaction-type: emulated-contract-publish
       contract-name: bme024-0-market-predicting
@@ -672,18 +667,13 @@ plan:
       path: contracts/traits/sips/nft-trait.clar
       clarity-version: 4
     - transaction-type: emulated-contract-publish
-      contract-name: prediction-market-trait
-      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
-      path: contracts/traits/prediction-market-trait.clar
-      clarity-version: 4
-    epoch: '3.4'
-  - id: 9
-    transactions:
-    - transaction-type: emulated-contract-publish
       contract-name: proposal-trait
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/traits/proposal-trait.clar
       clarity-version: 4
+    epoch: '3.4'
+  - id: 9
+    transactions:
     - transaction-type: emulated-contract-publish
       contract-name: pyth-traits-v2
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
