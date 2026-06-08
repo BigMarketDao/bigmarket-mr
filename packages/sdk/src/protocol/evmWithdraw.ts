@@ -5,12 +5,9 @@
  *   Builds the 256-byte BMP1 OP_WITHDRAW message for CHAIN_EVM, then
  *   asks MetaMask to sign it via eth_signTypedData_v4 (EIP-712).
  *
- *   The signed EIP-712 struct is:
- *     BMP1Withdraw(address controller, uint256 amount, uint256 nonce, bytes32 bmp1Hash)
- *
- *   MetaMask renders each field by name so users see their ETH address,
- *   the withdrawal amount, the nonce, and a 32-byte commitment to the full
- *   BMP1 message — instead of raw binary bytes.
+ *   The signed EIP-712 struct mirrors the Stacks SIP-018 withdraw tuple:
+ *     BMP1Withdraw(address controller, uint256 amount, bytes32 bmp1Hash,
+ *                  uint256 nonce, string operation, string recipient, string token)
  *
  *   Recovers the caller's uncompressed secp256k1 public key (X||Y, 64 bytes)
  *   from the signature for on-chain verification.
@@ -32,6 +29,10 @@ import {
   serializeCV,
 } from "@stacks/transactions";
 import { createVaultClient } from "../chains/stacks/vault.js";
+import {
+  buildEvmBmp1TypedData,
+  computeEvmBmp1Digest,
+} from "./evmSip18.js";
 import type { WithdrawFromVaultRequest } from "./stacksWithdraw.js";
 
 export type EvmWithdrawParams = {
@@ -69,8 +70,8 @@ export type SignedEvmWithdrawMessage = {
 };
 
 /**
- * Step 1: build the BMP1 message, sign it with MetaMask (personal_sign /
- * EIP-712), and recover the caller's uncompressed secp256k1 public key.
+ * Step 1: build the BMP1 message, sign it with MetaMask (EIP-712), and recover
+ * the caller's uncompressed secp256k1 public key.
  */
 export async function requestWithdrawSignatureEvm(
   params: EvmWithdrawParams,
@@ -110,127 +111,41 @@ export async function requestWithdrawSignatureEvm(
     amountMicro,
   });
 
-  // ── Sign with MetaMask eth_signTypedData_v4 (EIP-712) ────────────────────
-  // MetaMask renders: "BigMarket · BMP1Withdraw · payload: 0x424d50…"
-  // — far more readable than raw personal_sign bytes.
+  const typedData = buildEvmBmp1TypedData({
+    bmp1,
+    ethAddress,
+    display: {
+      token: tokenPrincipal,
+      mappedAddress,
+      recipient: mappedAddress,
+    },
+  });
+  const digest = computeEvmBmp1Digest(typedData.primaryType, typedData.message);
+
   const { getMetaMask } = await import("../chains/ethereum/injected.js");
   const provider = getMetaMask();
-
-  // ── Parse BMP1 fields for EIP-712 typed data ────────────────────────────
-  // BMP1 layout (offsets in bytes):
-  //   [0-7]   magic / version / opcode / flags
-  //   [8]     opcode,  [9] version,  [10-11] flags
-  //   [12-15] chain (4 bytes)
-  //   [16-47] controller-address (32 bytes, 12 zero padding + 20-byte EVM addr)
-  //   [48-63] nonce (16 bytes big-endian)
-  //   [64-95] slot0 (token commit)  ...
-  //   [160-191] slot3 (amount, uint256-compatible: high 16 = 0, low 16 = value)
-
-  const bmp1Hash = keccak_256(bmp1); // bytes32 — binds the signature to the full BMP1
-  const controllerBytes = bmp1.slice(16, 48); // (buff 32) — EIP-712 address encoding
-  const amountSlot = bmp1.slice(160, 192); // (buff 32) — EIP-712 uint256 encoding
-  const nonceBuff16 = bmp1.slice(48, 64); // (buff 16) from BMP1
-
-  // The EIP-712 typed-data message (what MetaMask displays):
-  //   controller → recognisable 0x ETH address
-  //   amount     → integer (micro-units, e.g. 55000000 for 55 USDCx)
-  //   nonce      → replay-protection counter
-  //   bmp1Hash   → commitment to the full BMP1 payload
-  const typedData = {
-    types: {
-      EIP712Domain: [
-        { name: "name", type: "string" },
-        { name: "version", type: "string" },
-      ],
-      BMP1Withdraw: [
-        { name: "controller", type: "address" },
-        { name: "amount", type: "uint256" },
-        { name: "nonce", type: "uint256" },
-        { name: "bmp1Hash", type: "bytes32" },
-      ],
-    },
-    primaryType: "BMP1Withdraw",
-    domain: { name: "BigMarket", version: "1.0.0" },
-    message: {
-      controller: ethAddress,
-      // MetaMask converts BigInt-as-string to uint256 correctly
-      amount: amountMicro.toString(),
-      nonce: nonce.toString(),
-      bmp1Hash: `0x${bytesToHex(bmp1Hash)}`,
-    },
-  };
 
   const sigHex = (await provider.request({
     method: "eth_signTypedData_v4",
     params: [ethAddress, JSON.stringify(typedData)],
   })) as string;
 
-  // MetaMask returns 65 bytes in R(32) || S(32) || V(1) order, where V = 27 or 28.
   const rawSig = hexToBytes(sigHex.startsWith("0x") ? sigHex.slice(2) : sigHex);
-
-  // Normalise V: some wallets return 0/1, others 27/28
   const v = rawSig[64] >= 27 ? rawSig[64] - 27 : rawSig[64];
 
-  // noble/secp256k1 v3 recoverPublicKey needs V(1) || R(32) || S(32) = VRS format.
   const vrsSig = new Uint8Array(65);
   vrsSig[0] = v;
   vrsSig.set(rawSig.slice(0, 64), 1);
 
-  // Clarity's secp256k1-recover? expects R(32) || S(32) || V(1) = RSV format
-  // (same byte order MetaMask emits, but with V normalised to 0 or 1).
   const rsvSig = new Uint8Array(65);
-  rsvSig.set(rawSig.slice(0, 64), 0); // R + S
-  rsvSig[64] = v; // normalised V as last byte
-
-  // ── Reproduce the EIP-712 digest for public key recovery ────────────────
-  // Must exactly mirror verify-evm in bme050-0-vault.clar.
-  //
-  // BMP1Withdraw(address controller,uint256 amount,uint256 nonce,bytes32 bmp1Hash)
-  //
-  //   struct-encoded (160 bytes) =
-  //     WITHDRAW_TYPEHASH (32)   keccak256(type string)
-  //     || controllerBytes (32)  BMP1 controller-address field — EIP-712 address encoding
-  //     || amountSlot (32)       BMP1 slot3 — already uint256 big-endian
-  //     || nonce32 (32)          16 zero bytes || BMP1 nonce (16 bytes)
-  //     || bmp1Hash (32)         keccak256(BMP1 message)
-  //
-  //   struct-hash = keccak256(struct-encoded)
-  //   digest      = keccak256(0x1901 || DOMAIN_SEPARATOR || struct-hash)
-
-  const WITHDRAW_TYPEHASH = hexToBytes(
-    "f1ebe45c9252e59f16c9eaed223a770a5d40b6b8bc14507a83cc68a149d644ba",
-  );
-  const DOMAIN_SEPARATOR = hexToBytes(
-    "4e3c7155c429f36e33b8498ec258c659f393ec00d8434884b72472304c45681d",
-  );
-  const EIP712_PREFIX = new Uint8Array([0x19, 0x01]);
-
-  // nonce32: 16 zero bytes + BMP1 nonce (16 bytes) = uint256 big-endian
-  const nonce32 = new Uint8Array(32);
-  nonce32.set(nonceBuff16, 16);
-
-  const structEncoded = new Uint8Array(160);
-  structEncoded.set(WITHDRAW_TYPEHASH, 0);
-  structEncoded.set(controllerBytes, 32);
-  structEncoded.set(amountSlot, 64);
-  structEncoded.set(nonce32, 96);
-  structEncoded.set(bmp1Hash, 128);
-
-  const structHash = keccak_256(structEncoded);
-  const digest = keccak_256(
-    new Uint8Array([...EIP712_PREFIX, ...DOMAIN_SEPARATOR, ...structHash]),
-  );
+  rsvSig.set(rawSig.slice(0, 64), 0);
+  rsvSig[64] = v;
 
   const { recoverPublicKey, Point } = await import("@noble/secp256k1");
+  const compressedKey = recoverPublicKey(vrsSig, digest, { prehash: false });
+  const uncompressedKey = Point.fromBytes(compressedKey).toBytes(false);
+  const pubkey64 = uncompressedKey.slice(1);
 
-  // noble/secp256k1 v3 recoverPublicKey requires VRS format
-  const compressedKey = recoverPublicKey(vrsSig, digest, {
-    prehash: false,
-  }); // 33 bytes (compressed)
-  const uncompressedKey = Point.fromBytes(compressedKey).toBytes(false); // 65 bytes (04||X||Y)
-  const pubkey64 = uncompressedKey.slice(1); // 64 bytes X||Y
-
-  // rsvSig (R || S || V) is what Clarity's secp256k1-recover? expects on-chain
   return { message: bmp1, signature: rsvSig, pubkey64 };
 }
 
@@ -251,12 +166,8 @@ export async function relayEvmWithdrawToServer(
     message: bytesToHex(signed.message),
     signature: bytesToHex(signed.signature),
     pubkey: bytesToHex(signed.pubkey64),
-    // For EVM withdrawals the vault's mapped-address and recipient are both
-    // the user's mapped Stacks address (the server holds its private key)
     stxAddress: params.mappedAddress,
     recipientAddress: params.mappedAddress,
-    // Tells the server to derive senderKey = deriveStacksPrivateKey(walletKey, ethAddress)
-    // rather than using the global walletKey as the tx fee-payer.
     controllerAddress: params.ethAddress,
   };
 

@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { principalCV } from '@stacks/transactions';
+import { getAddressFromPrivateKey, principalCV } from '@stacks/transactions';
 import { crossChainIntentCollection, crossChainMappingCollection } from '../../lib/data/db_models.js';
 import { getConfig } from '../../lib/config.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
@@ -174,8 +174,9 @@ export async function sweepIntentToVault(intentId: string) {
 
 		const nonce = await getAccountNonce(intent.mappedAddress);
 		console.log('nonce = ' + nonce + ' for ' + intent.mappedAddress);
-		const privateKey = stacks.deriveStacksPrivateKey(getConfig().walletKey, intent.sourceAddress);
-
+		let privateKey = stacks.deriveStacksPrivateKey(getConfig().walletKey, intent.sourceAddress);
+		const ma = getAddressFromPrivateKey(privateKey, getConfig().network as 'devnet' | 'mainnet' | 'testnet');
+		console.log('sweepIntentToVault = ' + ma);
 		const relayer = stacks.createVaultRelayerClient(getDaoConfig());
 		const { txid } = await relayer.depositForFromMappedAddress(
 			{
@@ -247,7 +248,11 @@ export async function depositMappedBalanceToVault(sourceChain: string, sourceAdd
 
 	const nonce = await getAccountNonce(mappedAddress);
 	const privateKey = stacks.deriveStacksPrivateKey(getConfig().walletKey, sourceAddress);
-
+	const ma = getAddressFromPrivateKey(privateKey, getConfig().network as 'devnet' | 'mainnet' | 'testnet');
+	console.log('sweepIntentToVault = ' + ma);
+	console.log('depositForFromMappedAddress: sourceAddress: ' + sourceAddress);
+	console.log('depositForFromMappedAddress: mappedAddress: ' + mappedAddress);
+	console.log('depositForFromMappedAddress: network: ' + getConfig().network);
 	const relayer = stacks.createVaultRelayerClient(dao);
 	const params: RelayerDepositForParams = {
 		privateKey,
