@@ -391,7 +391,7 @@
         <div
           class="mb-2 rounded-[var(--radius-md)] border border-[var(--color-warning-border)] bg-[var(--color-warning-soft)] px-3 py-2 text-sm text-[var(--color-warning)]"
         >
-          {VAULT_TOP_UP_MESSAGE}
+          {@html VAULT_TOP_UP_MESSAGE}
           <a
             href={VAULT_DEPOSIT_PATH}
             class="ml-1 font-semibold underline hover:opacity-90"

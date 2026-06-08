@@ -9,8 +9,10 @@
 		refreshVaultUsdcxBalance,
 		requireAppConfig,
 		requireDaoConfig,
+		showTxModal,
 		userWalletStore,
-		walletState
+		walletState,
+		watchTransaction
 	} from '@bigmarket/bm-common';
 	import { fmtMicroToStx, requestMappedDepositToVault } from '@bigmarket/bm-utilities';
 	import type { VaultUserChain } from '@bigmarket/bm-types';
@@ -143,26 +145,41 @@
 			if (canDepositViaWallet) {
 				const vault = stacks.createVaultClient(daoConfig);
 				const amount = custodyBalanceMicro!;
-				const result = await vault.depositSip10ToVault({
+				const response = await vault.depositSip10ToVault({
 					amountMicro: amount,
 					userChain: sourceIdentity.chain,
 					sourceAddress: sourceIdentity.address,
 					senderStxAddress: stxAddress
 				});
-				if (!result.success) {
-					throw new Error(result.error ?? 'Vault deposit failed');
+				if (!response.success) {
+					throw new Error(response.error ?? 'Vault deposit failed');
+				} else {
+					showTxModal(response.txid);
+					await watchTransaction(
+						appConfig.VITE_BIGMARKET_API,
+						appConfig.VITE_STACKS_API,
+						`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`,
+						response.txid
+					);
+					await refreshBalances();
 				}
-				txHash = result.txid;
+				txHash = response.txid;
 			} else {
-				const result = await requestMappedDepositToVault(
+				const response = await requestMappedDepositToVault(
 					appConfig.VITE_BIGMARKET_API,
 					apiSourceChain,
 					apiSourceAddress
 				);
-				txHash = result.txid;
+				txHash = response.txid;
+				showTxModal(response.txid);
+				await watchTransaction(
+					appConfig.VITE_BIGMARKET_API,
+					appConfig.VITE_STACKS_API,
+					`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`,
+					response.txid
+				);
+				await refreshBalances();
 			}
-
-			await refreshBalances();
 		} catch (e) {
 			errorMsg = e instanceof Error ? e.message : String(e);
 		} finally {

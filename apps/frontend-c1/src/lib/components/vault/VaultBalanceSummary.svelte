@@ -50,7 +50,7 @@
 	const usdcxKey = $derived(`${daoConfig.VITE_DAO_DEPLOYER}.usdcx::usdcx-token`);
 
 	let loading = $state(false);
-	let vaultBalanceLive = $state<bigint | null>(null);
+	let vaultBalanceLive = $state<number | undefined>($userWalletStore.vaultUsdcxBalanceMicro);
 	let walletUsdcxLive = $state<bigint | null>(null);
 	let mappedUsdcxLive = $state<bigint | null>(null);
 
@@ -104,7 +104,7 @@
 	async function loadVaultBalance(): Promise<void> {
 		const micro = await refreshVaultUsdcxBalance();
 		if (micro !== null) {
-			vaultBalanceLive = micro;
+			vaultBalanceLive = Number(micro);
 		}
 	}
 
@@ -193,7 +193,7 @@
 			>
 				<p class="text-[10px] text-neutral-500 dark:text-neutral-400">Vault USDCx</p>
 				<p class="mt-0.5 text-base font-semibold text-neutral-900 dark:text-neutral-100">
-					{loading && vaultBalance === null ? '…' : fmt(vaultBalance)}
+					{loading && vaultBalance === null ? '…' : fmtMicroToStx(vaultBalance || 0)}
 				</p>
 				<p class="mt-0.5 font-mono text-[9px] text-neutral-400">
 					<a

@@ -21,8 +21,10 @@
 		initWallet,
 		requireAppConfig,
 		requireDaoConfig,
+		showTxModal,
 		userWalletStore,
-		walletState
+		walletState,
+		watchTransaction
 	} from '@bigmarket/bm-common';
 	import { fmtMicroToStx } from '@bigmarket/bm-utilities';
 	import DepositAction from './DepositAction.svelte';
@@ -139,6 +141,23 @@
 	onMount(() => void initWallet(appConfig.VITE_BIGMARKET_API));
 
 	// ── actions ───────────────────────────────────────────────────────────────
+	async function loadBalances() {
+		errorMsg = null;
+		try {
+			const vault = stacks.createVaultClient(daoConfig);
+			const vaultBalance = await vault.getVaultUsdcxBalance(
+				appConfig.VITE_STACKS_API,
+				'stacks',
+				stxAddress
+			);
+			userWalletStore.set({
+				...$userWalletStore,
+				vaultUsdcxBalanceMicro: Number(vaultBalance)
+			});
+		} catch (e) {
+			errorMsg = e instanceof Error ? e.message : String(e);
+		}
+	}
 
 	async function directDeposit(amountMicro: bigint) {
 		if (!canDirectDeposit) return;
@@ -147,14 +166,25 @@
 		directTxHash = null;
 		try {
 			const vault = stacks.createVaultClient(daoConfig);
-			const result = await vault.depositSip10ToVault({
+			const response = await vault.depositSip10ToVault({
 				amountMicro,
 				userChain: 'stacks',
 				sourceAddress: getStxAddress(),
 				senderStxAddress: stxAddress
 			});
-			if (!result.success) throw new Error(result.error ?? 'Deposit failed');
-			directTxHash = result.txid ?? null;
+			if (!response.success) {
+				throw new Error(response.error ?? 'Deposit failed');
+			} else {
+				showTxModal(response.txid);
+				await watchTransaction(
+					appConfig.VITE_BIGMARKET_API,
+					appConfig.VITE_STACKS_API,
+					`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`,
+					response.txid
+				);
+			}
+			directTxHash = response.txid ?? null;
+			await loadBalances();
 		} catch (e) {
 			directError = e instanceof Error ? e.message : String(e);
 		} finally {

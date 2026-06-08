@@ -6,8 +6,7 @@ import {
 	isLoggedIn,
 	readVaultUsdcxBalanceMicro,
 	userReputationStore,
-	userWalletStore,
-	walletState
+	userWalletStore
 } from '@bigmarket/bm-common';
 import type {
 	AddressObject,

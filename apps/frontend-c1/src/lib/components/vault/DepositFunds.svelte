@@ -8,8 +8,10 @@
 		initWallet,
 		requireAppConfig,
 		requireDaoConfig,
+		showTxModal,
 		userWalletStore,
-		walletState
+		walletState,
+		watchTransaction
 	} from '@bigmarket/bm-common';
 	import UsdcxWalletBalance from './UsdcxWalletBalance.svelte';
 	import DepositAction from './DepositAction.svelte';
@@ -84,18 +86,27 @@
 
 		try {
 			const vault = stacks.createVaultClient(daoConfig);
-			const result = await vault.depositSip10ToVault({
+			const response = await vault.depositSip10ToVault({
 				amountMicro,
 				userChain: 'stacks',
 				sourceAddress: getStxAddress(),
 				senderStxAddress: stxAddress
 			});
 
-			if (!result.success) {
-				throw new Error(result.error ?? 'Vault deposit failed');
+			if (!response.success) {
+				throw new Error(response.error ?? 'Vault deposit failed');
+			} else {
+				showTxModal(response.txid);
+				await watchTransaction(
+					appConfig.VITE_BIGMARKET_API,
+					appConfig.VITE_STACKS_API,
+					`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`,
+					response.txid
+				);
+				//await refreshBalances();
 			}
 
-			txHash = result.txid ?? null;
+			txHash = response.txid ?? null;
 			await loadBalances();
 		} catch (e) {
 			errorMsg = e instanceof Error ? e.message : String(e);

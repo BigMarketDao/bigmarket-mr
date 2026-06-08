@@ -1,5 +1,6 @@
 import { PredictionMarketClaimEvent, PredictionMarketStakeEvent } from '@mijoco/stx_helpers/dist/index.js';
 import { daoEventCollection } from '../../../lib/data/db_models.js';
+import { getDaoConfig } from '../../../lib/config_dao.js';
 
 export async function getMyStakedMarkets(voter: string): Promise<Array<PredictionMarketStakeEvent>> {
 	const result = await daoEventCollection.find({ event: 'market-stake', voter }).toArray();
@@ -101,7 +102,10 @@ export async function getMyStakesAndClaims(voter: string): Promise<Array<any>> {
 			// Stage 1: Filter only relevant events
 			{
 				$match: {
-					$or: [{ event: 'market-stake', voter: voter }, { event: 'claim-winnings', claimer: voter }, { event: 'create-market' }]
+					$or: [{ event: 'market-stake', voter: voter }, { event: 'claim-winnings', claimer: voter }, { event: 'create-market' }],
+					extension: {
+						$in: [`${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`, `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`]
+					}
 				}
 			},
 
