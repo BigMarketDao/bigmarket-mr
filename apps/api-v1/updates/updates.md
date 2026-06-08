@@ -15,7 +15,7 @@ db.daoEventCollection.findAndModify({query: {\_id:new ObjectId('67978e5414ccb345
 
 ## Featured Markets
 
-db.daoEventCollection.findAndModify({query: {event : 'create-market' }, update: {$set: {"unhashedData.featured": true }}, upsert: false, new: true, fields: {}})
+db.daoEventCollection.findAndModify({query: {event : 'create-market', "unhashedData.name": "Will He-Man Descend to Earth and Trigger a Zombie Apocalypse by 2027?" }, update: {$set: {"unhashedData.featured": true }}, upsert: false, new: true, fields: {}})
 
 db.daoEventCollection.updateMany({event: 'create-market',extension: 'ST30Q4WJYHGMYEE1CTGQ334R9M7KQ8ETVQ9NB134T.bme023-0-market-scalar'},{$set: {'unhashedData.processed': true}})
 

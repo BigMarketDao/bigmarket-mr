@@ -609,7 +609,19 @@ export async function fetchMarketLiquidityEvents(
 }
 
 export async function fetchMarkets(): Promise<Array<PredictionMarketCreateEvent>> {
-	const result = await daoEventCollection.find({ 'unhashedData.processed': false, 'unhashedData.featured': true, event: 'create-market', unhashedData: { $ne: null, $exists: true }, marketData: { $ne: null, $exists: true } }).toArray();
+	//const result = await daoEventCollection.find({ extension: `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`, 'unhashedData.processed': false, 'unhashedData.featured': true, event: 'create-market', unhashedData: { $ne: null, $exists: true }, marketData: { $ne: null, $exists: true } }).toArray();
+	const result = await daoEventCollection
+		.find({
+			extension: {
+				$in: [`${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`, `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`]
+			},
+			'unhashedData.processed': false,
+			'unhashedData.featured': true,
+			event: 'create-market',
+			unhashedData: { $ne: null, $exists: true },
+			marketData: { $ne: null, $exists: true }
+		})
+		.toArray();
 	return result as unknown as Array<PredictionMarketCreateEvent>;
 }
 
@@ -634,7 +646,10 @@ export async function countCreateMarketEvents(marketType: number): Promise<numbe
 	try {
 		const result = await daoEventCollection.countDocuments({
 			event: 'create-market',
-			marketType
+			marketType,
+			extension: {
+				$in: [`${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`, `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`]
+			}
 		});
 		return Number(result);
 	} catch (err: any) {
