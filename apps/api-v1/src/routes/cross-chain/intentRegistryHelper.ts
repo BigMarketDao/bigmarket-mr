@@ -177,16 +177,20 @@ export async function sweepIntentToVault(intentId: string) {
 		const privateKey = stacks.deriveStacksPrivateKey(getConfig().walletKey, intent.sourceAddress);
 
 		const relayer = stacks.createVaultRelayerClient(getDaoConfig());
-		const { txid } = await relayer.depositForFromMappedAddress({
-			privateKey,
-			senderAddress: intent.mappedAddress,
-			amount: balance,
-			fee: RELAYER_STX_FEE,
-			nonce,
-			sourceChain: intent.sourceChain,
-			sourceAddress: intent.sourceAddress,
-			intentId: intent.intentId
-		});
+		const { txid } = await relayer.depositForFromMappedAddress(
+			{
+				privateKey,
+				senderAddress: intent.mappedAddress,
+				amount: balance,
+				fee: RELAYER_STX_FEE,
+				nonce,
+				sourceChain: intent.sourceChain,
+				sourceAddress: intent.sourceAddress,
+				intentId: intent.intentId
+			},
+			getConfig().walletKey,
+			getConfig().network
+		);
 
 		await crossChainIntentCollection.updateOne(
 			{ intentId },
@@ -254,7 +258,7 @@ export async function depositMappedBalanceToVault(sourceChain: string, sourceAdd
 		sourceAddress: sourceAddress,
 		intentId: crypto.randomUUID()
 	};
-	const { txid } = await relayer.depositForFromMappedAddress(params);
+	const { txid } = await relayer.depositForFromMappedAddress(params, getConfig().walletKey, getConfig().network);
 
 	return {
 		mappedAddress,

@@ -11,6 +11,7 @@ import {
   principalCV,
   serializeCV,
   serializeTransaction,
+  sponsorTransaction,
   standardPrincipalCV,
   uintCV,
 } from "@stacks/transactions";
@@ -61,6 +62,36 @@ function parseClarityUint(value: unknown): bigint {
   if (typeof value === "number") return BigInt(value);
   if (typeof value === "string") return BigInt(value);
   return 0n;
+}
+
+function resolveNetwork(network: string) {
+  if (network === "testnet") return STACKS_TESTNET;
+  if (network === "devnet") return STACKS_DEVNET;
+  return STACKS_MAINNET;
+}
+
+async function broadcast(
+  tx: Awaited<ReturnType<typeof makeContractCall>>,
+  label: string,
+  network: string,
+) {
+  const txHex = Buffer.from(serializeTransaction(tx)).toString("hex");
+  console.log(`[${label}] broadcasting, first 120 chars:`, txHex.slice(0, 120));
+
+  const result = await broadcastTransaction({
+    transaction: tx,
+    network: resolveNetwork(network),
+  });
+
+  if ("error" in result) {
+    throw new Error(
+      `broadcast failed: ${(result as any).error}` +
+        ((result as any).reason ? ` — ${(result as any).reason}` : ""),
+    );
+  }
+
+  console.log(`[${label}] txid:`, result.txid);
+  return result.txid;
 }
 
 export function createVaultClient(daoConfig: DaoConfig) {
@@ -239,10 +270,7 @@ export function createVaultClient(daoConfig: DaoConfig) {
       return buildBmp1Message({
         opcode: BMP1_OPCODES.BUY_SHARES,
         chain: BMP1_CHAINS[chain],
-        controllerAddress: vaultUserAddressBuffer(
-          chain,
-          params.sourceAddress,
-        ),
+        controllerAddress: vaultUserAddressBuffer(chain, params.sourceAddress),
         nonce: params.nonce,
         slots: [
           params.tokenPrincipalCommit,
@@ -272,10 +300,7 @@ export function createVaultClient(daoConfig: DaoConfig) {
       return buildBmp1Message({
         opcode: BMP1_OPCODES.SELL_SHARES,
         chain: BMP1_CHAINS[chain],
-        controllerAddress: vaultUserAddressBuffer(
-          chain,
-          params.sourceAddress,
-        ),
+        controllerAddress: vaultUserAddressBuffer(chain, params.sourceAddress),
         nonce: params.nonce,
         slots: [
           params.tokenPrincipalCommit,
@@ -302,10 +327,7 @@ export function createVaultClient(daoConfig: DaoConfig) {
       return buildBmp1Message({
         opcode: BMP1_OPCODES.CLAIM_WINNINGS,
         chain: BMP1_CHAINS[chain],
-        controllerAddress: vaultUserAddressBuffer(
-          chain,
-          params.sourceAddress,
-        ),
+        controllerAddress: vaultUserAddressBuffer(chain, params.sourceAddress),
         nonce: params.nonce,
         slots: [
           params.tokenPrincipalCommit,
@@ -465,7 +487,7 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
   const usdcxAddr = daoConfig.VITE_USDCX_CONTRACT_ADDRESS;
   const usdcxName = daoConfig.VITE_USDCX_CONTRACT_NAME;
 
-  async function broadcast(
+  async function broadcastInt(
     params: RelayerDepositParams,
     functionName: string,
     functionArgs: ReturnType<typeof uintCV>[],
@@ -543,7 +565,7 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
     ) {
       if (params.amount <= 0n) throw new Error("amount must be > 0");
 
-      return broadcast(
+      return broadcastInt(
         params,
         "deposit",
         [
@@ -565,6 +587,8 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
      */
     async depositForFromMappedAddress(
       params: RelayerDepositForParams,
+      senderKey: string,
+      network: string,
       defaultFee = 250_000,
     ) {
       if (params.amount <= 0n) throw new Error("amount must be > 0");
@@ -588,20 +612,52 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
       const intentBytes = new Uint8Array(32);
       intentBytes.set(hexToBytes(`0x${intentHex}`), 16);
       const intentIdCV = bufferCV(intentBytes);
+      const functionArgs = [
+        contractPrincipalCV(usdcxAddr, usdcxName) as any,
+        uintCV(params.amount) as any,
+        controllerChain as any,
+        controllerAddress as any,
+        mappedAddressCV as any,
+        intentIdCV as any,
+      ];
 
-      return broadcast(
-        params,
-        "deposit-for",
-        [
-          contractPrincipalCV(usdcxAddr, usdcxName) as any,
-          uintCV(params.amount) as any,
-          controllerChain as any,
-          controllerAddress as any,
-          mappedAddressCV as any,
-          intentIdCV as any,
-        ],
-        defaultFee,
-      );
+      const devnet = network === "devnet";
+      let tx = await makeContractCall({
+        contractAddress: deployer,
+        contractName: vaultName,
+        functionName: "deposit-for",
+        functionArgs,
+        senderKey,
+        network: network as any,
+        postConditionMode: PostConditionMode.Allow,
+        postConditions: [],
+        sponsored: !devnet, // important
+      });
+      if (!devnet) {
+        tx = await sponsorTransaction({
+          transaction: tx,
+          sponsorPrivateKey: senderKey,
+          fee: 1000n,
+        });
+      }
+
+      //readDaoEventsInternal(`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`);
+      const txid = await broadcast(tx, "deposit-for-relayer", network);
+
+      // const txid = broadcastInt(
+      //   params,
+      //   "deposit-for",
+      //   [
+      //     contractPrincipalCV(usdcxAddr, usdcxName) as any,
+      //     uintCV(params.amount) as any,
+      //     controllerChain as any,
+      //     controllerAddress as any,
+      //     mappedAddressCV as any,
+      //     intentIdCV as any,
+      //   ],
+      //   defaultFee,
+      // );
+      return { txid };
     },
   };
 }
