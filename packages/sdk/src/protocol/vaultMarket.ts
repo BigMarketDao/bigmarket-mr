@@ -13,7 +13,10 @@ import type {
 import { bytesToHex, hexToBytes } from "@stacks/common";
 import { createVaultClient } from "../chains/stacks/vault.js";
 import { principalCommitment, splitPrincipal } from "./commitments.js";
-import { computeEvmBmp1Digest } from "./evmBmp1Digest.js";
+import {
+  buildEvmBmp1TypedData,
+  computeEvmBmp1Digest,
+} from "./evmSip18.js";
 import {
   buildStacksBmp1MessageCv,
   stacksBmp1DomainCv,
@@ -76,14 +79,6 @@ export type VaultClaimParams = VaultMarketBaseParams & {
   userChain: VaultUserChain;
   sourceAddress: string;
 };
-
-function nonceFromBmp1(bmp1: Uint8Array): bigint {
-  let nonceVal = 0n;
-  for (let i = 48; i < 64; i++) {
-    nonceVal = (nonceVal << 8n) + BigInt(bmp1[i]);
-  }
-  return nonceVal;
-}
 
 async function marketCommits(
   tokenContract: string,
@@ -188,37 +183,18 @@ export async function buildVaultClaimBmp1(
 export async function signVaultBmp1Evm(params: {
   bmp1: Uint8Array;
   ethAddress: string;
+  tokenContract: string;
+  mappedAddress: string;
 }): Promise<SignedVaultBmp1> {
-  const digest = computeEvmBmp1Digest(params.bmp1);
-  const { keccak_256 } = await import("@noble/hashes/sha3");
-  const bmp1Hash = keccak_256(params.bmp1);
-  const nonce = nonceFromBmp1(params.bmp1);
-  // Must match slot3 in the BMP1 payload (verify-evm struct encoding).
-  const slot3 = params.bmp1.slice(160, 192);
-  const amountForWallet = BigInt("0x" + bytesToHex(slot3));
-
-  const typedData = {
-    types: {
-      EIP712Domain: [
-        { name: "name", type: "string" },
-        { name: "version", type: "string" },
-      ],
-      BMP1Withdraw: [
-        { name: "controller", type: "address" },
-        { name: "amount", type: "uint256" },
-        { name: "nonce", type: "uint256" },
-        { name: "bmp1Hash", type: "bytes32" },
-      ],
+  const typedData = buildEvmBmp1TypedData({
+    bmp1: params.bmp1,
+    ethAddress: params.ethAddress,
+    display: {
+      token: params.tokenContract,
+      mappedAddress: params.mappedAddress,
     },
-    primaryType: "BMP1Withdraw",
-    domain: { name: "BigMarket", version: "1.0.0" },
-    message: {
-      controller: params.ethAddress,
-      amount: amountForWallet.toString(),
-      nonce: nonce.toString(),
-      bmp1Hash: `0x${bytesToHex(bmp1Hash)}`,
-    },
-  };
+  });
+  const digest = computeEvmBmp1Digest(typedData.primaryType, typedData.message);
 
   const { getMetaMask } = await import("../chains/ethereum/injected.js");
   const provider = getMetaMask();
@@ -329,6 +305,8 @@ export async function vaultBuySharesEvm(
   const signed = await signVaultBmp1Evm({
     bmp1,
     ethAddress: params.ethAddress,
+    tokenContract: params.tokenContract,
+    mappedAddress: params.mappedAddress,
   });
   const body = toVaultMarketOpRequest(
     VAULT_MARKET_OPERATIONS.BUY_SHARES,
@@ -368,6 +346,8 @@ export async function vaultSellSharesEvm(
   const signed = await signVaultBmp1Evm({
     bmp1,
     ethAddress: params.ethAddress,
+    tokenContract: params.tokenContract,
+    mappedAddress: params.mappedAddress,
   });
   const body = toVaultMarketOpRequest(
     VAULT_MARKET_OPERATIONS.SELL_SHARES,
@@ -407,6 +387,8 @@ export async function vaultClaimWinningsEvm(
   const signed = await signVaultBmp1Evm({
     bmp1,
     ethAddress: params.ethAddress,
+    tokenContract: params.tokenContract,
+    mappedAddress: params.mappedAddress,
   });
   const body = toVaultMarketOpRequest(
     VAULT_MARKET_OPERATIONS.CLAIM_WINNINGS,

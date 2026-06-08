@@ -74,40 +74,48 @@
 ;; Domain: { name: "BigMarket", version: "1.0.0" }  (no chainId -- replay
 ;; protection is provided by the per-controller nonce in the BMP1 message).
 ;;
-;; Type:   BMP1Withdraw(bytes payload)
+;; Opcode-specific structs mirror Stacks SIP-018 tuples (see SDK evmSip18.ts).
+;; MetaMask renders each field by name; bmp1Hash binds the full 256-byte BMP1.
 ;;
-;; Digest path:
-;;   1. payload-hash = keccak256(bmp1_message)
-;;   2. struct-hash  = keccak256(WITHDRAW_TYPEHASH || payload-hash)
-;;   3. digest       = keccak256(0x1901 || DOMAIN_SEPARATOR || struct-hash)
+;; Digest path (per opcode):
+;;   struct-hash = keccak256(TYPEHASH || ABI-encoded fields)
+;;   digest      = keccak256(0x1901 || DOMAIN_SEPARATOR || struct-hash)
 ;;
-;; All constants are precomputed off-chain:
-;;   DOMAIN_SEPARATOR  = keccak256(domainTypeHash || keccak256("BigMarket") || keccak256("1.0.0"))
-;;   WITHDRAW_TYPEHASH = keccak256("BMP1Withdraw(bytes payload)")
+;; EIP-712 string fields (token, mappedAddress, recipient) are verified via
+;; precomputed keccak256(utf8) hashes passed as (buff 32). Clarity cannot hash
+;; raw UTF-8 strings on-chain. Relayers hash the same display strings the
+;; wallet signed (see SDK evmSip18.ts / eip712HashDisplayString).
 
 ;; 0x1901 -- EIP-712 two-byte prefix
 (define-constant EIP712_PREFIX 0x1901)
 
 ;; keccak256( domainTypeHash || keccak256("BigMarket") || keccak256("1.0.0") )
-;; domainTypeHash = keccak256("EIP712Domain(string name,string version)")
 (define-constant EIP712_DOMAIN_SEPARATOR
   0x4e3c7155c429f36e33b8498ec258c659f393ec00d8434884b72472304c45681d)
 
-;; keccak256("BMP1Withdraw(address controller,uint256 amount,uint256 nonce,bytes32 bmp1Hash)")
-;;
-;; MetaMask renders each field by name:
-;;   controller --> recognisable 0x EVM address
-;;   amount     --> raw micro-unit integer (e.g. 55000000 for 55 USDCx)
-;;   nonce      --> replay-protection counter
-;;   bmp1Hash   --> keccak256 of the full BMP1 payload (binds the signature)
-;;
-;; Encoding notes (all standard EIP-712 ABI encoding):
-;;   controller: 32 bytes left-padded  <-- exactly the BMP1 controller-address field
-;;   amount:     32-byte uint256       <-- exactly the BMP1 slot3 field (high 16 = 0)
-;;   nonce:      32-byte uint256       <-- BMP1 nonce (buff 16) prepended with 16 zero bytes
-;;   bmp1Hash:   bytes32 as-is
+;; keccak256("BMP1Withdraw(address controller,uint256 amount,bytes32 bmp1Hash,uint256 nonce,string operation,string recipient,string token)")
 (define-constant EIP712_WITHDRAW_TYPEHASH
-  0xf1ebe45c9252e59f16c9eaed223a770a5d40b6b8bc14507a83cc68a149d644ba)
+  0x7ddd25b313d8b4710b8f87bee912e0a43a14b97f44a9098b71ce2e1bee319c9d)
+
+;; keccak256("BMP1BuyShares(address controller,bytes32 bmp1Hash,uint256 expiry,string mappedAddress,uint256 marketId,uint256 maxCost,uint256 minShares,uint256 nonce,string operation,uint256 outcomeIndex,string token)")
+(define-constant EIP712_BUY_SHARES_TYPEHASH
+  0x2075f387905a08b438d1a903792130d970c0b52709ab9f4c9d7ecb07ce2e4324)
+
+;; keccak256("BMP1SellShares(address controller,bytes32 bmp1Hash,uint256 expiry,string mappedAddress,uint256 marketId,uint256 minRefund,uint256 nonce,string operation,uint256 outcomeIndex,uint256 sharesIn,string token)")
+(define-constant EIP712_SELL_SHARES_TYPEHASH
+  0xeca6ba45fa57685ad84c00f5e8b471235a345b20461c63e4b30cdbf7da3c7083)
+
+;; keccak256("BMP1ClaimWinnings(address controller,bytes32 bmp1Hash,uint256 expiry,string mappedAddress,uint256 marketId,uint256 nonce,string operation,string token)")
+(define-constant EIP712_CLAIM_WINNINGS_TYPEHASH
+  0x015e0b7da094f5a74b7810b287175317b3da28d96b771ea63a6a071d18b4264c)
+
+;; keccak256(operation string literals)
+(define-constant EIP712_OP_WITHDRAW       0x855511cc3694f64379908437d6d64458dc76d02482052bfb8a5b33a72c054c77)
+(define-constant EIP712_OP_BUY_SHARES     0x2ea4fe602c386ea6abea89f8e3d9fd5031470742d29bb30716e05448895b45c5)
+(define-constant EIP712_OP_SELL_SHARES    0xa373bcd1e40adb888ac2ff66c24227816d3f9d57d7dde63974309fd3e1a64ce5)
+(define-constant EIP712_OP_CLAIM_WINNINGS  0x4e430ce44038df5064ee69251aef2f20c95a8746d609c94838ad478b505aa6f2)
+
+(define-constant ZERO_16 0x00000000000000000000000000000000)
 
 ;; Stacks / SIP-018 signing constants
 ;; SIP-018 structured-data prefix: "SIP018" (6 bytes)
@@ -324,12 +332,15 @@
 ;; ============================================================
 
 (define-public (withdraw
-    (message        (buff 256))
-    (signature      (buff 65))
-    (pubkey         (buff 64))
-    (token          <sip010>)
-    (mapped-address principal)
-    (recipient      principal))
+    (message          (buff 256))
+    (signature        (buff 65))
+    (pubkey           (buff 64))
+    (token            <sip010>)
+    (mapped-address   principal)
+    (recipient        principal)
+    (eip712-token-hash     (buff 32))
+    (eip712-mapped-hash    (buff 32))
+    (eip712-recipient-hash (buff 32)))
   (let
     (
       (token-contract     (contract-of token))
@@ -364,7 +375,7 @@
                   (<= stacks-block-height expiry))            ERR_EXPIRED)
 
     ;; Signature: verify against the controller address
-    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract recipient))
+    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract recipient eip712-token-hash eip712-mapped-hash eip712-recipient-hash))
 
     ;; Effects (before token transfer -- re-entrancy)
     (map-set balances
@@ -415,12 +426,15 @@
 ;; ============================================================
 
 (define-public (buy-shares
-    (message        (buff 256))
-    (signature      (buff 65))
-    (pubkey         (buff 64))
-    (token          <sip010>)
-    (mapped-address principal)
-    (market         <prediction-market-trait>))
+    (message          (buff 256))
+    (signature        (buff 65))
+    (pubkey           (buff 64))
+    (token            <sip010>)
+    (mapped-address   principal)
+    (market           <prediction-market-trait>)
+    (eip712-token-hash     (buff 32))
+    (eip712-mapped-hash    (buff 32))
+    (eip712-recipient-hash (buff 32)))
   (let
     (
       (token-contract   (contract-of token))
@@ -453,7 +467,7 @@
     (asserts! (>= current-balance max-cost)                     ERR_INSUFFICIENT_BALANCE)
     (asserts! (is-eq nonce current-nonce)                       ERR_INVALID_NONCE)
     (asserts! (or (is-eq expiry u0) (<= stacks-block-height expiry)) ERR_EXPIRED)
-    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address))
+    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address eip712-token-hash eip712-mapped-hash eip712-recipient-hash))
     (map-set balances
       { controller-chain: chain, controller-address: controller, mapped-address: mapped-address, token: token-contract }
       (- current-balance max-cost))
@@ -493,12 +507,15 @@
 ;; ============================================================
 
 (define-public (sell-shares
-    (message        (buff 256))
-    (signature      (buff 65))
-    (pubkey         (buff 64))
-    (token          <sip010>)
-    (mapped-address principal)
-    (market         <prediction-market-trait>))
+    (message          (buff 256))
+    (signature        (buff 65))
+    (pubkey           (buff 64))
+    (token            <sip010>)
+    (mapped-address   principal)
+    (market           <prediction-market-trait>)
+    (eip712-token-hash     (buff 32))
+    (eip712-mapped-hash    (buff 32))
+    (eip712-recipient-hash (buff 32)))
   (let
     (
       (token-contract   (contract-of token))
@@ -529,7 +546,7 @@
     (asserts! (is-eq (get slot3 parsed) market-commit)          ERR_MARKET_COMMIT)
     (asserts! (is-eq nonce current-nonce)                       ERR_INVALID_NONCE)
     (asserts! (or (is-eq expiry u0) (<= stacks-block-height expiry)) ERR_EXPIRED)
-    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address))
+    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address eip712-token-hash eip712-mapped-hash eip712-recipient-hash))
     (map-set withdrawal-nonces { controller-chain: chain, controller-address: controller } (+ current-nonce u1))
     ;; Market refunds the net proceeds to this vault (payee = contract-caller).
     (let ((net-refund (try! (contract-call? market sell-vault mapped-address market-id min-refund outcome-index token shares-in))))
@@ -565,12 +582,15 @@
 ;; ============================================================
 
 (define-public (claim-winnings
-    (message        (buff 256))
-    (signature      (buff 65))
-    (pubkey         (buff 64))
-    (token          <sip010>)
-    (mapped-address principal)
-    (market         <prediction-market-trait>))
+    (message          (buff 256))
+    (signature        (buff 65))
+    (pubkey           (buff 64))
+    (token            <sip010>)
+    (mapped-address   principal)
+    (market           <prediction-market-trait>)
+    (eip712-token-hash     (buff 32))
+    (eip712-mapped-hash    (buff 32))
+    (eip712-recipient-hash (buff 32)))
   (let
     (
       (token-contract   (contract-of token))
@@ -597,7 +617,7 @@
     (asserts! (is-eq (get slot3 parsed) market-commit)          ERR_MARKET_COMMIT)
     (asserts! (is-eq nonce current-nonce)                       ERR_INVALID_NONCE)
     (asserts! (or (is-eq expiry u0) (<= stacks-block-height expiry)) ERR_EXPIRED)
-    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address))
+    (try! (verify-message-signature chain message signature pubkey controller mapped-address token-contract mapped-address eip712-token-hash eip712-mapped-hash eip712-recipient-hash))
     (map-set withdrawal-nonces { controller-chain: chain, controller-address: controller } (+ current-nonce u1))
     ;; Market pays the net winnings to this vault (payee = contract-caller).
     (let ((net-refund (try! (contract-call? market claim-winnings-vault mapped-address market-id token))))
@@ -669,16 +689,19 @@
 ;; ============================================================
 
 (define-private (verify-message-signature
-    (chain          (buff 4))
-    (message        (buff 256)) 
-    (signature      (buff 65))
-    (pubkey         (buff 64))
-    (controller     (buff 32))
-    (mapped-address principal)
-    (token-contract principal)
-    (recipient      principal))
+    (chain            (buff 4))
+    (message          (buff 256))
+    (signature        (buff 65))
+    (pubkey           (buff 64))
+    (controller       (buff 32))
+    (mapped-address   principal)
+    (token-contract   principal)
+    (recipient        principal)
+    (eip712-token-hash     (buff 32))
+    (eip712-mapped-hash    (buff 32))
+    (eip712-recipient-hash (buff 32)))
   (if (is-eq chain CHAIN_EVM)
-    (verify-evm message signature pubkey controller)
+    (verify-evm message signature pubkey controller eip712-token-hash eip712-mapped-hash eip712-recipient-hash)
     (if (is-eq chain CHAIN_STACKS)
       (verify-stacks-sip18 message signature controller mapped-address token-contract recipient)
       ERR_SIG_SCHEME)))
@@ -848,57 +871,8 @@
             (verify-stacks-claim-winnings message signature controller mapped-address token-contract domain-hash)
             ERR_MSG_OPCODE))))))
 
-;; EVM secp256k1 + EIP-712 structured-data verification.
-;;
-;; MetaMask shows named fields (controller, amount, nonce, bmp1Hash) instead of
-;; raw bytes.  The struct fields are lifted directly from the parsed BMP1 message
-;; so no auxiliary helpers or extra caller-supplied data are needed:
-;;
-;;   controller  <-- BMP1 controller-address  (buff 32, already EIP-712 address-encoded)
-;;   amount      <-- BMP1 slot3               (buff 32, already EIP-712 uint256-encoded)
-;;   nonce       <-- BMP1 nonce prepended with 16 zero bytes  -->  (buff 32) uint256
-;;   bmp1Hash    <-- keccak256(message)        (buff 32)
-;;
-;; Trust path:
-;;   1. Parse the BMP1 message to extract nonce (buff 16) and slot3 (buff 32)
-;;   2. nonce32  = 0x000...000 (16 bytes) || nonce (16 bytes)  -->  uint256 encoding
-;;   3. bmp1Hash = keccak256(message)
-;;   4. struct-encoded = WITHDRAW_TYPEHASH || controller || slot3 || nonce32 || bmp1Hash  (160 bytes)
-;;   5. struct-hash  = keccak256(struct-encoded)
-;;   6. digest       = keccak256(0x1901 || DOMAIN_SEPARATOR || struct-hash)
-;;   7. Recover compressed pubkey from signature against digest
-;;   8. Recompress supplied uncompressed pubkey and compare --> proves pubkey is signer's
-;;   9. Derive EVM address keccak256(uncompressed)[12:32] and compare with controller
-(define-private (verify-evm
-    (message    (buff 256))
-    (signature  (buff 65))
-    (pubkey     (buff 64))
-    (controller (buff 32)))
-  (let
-    (
-      (parsed         (parse-message message))
-      (bmp1-hash      (keccak256 message))
-      ;; Zero-pad the 16-byte BMP1 nonce to 32 bytes for EIP-712 uint256 encoding
-      (nonce32        (concat 0x00000000000000000000000000000000 (get nonce parsed)))
-      ;; Build the 160-byte EIP-712 struct encoding
-      (struct-encoded (concat EIP712_WITHDRAW_TYPEHASH
-                       (concat controller
-                         (concat (get slot3 parsed)
-                           (concat nonce32 bmp1-hash)))))
-      (struct-hash    (keccak256 struct-encoded))
-      (digest         (keccak256 (concat EIP712_PREFIX (concat EIP712_DOMAIN_SEPARATOR struct-hash))))
-      (recovered      (unwrap! (secp256k1-recover? digest signature) ERR_SIG_VERIFICATION))
-      (recompressed   (compress-pubkey pubkey))
-      (derived-addr   (evm-address-from-pubkey pubkey))
-      (expected-addr  (low-20-of-32 controller))
-    )
-    (asserts! (is-eq recovered recompressed)      ERR_PUBKEY_MISMATCH)
-    (asserts! (is-eq derived-addr expected-addr)  ERR_ADDRESS_MISMATCH)
-    (ok true)))
+;; EVM secp256k1 + EIP-712 structured-data verification (opcode-specific structs).
 
-;; Recompress an uncompressed secp256k1 pubkey (X || Y) to the 33-byte SEC
-;; compressed form (prefix || X), where prefix is 0x02 if Y is even and 0x03
-;; if odd.
 (define-private (compress-pubkey (uncompressed (buff 64)))
   (let
     (
@@ -908,19 +882,204 @@
     )
     (unwrap-panic (as-max-len? (concat prefix x) u33))))
 
-;; keccak256(uncompressed) and take the last 20 bytes -- the canonical EVM
-;; address derivation.
 (define-private (evm-address-from-pubkey (uncompressed (buff 64)))
   (unwrap-panic (as-max-len?
     (unwrap-panic (slice? (keccak256 uncompressed) u12 u32))
     u20)))
 
-;; Take the last 20 bytes of a 32-byte normalised address (drops the
-;; left-pad zeros used by EVM/BTC/Stacks identities).
 (define-private (low-20-of-32 (addr (buff 32)))
   (unwrap-panic (as-max-len?
     (unwrap-panic (slice? addr u12 u32))
     u20)))
+
+(define-private (slot-low-as-uint256 (slot (buff 32)))
+  (concat ZERO_16
+    (unwrap-panic (as-max-len? (unwrap-panic (slice? slot u16 u32)) u16))))
+
+(define-private (slot-high-as-uint256 (slot (buff 32)))
+  (concat ZERO_16
+    (unwrap-panic (as-max-len? (unwrap-panic (slice? slot u0 u16)) u16))))
+
+(define-private (verify-evm-recover-256
+    (struct-encoded (buff 256))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (controller     (buff 32)))
+  (let
+    (
+      (struct-hash  (keccak256 struct-encoded))
+      (digest       (keccak256 (concat EIP712_PREFIX (concat EIP712_DOMAIN_SEPARATOR struct-hash))))
+      (recovered    (unwrap! (secp256k1-recover? digest signature) ERR_SIG_VERIFICATION))
+      (recompressed (compress-pubkey pubkey))
+      (derived-addr (evm-address-from-pubkey pubkey))
+      (expected-addr (low-20-of-32 controller))
+    )
+    (begin
+      (asserts! (is-eq recovered recompressed)     ERR_PUBKEY_MISMATCH)
+      (asserts! (is-eq derived-addr expected-addr) ERR_ADDRESS_MISMATCH)
+      (ok true))))
+
+(define-private (verify-evm-recover-384
+    (struct-encoded (buff 384))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (controller     (buff 32)))
+  (let
+    (
+      (struct-hash  (keccak256 struct-encoded))
+      (digest       (keccak256 (concat EIP712_PREFIX (concat EIP712_DOMAIN_SEPARATOR struct-hash))))
+      (recovered    (unwrap! (secp256k1-recover? digest signature) ERR_SIG_VERIFICATION))
+      (recompressed (compress-pubkey pubkey))
+      (derived-addr (evm-address-from-pubkey pubkey))
+      (expected-addr (low-20-of-32 controller))
+    )
+    (begin
+      (asserts! (is-eq recovered recompressed)     ERR_PUBKEY_MISMATCH)
+      (asserts! (is-eq derived-addr expected-addr) ERR_ADDRESS_MISMATCH)
+      (ok true))))
+
+(define-private (verify-evm-recover-288
+    (struct-encoded (buff 288))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (controller     (buff 32)))
+  (let
+    (
+      (struct-hash  (keccak256 struct-encoded))
+      (digest       (keccak256 (concat EIP712_PREFIX (concat EIP712_DOMAIN_SEPARATOR struct-hash))))
+      (recovered    (unwrap! (secp256k1-recover? digest signature) ERR_SIG_VERIFICATION))
+      (recompressed (compress-pubkey pubkey))
+      (derived-addr (evm-address-from-pubkey pubkey))
+      (expected-addr (low-20-of-32 controller))
+    )
+    (begin
+      (asserts! (is-eq recovered recompressed)     ERR_PUBKEY_MISMATCH)
+      (asserts! (is-eq derived-addr expected-addr) ERR_ADDRESS_MISMATCH)
+      (ok true))))
+
+(define-private (verify-evm-withdraw
+    (message        (buff 256))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (controller     (buff 32))
+    (token-hash     (buff 32))
+    (recipient-hash (buff 32)))
+  (let
+    (
+      (parsed         (parse-message message))
+      (bmp1-hash      (keccak256 message))
+      (nonce32        (concat ZERO_16 (get nonce parsed)))
+      (struct-encoded
+        (concat EIP712_WITHDRAW_TYPEHASH
+          (concat controller
+            (concat (slot-low-as-uint256 (get slot3 parsed))
+              (concat bmp1-hash
+                (concat nonce32
+                  (concat EIP712_OP_WITHDRAW
+                    (concat recipient-hash
+                      token-hash))))))))
+    )
+    (verify-evm-recover-256 (unwrap-panic (as-max-len? struct-encoded u256)) signature pubkey controller)))
+
+(define-private (verify-evm-buy-shares
+    (message        (buff 256))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (controller     (buff 32))
+    (token-hash     (buff 32))
+    (mapped-hash    (buff 32)))
+  (let
+    (
+      (parsed         (parse-message message))
+      (bmp1-hash      (keccak256 message))
+      (nonce32        (concat ZERO_16 (get nonce parsed)))
+      (struct-encoded
+        (concat EIP712_BUY_SHARES_TYPEHASH
+          (concat controller
+            (concat bmp1-hash
+              (concat (slot-low-as-uint256 (get slot5 parsed))
+                (concat mapped-hash
+                  (concat (slot-low-as-uint256 (get slot2 parsed))
+                    (concat (slot-high-as-uint256 (get slot4 parsed))
+                      (concat (slot-low-as-uint256 (get slot4 parsed))
+                        (concat nonce32
+                          (concat EIP712_OP_BUY_SHARES
+                            (concat (slot-high-as-uint256 (get slot2 parsed))
+                              token-hash))))))))))))
+    )
+    (verify-evm-recover-384 (unwrap-panic (as-max-len? struct-encoded u384)) signature pubkey controller)))
+
+(define-private (verify-evm-sell-shares
+    (message        (buff 256))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (controller     (buff 32))
+    (token-hash     (buff 32))
+    (mapped-hash    (buff 32)))
+  (let
+    (
+      (parsed         (parse-message message))
+      (bmp1-hash      (keccak256 message))
+      (nonce32        (concat ZERO_16 (get nonce parsed)))
+      (struct-encoded
+        (concat EIP712_SELL_SHARES_TYPEHASH
+          (concat controller
+            (concat bmp1-hash
+              (concat (slot-low-as-uint256 (get slot5 parsed))
+                (concat mapped-hash
+                  (concat (slot-low-as-uint256 (get slot2 parsed))
+                    (concat (slot-high-as-uint256 (get slot4 parsed))
+                      (concat nonce32
+                        (concat EIP712_OP_SELL_SHARES
+                          (concat (slot-high-as-uint256 (get slot2 parsed))
+                            (concat (slot-low-as-uint256 (get slot4 parsed))
+                              token-hash))))))))))))
+    )
+    (verify-evm-recover-384 (unwrap-panic (as-max-len? struct-encoded u384)) signature pubkey controller)))
+
+(define-private (verify-evm-claim-winnings
+    (message        (buff 256))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (controller     (buff 32))
+    (token-hash     (buff 32))
+    (mapped-hash    (buff 32)))
+  (let
+    (
+      (parsed         (parse-message message))
+      (bmp1-hash      (keccak256 message))
+      (nonce32        (concat ZERO_16 (get nonce parsed)))
+      (struct-encoded
+        (concat EIP712_CLAIM_WINNINGS_TYPEHASH
+          (concat controller
+            (concat bmp1-hash
+              (concat (slot-low-as-uint256 (get slot5 parsed))
+                (concat mapped-hash
+                  (concat (slot-low-as-uint256 (get slot2 parsed))
+                    (concat nonce32
+                      (concat EIP712_OP_CLAIM_WINNINGS
+                        token-hash)))))))))
+    )
+    (verify-evm-recover-288 (unwrap-panic (as-max-len? struct-encoded u288)) signature pubkey controller)))
+
+(define-private (verify-evm
+    (message        (buff 256))
+    (signature      (buff 65))
+    (pubkey         (buff 64))
+    (controller     (buff 32))
+    (token-hash     (buff 32))
+    (mapped-hash    (buff 32))
+    (recipient-hash (buff 32)))
+  (let ((opcode (unwrap-panic (element-at? message u8))))
+    (if (is-eq opcode OP_WITHDRAW)
+      (verify-evm-withdraw message signature pubkey controller token-hash recipient-hash)
+      (if (is-eq opcode OP_BUY_SHARES)
+        (verify-evm-buy-shares message signature pubkey controller token-hash mapped-hash)
+        (if (is-eq opcode OP_SELL_SHARES)
+          (verify-evm-sell-shares message signature pubkey controller token-hash mapped-hash)
+          (if (is-eq opcode OP_CLAIM_WINNINGS)
+            (verify-evm-claim-winnings message signature pubkey controller token-hash mapped-hash)
+            ERR_MSG_OPCODE))))))
 
 ;; ============================================================
 ;; Private: address helpers

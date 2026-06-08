@@ -1,5 +1,5 @@
 import type { VaultMarketOpRequest, WithdrawFromVaultRequest } from '@bigmarket/sdk';
-import { stacks } from '@bigmarket/sdk';
+import { eip712HashDisplayString, stacks } from '@bigmarket/sdk';
 import { hexToBytes } from '@stacks/common';
 import { broadcastTransaction, bufferCV, contractPrincipalCV, getAddressFromPrivateKey, makeContractCall, noneCV, PostConditionMode, principalCV, serializeTransaction, sponsorTransaction, standardPrincipalCV, uintCV } from '@stacks/transactions';
 import { STACKS_DEVNET, STACKS_MAINNET, STACKS_TESTNET } from '@stacks/network';
@@ -26,6 +26,15 @@ async function broadcast(tx: Awaited<ReturnType<typeof makeContractCall>>, label
 
 	console.log(`[${label}] txid:`, result.txid);
 	return result.txid;
+}
+
+/** Precomputed keccak256(utf8) hashes for EIP-712 string fields (vault verify-evm). */
+function eip712DisplayHashCvs(token: string, mapped: string, recipient = '') {
+	return [
+		bufferCV(eip712HashDisplayString(token)),
+		bufferCV(eip712HashDisplayString(mapped)),
+		bufferCV(eip712HashDisplayString(recipient))
+	];
 }
 
 /**
@@ -56,11 +65,21 @@ export async function withdrawFromVault(body: WithdrawFromVaultRequest): Promise
 	const usdcxName = daoConfig.VITE_USDCX_CONTRACT_NAME;
 
 	const devnet = getConfig().network === 'devnet';
+	const tokenDisplay = `${usdcxAddr}.${usdcxName}`;
+
 	let tx = await makeContractCall({
 		contractAddress: deployer,
 		contractName: vaultName,
 		functionName: 'withdraw',
-		functionArgs: [bufferCV(hexToBytes(body.message)), bufferCV(hexToBytes(body.signature)), bufferCV(hexToBytes(body.pubkey)), contractPrincipalCV(usdcxAddr, usdcxName), principalCV(body.stxAddress), principalCV(body.recipientAddress)],
+		functionArgs: [
+			bufferCV(hexToBytes(body.message)),
+			bufferCV(hexToBytes(body.signature)),
+			bufferCV(hexToBytes(body.pubkey)),
+			contractPrincipalCV(usdcxAddr, usdcxName),
+			principalCV(body.stxAddress),
+			principalCV(body.recipientAddress),
+			...eip712DisplayHashCvs(tokenDisplay, body.stxAddress, body.recipientAddress)
+		],
 		senderKey,
 		network,
 		postConditionMode: PostConditionMode.Allow,
@@ -114,7 +133,15 @@ export async function executeVaultMarketOp(body: VaultMarketOpRequest): Promise<
 		contractAddress: deployer,
 		contractName: vaultName,
 		functionName: fn,
-		functionArgs: [bufferCV(hexToBytes(body.message)), bufferCV(hexToBytes(body.signature)), bufferCV(hexToBytes(body.pubkey)), contractPrincipalCV(tokenAddr, tokenName), principalCV(body.mappedAddress), contractPrincipalCV(marketAddr, marketName)],
+		functionArgs: [
+			bufferCV(hexToBytes(body.message)),
+			bufferCV(hexToBytes(body.signature)),
+			bufferCV(hexToBytes(body.pubkey)),
+			contractPrincipalCV(tokenAddr, tokenName),
+			principalCV(body.mappedAddress),
+			contractPrincipalCV(marketAddr, marketName),
+			...eip712DisplayHashCvs(body.tokenContract, body.mappedAddress)
+		],
 		senderKey,
 		network,
 		postConditionMode: PostConditionMode.Allow,

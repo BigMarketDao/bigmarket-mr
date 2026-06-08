@@ -1,4 +1,4 @@
-import { Cl, ClarityType, contractPrincipalCV, principalCV, serializeCVBytes } from '@stacks/transactions';
+import { Cl, ClarityType, contractPrincipalCV, principalCV, serializeCVBytes, stringAsciiCV } from '@stacks/transactions';
 import * as secp from '@noble/secp256k1';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { hmac } from '@noble/hashes/hmac';
@@ -35,27 +35,144 @@ const OP_CLAIM_WINNINGS = 0x04;
 const BMP1_VERSION = 0x01;
 
 // EIP-712 constants — must match bme050-0-vault.clar exactly.
-// keccak256("BMP1Withdraw(address controller,uint256 amount,uint256 nonce,bytes32 bmp1Hash)")
-const EIP712_TYPEHASH = new Uint8Array([
-	0xf1, 0xeb, 0xe4, 0x5c, 0x92, 0x52, 0xe5, 0x9f, 0x16, 0xc9, 0xea, 0xed, 0x22, 0x3a, 0x77, 0x0a,
-	0x5d, 0x40, 0xb6, 0xb8, 0xbc, 0x14, 0x50, 0x7a, 0x83, 0xcc, 0x68, 0xa1, 0x49, 0xd6, 0x44, 0xba
-]);
-// keccak256(domainTypeHash || keccak256("BigMarket") || keccak256("1.0.0"))
 const EIP712_DOMAIN_SEP = new Uint8Array([
 	0x4e, 0x3c, 0x71, 0x55, 0xc4, 0x29, 0xf3, 0x6e, 0x33, 0xb8, 0x49, 0x8e, 0xc2, 0x58, 0xc6, 0x59,
 	0xf3, 0x93, 0xec, 0x00, 0xd8, 0x43, 0x48, 0x84, 0xb7, 0x24, 0x72, 0x30, 0x4c, 0x45, 0x68, 0x1d
 ]);
 
-/** Compute the EIP-712 digest for BMP1Withdraw — mirrors verify-evm in the vault contract. */
-function eip712Digest(message: Uint8Array): Uint8Array {
-	const bmp1Hash     = keccak_256(message);
-	const controller   = message.slice(16, 48);   // OFF_CONTROLLER
-	const slot3        = message.slice(160, 192);  // OFF_SLOT3 (amount)
-	const nonce16      = message.slice(48, 64);    // OFF_NONCE
-	const nonce32      = concatBytes(new Uint8Array(16), nonce16);
-	const structEncoded = concatBytes(EIP712_TYPEHASH, controller, slot3, nonce32, bmp1Hash);
-	const structHash   = keccak_256(structEncoded);
+const EIP712_TYPEHASH = {
+	withdraw: new Uint8Array(Buffer.from('7ddd25b313d8b4710b8f87bee912e0a43a14b97f44a9098b71ce2e1bee319c9d', 'hex')),
+	buyShares: new Uint8Array(Buffer.from('2075f387905a08b438d1a903792130d970c0b52709ab9f4c9d7ecb07ce2e4324', 'hex')),
+	sellShares: new Uint8Array(Buffer.from('eca6ba45fa57685ad84c00f5e8b471235a345b20461c63e4b30cdbf7da3c7083', 'hex')),
+	claimWinnings: new Uint8Array(Buffer.from('015e0b7da094f5a74b7810b287175317b3da28d96b771ea63a6a071d18b4264c', 'hex'))
+};
+
+const EIP712_OP_HASH = {
+	withdraw: new Uint8Array(Buffer.from('855511cc3694f64379908437d6d64458dc76d02482052bfb8a5b33a72c054c77', 'hex')),
+	buyShares: new Uint8Array(Buffer.from('2ea4fe602c386ea6abea89f8e3d9fd5031470742d29bb30716e05448895b45c5', 'hex')),
+	sellShares: new Uint8Array(Buffer.from('a373bcd1e40adb888ac2ff66c24227816d3f9d57d7dde63974309fd3e1a64ce5', 'hex')),
+	claimWinnings: new Uint8Array(Buffer.from('4e430ce44038df5064ee69251aef2f20c95a8746d609c94838ad478b505aa6f2', 'hex'))
+};
+
+function eip712HashString(value: string): Uint8Array {
+	return keccak_256(new TextEncoder().encode(value));
+}
+
+function slotLowAsUint256(slot: Uint8Array): Uint8Array {
+	return concatBytes(new Uint8Array(16), slot.slice(16, 32));
+}
+
+function slotHighAsUint256(slot: Uint8Array): Uint8Array {
+	return concatBytes(new Uint8Array(16), slot.slice(0, 16));
+}
+
+function eip712DigestFromStruct(structEncoded: Uint8Array): Uint8Array {
+	const structHash = keccak_256(structEncoded);
 	return keccak_256(concatBytes(new Uint8Array([0x19, 0x01]), EIP712_DOMAIN_SEP, structHash));
+}
+
+function eip712WithdrawDigest(
+	message: Uint8Array,
+	tokenStr: string,
+	recipientStr: string
+): Uint8Array {
+	const bmp1Hash = keccak_256(message);
+	const controller = message.slice(16, 48);
+	const slot3 = message.slice(160, 192);
+	const nonce32 = concatBytes(new Uint8Array(16), message.slice(48, 64));
+	const structEncoded = concatBytes(
+		EIP712_TYPEHASH.withdraw,
+		controller,
+		slotLowAsUint256(slot3),
+		bmp1Hash,
+		nonce32,
+		EIP712_OP_HASH.withdraw,
+		eip712HashString(recipientStr),
+		eip712HashString(tokenStr)
+	);
+	return eip712DigestFromStruct(structEncoded);
+}
+
+function eip712BuySharesDigest(message: Uint8Array, tokenStr: string, mappedStr: string): Uint8Array {
+	const bmp1Hash = keccak_256(message);
+	const controller = message.slice(16, 48);
+	const slot2 = message.slice(128, 160);
+	const slot4 = message.slice(192, 224);
+	const slot5 = message.slice(224, 256);
+	const nonce32 = concatBytes(new Uint8Array(16), message.slice(48, 64));
+	const structEncoded = concatBytes(
+		EIP712_TYPEHASH.buyShares,
+		controller,
+		bmp1Hash,
+		slotLowAsUint256(slot5),
+		eip712HashString(mappedStr),
+		slotLowAsUint256(slot2),
+		slotHighAsUint256(slot4),
+		slotLowAsUint256(slot4),
+		nonce32,
+		EIP712_OP_HASH.buyShares,
+		slotHighAsUint256(slot2),
+		eip712HashString(tokenStr)
+	);
+	return eip712DigestFromStruct(structEncoded);
+}
+
+function eip712SellSharesDigest(message: Uint8Array, tokenStr: string, mappedStr: string): Uint8Array {
+	const bmp1Hash = keccak_256(message);
+	const controller = message.slice(16, 48);
+	const slot2 = message.slice(128, 160);
+	const slot4 = message.slice(192, 224);
+	const slot5 = message.slice(224, 256);
+	const nonce32 = concatBytes(new Uint8Array(16), message.slice(48, 64));
+	const structEncoded = concatBytes(
+		EIP712_TYPEHASH.sellShares,
+		controller,
+		bmp1Hash,
+		slotLowAsUint256(slot5),
+		eip712HashString(mappedStr),
+		slotLowAsUint256(slot2),
+		slotHighAsUint256(slot4),
+		nonce32,
+		EIP712_OP_HASH.sellShares,
+		slotHighAsUint256(slot2),
+		slotLowAsUint256(slot4),
+		eip712HashString(tokenStr)
+	);
+	return eip712DigestFromStruct(structEncoded);
+}
+
+function eip712ClaimWinningsDigest(message: Uint8Array, tokenStr: string, mappedStr: string): Uint8Array {
+	const bmp1Hash = keccak_256(message);
+	const controller = message.slice(16, 48);
+	const slot2 = message.slice(128, 160);
+	const slot5 = message.slice(224, 256);
+	const nonce32 = concatBytes(new Uint8Array(16), message.slice(48, 64));
+	const structEncoded = concatBytes(
+		EIP712_TYPEHASH.claimWinnings,
+		controller,
+		bmp1Hash,
+		slotLowAsUint256(slot5),
+		eip712HashString(mappedStr),
+		slotLowAsUint256(slot2),
+		nonce32,
+		EIP712_OP_HASH.claimWinnings,
+		eip712HashString(tokenStr)
+	);
+	return eip712DigestFromStruct(structEncoded);
+}
+
+function eip712Digest(
+	message: Uint8Array,
+	tokenStr: string,
+	mappedStr: string,
+	recipientStr: string
+): Uint8Array {
+	const opcode = message[8]!;
+	if (opcode === OP_WITHDRAW) return eip712WithdrawDigest(message, tokenStr, recipientStr);
+	if (opcode === OP_BUY_SHARES) return eip712BuySharesDigest(message, tokenStr, mappedStr);
+	if (opcode === OP_SELL_SHARES) return eip712SellSharesDigest(message, tokenStr, mappedStr);
+	if (opcode === OP_CLAIM_WINNINGS) return eip712ClaimWinningsDigest(message, tokenStr, mappedStr);
+	throw new Error(`Unsupported BMP1 opcode for EIP-712: 0x${opcode.toString(16)}`);
 }
 
 // ── SIP-018 signing constants ─────────────────────────────────────────────────
@@ -331,8 +448,26 @@ function buildBmp1(opts: BuildMessageOpts): Uint8Array {
 	return msg;
 }
 
-function signEvm(message: Uint8Array, privKey: Uint8Array): Uint8Array {
-	const digest = eip712Digest(message);
+function tokenDisplay(tokenName: string): string {
+	return `${deployer}.${tokenName}`;
+}
+
+function eip712DisplayCvs(tokenName: string, mapped: string, recipient = '') {
+	return [
+		Cl.buffer(eip712HashString(tokenDisplay(tokenName))),
+		Cl.buffer(eip712HashString(mapped)),
+		Cl.buffer(eip712HashString(recipient))
+	];
+}
+
+function signEvm(
+	message: Uint8Array,
+	privKey: Uint8Array,
+	tokenStr: string,
+	mappedStr: string,
+	recipientStr = ''
+): Uint8Array {
+	const digest = eip712Digest(message, tokenStr, mappedStr, recipientStr);
 	const [sig, recovery] = secp.signSync(digest, privKey, { der: false, recovered: true, canonical: true });
 	// Clarity secp256k1-recover? expects R(32) || S(32) || V(1) = RSV format
 	const out = new Uint8Array(65);
@@ -352,6 +487,9 @@ type WithdrawMaterials = {
 	tokenCV: ReturnType<typeof contractPrincipalCV>;
 	mappedCV: ReturnType<typeof principalCV>;
 	recipientCV: ReturnType<typeof principalCV>;
+	tokenName: string;
+	mapped: string;
+	recipient: string;
 };
 
 function buildWithdraw(args: {
@@ -380,8 +518,18 @@ function buildWithdraw(args: {
 		...(args.overrides ?? {})
 	});
 
-	const signature = signEvm(message, args.key.privKey);
-	return { message, signature, pubkey: args.key.uncompressed, tokenCV, mappedCV, recipientCV };
+	const signature = signEvm(message, args.key.privKey, tokenDisplay(tokenName), args.mapped, args.recipient);
+	return {
+		message,
+		signature,
+		pubkey: args.key.uncompressed,
+		tokenCV,
+		mappedCV,
+		recipientCV,
+		tokenName,
+		mapped: args.mapped,
+		recipient: args.recipient,
+	};
 }
 
 function callDeposit(sender: string, amount: number | bigint, tokenName = sbtcName) {
@@ -427,7 +575,8 @@ function callWithdraw(sender: string, mats: WithdrawMaterials) {
 			Cl.buffer(mats.pubkey),
 			mats.tokenCV,
 			mats.mappedCV,
-			mats.recipientCV
+			mats.recipientCV,
+			...eip712DisplayCvs(mats.tokenName, mats.mapped, mats.recipient)
 		],
 		sender
 	);
@@ -715,7 +864,7 @@ describe('vault — withdraw (Use Case 3: signed BMP1 message)', () => {
 			slot3: slotLowUint(100_000),
 			slot4: slotLowUint(0)
 		});
-		const signature = signEvm(message, key.privKey);
+		const signature = signEvm(message, key.privKey, tokenDisplay(sbtcName), mapped, betty);
 		const r = simnet.callPublicFn(
 			vault,
 			'withdraw',
@@ -725,7 +874,8 @@ describe('vault — withdraw (Use Case 3: signed BMP1 message)', () => {
 				Cl.buffer(key.uncompressed),
 				wrappedStxTrait(),
 				principalCV(mapped),
-				principalCV(betty)
+				principalCV(betty),
+				...eip712DisplayCvs(sbtcName, mapped, betty)
 			],
 			tom
 		);
@@ -745,7 +895,8 @@ describe('vault — withdraw (Use Case 3: signed BMP1 message)', () => {
 				Cl.buffer(mats.pubkey),
 				mats.tokenCV,
 				principalCV(bob),
-				mats.recipientCV
+				mats.recipientCV,
+				...eip712DisplayCvs(mats.tokenName, mats.mapped, mats.recipient)
 			],
 			tom
 		);
@@ -764,7 +915,8 @@ describe('vault — withdraw (Use Case 3: signed BMP1 message)', () => {
 				Cl.buffer(mats.pubkey),
 				mats.tokenCV,
 				mats.mappedCV,
-				principalCV(bob)
+				principalCV(bob),
+				...eip712DisplayCvs(mats.tokenName, mats.mapped, mats.recipient)
 			],
 			tom
 		);
@@ -810,7 +962,7 @@ describe('vault — withdraw (Use Case 3: signed BMP1 message)', () => {
 			slot3: slotLowUint(100_000),
 			slot4: slotLowUint(0)
 		});
-		const signature = signEvm(message, attacker.privKey);
+		const signature = signEvm(message, attacker.privKey, tokenDisplay(sbtcName), mapped, betty);
 		// Pass the legitimate uncompressed pubkey — secp256k1-recover? will recover the attacker's pubkey,
 		// which won't match the compressed form of the supplied pubkey.
 		const r = simnet.callPublicFn(
@@ -822,7 +974,8 @@ describe('vault — withdraw (Use Case 3: signed BMP1 message)', () => {
 				Cl.buffer(key.uncompressed),
 				contractPrincipalCV(deployer, sbtcName),
 				principalCV(mapped),
-				principalCV(betty)
+				principalCV(betty),
+				...eip712DisplayCvs(sbtcName, mapped, betty)
 			],
 			tom
 		);
@@ -845,7 +998,7 @@ describe('vault — withdraw (Use Case 3: signed BMP1 message)', () => {
 			slot3: slotLowUint(100_000),
 			slot4: slotLowUint(0)
 		});
-		const signature = signEvm(message, attacker.privKey);
+		const signature = signEvm(message, attacker.privKey, tokenDisplay(sbtcName), mapped, betty);
 		const r = simnet.callPublicFn(
 			vault,
 			'withdraw',
@@ -855,7 +1008,8 @@ describe('vault — withdraw (Use Case 3: signed BMP1 message)', () => {
 				Cl.buffer(attacker.uncompressed),
 				contractPrincipalCV(deployer, sbtcName),
 				principalCV(mapped),
-				principalCV(betty)
+				principalCV(betty),
+				...eip712DisplayCvs(sbtcName, mapped, betty)
 			],
 			tom
 		);
@@ -936,6 +1090,7 @@ describe('vault — withdraw (CHAIN_STACKS, SIP-018 human-readable tuple)', () =
 				Cl.buffer(signature),
 				Cl.buffer(new Uint8Array(64)), // pubkey unused for CHAIN_STACKS
 				tokenCV, mappedCV, recipientCV,
+				...eip712DisplayCvs(sbtcName, alice, betty),
 			],
 			tom,
 		);
@@ -970,7 +1125,7 @@ describe('vault — withdraw (CHAIN_STACKS, SIP-018 human-readable tuple)', () =
 
 		const r = simnet.callPublicFn(
 			vault, 'withdraw',
-			[Cl.buffer(message), Cl.buffer(badSignature), Cl.buffer(new Uint8Array(64)), tokenCV, mappedCV, recipientCV],
+			[Cl.buffer(message), Cl.buffer(badSignature), Cl.buffer(new Uint8Array(64)), tokenCV, mappedCV, recipientCV, ...eip712DisplayCvs(sbtcName, alice, betty)],
 			tom,
 		);
 		// The recovered key won't hash to alice's address
@@ -991,13 +1146,13 @@ describe('vault — withdraw (CHAIN_STACKS, SIP-018 human-readable tuple)', () =
 		});
 		expect(simnet.callPublicFn(vault, 'withdraw',
 			[Cl.buffer(msg0), Cl.buffer(signStacks(msg0, key, tokenCV, recipientCV, 100_000n, 0n)),
-			 Cl.buffer(new Uint8Array(64)), tokenCV, mappedCV, recipientCV], tom,
+			 Cl.buffer(new Uint8Array(64)), tokenCV, mappedCV, recipientCV, ...eip712DisplayCvs(sbtcName, alice, betty)], tom,
 		).result).toEqual(Cl.ok(Cl.uint(100_000)));
 
 		// Replay nonce=0 should fail
 		const r = simnet.callPublicFn(vault, 'withdraw',
 			[Cl.buffer(msg0), Cl.buffer(signStacks(msg0, key, tokenCV, recipientCV, 100_000n, 0n)),
-			 Cl.buffer(new Uint8Array(64)), tokenCV, mappedCV, recipientCV], tom,
+			 Cl.buffer(new Uint8Array(64)), tokenCV, mappedCV, recipientCV, ...eip712DisplayCvs(sbtcName, alice, betty)], tom,
 		);
 		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_INVALID_NONCE)));
 	});
@@ -1040,6 +1195,8 @@ type BuySharesMaterials = {
 	tokenCV: ReturnType<typeof contractPrincipalCV>;
 	mappedCV: ReturnType<typeof principalCV>;
 	marketCV: ReturnType<typeof contractPrincipalCV>;
+	tokenName: string;
+	mapped: string;
 };
 
 function buildBuyShares(args: {
@@ -1075,8 +1232,8 @@ function buildBuyShares(args: {
 		...(args.overrides ?? {})
 	});
 
-	const signature = signEvm(message, args.key.privKey);
-	return { message, signature, pubkey: args.key.uncompressed, tokenCV, mappedCV, marketCV };
+	const signature = signEvm(message, args.key.privKey, tokenDisplay(tokenName), args.mapped);
+	return { message, signature, pubkey: args.key.uncompressed, tokenCV, mappedCV, marketCV, tokenName, mapped: args.mapped };
 }
 
 function buildBuySharesStacks(args: {
@@ -1112,7 +1269,7 @@ function buildBuySharesStacks(args: {
 	});
 
 	const signature = signStacksBuy(message, args.key, tokenCV, mappedCV);
-	return { message, signature, pubkey: new Uint8Array(64), tokenCV, mappedCV, marketCV };
+	return { message, signature, pubkey: new Uint8Array(64), tokenCV, mappedCV, marketCV, tokenName, mapped: args.mapped };
 }
 
 function callBuyShares(sender: string, mats: BuySharesMaterials, marketName: string) {
@@ -1125,7 +1282,8 @@ function callBuyShares(sender: string, mats: BuySharesMaterials, marketName: str
 			Cl.buffer(mats.pubkey),
 			mats.tokenCV,
 			mats.mappedCV,
-			contractPrincipalCV(deployer, marketName)
+			contractPrincipalCV(deployer, marketName),
+			...eip712DisplayCvs(mats.tokenName, mats.mapped)
 		],
 		sender
 	);
@@ -1283,6 +1441,7 @@ describe('vault — buy-shares (CHAIN_STACKS, SIP-018 buy-shares tuple)', () => 
 				tokenCV,
 				mappedCV,
 				contractPrincipalCV(deployer, marketPredicting),
+				...eip712DisplayCvs(mats.tokenName, mats.mapped),
 			],
 			tom,
 		);
@@ -1352,7 +1511,7 @@ describe('vault — buy-shares (Use Case 4: signed BMP1 + categorical market)', 
 		const r = simnet.callPublicFn(
 			vault,
 			'buy-shares',
-			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), wrappedStxTrait(), mats.mappedCV, contractPrincipalCV(deployer, marketPredicting)],
+			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), wrappedStxTrait(), mats.mappedCV, contractPrincipalCV(deployer, marketPredicting), ...eip712DisplayCvs(mats.tokenName, mats.mapped)],
 			tom
 		);
 		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_TOKEN_COMMIT)));
@@ -1364,7 +1523,7 @@ describe('vault — buy-shares (Use Case 4: signed BMP1 + categorical market)', 
 		const r = simnet.callPublicFn(
 			vault,
 			'buy-shares',
-			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, principalCV(bob), contractPrincipalCV(deployer, marketPredicting)],
+			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, principalCV(bob), contractPrincipalCV(deployer, marketPredicting), ...eip712DisplayCvs(mats.tokenName, mats.mapped)],
 			tom
 		);
 		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_MAPPED_COMMIT)));
@@ -1377,7 +1536,7 @@ describe('vault — buy-shares (Use Case 4: signed BMP1 + categorical market)', 
 		const r = simnet.callPublicFn(
 			vault,
 			'buy-shares',
-			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketPredicting)],
+			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketPredicting), ...eip712DisplayCvs(mats.tokenName, mats.mapped)],
 			tom
 		);
 		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_MARKET_COMMIT)));
@@ -1408,11 +1567,19 @@ describe('vault — buy-shares (Use Case 4: signed BMP1 + categorical market)', 
 		const attacker = newEvmKey(98);
 		const mats = buildBuyShares({ key, mapped, market: marketPredicting, marketId: 0, outcomeIndex: 1, maxCost: 1_000_000n, minShares: 1n });
 		// Re-sign with the attacker key but keep the legitimate controller pubkey
-		const badSig = signEvm(mats.message, attacker.privKey);
+		const badSig = signEvm(mats.message, attacker.privKey, tokenDisplay(mats.tokenName), mats.mapped);
 		const r = simnet.callPublicFn(
 			vault,
 			'buy-shares',
-			[Cl.buffer(mats.message), Cl.buffer(badSig), Cl.buffer(key.uncompressed), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketPredicting)],
+			[
+				Cl.buffer(mats.message),
+				Cl.buffer(badSig),
+				Cl.buffer(key.uncompressed),
+				mats.tokenCV,
+				mats.mappedCV,
+				contractPrincipalCV(deployer, marketPredicting),
+				...eip712DisplayCvs(mats.tokenName, mats.mapped)
+			],
 			tom
 		);
 		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_PUBKEY_MISMATCH)));
@@ -1440,7 +1607,7 @@ describe('vault — buy-shares (Use Case 4: signed BMP1 + scalar market)', () =>
 		const r = simnet.callPublicFn(
 			vault,
 			'buy-shares',
-			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketScalar)],
+			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketScalar), ...eip712DisplayCvs(mats.tokenName, mats.mapped)],
 			tom
 		);
 		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_MARKET_COMMIT)));
@@ -1496,8 +1663,8 @@ function buildSellShares(args: {
 		...(args.overrides ?? {})
 	});
 
-	const signature = signEvm(message, args.key.privKey);
-	return { message, signature, pubkey: args.key.uncompressed, tokenCV, mappedCV, marketCV };
+	const signature = signEvm(message, args.key.privKey, tokenDisplay(tokenName), args.mapped);
+	return { message, signature, pubkey: args.key.uncompressed, tokenCV, mappedCV, marketCV, tokenName, mapped: args.mapped };
 }
 
 function buildClaimWinnings(args: {
@@ -1529,15 +1696,23 @@ function buildClaimWinnings(args: {
 		...(args.overrides ?? {})
 	});
 
-	const signature = signEvm(message, args.key.privKey);
-	return { message, signature, pubkey: args.key.uncompressed, tokenCV, mappedCV, marketCV };
+	const signature = signEvm(message, args.key.privKey, tokenDisplay(tokenName), args.mapped);
+	return { message, signature, pubkey: args.key.uncompressed, tokenCV, mappedCV, marketCV, tokenName, mapped: args.mapped };
 }
 
 function callVaultMarketFn(fn: string, sender: string, mats: BuySharesMaterials, marketName: string) {
 	return simnet.callPublicFn(
 		vault,
 		fn,
-		[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketName)],
+		[
+			Cl.buffer(mats.message),
+			Cl.buffer(mats.signature),
+			Cl.buffer(mats.pubkey),
+			mats.tokenCV,
+			mats.mappedCV,
+			contractPrincipalCV(deployer, marketName),
+			...eip712DisplayCvs(mats.tokenName, mats.mapped)
+		],
 		sender
 	);
 }
@@ -1601,7 +1776,7 @@ describe('vault — sell-shares (Use Case 5: signed BMP1 brings proceeds back to
 		const r = simnet.callPublicFn(
 			vault,
 			'sell-shares',
-			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketPredicting)],
+			[Cl.buffer(mats.message), Cl.buffer(mats.signature), Cl.buffer(mats.pubkey), mats.tokenCV, mats.mappedCV, contractPrincipalCV(deployer, marketPredicting), ...eip712DisplayCvs(mats.tokenName, mats.mapped)],
 			tom
 		);
 		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_MARKET_COMMIT)));
