@@ -136,9 +136,7 @@
   );
 
   const closeDateLine = $derived(
-    dateOfResolution(currentBurnHeight, market)
-      ?.closeOffChain.split(",")[0]
-      ?.trim() ?? "",
+    dateOfResolution(currentBurnHeight, market)?.closeOffChain,
   );
 
   const handleResolution = async (data: any) => {
@@ -337,9 +335,9 @@
     </div>
     <p class="mt-2 text-base font-medium text-foreground tabular-nums">
       {closeDateLine}
-      {#if appConfig.VITE_NETWORK === "devnet"}
+      {#if appConfig.VITE_NETWORK === "devnet" || appConfig.VITE_NETWORK === "testnet"}
         <br /><span class="mt-1 text-xs text-foreground/40"
-          >dates on testnet are unreliable</span
+          >dates on testnet are unreliable (ends: {endOfMarket} current: {currentBurnHeight})</span
         >
       {/if}
     </p>

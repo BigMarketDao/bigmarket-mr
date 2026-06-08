@@ -287,8 +287,9 @@ export const dateOfResolution = (
 ) => {
   const startOnChain = market.marketData.marketStart || currentHeight;
   const closeOnChain =
-    market.marketData.marketStart ||
-    currentHeight + (market.marketData.marketDuration || 0);
+    coolDownBlock(market) - (market.marketData.coolDownPeriod ?? 0);
+  // (market.marketData.marketStart ?? 0) +
+  // (market.marketData.marketDuration ?? 0);
   const resolvesOnChain = coolDownBlock(market);
 
   // --- NEW logic ---
