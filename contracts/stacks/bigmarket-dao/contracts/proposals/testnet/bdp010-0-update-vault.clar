@@ -12,6 +12,7 @@
 				{extension: .bme050-2-vault, enabled: true}
 			)
 		))
+		(try! (contract-call? .bme050-2-vault set-token-allowed 'ST30Q4WJYHGMYEE1CTGQ334R9M7KQ8ETVQ9NB134T.usdcx true))
 		(ok true)
 	)
 )

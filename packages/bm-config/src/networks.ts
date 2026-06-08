@@ -121,7 +121,7 @@ export const daoConfigByNetwork: { [key: string]: DaoConfig } = {
     VITE_DAO_REPUTATION_TOKEN: "bme030-0-reputation-token",
     VITE_DAO_LIQUIDITY_CONTRIBUTION: "bme010-0-liquidity-contribution",
     VITE_DAO_RESOLUTION_COORDINATOR: "bme008-0-resolution-coordinator",
-    VITE_DAO_VAULT: "bme050-1-vault",
+    VITE_DAO_VAULT: "bme050-2-vault",
     VITE_DAO_BIG_PLAY: "big-play",
     VITE_SBTC_DEPLOYER: "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT",
     VITE_PEPE_FULL_CONTRACT: "ST1CV2YGRJA5X8BWS0GP31J9HF56M06CQK8998TSX.tpepe",
