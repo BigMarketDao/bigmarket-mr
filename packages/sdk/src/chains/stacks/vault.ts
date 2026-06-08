@@ -588,6 +588,7 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
     async depositForFromMappedAddress(
       params: RelayerDepositForParams,
       senderKey: string,
+      sponsorKey: string,
       network: string,
       defaultFee = 250_000,
     ) {
@@ -622,6 +623,7 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
       ];
 
       const devnet = network === "devnet";
+      console.log("sponsoring transaction on: " + devnet);
       let tx = await makeContractCall({
         contractAddress: deployer,
         contractName: vaultName,
@@ -634,9 +636,10 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
         sponsored: !devnet, // important
       });
       if (!devnet) {
+        console.log("sponsoring transaction", functionArgs);
         tx = await sponsorTransaction({
           transaction: tx,
-          sponsorPrivateKey: senderKey,
+          sponsorPrivateKey: sponsorKey,
           fee: 1000n,
         });
       }
