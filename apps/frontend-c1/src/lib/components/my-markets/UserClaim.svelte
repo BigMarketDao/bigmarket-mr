@@ -35,6 +35,8 @@
 		visible: boolean;
 	}> = [];
 
+	const hasOnChainStakes = (shareList: number[] = []) => shareList.some((amount) => amount > 0);
+
 	const buildCategorySharesFromEvents = (
 		categoryCount: number,
 		stakeIndexes: number[] = [],
@@ -44,14 +46,14 @@
 	): number[] => {
 		const shares = Array.from({ length: categoryCount }, () => 0);
 		for (let i = 0; i < stakeIndexes.length; i++) {
-			const index = stakeIndexes[i];
-			if (typeof index === 'number' && index >= 0 && index < categoryCount) {
+			const index = Number(stakeIndexes[i]);
+			if (!Number.isNaN(index) && index >= 0 && index < categoryCount) {
 				shares[index] += stakeAmounts[i] || 0;
 			}
 		}
 		for (let i = 0; i < unstakeIndexes.length; i++) {
-			const index = unstakeIndexes[i];
-			if (typeof index === 'number' && index >= 0 && index < categoryCount) {
+			const index = Number(unstakeIndexes[i]);
+			if (!Number.isNaN(index) && index >= 0 && index < categoryCount) {
 				shares[index] -= unstakeAmounts[i] || 0;
 			}
 		}
@@ -61,20 +63,41 @@
 	const getClaimOutcomeIndex = () =>
 		market.claim?.indexWon ?? market.marketData.outcome ?? outcomeIndex;
 
+	const getHistoricalShares = () => {
+		if (market.categoryShares?.length) return market.categoryShares;
+		return buildCategorySharesFromEvents(
+			market.marketData.categories.length,
+			market.stakeIndexes ?? [],
+			market.stakeAmounts ?? [],
+			market.unstakeIndexes ?? [],
+			market.unstakeAmounts ?? []
+		);
+	};
+
+	const applyClaimShareFallback = (shareList: number[]) => {
+		if (shareList.some((amount) => amount > 0) || !market.claim) return shareList;
+		const fallback = Array.from({ length: market.marketData.categories.length }, () => 0);
+		const wonIndex = getClaimOutcomeIndex();
+		if (typeof wonIndex === 'number' && wonIndex >= 0) {
+			fallback[wonIndex] =
+				market.claim.userSharesInOutcome ?? market.claim.userStake ?? market.stakeTotal ?? 0;
+		}
+		return fallback;
+	};
+
+	const useHistoricalBreakdown = $derived(
+		market.claimed ||
+			(market.marketData.concluded &&
+				!hasOnChainStakes(stakes) &&
+				((market.stakeTotal ?? 0) > 0 || hasOnChainStakes(getHistoricalShares())))
+	);
+
 	const breakdownShares = $derived(
-		market.claimed
-			? buildCategorySharesFromEvents(
-					market.marketData.categories.length,
-					market.stakeIndexes,
-					market.stakeAmounts,
-					market.unstakeIndexes,
-					market.unstakeAmounts
-				)
-			: stakes
+		useHistoricalBreakdown ? applyClaimShareFallback(getHistoricalShares()) : stakes
 	);
 
 	const breakdownTokens = $derived.by(() => {
-		if (!market.claimed) return tokens;
+		if (!useHistoricalBreakdown) return tokens;
 		const claimTokens = Array.from({ length: market.marketData.categories.length }, () => 0);
 		const wonIndex = getClaimOutcomeIndex();
 		if (typeof wonIndex === 'number' && wonIndex >= 0) {
@@ -84,7 +107,7 @@
 	});
 
 	const getBreakdownPayout = (index: number) => {
-		if (market.claimed) {
+		if (useHistoricalBreakdown && market.claimed) {
 			const wonIndex = getClaimOutcomeIndex();
 			if (index !== wonIndex) return 0;
 			return market.claim?.netRefund ?? 0;
@@ -325,9 +348,11 @@
 {#if !isLoading && showBreakdown}
 	<tr class="bg-muted/50 text-foreground">
 		<td colspan="6" class="rounded border border-border p-3">
-			{#if market.claimed}
+			{#if useHistoricalBreakdown}
 				<p class="mb-3 text-[10px] text-muted-foreground">
-					Position history from staking events. On-chain balances are cleared after claim.
+					{market.claimed
+						? 'Position history from staking events. On-chain balances are cleared after claim.'
+						: 'Position history from staking events. Live on-chain balances are unavailable.'}
 				</p>
 			{/if}
 			<table class="w-full border-collapse text-[11px]">
@@ -336,10 +361,10 @@
 						<th class="p-5 text-left font-medium text-muted-foreground">Category</th>
 						<th class="p-5 text-right font-medium text-muted-foreground">Shares</th>
 						<th class="p-5 text-right font-medium text-muted-foreground">
-							{market.claimed ? 'Claimed tokens' : 'Tokens'}
+							{useHistoricalBreakdown ? 'Claimed tokens' : 'Tokens'}
 						</th>
 						<th class="p-5 text-right font-medium text-muted-foreground">
-							{market.claimed ? 'Received' : 'Payout'}
+							{useHistoricalBreakdown && market.claimed ? 'Received' : 'Payout'}
 						</th>
 					</tr>
 				</thead>
@@ -360,7 +385,7 @@
 								)}</td
 							>
 							<td class={getClazz(market.marketData.outcome, index, 'p-5 text-right')}
-								>{#if market.claimed && index !== getClaimOutcomeIndex()}
+								>{#if useHistoricalBreakdown && index !== getClaimOutcomeIndex()}
 									<span class="text-muted-foreground">—</span>
 								{:else}
 									{fmtMicroToStx(

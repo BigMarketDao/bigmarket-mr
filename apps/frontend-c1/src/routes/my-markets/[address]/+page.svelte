@@ -151,6 +151,7 @@
 		try {
 			isLoading = true;
 			await computePendingPayouts();
+			console.log('myMarketData: ', myMarketData);
 			isLoading = false;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load market data';

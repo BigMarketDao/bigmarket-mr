@@ -2,6 +2,32 @@ import { PredictionMarketClaimEvent, PredictionMarketStakeEvent } from '@mijoco/
 import { daoEventCollection } from '../../../lib/data/db_models.js';
 import { getDaoConfig } from '../../../lib/config_dao.js';
 
+function buildCategoryShares(row: {
+	marketData?: { categories?: unknown[] };
+	stakeIndexes?: number[];
+	stakeAmounts?: number[];
+	unstakeIndexes?: number[];
+	unstakeAmounts?: number[];
+}): number[] {
+	const categoryCount = row.marketData?.categories?.length ?? 0;
+	const shares = Array.from({ length: categoryCount }, () => 0);
+
+	for (let i = 0; i < (row.stakeIndexes?.length ?? 0); i++) {
+		const index = Number(row.stakeIndexes?.[i]);
+		if (!Number.isNaN(index) && index >= 0 && index < categoryCount) {
+			shares[index] += Number(row.stakeAmounts?.[i]) || 0;
+		}
+	}
+	for (let i = 0; i < (row.unstakeIndexes?.length ?? 0); i++) {
+		const index = Number(row.unstakeIndexes?.[i]);
+		if (!Number.isNaN(index) && index >= 0 && index < categoryCount) {
+			shares[index] -= Number(row.unstakeAmounts?.[i]) || 0;
+		}
+	}
+
+	return shares.map((amount) => Math.max(0, amount));
+}
+
 export async function getMyStakedMarkets(voter: string): Promise<Array<PredictionMarketStakeEvent>> {
 	const result = await daoEventCollection.find({ event: 'market-stake', voter }).toArray();
 	return result as unknown as Array<PredictionMarketStakeEvent>;
@@ -270,5 +296,8 @@ export async function getMyStakesAndClaims(voter: string): Promise<Array<any>> {
 
 		.toArray();
 
-	return result as unknown as Array<any>;
+	return result.map((row) => ({
+		...row,
+		categoryShares: buildCategoryShares(row)
+	})) as unknown as Array<any>;
 }
