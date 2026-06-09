@@ -102,7 +102,7 @@ export async function getMyStakesAndClaims(voter: string): Promise<Array<any>> {
 			// Stage 1: Filter only relevant events
 			{
 				$match: {
-					$or: [{ event: 'market-stake', voter: voter }, { event: 'claim-winnings', claimer: voter }, { event: 'create-market' }],
+					$or: [{ event: 'market-stake', voter: voter }, { event: 'market-unstake', seller: voter }, { event: 'claim-winnings', claimer: voter }, { event: 'create-market' }],
 					extension: {
 						$in: [`${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_PREDICTING}`, `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`]
 					}
@@ -120,7 +120,18 @@ export async function getMyStakesAndClaims(voter: string): Promise<Array<any>> {
 								totalAmount: { $sum: '$amount' },
 								stakeIds: { $push: '$_id' },
 								stakeAmounts: { $push: '$amount' },
+								stakeIndexes: { $push: '$index' },
 								voter: { $push: '$voter' }
+							}
+						}
+					],
+					unstakes: [
+						{ $match: { event: 'market-unstake', seller: voter } },
+						{
+							$group: {
+								_id: { marketId: '$marketId', extension: '$extension' },
+								unstakeAmounts: { $push: '$sharesIn' },
+								unstakeIndexes: { $push: '$index' }
 							}
 						}
 					],
@@ -182,6 +193,20 @@ export async function getMyStakesAndClaims(voter: string): Promise<Array<any>> {
 												},
 												0
 											]
+										},
+										unstake: {
+											$arrayElemAt: [
+												{
+													$filter: {
+														input: '$unstakes',
+														as: 'u',
+														cond: {
+															$and: [{ $eq: ['$$u._id.marketId', '$$s._id.marketId'] }, { $eq: ['$$u._id.extension', '$$s._id.extension'] }]
+														}
+													}
+												},
+												0
+											]
 										}
 									},
 									in: {
@@ -193,6 +218,9 @@ export async function getMyStakesAndClaims(voter: string): Promise<Array<any>> {
 										stakeTotal: '$$s.totalAmount',
 										stakeIds: '$$s.stakeIds',
 										stakeAmounts: '$$s.stakeAmounts',
+										stakeIndexes: '$$s.stakeIndexes',
+										unstakeAmounts: { $ifNull: ['$$unstake.unstakeAmounts', []] },
+										unstakeIndexes: { $ifNull: ['$$unstake.unstakeIndexes', []] },
 										claimed: { $cond: [{ $ifNull: ['$$claim', false] }, true, false] },
 										claim: '$$claim.claim',
 										marketMeta: '$$market.market.unhashedData',
@@ -218,6 +246,9 @@ export async function getMyStakesAndClaims(voter: string): Promise<Array<any>> {
 					stakeTotal: 1,
 					stakeIds: 1,
 					stakeAmounts: 1,
+					stakeIndexes: 1,
+					unstakeAmounts: 1,
+					unstakeIndexes: 1,
 					claimed: 1,
 					claim: 1,
 					'marketMeta.name': 1,

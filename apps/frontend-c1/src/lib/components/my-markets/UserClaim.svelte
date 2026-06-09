@@ -35,6 +35,63 @@
 		visible: boolean;
 	}> = [];
 
+	const buildCategorySharesFromEvents = (
+		categoryCount: number,
+		stakeIndexes: number[] = [],
+		stakeAmounts: number[] = [],
+		unstakeIndexes: number[] = [],
+		unstakeAmounts: number[] = []
+	): number[] => {
+		const shares = Array.from({ length: categoryCount }, () => 0);
+		for (let i = 0; i < stakeIndexes.length; i++) {
+			const index = stakeIndexes[i];
+			if (typeof index === 'number' && index >= 0 && index < categoryCount) {
+				shares[index] += stakeAmounts[i] || 0;
+			}
+		}
+		for (let i = 0; i < unstakeIndexes.length; i++) {
+			const index = unstakeIndexes[i];
+			if (typeof index === 'number' && index >= 0 && index < categoryCount) {
+				shares[index] -= unstakeAmounts[i] || 0;
+			}
+		}
+		return shares.map((amount) => Math.max(0, amount));
+	};
+
+	const getClaimOutcomeIndex = () =>
+		market.claim?.indexWon ?? market.marketData.outcome ?? outcomeIndex;
+
+	const breakdownShares = $derived(
+		market.claimed
+			? buildCategorySharesFromEvents(
+					market.marketData.categories.length,
+					market.stakeIndexes,
+					market.stakeAmounts,
+					market.unstakeIndexes,
+					market.unstakeAmounts
+				)
+			: stakes
+	);
+
+	const breakdownTokens = $derived.by(() => {
+		if (!market.claimed) return tokens;
+		const claimTokens = Array.from({ length: market.marketData.categories.length }, () => 0);
+		const wonIndex = getClaimOutcomeIndex();
+		if (typeof wonIndex === 'number' && wonIndex >= 0) {
+			claimTokens[wonIndex] = market.claim?.userTokensInOutcome ?? market.claim?.userShare ?? 0;
+		}
+		return claimTokens;
+	});
+
+	const getBreakdownPayout = (index: number) => {
+		if (market.claimed) {
+			const wonIndex = getClaimOutcomeIndex();
+			if (index !== wonIndex) return 0;
+			return market.claim?.netRefund ?? 0;
+		}
+		return calculateExpectedPayout(market.marketData, breakdownShares, index)?.netRefund ?? 0;
+	};
+
 	const getClazz = (outcome: number | null | undefined, index: number, align?: string) => {
 		const base = `pb-2 pl-2 font-mono tabular-nums text-foreground ${align ?? ''}`;
 		if (outcome === null) {
@@ -268,13 +325,22 @@
 {#if !isLoading && showBreakdown}
 	<tr class="bg-muted/50 text-foreground">
 		<td colspan="6" class="rounded border border-border p-3">
+			{#if market.claimed}
+				<p class="mb-3 text-[10px] text-muted-foreground">
+					Position history from staking events. On-chain balances are cleared after claim.
+				</p>
+			{/if}
 			<table class="w-full border-collapse text-[11px]">
 				<thead class="mb-5">
 					<tr>
 						<th class="p-5 text-left font-medium text-muted-foreground">Category</th>
 						<th class="p-5 text-right font-medium text-muted-foreground">Shares</th>
-						<th class="p-5 text-right font-medium text-muted-foreground">Tokens</th>
-						<th class="p-5 text-right font-medium text-muted-foreground">Payout</th>
+						<th class="p-5 text-right font-medium text-muted-foreground">
+							{market.claimed ? 'Claimed tokens' : 'Tokens'}
+						</th>
+						<th class="p-5 text-right font-medium text-muted-foreground">
+							{market.claimed ? 'Received' : 'Payout'}
+						</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -289,19 +355,23 @@
 							>
 							<td class={getClazz(market.marketData.outcome, index, 'p-5 text-right')}
 								>{fmtMicroToStx(
-									stakes[index] || 0,
+									breakdownShares[index] || 0,
 									getMarketToken(market.marketData.token, $allowedTokenStore).decimals
 								)}</td
 							>
 							<td class={getClazz(market.marketData.outcome, index, 'p-5 text-right')}
-								>{fmtMicroToStx(
-									tokens[index] || 0,
-									getMarketToken(market.marketData.token, $allowedTokenStore).decimals
-								)}</td
+								>{#if market.claimed && index !== getClaimOutcomeIndex()}
+									<span class="text-muted-foreground">—</span>
+								{:else}
+									{fmtMicroToStx(
+										breakdownTokens[index] || 0,
+										getMarketToken(market.marketData.token, $allowedTokenStore).decimals
+									)}
+								{/if}</td
 							>
 							<td class={getClazz(market.marketData.outcome, index, 'p-5 text-right')}
 								>{fmtMicroToStx(
-									calculateExpectedPayout(market.marketData, stakes, index)!.netRefund,
+									getBreakdownPayout(index),
 									getMarketToken(market.marketData.token, $allowedTokenStore).decimals
 								)}</td
 							>
