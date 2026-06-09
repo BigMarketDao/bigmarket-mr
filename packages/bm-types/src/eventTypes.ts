@@ -255,8 +255,12 @@ export interface UserMarketStake {
   stakeTotal: number;
   stakeIds: string[];
   stakeAmounts: number[];
+  stakeIndexes?: number[];
+  unstakeAmounts?: number[];
+  unstakeIndexes?: number[];
+  categoryShares?: number[];
   claimed: boolean;
-  claim: ClaimWinnings;
+  claim: ClaimWinnings & Partial<PredictionMarketClaimEvent>;
   marketMeta: {
     name: string;
     description: string;
