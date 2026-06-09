@@ -15,18 +15,24 @@
 	import { selectedCurrency } from '@bigmarket/bm-common';
 	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
 	import { ArrowBigDown, ArrowBigUp } from 'lucide-svelte';
+	import UserClaimHistory from './UserClaimHistory.svelte';
+	import { fetchMyClaimedMarket } from '$lib/core/app/loaders/myMarketsLoaders';
+	import type { PredictionMarketClaimEvent } from '@bigmarket/bm-types';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
-	const { market, stakes, tokens } = $props<{
+	const { market, stakes, tokens, address } = $props<{
 		market: UserMarketStake;
 		stakes: Array<number>;
 		tokens: Array<number>;
+		address: string;
 	}>();
 
 	let isLoading: boolean = $state(true);
 	let showBreakdown: boolean = $state(false);
 	let outcomeIndex: number = $state(0);
+	let hasClaim: boolean = $state(false);
+	let claimRecord = $state<PredictionMarketClaimEvent | null>(null);
 	let detailedData: Array<{
 		marketId: number;
 		extension: string;
@@ -34,86 +40,6 @@
 		userTokens: Array<number>;
 		visible: boolean;
 	}> = [];
-
-	const hasOnChainStakes = (shareList: number[] = []) => shareList.some((amount) => amount > 0);
-
-	const buildCategorySharesFromEvents = (
-		categoryCount: number,
-		stakeIndexes: number[] = [],
-		stakeAmounts: number[] = [],
-		unstakeIndexes: number[] = [],
-		unstakeAmounts: number[] = []
-	): number[] => {
-		const shares = Array.from({ length: categoryCount }, () => 0);
-		for (let i = 0; i < stakeIndexes.length; i++) {
-			const index = Number(stakeIndexes[i]);
-			if (!Number.isNaN(index) && index >= 0 && index < categoryCount) {
-				shares[index] += stakeAmounts[i] || 0;
-			}
-		}
-		for (let i = 0; i < unstakeIndexes.length; i++) {
-			const index = Number(unstakeIndexes[i]);
-			if (!Number.isNaN(index) && index >= 0 && index < categoryCount) {
-				shares[index] -= unstakeAmounts[i] || 0;
-			}
-		}
-		return shares.map((amount) => Math.max(0, amount));
-	};
-
-	const getClaimOutcomeIndex = () =>
-		market.claim?.indexWon ?? market.marketData.outcome ?? outcomeIndex;
-
-	const getHistoricalShares = () => {
-		if (market.categoryShares?.length) return market.categoryShares;
-		return buildCategorySharesFromEvents(
-			market.marketData.categories.length,
-			market.stakeIndexes ?? [],
-			market.stakeAmounts ?? [],
-			market.unstakeIndexes ?? [],
-			market.unstakeAmounts ?? []
-		);
-	};
-
-	const applyClaimShareFallback = (shareList: number[]) => {
-		if (shareList.some((amount) => amount > 0) || !market.claim) return shareList;
-		const fallback = Array.from({ length: market.marketData.categories.length }, () => 0);
-		const wonIndex = getClaimOutcomeIndex();
-		if (typeof wonIndex === 'number' && wonIndex >= 0) {
-			fallback[wonIndex] =
-				market.claim.userSharesInOutcome ?? market.claim.userStake ?? market.stakeTotal ?? 0;
-		}
-		return fallback;
-	};
-
-	const useHistoricalBreakdown = $derived(
-		market.claimed ||
-			(market.marketData.concluded &&
-				!hasOnChainStakes(stakes) &&
-				((market.stakeTotal ?? 0) > 0 || hasOnChainStakes(getHistoricalShares())))
-	);
-
-	const breakdownShares = $derived(
-		useHistoricalBreakdown ? applyClaimShareFallback(getHistoricalShares()) : stakes
-	);
-
-	const breakdownTokens = $derived.by(() => {
-		if (!useHistoricalBreakdown) return tokens;
-		const claimTokens = Array.from({ length: market.marketData.categories.length }, () => 0);
-		const wonIndex = getClaimOutcomeIndex();
-		if (typeof wonIndex === 'number' && wonIndex >= 0) {
-			claimTokens[wonIndex] = market.claim?.userTokensInOutcome ?? market.claim?.userShare ?? 0;
-		}
-		return claimTokens;
-	});
-
-	const getBreakdownPayout = (index: number) => {
-		if (useHistoricalBreakdown && market.claimed) {
-			const wonIndex = getClaimOutcomeIndex();
-			if (index !== wonIndex) return 0;
-			return market.claim?.netRefund ?? 0;
-		}
-		return calculateExpectedPayout(market.marketData, breakdownShares, index)?.netRefund ?? 0;
-	};
 
 	const getClazz = (outcome: number | null | undefined, index: number, align?: string) => {
 		const base = `pb-2 pl-2 font-mono tabular-nums text-foreground ${align ?? ''}`;
@@ -175,8 +101,23 @@
 		}
 	};
 
+	const showStakingBreakdown = $derived(
+		showBreakdown && (!market.marketData.concluded || !hasClaim)
+	);
+
+	const claimTxId = $derived(claimRecord?.txId);
+
 	onMount(async () => {
 		outcomeIndex = market.marketData.outcome!;
+		if (market.marketData.concluded) {
+			claimRecord = await fetchMyClaimedMarket(
+				appConfig.VITE_BIGMARKET_API,
+				market.marketId,
+				market.extension,
+				address
+			);
+			hasClaim = !!claimRecord?.txId;
+		}
 		isLoading = false;
 	});
 </script>
@@ -286,33 +227,16 @@
 					class="inline-flex h-11 cursor-pointer items-center rounded-md bg-primary px-3 text-[11px] font-medium text-primary-foreground transition-opacity hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50 md:h-10"
 					disabled={isLoading}
 				>
-					{#if isLoading}
-						<svg class="mr-1 -ml-1 h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
-							<circle
-								class="opacity-25"
-								cx="12"
-								cy="12"
-								r="10"
-								stroke="currentColor"
-								stroke-width="4"
-							></circle>
-							<path
-								class="opacity-75"
-								fill="currentColor"
-								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-							></path>
-						</svg>
-					{/if}
 					Claim
 				</button>
-			{:else if market.claimed}
+			{:else if (market.claimed || hasClaim) && claimTxId}
 				<Bulletin message="View claim transaction on the explorer.">
 					<span>
 						<a
 							href={stacks.explorerTxUrl(
 								appConfig.VITE_NETWORK,
 								appConfig.VITE_STACKS_EXPLORER,
-								market.claim.txId
+								claimTxId
 							)}
 							target="_blank"
 							class="text-[11px] font-medium text-primary underline hover:text-primary/80"
@@ -348,62 +272,59 @@
 {#if !isLoading && showBreakdown}
 	<tr class="bg-muted/50 text-foreground">
 		<td colspan="6" class="rounded border border-border p-3">
-			{#if useHistoricalBreakdown}
-				<p class="mb-3 text-[10px] text-muted-foreground">
-					{market.claimed
-						? 'Position history from staking events. On-chain balances are cleared after claim.'
-						: 'Position history from staking events. Live on-chain balances are unavailable.'}
-				</p>
+			{#if market.marketData.concluded}
+				<UserClaimHistory
+					marketId={market.marketId}
+					extension={market.extension}
+					claimer={address}
+					marketData={market.marketData}
+					claim={claimRecord}
+				/>
 			{/if}
-			<table class="w-full border-collapse text-[11px]">
-				<thead class="mb-5">
-					<tr>
-						<th class="p-5 text-left font-medium text-muted-foreground">Category</th>
-						<th class="p-5 text-right font-medium text-muted-foreground">Shares</th>
-						<th class="p-5 text-right font-medium text-muted-foreground">
-							{useHistoricalBreakdown ? 'Claimed tokens' : 'Tokens'}
-						</th>
-						<th class="p-5 text-right font-medium text-muted-foreground">
-							{useHistoricalBreakdown && market.claimed ? 'Received' : 'Payout'}
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each market.marketData.categories, index (index)}
-						<tr
-							class={outcomeIndex === index
-								? 'border-b border-success/20 bg-success/5'
-								: 'border-b border-border'}
-						>
-							<td class={getClazz(market.marketData.outcome, index, 'p-5 text-left ')}
-								>{@html getCategoryLabel($selectedCurrency, index, market.marketData)}</td
-							>
-							<td class={getClazz(market.marketData.outcome, index, 'p-5 text-right')}
-								>{fmtMicroToStx(
-									breakdownShares[index] || 0,
-									getMarketToken(market.marketData.token, $allowedTokenStore).decimals
-								)}</td
-							>
-							<td class={getClazz(market.marketData.outcome, index, 'p-5 text-right')}
-								>{#if useHistoricalBreakdown && index !== getClaimOutcomeIndex()}
-									<span class="text-muted-foreground">—</span>
-								{:else}
-									{fmtMicroToStx(
-										breakdownTokens[index] || 0,
-										getMarketToken(market.marketData.token, $allowedTokenStore).decimals
-									)}
-								{/if}</td
-							>
-							<td class={getClazz(market.marketData.outcome, index, 'p-5 text-right')}
-								>{fmtMicroToStx(
-									getBreakdownPayout(index),
-									getMarketToken(market.marketData.token, $allowedTokenStore).decimals
-								)}</td
-							>
+
+			{#if showStakingBreakdown}
+				<table class="w-full border-collapse text-[11px]">
+					<thead class="mb-5">
+						<tr>
+							<th class="p-5 text-left font-medium text-muted-foreground">Category</th>
+							<th class="p-5 text-right font-medium text-muted-foreground">Shares</th>
+							<th class="p-5 text-right font-medium text-muted-foreground">Tokens</th>
+							<th class="p-5 text-right font-medium text-muted-foreground">Payout</th>
 						</tr>
-					{/each}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{#each market.marketData.categories, index (index)}
+							<tr
+								class={outcomeIndex === index
+									? 'border-b border-success/20 bg-success/5'
+									: 'border-b border-border'}
+							>
+								<td class={getClazz(market.marketData.outcome, index, 'p-5 text-left ')}
+									>{@html getCategoryLabel($selectedCurrency, index, market.marketData)}</td
+								>
+								<td class={getClazz(market.marketData.outcome, index, 'p-5 text-right')}
+									>{fmtMicroToStx(
+										stakes[index] || 0,
+										getMarketToken(market.marketData.token, $allowedTokenStore).decimals
+									)}</td
+								>
+								<td class={getClazz(market.marketData.outcome, index, 'p-5 text-right')}
+									>{fmtMicroToStx(
+										tokens[index] || 0,
+										getMarketToken(market.marketData.token, $allowedTokenStore).decimals
+									)}</td
+								>
+								<td class={getClazz(market.marketData.outcome, index, 'p-5 text-right')}
+									>{fmtMicroToStx(
+										calculateExpectedPayout(market.marketData, stakes, index)?.netRefund ?? 0,
+										getMarketToken(market.marketData.token, $allowedTokenStore).decimals
+									)}</td
+								>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			{/if}
 		</td>
 	</tr>
 {/if}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import UserClaim from '$lib/components/my-markets/UserClaim.svelte';
+	import UserStakingHistory from '$lib/components/my-markets/UserStakingHistory.svelte';
 	import { connectWallet, isLoggedIn } from '@bigmarket/bm-common';
 	import type {
 		PredictionMarketClaimEvent,
@@ -492,8 +492,9 @@
 										<tbody>
 											{#if userTokens && userTokens.length === filteredMarkets.length}
 												{#each filteredMarkets as market (market.marketId + '_' + market.marketType)}
-													<UserClaim
+													<UserStakingHistory
 														{market}
+														address={data.address}
 														tokens={userTokens.find(
 															(o) => o.mid === market.marketId + '_' + market.marketType
 														)?.tokens || []}

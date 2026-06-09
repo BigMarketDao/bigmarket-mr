@@ -260,7 +260,7 @@ export interface UserMarketStake {
   unstakeIndexes?: number[];
   categoryShares?: number[];
   claimed: boolean;
-  claim: ClaimWinnings & Partial<PredictionMarketClaimEvent>;
+  claim?: PredictionMarketClaimEvent | null;
   marketMeta: {
     name: string;
     description: string;
