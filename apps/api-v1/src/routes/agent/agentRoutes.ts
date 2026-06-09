@@ -48,8 +48,11 @@ router.get('/resolve/:marketId/:marketType', async (req, res) => {
 		const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi, getConfig().stacksHiroKey)) || ({} as StacksInfo);
 		const blockHeight = stacksInfo.burn_block_height;
 		const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
+
 		if (blockHeight >= endCool) {
+			console.log('resolveScalarMarketOnChain: resolving market: ', market.marketData);
 			const markets = await resolveScalarMarketOnChain(market);
+			console.log('resolveScalarMarketOnChain: resolved market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
 			res.json(markets);
 		} else {
 			res.status(500);

@@ -8,8 +8,9 @@ import { daoEventCollection } from '../../lib/data/db_models.js';
 import { estimateBitcoinBlockTime, formatFiat } from '../../lib/utils.js';
 import { getExchangeRates } from '../rates/rates_utils.js';
 import { savePoll } from '../polling/polling_helper.js';
-import { cachedData, fetchAllowedTokens } from '../predictions/markets_helper.js';
+import { cachedData, fetchAllowedTokens, updateMarketData } from '../predictions/markets_helper.js';
 import { fetchCreateMarketMerkleInput } from '../gating/gating_helper.js';
+import { ResolutionState } from '@bigmarket/bm-types';
 
 const bitcoinLogo = 'https://media.istockphoto.com/id/1139020309/vector/bitcoin-internet-money-icon-vector.jpg?s=612x612&w=0&k=20&c=vcRUEDzhndMOctdM7PN1qmipo5rY_aOByWFW0IkW8bs=';
 const stacksLogo =
@@ -42,10 +43,20 @@ export async function sweepAndResolveScalarMarkets(): Promise<Array<PredictionMa
 	const stacksInfo = (await fetchStacksInfo(getConfig().stacksApi, getConfig().stacksHiroKey)) || ({} as StacksInfo);
 	const blockHeight = stacksInfo.burn_block_height;
 	for (const market of markets) {
+		const marketData = await updateMarketData(market.marketId, market.marketType, market.extension);
+		if (!marketData) continue;
+		if (marketData.resolutionState === ResolutionState.RESOLUTION_RESOLVED) {
+			console.log('sweepAndResolveScalarMarkets: already resolved market: ' + marketData.resolutionState);
+			continue;
+		}
+
 		console.log('sweepAndResolveScalarMarkets: scanning: ' + market.unhashedData.name);
+		if (marketData.resolutionState === ResolutionState.RESOLUTION_RESOLVED) {
+			continue;
+		}
 		if (market.marketType === 2) {
 			console.log('sweepAndResolveScalarMarkets: found scalar: ' + market.unhashedData.name);
-			const endCool = market.marketData.marketStart! + market.marketData.marketDuration! + market.marketData.coolDownPeriod!;
+			const endCool = marketData.marketStart! + marketData.marketDuration! + marketData.coolDownPeriod!;
 			if (blockHeight >= endCool) {
 				console.log('sweepAndResolveScalarMarkets: found candidate market: ' + market.unhashedData.name);
 				const rm = await resolveScalarMarketOnChain(market);
@@ -67,7 +78,12 @@ export async function resolveUndisputedScalarMarketsOnChain(): Promise<Array<Pre
 
 	for (const market of markets) {
 		try {
-			const resolutionBurnHeight = market.marketData.resolutionBurnHeight || 0;
+			const marketData = await updateMarketData(market.marketId, market.marketType, market.extension);
+			if (!marketData) continue;
+			if (marketData.resolutionState === ResolutionState.RESOLUTION_RESOLVED) {
+				continue;
+			}
+			const resolutionBurnHeight = marketData.resolutionBurnHeight || 0;
 			const endDispute = resolutionBurnHeight + (cachedData?.contractData.disputeWindowLength || 144);
 			if (blockHeight > endDispute) {
 				console.log('resolveUndisputedScalarMarketsOnChain: found candidate market: ' + market.unhashedData.name);
@@ -255,6 +271,9 @@ function sleep(ms: number) {
 
 export async function resolveScalarMarketOnChain(market: PredictionMarketCreateEvent) {
 	if (market.extension !== `${getDaoConfig().VITE_DAO_DEPLOYER}.${getDaoConfig().VITE_DAO_MARKET_SCALAR}`) throw new Error('Scalar market resolution only: ' + market.unhashedData.name);
+	if (market.marketData.resolutionState === ResolutionState.RESOLUTION_RESOLVED) {
+		return;
+	}
 	const network = resolveStacksNetwork();
 	const nonce = await fetchWalletKeyNonce();
 	console.log('resolveScalarMarketOnChain: resolving market: ' + market.extension.split('.')[1] + ':' + market.marketId + ' ' + market.unhashedData.name);
