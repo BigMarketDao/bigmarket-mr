@@ -295,7 +295,7 @@
 			/>
 		</div>
 
-		<div class="scrollbar-hide mt-4 max-w-full overflow-x-auto">
+		<div class=" mt-4">
 			<nav
 				bind:clientWidth={categoryNavWidth}
 				class="flex h-8 w-max items-center gap-2"

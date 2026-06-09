@@ -12,17 +12,17 @@
 		isResolved,
 		isResolving,
 		isRunning,
-		mapToMinMaxStringsFormatted
+		mapToMinMaxStringsFormatted,
+		resolveMarket,
+		resolveMarketsUndisputed
 	} from '@bigmarket/bm-utilities';
 	import { getStxAddress } from '@bigmarket/sip18-forum';
 	import { Currency, Eye } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
-	const resolveMarketsScalar = () => {
-		console.log('resolveMarketsScalar');
-	};
 	const {
 		market,
+		bmApi,
 		selectedCurrency,
 		currentBurnHeight,
 		disputeWindowLength,
@@ -30,6 +30,7 @@
 		isCoordinator
 	} = $props<{
 		market: Array<PredictionMarketCreateEvent>;
+		bmApi: string;
 		selectedCurrency: Currency;
 		currentBurnHeight: number;
 		disputeWindowLength: number;
@@ -38,6 +39,16 @@
 	}>();
 
 	let showModal = $state(false);
+
+	const resolveMarketsScalar = async () => {
+		const result = await resolveMarket(bmApi, market.marketId, market.marketType);
+		console.log('resolveMarketsScalar: ', result);
+	};
+
+	const resolveMarketsScalarUndisputed = async () => {
+		const result = await resolveMarketsUndisputed(bmApi);
+		console.log('resolveMarketsScalar: ', result);
+	};
 
 	let endOfCooling = $derived(
 		(market.marketData?.marketStart || 0) +
@@ -76,11 +87,11 @@
 	});
 </script>
 
-<section class="w-full text-xs text-foreground">
+<section class="text-foreground w-full text-xs">
 	<div class="">
 		<div class="text-nowrap">
 			<a
-				class="capitalize focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+				class="focus-visible:ring-ring capitalize focus-visible:ring-2 focus-visible:outline-none"
 				href="/"
 				onclick={(e) => {
 					e.preventDefault();
@@ -90,7 +101,7 @@
 				<!-- {market.unhashedData.category}
         {#if isCategoricalMarket()}Category{:else if isBinaryMarket()}Binary{:else if isScalarMarket()}Scalar{/if}
         Market  -->
-				<Eye class="inline h-3 w-3 text-muted-foreground" /></a
+				<Eye class="text-muted-foreground inline h-3 w-3" /></a
 			>
 		</div>
 	</div>
@@ -107,8 +118,8 @@
 							<span class="text-info">Market has cooled</span> —
 							<a
 								href="/"
-								onclick={() => resolveMarketsScalar()}
-								class="font-bold underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+								onclick={() => resolveMarketsScalarUndisputed()}
+								class="focus-visible:ring-ring font-bold underline focus-visible:ring-2 focus-visible:outline-none"
 							>
 								waiting to be resolved
 							</a>
@@ -130,6 +141,13 @@
 								Closes: {estimateBitcoinBlockTime(endOfDispute, current)}
 								({endOfDispute - current} blocks)
 							</span>
+							<a
+								href="/"
+								onclick={() => resolveMarketsScalarUndisputed()}
+								class="focus-visible:ring-ring font-bold underline focus-visible:ring-2 focus-visible:outline-none"
+							>
+								resolve undisputed
+							</a>
 						{:else if isFinalisable(current, votingWindow, market)}
 							Dispute window closed
 						{:else if isResolved(market)}
@@ -139,7 +157,7 @@
 						{/if}
 					</div>
 					<table class="w-full border-collapse text-left">
-						<tbody class="divide-y divide-border text-sm font-medium">
+						<tbody class="divide-border divide-y text-sm font-medium">
 							<tr>
 								<th class="w-1/3 py-2 font-medium">Start</th>
 								<td class="py-2 tabular-nums">
@@ -153,14 +171,18 @@
 								<th class="w-1/3 py-2 font-medium">Close</th>
 								<td class="py-2 tabular-nums">
 									{estimateBitcoinBlockTime(endOfMarket, current)}
-									<span class="text-muted-foreground">(in {fmtNumber(endOfMarket - current)} blocks)</span>
+									<span class="text-muted-foreground"
+										>(in {fmtNumber(endOfMarket - current)} blocks)</span
+									>
 								</td>
 							</tr>
 							<tr>
 								<th class="w-1/3 py-2 font-medium">End of Cooling</th>
 								<td class="py-2 tabular-nums">
 									{estimateBitcoinBlockTime(endOfCooling, current)}
-									<span class="text-muted-foreground">(in {fmtNumber(endOfCooling - current)} blocks)</span>
+									<span class="text-muted-foreground"
+										>(in {fmtNumber(endOfCooling - current)} blocks)</span
+									>
 								</td>
 							</tr>
 							{#if isCoordinator}
@@ -174,13 +196,16 @@
 								<tr>
 									<th class="py-2 font-medium">Market Fee</th>
 									<td class="py-2">
-										<span class="text-muted-foreground tabular-nums">{market.marketData.marketFeeBips / 100}</span>
+										<span class="text-muted-foreground tabular-nums"
+											>{market.marketData.marketFeeBips / 100}</span
+										>
 									</td>
 								</tr>
 								<tr>
 									<th class="py-2 font-medium">Resolution State</th>
 									<td class="py-2">
-										{getResolutionMessage(current, votingWindow, market)}
+										{getResolutionMessage(current, votingWindow, market)} ({market.marketData
+											.resolutionState}) {market.marketData.resolutionBurnHeight}
 										{#if (market.marketData?.resolutionBurnHeight || 0) > 0}resolved at block {market
 												.marketData.resolutionBurnHeight}{/if}
 									</td>
@@ -188,7 +213,9 @@
 								<tr>
 									<th class="py-2 font-medium">Concluded</th>
 									<td class="py-2">
-										<span class="text-muted-foreground tabular-nums">{market.marketData.concluded}</span>
+										<span class="text-muted-foreground tabular-nums"
+											>{market.marketData.concluded}</span
+										>
 									</td>
 								</tr>
 								<tr>
@@ -206,39 +233,48 @@
 								<tr>
 									<th class="py-2 font-medium">Token:</th>
 									<td class="py-2">
-										<span class="text-muted-foreground tabular-nums">{market.marketData.token}</span>
+										<span class="text-muted-foreground tabular-nums">{market.marketData.token}</span
+										>
 									</td>
 								</tr>
 								{#if market.marketType === 2}
 									<tr>
 										<th class="py-2 font-medium">Price Outcome</th>
 										<td class="py-2">
-											<span class="text-muted-foreground tabular-nums">{market.marketData.priceOutcome}</span>
+											<span class="text-muted-foreground tabular-nums"
+												>{market.marketData.priceOutcome}</span
+											>
 										</td>
 									</tr>
 									<tr>
 										<th class="py-2 font-medium">Price feed id</th>
 										<td class="py-2">
-											<span class="text-muted-foreground tabular-nums">{market.marketData.priceFeedId}</span>
+											<span class="text-muted-foreground tabular-nums"
+												>{market.marketData.priceFeedId}</span
+											>
 										</td>
 									</tr>
 									<tr>
 										<th class="py-2 font-medium">Start price</th>
 										<td class="py-2">
-											<span class="text-muted-foreground tabular-nums">{market.marketData.startPrice}</span>
+											<span class="text-muted-foreground tabular-nums"
+												>{market.marketData.startPrice}</span
+											>
 										</td>
 									</tr>
 								{/if}
 								<tr>
 									<th class="py-2 font-medium">Outcome</th>
 									<td class="py-2">
-										<span class="text-muted-foreground tabular-nums">{market.marketData.outcome || '?'}</span>
+										<span class="text-muted-foreground tabular-nums"
+											>{market.marketData.outcome || '?'}</span
+										>
 									</td>
 								</tr>
 								<tr>
 									<th class="py-2 font-medium">Categories</th>
 									<td class="py-2">
-										<span class=" font-medium text-muted-foreground tabular-nums"
+										<span class=" text-muted-foreground font-medium tabular-nums"
 											>{mapToMinMaxStringsFormatted(
 												selectedCurrency,
 												market.marketData.categories
@@ -249,7 +285,7 @@
 								<tr>
 									<th class="py-2 font-medium">Stakeds</th>
 									<td class="py-2">
-										<span class="font-medium text-muted-foreground tabular-nums"
+										<span class="text-muted-foreground font-medium tabular-nums"
 											>{market.marketData.stakeTokens.join(', ')}</span
 										>
 									</td>
@@ -257,7 +293,7 @@
 								<tr>
 									<th class="py-2 font-medium">Shares</th>
 									<td class="py-2">
-										<span class="font-medium text-muted-foreground tabular-nums"
+										<span class="text-muted-foreground font-medium tabular-nums"
 											>{market.marketData.stakes.join(', ')}</span
 										>
 									</td>

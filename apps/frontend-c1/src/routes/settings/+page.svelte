@@ -18,7 +18,7 @@
 		resolveMarketsCategorical,
 		resolveMarketsScalar,
 		resolveMarketsUndisputed
-	} from '$lib/core/app/loaders/settingsLoader';
+	} from '@bigmarket/bm-utilities';
 
 	let data: PredictionContractData = $daoOverviewStore.contractData;
 	let contractBalances: ContractBalances | null = $state(null);
@@ -253,7 +253,7 @@
 									href="/"
 									onclick={(e) => {
 										e.preventDefault();
-										resolveMarketsCategorical();
+										resolveMarketsCategorical(appConfig.VITE_BIGMARKET_API);
 									}}>resolve</a
 								></td
 							>
@@ -267,7 +267,7 @@
 									href="/"
 									onclick={(e) => {
 										e.preventDefault();
-										resolveMarketsScalar();
+										resolveMarketsScalar(appConfig.VITE_BIGMARKET_API);
 									}}>resolve</a
 								></td
 							>
@@ -281,7 +281,7 @@
 									href="/"
 									onclick={(e) => {
 										e.preventDefault();
-										resolveMarketsUndisputed();
+										resolveMarketsUndisputed(appConfig.VITE_BIGMARKET_API);
 									}}>resolve</a
 								></td
 							>

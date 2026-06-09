@@ -1,22 +1,23 @@
 import { callContractReadOnly, fetchContractBalances, fetchMarketData, getSip10Properties, readPredictionContractData } from '@mijoco/stx_helpers/dist/index.js';
-import type {
-	StoredOpinionPoll,
-	TokenPermissionEvent,
-	MarketCategory,
-	DaoOverview,
-	BasicEvent,
-	MarketData,
-	MarketVotingVoteEvent,
-	PredictionMarketClaimEvent,
-	PredictionMarketCreateEvent,
-	PredictionMarketStakeEvent,
-	PredictionMarketUnStakeEvent,
-	PredictionMarketLPAddEvent,
-	PredictionMarketLPRemoveEvent,
-	PredictionMarketLPClaimEvent,
-	ReputationContractData,
-	ReputationByEpochContractData,
-	ReputationByUserContractData
+import {
+	type StoredOpinionPoll,
+	type TokenPermissionEvent,
+	type MarketCategory,
+	type DaoOverview,
+	type BasicEvent,
+	type MarketData,
+	type MarketVotingVoteEvent,
+	type PredictionMarketClaimEvent,
+	type PredictionMarketCreateEvent,
+	type PredictionMarketStakeEvent,
+	type PredictionMarketUnStakeEvent,
+	type PredictionMarketLPAddEvent,
+	type PredictionMarketLPRemoveEvent,
+	type PredictionMarketLPClaimEvent,
+	type ReputationContractData,
+	type ReputationByEpochContractData,
+	type ReputationByUserContractData,
+	ResolutionState
 } from '@bigmarket/bm-types';
 import { daoEventCollection, marketCategoriesCollection, marketCollection } from '../../lib/data/db_models.js';
 import { findUserEnteredPollByHash } from '../polling/polling_helper.js';
@@ -151,12 +152,12 @@ export function readMinTokenLiquidityToken(contractName: string, token: string):
 	// }
 }
 
-async function updateMarketData(marketId: number, marketType: number, marketContract: string) {
+export async function updateMarketData(marketId: number, marketType: number, marketContract: string) {
 	// marketData is kept up to date on the create-market event when new events are detected!
 	const marketData: MarketData | undefined = await fetchMarketData(getConfig().stacksApi, marketId, marketContract.split('.')[0], marketContract.split('.')[1], getConfig().stacksHiroKey);
 	if (!marketData) {
 		console.error('Problem calling api - maybe rate limits?');
-		return 'Problem calling api - maybe rate limits?';
+		return;
 	}
 	const createEvent = await fetchMarket(marketId, marketType);
 	if (!createEvent) return; // events sequence can screw eg during development
@@ -170,6 +171,7 @@ async function updateMarketData(marketId: number, marketType: number, marketCont
 		console.error('createEvent is null or missing _id', createEvent);
 		// Optionally throw or return here if this is a blocking issue
 	}
+	return marketData;
 }
 export async function updatePredictionMarketCreateEvent(marketType: number, result: any, basicEvent: BasicEvent) {
 	let metadataHash = result.value['market-data-hash'].value;
@@ -183,6 +185,9 @@ export async function updatePredictionMarketCreateEvent(marketType: number, resu
 		console.error('Problem calling api - maybe rate limits?');
 		return 'Problem calling api - maybe rate limits?';
 	}
+	const ce = await fetchMarket(marketId, marketType);
+	if (ce) return;
+
 	const createEvent = {
 		...basicEvent,
 		marketId,
@@ -212,7 +217,9 @@ export async function updateResolveMarketEvent(marketType: number, result: any, 
 	};
 	// if (!createEvent || changes.resolutionState < createEvent.resolutionState) return;
 	if (createEvent && createEvent._id) {
-		await updateDaoEvent(new ObjectId(createEvent._id), changes);
+		if (createEvent.marketData.resolutionState < ResolutionState.RESOLUTION_DISPUTED) {
+			await updateDaoEvent(new ObjectId(createEvent._id), changes);
+		}
 	} else {
 		console.error('createEvent is null or missing _id', createEvent);
 		// Optionally throw or return here if this is a blocking issue
@@ -266,7 +273,9 @@ export async function updateResolveMarketVoteEvent(marketType: number, result: a
 		resolver: result.value.resolver.value
 	};
 	if (createEvent && createEvent._id) {
-		await updateDaoEvent(new ObjectId(createEvent._id), changes);
+		if (createEvent.marketData.resolutionState < ResolutionState.RESOLUTION_RESOLVED) {
+			await updateDaoEvent(new ObjectId(createEvent._id), changes);
+		}
 	} else {
 		console.error('createEvent is null or missing _id', createEvent);
 		// Optionally throw or return here if this is a blocking issue
@@ -291,7 +300,9 @@ export async function updateDisputeResolutionEvent(marketType: number, result: a
 		disputer: result.value.disputer.value
 	};
 	if (createEvent && createEvent._id) {
-		await updateDaoEvent(new ObjectId(createEvent._id), changes);
+		if (createEvent.marketData.resolutionState < ResolutionState.RESOLUTION_RESOLVED) {
+			await updateDaoEvent(new ObjectId(createEvent._id), changes);
+		}
 	} else {
 		console.error('createEvent is null or missing _id', createEvent);
 		// Optionally throw or return here if this is a blocking issue
