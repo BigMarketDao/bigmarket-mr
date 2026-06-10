@@ -81,10 +81,12 @@
 ;;   struct-hash = keccak256(TYPEHASH || ABI-encoded fields)
 ;;   digest      = keccak256(0x1901 || DOMAIN_SEPARATOR || struct-hash)
 ;;
-;; EIP-712 string fields (token, mappedAddress, recipient) are verified via
-;; precomputed keccak256(utf8) hashes passed as (buff 32). Clarity cannot hash
-;; raw UTF-8 strings on-chain. Relayers hash the same display strings the
-;; wallet signed (see SDK evmSip18.ts / eip712HashDisplayString).
+;; EIP-712 string fields use keccak256(utf8(display-string)) in the wallet.
+;; Clarity cannot derive principal display strings at runtime. Mitigations:
+;;   - token: DAO registry (token-eip712-display) - on-chain keccak256 of the
+;;     canonical UTF-8 bytes must match eip712-token-hash (closes token binding).
+;;   - mappedAddress / recipient: relayer-supplied hashes; BMP1 slot commitments
+;;     still bind execution - documented relayer trust (see crit_eip-hashes.md).
 
 ;; 0x1901 -- EIP-712 two-byte prefix
 (define-constant EIP712_PREFIX 0x1901)
@@ -162,6 +164,9 @@
 (define-constant ERR_SIG_SCHEME           (err u7118))
 (define-constant ERR_MARKET_COMMIT        (err u7119))
 (define-constant ERR_MARKET_NOT_ALLOWED   (err u7120))
+(define-constant ERR_TOKEN_EIP712_BINDING (err u7121))
+(define-constant ERR_TOKEN_DISPLAY_LEN    (err u7122))
+(define-constant MAX_TOKEN_DISPLAY_LEN    u128)
 
 ;; ============================================================
 ;; Storage
@@ -169,6 +174,10 @@
 
 ;; Whitelisted SIP-010 tokens
 (define-map allowed-tokens principal bool)
+
+;; Canonical EIP-712 UTF-8 display strings for whitelisted tokens.
+;; { display: raw utf8 bytes (left-aligned), len: exact byte count to hash }
+(define-map token-eip712-display principal { display: (buff 128), len: uint })
 
 ;; Whitelisted market contracts the vault may interact with
 (define-map authorized-markets principal bool)
@@ -223,6 +232,31 @@
     (try! (is-dao-or-extension))
     (map-set allowed-tokens (contract-of token) allowed)
     (ok true)))
+
+;; Register the canonical UTF-8 principal display string for a whitelisted token.
+;; Must match the string the SDK passes to MetaMask / eip712HashDisplayString.
+(define-public (set-token-eip712-display
+    (token <sip010>)
+    (display-utf8 (buff 128))
+    (display-len uint))
+  (let ((token-contract (contract-of token)))
+    (try! (is-dao-or-extension))
+    (asserts! (check-token token-contract) ERR_TOKEN_NOT_ALLOWED)
+    (asserts! (and (> display-len u0) (<= display-len MAX_TOKEN_DISPLAY_LEN)) ERR_TOKEN_DISPLAY_LEN)
+    (map-set token-eip712-display token-contract { display: display-utf8, len: display-len })
+    (print { event: "token-eip712-display", token: token-contract, len: display-len })
+    (ok true)))
+
+(define-read-only (get-token-eip712-display-hash (token-contract principal))
+  (match (map-get? token-eip712-display token-contract)
+    entry
+      (let ((display-slice
+              (unwrap-panic
+                (as-max-len?
+                  (unwrap-panic (slice? (get display entry) u0 (get len entry)))
+                  u128))))
+        (ok (some (keccak256 display-slice))))
+    (ok none)))
 
 ;; ============================================================
 ;; Extension trait
@@ -707,6 +741,22 @@
 ;; Signature verification -- chain dispatch
 ;; ============================================================
 
+(define-private (verify-token-eip712-hash (token-contract principal) (supplied-hash (buff 32)))
+  (match (map-get? token-eip712-display token-contract)
+    entry
+      (let
+        (
+          (display-slice
+            (unwrap-panic
+              (as-max-len?
+                (unwrap-panic (slice? (get display entry) u0 (get len entry)))
+                u128)))
+          (expected (keccak256 display-slice))
+        )
+        (asserts! (is-eq expected supplied-hash) ERR_TOKEN_EIP712_BINDING)
+        (ok true))
+    ERR_TOKEN_EIP712_BINDING))
+
 (define-private (verify-message-signature
     (chain            (buff 4))
     (message          (buff 256))
@@ -720,7 +770,9 @@
     (eip712-mapped-hash    (buff 32))
     (eip712-recipient-hash (buff 32)))
   (if (is-eq chain CHAIN_EVM)
-    (verify-evm message signature pubkey controller eip712-token-hash eip712-mapped-hash eip712-recipient-hash)
+    (begin
+      (try! (verify-token-eip712-hash token-contract eip712-token-hash))
+      (verify-evm message signature pubkey controller eip712-token-hash eip712-mapped-hash eip712-recipient-hash))
     (if (is-eq chain CHAIN_STACKS)
       (verify-stacks-sip18 message signature controller mapped-address token-contract recipient)
       ERR_SIG_SCHEME)))

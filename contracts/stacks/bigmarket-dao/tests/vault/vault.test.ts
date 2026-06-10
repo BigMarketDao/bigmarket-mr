@@ -346,6 +346,7 @@ const ERR_RECIPIENT_COMMIT = 7115;
 const ERR_EXPIRED = 7116;
 const ERR_PUBKEY_MISMATCH = 7117;
 const ERR_SIG_SCHEME = 7118;
+const ERR_TOKEN_EIP712_BINDING = 7121;
 
 const sbtcTrait = () => contractPrincipalCV(deployer, sbtcName);
 const wrappedStxTrait = () => contractPrincipalCV(deployer, wrappedStxName);
@@ -880,6 +881,42 @@ describe('vault — withdraw (Use Case 3: signed BMP1 message)', () => {
 			tom
 		);
 		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_TOKEN_COMMIT)));
+	});
+
+	it('err: eip712-token-hash must match DAO-registered token display string', async () => {
+		const { key, mapped } = await setupCreditedVault(500_000n);
+		const mats = buildWithdraw({ key, mapped, recipient: betty, amount: 100_000n });
+		const [tokenHash, mappedHash, recipientHash] = eip712DisplayCvs(mats.tokenName, mats.mapped, mats.recipient);
+		const badTokenHash = Cl.buffer(new Uint8Array(32).fill(0xab));
+		const r = simnet.callPublicFn(
+			vault,
+			'withdraw',
+			[
+				Cl.buffer(mats.message),
+				Cl.buffer(mats.signature),
+				Cl.buffer(mats.pubkey),
+				mats.tokenCV,
+				mats.mappedCV,
+				mats.recipientCV,
+				badTokenHash,
+				mappedHash,
+				recipientHash
+			],
+			tom
+		);
+		expect(r.result).toEqual(Cl.error(Cl.uint(ERR_TOKEN_EIP712_BINDING)));
+	});
+
+	it('ok: get-token-eip712-display-hash matches SDK display string hash', async () => {
+		await setupVault();
+		const expected = eip712HashString(tokenDisplay(sbtcName));
+		const r = simnet.callReadOnlyFn(
+			vault,
+			'get-token-eip712-display-hash',
+			[contractPrincipalCV(deployer, sbtcName)],
+			alice
+		);
+		expect(r.result).toEqual(Cl.ok(Cl.some(Cl.buffer(expected))));
 	});
 
 	it('err: mapped-commit mismatch when wrong mapped principal is passed', async () => {
