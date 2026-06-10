@@ -21,8 +21,8 @@
 				{extension: .bme024-0-market-scalar-pyth, enabled: true}
 				{extension: .bme024-0-market-predicting, enabled: true}
 				{extension: .bme030-0-reputation-token, enabled: true}
-				;;{extension: .bme032-0-scalar-strategy-hedge, enabled: true}
 				{extension: .bme008-0-resolution-coordinator, enabled: true}
+				{extension: .bme050-0-vault, enabled: true}
 			)
 		))
 		;; Set initial members who are able to make proposals
@@ -78,6 +78,24 @@
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-price-band-width 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace u1000))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-price-band-width 0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744 u900))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-price-band-width 0x8963217838ab4cf5cadc172203c1f0b763fbaa45f346d8ee50ba994bbcac3026 u600))
+
+		;; Vault: token allowlist, EIP-712 display registry, and market wiring.
+		(try! (contract-call? .bme050-0-vault set-token-allowed 'SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx true))
+		(try! (contract-call? .bme050-0-vault set-token-allowed 'SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27.wrapped-stx true))
+		(try! (contract-call? .bme050-0-vault set-token-allowed 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token true))
+		(try! (contract-call? .bme050-0-vault set-token-eip712-display 'SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx
+			0x535031323053425242514a30304d43575337544d355238574a4e54544b44354b304846524332434e452e7573646378000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+			u47))
+		(try! (contract-call? .bme050-0-vault set-token-eip712-display 'SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27.wrapped-stx
+			0x5350315343443845524d5446594536434b3953304d4857514350365359344e4156464a3533384132372e777261707065642d737478000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+			u53))
+		(try! (contract-call? .bme050-0-vault set-token-eip712-display 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token
+			0x534d335644584b33575a5a534138345858464b4146414631354e4e5a5833324354534738324a4651342e736274632d746f6b656e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+			u52))
+		(try! (contract-call? .bme050-0-vault set-market-allowed .bme024-0-market-predicting true))
+		(try! (contract-call? .bme050-0-vault set-market-allowed .bme024-0-market-scalar-pyth true))
+		(try! (contract-call? .bme024-0-market-predicting set-authorized-vault .bme050-0-vault true))
+		(try! (contract-call? .bme024-0-market-scalar-pyth set-authorized-vault .bme050-0-vault true))
 
 		 ;; Mint BIG (100) for initial governance operations (note the dao has no executive/all powerfull actions/teams) 
 		(try! (contract-call? .bme000-0-governance-token bmg-mint-many

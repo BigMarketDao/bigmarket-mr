@@ -25,7 +25,7 @@
 				{extension: .bme032-0-scalar-strategy-hedge, enabled: true}
 				{extension: .bme040-0-shares-marketplace, enabled: true}
 				{extension: .bme008-0-resolution-coordinator, enabled: true}
-
+				{extension: .bme050-0-vault, enabled: true}
 			)
 		))
 		;; Set core team members.
@@ -68,6 +68,16 @@
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-token-minimum-seed 'ST2X0FMCBMBK3F41WVS8PKN75PF9H5ZDRJB7H600B.wrapped-stx u100000000))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-token-minimum-seed .bme000-0-governance-token u100000000))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-token-minimum-seed 'ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token u100000000))
+
+		;; Vault: token allowlist, EIP-712 display registry, and market wiring.
+		(try! (contract-call? .bme050-0-vault set-token-allowed 'ST30Q4WJYHGMYEE1CTGQ334R9M7KQ8ETVQ9NB134T.usdcx true))
+		(try! (contract-call? .bme050-0-vault set-token-eip712-display 'ST30Q4WJYHGMYEE1CTGQ334R9M7KQ8ETVQ9NB134T.usdcx
+			0x535433305134574a5948474d594545314354475133333452394d374b513845545651394e42313334542e7573646378000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+			u47))
+		(try! (contract-call? .bme050-0-vault set-market-allowed .bme024-0-market-predicting true))
+		(try! (contract-call? .bme050-0-vault set-market-allowed .bme024-0-market-scalar-pyth true))
+		(try! (contract-call? .bme024-0-market-predicting set-authorized-vault .bme050-0-vault true))
+		(try! (contract-call? .bme024-0-market-scalar-pyth set-authorized-vault .bme050-0-vault true))
 
 		(try! (contract-call? .bme000-0-governance-token bmg-mint-many
 			(list

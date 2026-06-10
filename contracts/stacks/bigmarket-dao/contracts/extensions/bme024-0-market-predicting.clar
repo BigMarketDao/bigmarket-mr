@@ -157,6 +157,19 @@
 )
 (define-map allowed-tokens principal bool)
 
+(define-map authorized-vaults principal bool)
+
+(define-public (set-authorized-vault (vault principal) (enabled bool))
+  (begin
+    (try! (is-dao-or-extension))
+    (map-set authorized-vaults vault enabled)
+    (print {event: "authorized-vault", vault: vault, enabled: enabled})
+    (ok true)))
+
+(define-read-only (is-authorized-vault (vault principal))
+  (default-to false (map-get? authorized-vaults vault)))
+
+
 ;; ---------------- access control ----------------
 (define-public (is-dao-or-extension)
 	(ok (asserts! (or (is-eq tx-sender .bigmarket-dao) (contract-call? .bigmarket-dao is-extension contract-caller)) ERR_UNAUTHORISED))
@@ -650,6 +663,7 @@
     (max-cost uint))
   (begin
     (try! (is-dao-or-extension))
+    (asserts! (is-authorized-vault contract-caller) ERR_UNAUTHORISED)
     (predict-category-core beneficiary contract-caller market-id min-shares index token max-cost)
   )
 )
@@ -1308,6 +1322,7 @@
     (shares-in uint))
   (begin
     (try! (is-dao-or-extension))
+    (asserts! (is-authorized-vault contract-caller) ERR_UNAUTHORISED)
     (sell-category-core beneficiary contract-caller market-id min-refund index token shares-in)))
 
 ;; Vault relay (trait: claim-winnings-vault). Winnings for `beneficiary` are
@@ -1318,6 +1333,7 @@
     (token <ft-token>))
   (begin
     (try! (is-dao-or-extension))
+    (asserts! (is-authorized-vault contract-caller) ERR_UNAUTHORISED)
     (claim-winnings-core beneficiary contract-caller market-id token)))
 
 ;; --- Extension callback
