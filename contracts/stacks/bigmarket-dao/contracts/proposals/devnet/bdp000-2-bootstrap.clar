@@ -81,7 +81,7 @@
 			'ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5 true
 		))
 
-		;; Set allowed vault contracts.
+		;; Vault: token allowlist, EIP-712 display registry, and market wiring.
 		(try! (contract-call? .bme050-0-vault set-token-allowed
 			'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.wrapped-stx true
 		))
@@ -91,6 +91,19 @@
 		(try! (contract-call? .bme050-0-vault set-token-allowed
 			'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sbtc true
 		))
+		(try! (contract-call? .bme050-0-vault set-token-eip712-display .sbtc
+			0x535431505148514b5630524a585a465931444758384d4e534e5956453356475a4a53525450475a474d2e7362746300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+			u46))
+		(try! (contract-call? .bme050-0-vault set-token-eip712-display .wrapped-stx
+			0x535431505148514b5630524a585a465931444758384d4e534e5956453356475a4a53525450475a474d2e777261707065642d737478000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+			u53))
+		(try! (contract-call? .bme050-0-vault set-token-eip712-display .usdcx
+			0x535431505148514b5630524a585a465931444758384d4e534e5956453356475a4a53525450475a474d2e7573646378000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+			u47))
+		(try! (contract-call? .bme050-0-vault set-market-allowed .bme024-0-market-predicting true))
+		(try! (contract-call? .bme050-0-vault set-market-allowed .bme024-0-market-scalar-pyth true))
+		(try! (contract-call? .bme024-0-market-predicting set-authorized-vault .bme050-0-vault true))
+		(try! (contract-call? .bme024-0-market-scalar-pyth set-authorized-vault .bme050-0-vault true))
 
 		;; Set executive team members.
 		(try! (contract-call? .bme004-0-core-execute set-executive-team-member
