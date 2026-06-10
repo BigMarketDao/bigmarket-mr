@@ -161,6 +161,7 @@
 (define-constant ERR_PUBKEY_MISMATCH      (err u7117))
 (define-constant ERR_SIG_SCHEME           (err u7118))
 (define-constant ERR_MARKET_COMMIT        (err u7119))
+(define-constant ERR_MARKET_NOT_ALLOWED   (err u7120))
 
 ;; ============================================================
 ;; Storage
@@ -168,6 +169,9 @@
 
 ;; Whitelisted SIP-010 tokens
 (define-map allowed-tokens principal bool)
+
+;; Whitelisted market contracts the vault may interact with
+(define-map authorized-markets principal bool)
 
 ;; Cross-chain balances
 ;; controller-chain:   4-byte chain id
@@ -200,8 +204,19 @@
     (ok true)))
 
 ;; ============================================================
-;; Admin (DAO only)
+;; white list market contracts
 ;; ============================================================
+(define-public (set-market-allowed (market-contract principal) (enabled bool))
+  (begin
+    (try! (is-dao-or-extension))
+    (map-set authorized-markets market-contract enabled)
+    (print {event: "authorized-market", market: market-contract, enabled: enabled})
+    (ok true)))
+(define-read-only (get-market-allowed (market-contract principal))
+  (ok (map-get? authorized-markets market-contract))
+)
+(define-private (check-market (market-contract principal))
+  (default-to false (map-get? authorized-markets market-contract)))
 
 (define-public (set-token-allowed (token <sip010>) (allowed bool))
   (begin
@@ -350,9 +365,9 @@
       (nonce              (buff-to-uint-be (get nonce parsed)))
       (amount             (slot-low-uint (get slot3 parsed)))
       (expiry             (slot-low-uint (get slot4 parsed)))
-      (token-commit       (keccak256 (unwrap-panic (to-consensus-buff? token-contract))))
-      (mapped-commit      (keccak256 (unwrap-panic (to-consensus-buff? mapped-address))))
-      (recipient-commit   (keccak256 (unwrap-panic (to-consensus-buff? recipient))))
+      (token-commit       (keccak256 (unwrap! (to-consensus-buff? token-contract) ERR_TOKEN_COMMIT)))
+      (mapped-commit      (keccak256 (unwrap! (to-consensus-buff? mapped-address) ERR_MAPPED_COMMIT)))
+      (recipient-commit   (keccak256 (unwrap! (to-consensus-buff? recipient) ERR_RECIPIENT_COMMIT)))
       (current-balance    (get-balance chain controller mapped-address token-contract))
       (current-nonce      (get-nonce chain controller))
     )
@@ -448,21 +463,23 @@
       (max-cost         (slot-high-uint (get slot4 parsed)))
       (min-shares       (slot-low-uint (get slot4 parsed)))
       (expiry           (slot-low-uint (get slot5 parsed)))
-      (token-commit     (keccak256 (unwrap-panic (to-consensus-buff? token-contract))))
-      (mapped-commit    (keccak256 (unwrap-panic (to-consensus-buff? mapped-address))))
-      (market-commit    (keccak256 (unwrap-panic (to-consensus-buff? market-contract))))
+      (token-commit     (keccak256 (unwrap! (to-consensus-buff? token-contract) ERR_TOKEN_COMMIT)))
+      (mapped-commit    (keccak256 (unwrap! (to-consensus-buff? mapped-address) ERR_MAPPED_COMMIT)))
+      (market-commit    (keccak256 (unwrap! (to-consensus-buff? market-contract) ERR_MARKET_COMMIT)))
       (current-balance  (get-balance chain controller mapped-address token-contract))
       (current-nonce    (get-nonce chain controller))
     )
+    
+    (asserts! (check-market market-contract)                    ERR_MARKET_NOT_ALLOWED)
     (asserts! (is-eq (get magic   parsed) BMP1_MAGIC)           ERR_MSG_MAGIC)
     (asserts! (is-eq (get version parsed) BMP1_VERSION)         ERR_MSG_VERSION)
-    (asserts! (is-eq (get opcode  parsed) OP_BUY_SHARES)         ERR_MSG_OPCODE)
+    (asserts! (is-eq (get opcode  parsed) OP_BUY_SHARES)        ERR_MSG_OPCODE)
     (asserts! (check-chain chain)                               ERR_UNSUPPORTED_CHAIN)
     (asserts! (check-address chain controller)                  ERR_INVALID_ADDRESS)
     (asserts! (> max-cost u0)                                   ERR_INVALID_AMOUNT)
     (asserts! (check-token token-contract)                      ERR_TOKEN_NOT_ALLOWED)
-    (asserts! (is-eq (get slot0 parsed) token-commit)          ERR_TOKEN_COMMIT)
-    (asserts! (is-eq (get slot1 parsed) mapped-commit)           ERR_MAPPED_COMMIT)
+    (asserts! (is-eq (get slot0 parsed) token-commit)           ERR_TOKEN_COMMIT)
+    (asserts! (is-eq (get slot1 parsed) mapped-commit)          ERR_MAPPED_COMMIT)
     (asserts! (is-eq (get slot3 parsed) market-commit)          ERR_MARKET_COMMIT)
     (asserts! (>= current-balance max-cost)                     ERR_INSUFFICIENT_BALANCE)
     (asserts! (is-eq nonce current-nonce)                       ERR_INVALID_NONCE)
@@ -529,11 +546,12 @@
       (min-refund       (slot-high-uint (get slot4 parsed)))
       (shares-in        (slot-low-uint (get slot4 parsed)))
       (expiry           (slot-low-uint (get slot5 parsed)))
-      (token-commit     (keccak256 (unwrap-panic (to-consensus-buff? token-contract))))
-      (mapped-commit    (keccak256 (unwrap-panic (to-consensus-buff? mapped-address))))
-      (market-commit    (keccak256 (unwrap-panic (to-consensus-buff? market-contract))))
+      (token-commit     (keccak256 (unwrap! (to-consensus-buff? token-contract) ERR_TOKEN_COMMIT)))
+      (mapped-commit    (keccak256 (unwrap! (to-consensus-buff? mapped-address) ERR_MAPPED_COMMIT)))
+      (market-commit    (keccak256 (unwrap! (to-consensus-buff? market-contract) ERR_MARKET_COMMIT)))
       (current-nonce    (get-nonce chain controller))
     )
+    (asserts! (check-market market-contract)                    ERR_MARKET_NOT_ALLOWED)
     (asserts! (is-eq (get magic   parsed) BMP1_MAGIC)           ERR_MSG_MAGIC)
     (asserts! (is-eq (get version parsed) BMP1_VERSION)         ERR_MSG_VERSION)
     (asserts! (is-eq (get opcode  parsed) OP_SELL_SHARES)        ERR_MSG_OPCODE)
@@ -601,11 +619,12 @@
       (nonce            (buff-to-uint-be (get nonce parsed)))
       (market-id        (slot-low-uint (get slot2 parsed)))
       (expiry           (slot-low-uint (get slot5 parsed)))
-      (token-commit     (keccak256 (unwrap-panic (to-consensus-buff? token-contract))))
-      (mapped-commit    (keccak256 (unwrap-panic (to-consensus-buff? mapped-address))))
-      (market-commit    (keccak256 (unwrap-panic (to-consensus-buff? market-contract))))
+      (token-commit     (keccak256 (unwrap! (to-consensus-buff? token-contract) ERR_TOKEN_COMMIT)))
+      (mapped-commit    (keccak256 (unwrap! (to-consensus-buff? mapped-address) ERR_MAPPED_COMMIT)))
+      (market-commit    (keccak256 (unwrap! (to-consensus-buff? market-contract) ERR_MARKET_COMMIT)))
       (current-nonce    (get-nonce chain controller))
     )
+    (asserts! (check-market market-contract)                    ERR_MARKET_NOT_ALLOWED)
     (asserts! (is-eq (get magic   parsed) BMP1_MAGIC)           ERR_MSG_MAGIC)
     (asserts! (is-eq (get version parsed) BMP1_VERSION)         ERR_MSG_VERSION)
     (asserts! (is-eq (get opcode  parsed) OP_CLAIM_WINNINGS)     ERR_MSG_OPCODE)
