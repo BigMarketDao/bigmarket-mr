@@ -19,7 +19,7 @@
 ;; The hedge strategy can be switched off by the dao.
 
 (use-trait ft-token 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
-(impl-trait .prediction-market-trait.prediction-market-trait)
+(impl-trait 'SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD.prediction-market-trait.prediction-market-trait)
 (use-trait hedge-trait 'SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ.hedge-trait.hedge-trait)
 (use-trait ft-velar-token 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)

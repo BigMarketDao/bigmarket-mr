@@ -34,12 +34,12 @@ mcp-tools:
   - sip018_hash
   - sip018_verify
 env:
-  - BIGMARKET_NETWORK              # testnet | mainnet  (default: testnet)
-  - BIGMARKET_BANG_ENABLED         # "true" to enable create-market / claim-airdrop / --token bang
-  - BIGMARKET_BANG_CONTRACT        # SIP-010 principal for BANG token (required when BANG enabled)
-  - BIGMARKET_BANG_GATE_CONTRACT   # Wrapper contract that burns BANG + calls create-market
-  - BIGMARKET_BANG_CLAIM_CONTRACT  # Airdrop claim contract
-  - BIGMARKET_AUTO_CONFIRM         # set true to skip --confirm prompts
+  - BIGMARKET_NETWORK # testnet | mainnet  (default: testnet)
+  - BIGMARKET_BANG_ENABLED # "true" to enable create-market / claim-airdrop / --token bang
+  - BIGMARKET_BANG_CONTRACT # SIP-010 principal for BANG token (required when BANG enabled)
+  - BIGMARKET_BANG_GATE_CONTRACT # Wrapper contract that burns BANG + calls create-market
+  - BIGMARKET_BANG_CLAIM_CONTRACT # Airdrop claim contract
+  - BIGMARKET_AUTO_CONFIRM # set true to skip --confirm prompts
 ---
 
 ## Usage
@@ -61,14 +61,14 @@ bigmarket status
 
 ## Environment
 
-| Var | Purpose |
-|-----|---------|
-| `BIGMARKET_NETWORK` | `testnet` (default) or `mainnet` |
-| `BIGMARKET_BANG_ENABLED` | Must be `true` to use BANG-gated actions (default: off) |
-| `BIGMARKET_BANG_CONTRACT` | SIP-010 principal for the BANG token |
-| `BIGMARKET_BANG_GATE_CONTRACT` | Wrapper that burns 100 BANG and forwards to `bme024-0-market-predicting.create-market` |
-| `BIGMARKET_BANG_CLAIM_CONTRACT` | Airdrop claim contract |
-| `BIGMARKET_AUTO_CONFIRM` | `true` to skip the `--confirm` gate (testing only) |
+| Var                             | Purpose                                                                                |
+| ------------------------------- | -------------------------------------------------------------------------------------- |
+| `BIGMARKET_NETWORK`             | `testnet` (default) or `mainnet`                                                       |
+| `BIGMARKET_BANG_ENABLED`        | Must be `true` to use BANG-gated actions (default: off)                                |
+| `BIGMARKET_BANG_CONTRACT`       | SIP-010 principal for the BANG token                                                   |
+| `BIGMARKET_BANG_GATE_CONTRACT`  | Wrapper that burns 100 BANG and forwards to `bme024-0-market-predicting.create-market` |
+| `BIGMARKET_BANG_CLAIM_CONTRACT` | Airdrop claim contract                                                                 |
+| `BIGMARKET_AUTO_CONFIRM`        | `true` to skip the `--confirm` gate (testing only)                                     |
 
 ## Contracts
 
@@ -76,7 +76,7 @@ bigmarket status
 - Reputation (BIGR): `bme030-0-reputation-token`
 - Treasury: `bme006-0-treasury`
 - Testnet deployer: `ST30Q4WJYHGMYEE1CTGQ334R9M7KQ8ETVQ9NB134T`
-- Mainnet deployer: `SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27`
+- Mainnet deployer: `SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD`
 
 ## Behavior
 
@@ -94,26 +94,26 @@ bigmarket status
 
 `comment` posts a reply to a market's discussion thread — **no on-chain tx, no gas**.
 
-| Field | Detail |
-|-------|--------|
-| Signing | SIP-018 structured data via `sip018_sign` |
-| Tuple fields | `identifier` (ascii), `created` (uint), `title` (ascii), `content` (ascii) |
-| Domain | `{ name: "BigMarket", version: "1.0.0" }` |
-| Endpoint | `POST {FORUM_API}/forum/message` |
-| Thread source | `market.unhashedData.forumMessageId` from BigMarket API |
-| Board ID | `90a5e66c-d42f-4307-a3fc-c871435ca244` |
-| Constraints | title ≤100 chars, content ≤500 chars, printable ASCII only |
+| Field         | Detail                                                                     |
+| ------------- | -------------------------------------------------------------------------- |
+| Signing       | SIP-018 structured data via `sip018_sign`                                  |
+| Tuple fields  | `identifier` (ascii), `created` (uint), `title` (ascii), `content` (ascii) |
+| Domain        | `{ name: "BigMarket", version: "1.0.0" }`                                  |
+| Endpoint      | `POST {FORUM_API}/forum/message`                                           |
+| Thread source | `market.unhashedData.forumMessageId` from BigMarket API                    |
+| Board ID      | `90a5e66c-d42f-4307-a3fc-c871435ca244`                                     |
+| Constraints   | title ≤100 chars, content ≤500 chars, printable ASCII only                 |
 
 Top-level replies have `parentId = forumMessageId`. Pass `--reply-to <id>` to nest under a specific message.
 
 ## Clarity error map
 
-| Code | Meaning |
-|------|---------|
-| `u1001` | market not found |
-| `u1002` | market not open |
-| `u1003` | category not found |
-| `u1004` | insufficient shares |
-| `u1005` | slippage exceeded |
-| `u1006` | seed amount too low |
+| Code    | Meaning                                         |
+| ------- | ----------------------------------------------- |
+| `u1001` | market not found                                |
+| `u1002` | market not open                                 |
+| `u1003` | category not found                              |
+| `u1004` | insufficient shares                             |
+| `u1005` | slippage exceeded                               |
+| `u1006` | seed amount too low                             |
 | `u2001` | not authorized (BANG balance or gate misconfig) |

@@ -196,7 +196,7 @@ describe('gating market  creation', () => {
 		);
 		console.log('--------------------------------------------------------------------------------------------------------------');
 		allowedCreators = [
-			'SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27',
+			'SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD',
 			'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29', //am
 			'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z', // daoguy
 			'SP2Z2CBMGWB9MQZAF5Z8X56KS69XRV3SJF4WKJ7J9', // deorg
@@ -204,7 +204,7 @@ describe('gating market  creation', () => {
 		];
 		let newRoot = generateMerkleTreeUsingStandardPrincipal(allowedCreators);
 		//let merklProof1 = generateMerkleProof(newRoot.tree, 'ST3RR3HF25CQ9A5DEWS4R1WKJSBCFKQXFBYPJK3WV');
-		const lookupRootKey1 = contractId2Key('SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27.bme023-0-market-scalar-pyth');
+		const lookupRootKey1 = contractId2Key('SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD.bme024-0-market-scalar-pyth');
 		console.log('--------------------------------------------------------------------------------------------------------------');
 		console.log(allowedCreators);
 		console.log(

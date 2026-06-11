@@ -28,7 +28,7 @@
 
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
 (use-trait sip010 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
-(use-trait prediction-market-trait .prediction-market-trait.prediction-market-trait)
+(use-trait prediction-market-trait 'SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD.prediction-market-trait.prediction-market-trait)
 
 ;; ============================================================
 ;; Constants -- chains

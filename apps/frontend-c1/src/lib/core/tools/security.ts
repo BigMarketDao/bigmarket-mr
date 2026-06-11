@@ -4,7 +4,7 @@ import { isLoggedIn } from '@bigmarket/bm-common';
 export const DEV_WALLET_STORAGE_KEY = 'bm.devWalletPrivateKey';
 
 const coordinators = [
-	{ stxAddress: 'SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27', btcAddress: '' },
+	{ stxAddress: 'SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD', btcAddress: '' },
 	{
 		stxAddress: 'ST1R1061ZT6KPJXQ7PAXPFB6ZAZ6ZWW28G8HXK9G5',
 		btcAddress: 'bc1qkj5yxgm3uf78qp2fdmgx2k76ccdvj7rx0qwhv0'
@@ -32,7 +32,7 @@ const coordinators = [
 	{ stxAddress: 'STEZD95XQ194X67C1QJW4PHKDG8F5D66ZCYFX27A', btcAddress: '' },
 	{ stxAddress: 'ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ', btcAddress: '' }, //am
 	{ stxAddress: 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29', btcAddress: '' },
-	{ stxAddress: 'SP3N1MPGR5ABZ1AX0SW2DDP5KKZSKB93WDYXQA1H8', btcAddress: '' },
+	{ stxAddress: 'SP2A6S0FQCBJ7P54ZQ5FFQ6F1AVS60F5DBC9H0D7R', btcAddress: '' },
 	{ stxAddress: 'ST3Y12HJYP2NMNAFHWBPM2CMYDHYXME1F46VC5SPJ', btcAddress: '' },
 	{ stxAddress: 'ST3NS9010CQ9AK3M6XN3XD9EHNTDZVGYSMCBG3K6Z', btcAddress: '' },
 	{ stxAddress: 'SP2Z2CBMGWB9MQZAF5Z8X56KS69XRV3SJF4WKJ7J9', btcAddress: '' }, // deorg
