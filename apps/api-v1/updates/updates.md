@@ -96,7 +96,7 @@ db.marketCategoriesCollection.insertMany([
 db.marketCategoriesCollection.updateOne({name: 'banter'},{$set: {'displayName': 'Start Ups'}})
 
 
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ['SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27',
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ['SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD',
 			'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29',
 			'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z',
 			'SP2Z2CBMGWB9MQZAF5Z8X56KS69XRV3SJF4WKJ7J9',

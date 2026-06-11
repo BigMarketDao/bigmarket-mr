@@ -10,7 +10,7 @@
 ;; possible outcomes.
 
 (use-trait ft-token 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
-(impl-trait .prediction-market-trait.prediction-market-trait)
+(impl-trait 'SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD.prediction-market-trait.prediction-market-trait)
 
 ;; ---------------- CONSTANTS & TYPES ----------------
 ;; Market Types (2 => range based markets)

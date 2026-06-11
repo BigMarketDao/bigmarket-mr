@@ -11,7 +11,7 @@
 ;; outcome from at least 2 and up to 10 potential outcomes.
 
 (impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.extension-trait.extension-trait)
-(use-trait prediction-market-trait .prediction-market-trait.prediction-market-trait)
+(use-trait prediction-market-trait 'SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD.prediction-market-trait.prediction-market-trait)
 
 (define-constant ERR_UNAUTHORISED (err u2100))
 (define-constant err-poll-already-exists (err u2102))
@@ -25,18 +25,6 @@
 (define-constant err-invalid-category (err u2116))
 (define-constant err-invalid-extension (err u2117))
 
-
-;; (define-constant structured-data-prefix 0x534950303138)
-;; (define-constant message-domain-hash (sha256 (unwrap! (to-consensus-buff?
-;; 	{
-;; 		name: "BigMarket",
-;; 		version: "1.0.0",
-;; 		chain-id: chain-id
-;; 	}
-;;     ) ERR_UNAUTHORISED)
-;; ))
-
-;; (define-constant structured-data-header (concat structured-data-prefix message-domain-hash))
 
 (define-data-var voting-duration uint u288)
 
