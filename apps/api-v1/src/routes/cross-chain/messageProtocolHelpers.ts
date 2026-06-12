@@ -56,7 +56,11 @@ export async function withdrawFromVault(body: WithdrawFromVaultRequest): Promise
 
 	if (!config.walletKey) throw new Error('Server walletKey is not configured.');
 
-	const { privateKey: senderKey } = resolveMappedKey(config, body.stxAddress);
+	const evmController =
+		typeof body.controllerAddress === 'string' && /^0x[0-9a-fA-F]{40}$/.test(body.controllerAddress)
+			? body.controllerAddress
+			: undefined;
+	const { privateKey: senderKey } = resolveMappedKey(config, evmController);
 
 	const network = resolveNetwork(config.network);
 	const deployer = daoConfig.VITE_DAO_DEPLOYER;
@@ -267,4 +271,67 @@ export async function sweepRelayAddress(body: { controllerAddress: string; recip
 	//await readDaoExtensionEvents(false,`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`);
 	console.log(`[sweep-relay] ${amount} USDCx from ${relayAddress} → ${body.recipientAddress}`);
 	return { txid, relayAddress, amount: amount.toString() };
+}
+
+function microUsdcToAllbridgeAmount(micro: bigint): string {
+	const whole = micro / 1_000_000n;
+	const frac = micro % 1_000_000n;
+	if (frac === 0n) return whole.toString();
+	return `${whole}.${frac.toString().padStart(6, '0').replace(/0+$/, '')}`;
+}
+
+/**
+ * Bridge USDCx from the controller's mapped Stacks relay address to Ethereum USDC via AllBridge.
+ * Mainnet only — the mapped private key is derived from walletKey + EVM controller address.
+ */
+export async function bridgeRelayToEthereum(body: {
+	controllerAddress: string;
+	toAccountAddress?: string;
+	amountMicro?: string;
+}): Promise<{ txid: string; relayAddress: string; amount: string }> {
+	const config = getConfig();
+
+	if (config.network !== 'mainnet') {
+		throw new Error('AllBridge Stacks → Ethereum is only available on mainnet.');
+	}
+	if (!config.walletKey) throw new Error('Server walletKey is not configured.');
+	if (!body.controllerAddress) throw new Error('controllerAddress is required');
+
+	const ethRecipient = (body.toAccountAddress ?? body.controllerAddress).trim();
+	if (!/^0x[0-9a-fA-F]{40}$/.test(ethRecipient)) {
+		throw new Error('toAccountAddress must be a valid Ethereum address (0x…).');
+	}
+
+	const { address: relayAddress, privateKey } = resolveMappedKey(config, body.controllerAddress);
+	const daoConfig = getDaoConfig();
+	const vault = stacks.createVaultClient(daoConfig);
+	const balanceMicro = await vault.getUsdcxBalance(config.stacksApi, relayAddress);
+
+	if (balanceMicro <= 0n) {
+		throw new Error(`No USDCx balance to bridge at mapped address ${relayAddress}`);
+	}
+
+	const amountMicro = body.amountMicro ? BigInt(body.amountMicro) : balanceMicro;
+	if (amountMicro <= 0n) throw new Error('amountMicro must be > 0');
+	if (amountMicro > balanceMicro) {
+		throw new Error(`Requested ${amountMicro} micro-USDCx but ${relayAddress} only holds ${balanceMicro}`);
+	}
+
+	const { sendAllbridgeWithdrawRelayer, ChainSymbol } = await import('@bigmarket/sdk/ethereum');
+
+	const { txHash } = await sendAllbridgeWithdrawRelayer({
+		amount: microUsdcToAllbridgeAmount(amountMicro),
+		fromAccountAddress: relayAddress,
+		toAccountAddress: ethRecipient,
+		sourceChain: ChainSymbol.STX,
+		destinationChain: ChainSymbol.ETH,
+		tokenSymbol: 'USDCx',
+		tokenSymbolDestination: 'USDC',
+		stxIsTestnet: false,
+		privateKey,
+		network: 'mainnet'
+	});
+
+	console.log(`[bridge-relay] ${amountMicro} micro-USDCx from ${relayAddress} → ${ethRecipient}, txid ${txHash}`);
+	return { txid: txHash, relayAddress, amount: amountMicro.toString() };
 }

@@ -1,23 +1,47 @@
+import type { Eip1193Provider } from "@bigmarket/bm-types";
 import type { WalletAdapter, WalletSession } from "../../wallet/types.js";
-import { findMetaMask, getMetaMask } from "./injected.js";
+import { findMetaMask, formatEip1193ConnectError, getMetaMask } from "./injected.js";
+
+let connectInFlight: Promise<void> | null = null;
+
+function attachMetaMaskListeners(provider: Eip1193Provider) {
+  provider.on("accountsChanged", (accounts: string[]) => {
+    console.log("accountsChanged", accounts);
+  });
+
+  provider.on("chainChanged", (chainId: string) => {
+    console.log("chainChanged", chainId);
+    window.location.reload();
+  });
+}
 
 /** MetaMask session only — no Web3/Allbridge (safe for SSR bundles via {@link ../internal/registry.js}). */
 export const ethereumWalletAdapter: WalletAdapter = {
   async connect() {
-    const provider = getMetaMask();
+    if (connectInFlight) {
+      return connectInFlight;
+    }
 
-    await provider.request<string[]>({
-      method: "eth_requestAccounts",
+    connectInFlight = (async () => {
+      const provider = getMetaMask();
+
+      const existing = await provider.request<string[]>({
+        method: "eth_accounts",
+      });
+      if (existing.length === 0) {
+        await provider.request<string[]>({
+          method: "eth_requestAccounts",
+        });
+      }
+
+      attachMetaMaskListeners(provider);
+    })().catch((err) => {
+      throw new Error(formatEip1193ConnectError(err));
+    }).finally(() => {
+      connectInFlight = null;
     });
 
-    provider.on("accountsChanged", (accounts: string[]) => {
-      console.log("accountsChanged", accounts);
-    });
-
-    provider.on("chainChanged", (chainId: string) => {
-      console.log("chainChanged", chainId);
-      window.location.reload();
-    });
+    return connectInFlight;
   },
 
   async disconnect() {

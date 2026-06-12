@@ -47,12 +47,85 @@ function encodeStacksTxHex(raw: unknown): string {
         "Allbridge withdraw: transaction string is not hex (unexpected encoding)",
       );
     }
-    return `0x${hexBody}`;
+    return hexBody;
   }
   if (raw instanceof Uint8Array) {
-    return `0x${bytesToHex(raw)}`;
+    return bytesToHex(raw);
   }
   throw new Error("Allbridge withdraw: unsupported raw transaction type");
+}
+
+/** Sign and broadcast an unsigned Allbridge Stacks tx using a relayer-held private key. */
+export async function signAndBroadcastAllbridgeStacksTx(
+  txHex: string,
+  privateKey: string,
+  network: "mainnet" | "testnet" | "devnet",
+): Promise<string> {
+  const { deserializeTransaction, TransactionSigner, broadcastTransaction } =
+    await import("@stacks/transactions");
+  const { hexToBytes } = await import("@stacks/common");
+  const { STACKS_DEVNET, STACKS_MAINNET, STACKS_TESTNET } = await import(
+    "@stacks/network"
+  );
+
+  const stacksNetwork =
+    network === "testnet"
+      ? STACKS_TESTNET
+      : network === "devnet"
+        ? STACKS_DEVNET
+        : STACKS_MAINNET;
+
+  const transaction = deserializeTransaction(hexToBytes(txHex));
+  const signer = new TransactionSigner(transaction);
+  signer.signOrigin(privateKey);
+
+  const result = await broadcastTransaction({
+    transaction: signer.transaction,
+    network: stacksNetwork,
+  });
+
+  if ("error" in result) {
+    throw new Error(
+      `Allbridge withdraw broadcast failed: ${(result as { error: string }).error}`,
+    );
+  }
+
+  return result.txid;
+}
+
+/**
+ * Server-side Allbridge withdraw: mapped relay address (server-held key) → Ethereum.
+ * Used after an EVM vault withdrawal lands USDCx on the mapped Stacks address.
+ */
+export async function sendAllbridgeWithdrawRelayer(
+  params: SendAllbridgeWithdrawParams & {
+    privateKey: string;
+    network: "mainnet" | "testnet" | "devnet";
+  },
+): Promise<{ txHash: string }> {
+  assertWithdrawAddresses(params);
+
+  const { sdk, sourceToken, destinationToken, messenger } =
+    await loadAllbridgeWithdrawContext(params);
+
+  const sendParams: SendParams = {
+    amount: params.amount,
+    fromAccountAddress: params.fromAccountAddress.trim(),
+    toAccountAddress: params.toAccountAddress.trim(),
+    sourceToken,
+    destinationToken,
+    messenger,
+  };
+
+  const rawTx = await sdk.bridge.rawTxBuilder.send(sendParams);
+  const txHex = encodeStacksTxHex(rawTx);
+  const txHash = await signAndBroadcastAllbridgeStacksTx(
+    txHex,
+    params.privateKey,
+    params.network,
+  );
+
+  return { txHash };
 }
 
 async function loadAllbridgeWithdrawContext(
@@ -163,7 +236,7 @@ export async function sendAllbridgeWithdraw(
 
   const { request } = await import("@stacks/connect");
   const res = await request("stx_signTransaction", {
-    transaction: txHex,
+    transaction: `0x${txHex}`,
     broadcast: true,
   });
 

@@ -224,7 +224,7 @@
 				</p>
 				{#if isEvmConnected}
 					<p class="mt-0.5 truncate font-mono text-[9px] text-neutral-400" title={ethAddress}>
-						{truncate(ethAddress, 10)}
+						{ethAddress}
 					</p>
 				{:else}
 					<p class="mt-0.5 font-mono text-[9px] text-neutral-400">
@@ -238,7 +238,7 @@
 							target="_blank"
 						>
 							<ExternalLink class="h-4 w-4" />
-							{truncate(stxAddress, 10)}
+							{stxAddress}
 						</a>
 					</p>
 				{/if}

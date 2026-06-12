@@ -229,8 +229,9 @@
 					>
 				{/if}
 				<p class="text-[11px] leading-relaxed text-neutral-600 dark:text-neutral-400">
-					Once confirmed, USDCx will be at your mapped Stacks address. Use the admin panel below to
-					bridge it back to Ethereum via AllBridge (or sweep for testing).
+					Step 1 complete — USDCx is on your mapped relay address. Use <strong
+						>Step 2 — Bridge to Ethereum</strong
+					> below to send it back to your MetaMask wallet via AllBridge.
 				</p>
 				<button
 					type="button"

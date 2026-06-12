@@ -1,6 +1,6 @@
 import express from 'express';
 import { WithdrawFromVaultRequest } from '@bigmarket/sdk';
-import { withdrawFromVault, executeVaultMarketOp, getRelayInfo, sweepRelayAddress } from './messageProtocolHelpers.js';
+import { withdrawFromVault, executeVaultMarketOp, getRelayInfo, sweepRelayAddress, bridgeRelayToEthereum } from './messageProtocolHelpers.js';
 import type { VaultMarketOpRequest } from '@bigmarket/sdk';
 
 const router = express.Router();
@@ -91,6 +91,32 @@ router.post('/sweep-relay', async (req, res) => {
 	} catch (err: any) {
 		console.error('POST /bigmarket-api/cross-chain/protocol/sweep-relay failed', err);
 		res.status(500).json({ error: err.message ?? 'Relay sweep failed' });
+	}
+});
+
+/**
+ * POST /cross-chain/protocol/bridge-relay-to-ethereum
+ *
+ * Body: { controllerAddress: string, toAccountAddress?: string, amountMicro?: string }
+ *
+ * AllBridge USDCx from the mapped relay address → USDC on Ethereum (mainnet only).
+ * Defaults to the full relay balance and the same ETH address as controllerAddress.
+ */
+router.post('/bridge-relay-to-ethereum', async (req, res) => {
+	try {
+		const { controllerAddress, toAccountAddress, amountMicro } = req.body as {
+			controllerAddress: string;
+			toAccountAddress?: string;
+			amountMicro?: string;
+		};
+		if (!controllerAddress) {
+			return res.status(400).json({ error: 'controllerAddress is required' });
+		}
+		const result = await bridgeRelayToEthereum({ controllerAddress, toAccountAddress, amountMicro });
+		res.json(result);
+	} catch (err: any) {
+		console.error('POST /bigmarket-api/cross-chain/protocol/bridge-relay-to-ethereum failed', err);
+		res.status(500).json({ error: err.message ?? 'Bridge to Ethereum failed' });
 	}
 });
 

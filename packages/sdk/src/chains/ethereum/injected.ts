@@ -1,5 +1,19 @@
 import { type Eip1193Provider } from "@bigmarket/bm-types";
 
+export function formatEip1193ConnectError(err: unknown): string {
+  const e = err as { code?: number; message?: string };
+  if (e?.code === -32002) {
+    return "MetaMask already has a connection request open. Check the extension popup and approve it, then try again.";
+  }
+  if (e?.code === 4001) {
+    return "Connection rejected in MetaMask.";
+  }
+  if (typeof e?.message === "string" && e.message.length > 0) {
+    return e.message;
+  }
+  return String(err);
+}
+
 export function toEip1193(
   provider: Record<string, unknown> | undefined,
 ): Eip1193Provider | undefined {

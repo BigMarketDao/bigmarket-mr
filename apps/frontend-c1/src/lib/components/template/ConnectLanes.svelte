@@ -12,8 +12,25 @@
 	let walletAddress = typeof window !== 'undefined' ? getStxAddress() : '???';
 	let isPhantomConnected = $state(false);
 	let isMetaMaskConnected = $state(false);
+	let connecting = $state<'stacks' | 'ethereum' | null>(null);
+	let errorMsg = $state<string | null>(null);
 
-	// async function checkPhantomConnected() {
+	async function runConnect(chain: 'stacks' | 'ethereum') {
+		if (connecting) return;
+		errorMsg = null;
+		connecting = chain;
+		try {
+			await connectWallet(appConfig.VITE_BIGMARKET_API, chain);
+			window.location.reload();
+		} catch (e) {
+			errorMsg = e instanceof Error ? e.message : String(e);
+		} finally {
+			connecting = null;
+		}
+	}
+
+	const connectStacks = () => runConnect('stacks');
+	const connectMetaMask = () => runConnect('ethereum');
 	// 	const phantom = window.phantom?.solana;
 
 	// 	if (!phantom) return false;
@@ -46,51 +63,31 @@
 		}
 	});
 
-	const connectStacks = async () => {
-		await connectWallet(appConfig.VITE_BIGMARKET_API, 'stacks');
-		window.location.reload();
-	};
+	// async function checkPhantomConnected() {
+	// 	// const phantom = window.phantom?.solana;
+	// 	// if (!phantom) {
+	// 	// 	window.open('https://phantom.app/', '_blank');
+	// 	// 	return;
+	// 	// }
+	// 	// const response = await phantom.connect();
+	// 	// const publicKey = (response as { publicKey: { toString: () => string } }).publicKey.toString();
+	// 	// console.log('publicKey', publicKey);
+	// 	// isPhantomConnected = true;
+	// 	await connectWallet(appConfig.VITE_BIGMARKET_API, 'solana');
 
-	const connectPhantom = async () => {
-		// const phantom = window.phantom?.solana;
-		// if (!phantom) {
-		// 	window.open('https://phantom.app/', '_blank');
-		// 	return;
-		// }
-		// const response = await phantom.connect();
-		// const publicKey = (response as { publicKey: { toString: () => string } }).publicKey.toString();
-		// console.log('publicKey', publicKey);
-		// isPhantomConnected = true;
-		await connectWallet(appConfig.VITE_BIGMARKET_API, 'solana');
+	// 	window.location.reload();
+	// };
 
-		window.location.reload();
-	};
-
-	const connectMetaMask = async () => {
-		// const phantom = window.phantom?.solana;
-		// if (!phantom) {
-		// 	window.open('https://phantom.app/', '_blank');
-		// 	return;
-		// }
-		// const response = await phantom.connect();
-		// const publicKey = (response as { publicKey: { toString: () => string } }).publicKey.toString();
-		// console.log('publicKey', publicKey);
-		// isPhantomConnected = true;
-		await connectWallet(appConfig.VITE_BIGMARKET_API, 'ethereum');
-
-		window.location.reload();
-	};
-
-	const disconnectPhantom = async () => {
-		const phantom = window.phantom?.solana;
-		if (!phantom) {
-			window.open('https://phantom.app/', '_blank');
-			return;
-		}
-		await phantom.disconnect();
-		isPhantomConnected = false;
-		window.location.reload();
-	};
+	// const connectPhantom = async () => {
+	// 	const phantom = window.phantom?.solana;
+	// 	if (!phantom) {
+	// 		window.open('https://phantom.app/', '_blank');
+	// 		return;
+	// 	}
+	// 	await phantom.disconnect();
+	// 	isPhantomConnected = false;
+	// 	window.location.reload();
+	// };
 
 	const disconnectMetaMask = async () => {
 		const mm = window.phantom?.ethereum;
@@ -134,17 +131,43 @@
 						>Connect Wallet</TypoHeader
 					>
 					<ParaContainer>Full access including staking in markets.</ParaContainer>
-					<Button onclick={connectStacks}>Connect Stacks</Button>
-					<!-- {#if isPhantomConnected}
+					{#if errorMsg}
+						<p
+							class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800/50 dark:bg-red-900/20 dark:text-red-200"
+							role="alert"
+						>
+							{errorMsg}
+						</p>
+					{/if}
+					<div class="flex flex-col gap-2">
+						<Button
+							variant="secondary"
+							class=""
+							onclick={connectStacks}
+							disabled={connecting !== null}
+						>
+							{connecting === 'stacks' ? 'Connecting…' : 'Connect Stacks'}
+						</Button>
+						<!-- {#if isPhantomConnected}
 						<Button onclick={disconnectPhantom}>Disconnect Phantom</Button>
 					{:else}
 						<Button onclick={connectPhantom}>Connect Phantom</Button>
 					{/if} -->
-					{#if isMetaMaskConnected}
-						<Button onclick={disconnectMetaMask}>Disconnect Meta Mask</Button>
-					{:else}
-						<Button onclick={connectMetaMask}>Connect Meta Mask</Button>
-					{/if}
+						{#if isMetaMaskConnected}
+							<Button variant="secondary" class="" onclick={disconnectMetaMask}
+								>Disconnect Meta Mask</Button
+							>
+						{:else}
+							<Button
+								variant="secondary"
+								class=""
+								onclick={connectMetaMask}
+								disabled={connecting !== null}
+							>
+								{connecting === 'ethereum' ? 'Connecting…' : 'Connect Meta Mask'}
+							</Button>
+						{/if}
+					</div>
 				</div>
 			</div>
 		{/if}
@@ -152,7 +175,7 @@
 
 	<div class="my-4 h-px w-full bg-neutral-200 dark:bg-neutral-800"></div>
 
-	{#if !$userWalletStore.walletSigningMode}
+	{#if !$userWalletStore.walletSigningMode && appConfig.VITE_NETWORK === 'devnet'}
 		<ConnectPlaywright />
 	{/if}
 </div>

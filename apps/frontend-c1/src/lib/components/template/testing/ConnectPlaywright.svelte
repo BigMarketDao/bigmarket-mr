@@ -1,9 +1,17 @@
 <script lang="ts">
-	import { Button, TypoHeader } from '@bigmarket/bm-ui';
+	import { Button } from '@bigmarket/bm-ui';
 	import { onMount } from 'svelte';
-	import { getStxAddress, isLoggedIn, connectWallet, userWalletStore } from '@bigmarket/bm-common';
+	import {
+		getStxAddress,
+		isLoggedIn,
+		connectWallet,
+		userWalletStore,
+		requireAppConfig,
+		appConfigStore
+	} from '@bigmarket/bm-common';
 	import { DEV_WALLET_STORAGE_KEY, getAddresses } from '$lib/core/tools/security';
 
+	const appConfig = $derived(requireAppConfig($appConfigStore));
 	/**
 	 * DEVNET wallets (Clarinet test accounts)
 	 * ✅ Keep this DEV-only (see `showDevWallets` below).
@@ -68,14 +76,14 @@
 	class="mx-auto rounded-2xl border border-neutral-200 bg-white/80 p-6 shadow-sm backdrop-blur
          sm:p-8 dark:border-neutral-800 dark:bg-neutral-900/80"
 >
-	<div class="mb-10 flex items-center justify-between">
+	<!-- <div class="mb-10 flex items-center justify-between">
 		<TypoHeader level={2} className="text-neutral-900 dark:text-neutral-100">
 			Plawright Connection
 		</TypoHeader>
-	</div>
+	</div> -->
 
 	<section>
-		{#if isLoggedIn()}
+		{#if isLoggedIn() && appConfig.VITE_NETWORK === 'devnet'}
 			<div
 				data-testid="wallet-connect:status:connected"
 				class="rounded-lg border border-emerald-200/60 bg-emerald-50/60 p-4 text-sm text-emerald-900
@@ -140,5 +148,5 @@
 		{/if}
 	</section>
 
-	<div class="my-10 h-px w-full bg-neutral-200 dark:bg-neutral-800"></div>
+	<!-- <div class="my-10 h-px w-full bg-neutral-200 dark:bg-neutral-800"></div> -->
 </div>

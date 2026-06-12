@@ -12,6 +12,7 @@ export {
 export {
   approveAllbridgeWithdrawIfNeeded,
   sendAllbridgeWithdraw,
+  sendAllbridgeWithdrawRelayer,
   type SendAllbridgeWithdrawParams,
 } from "./chains/ethereum/withdraw.js";
 export { ChainSymbol, Messenger } from "@allbridge/bridge-core-sdk";

@@ -1,16 +1,17 @@
 <script lang="ts">
-	import { walletState } from '@bigmarket/bm-common';
+	import {
+		appConfigStore,
+		requireAppConfig,
+		walletState
+	} from '@bigmarket/bm-common';
 	import VaultWithdrawBridge from './VaultWithdrawBridge.svelte';
+	import VaultWithdrawBridgeOut from './VaultWithdrawBridgeOut.svelte';
 	import VaultWithdrawStacks from './VaultWithdrawStacks.svelte';
-	import MappedSweepPanel from './MappedSweepPanel.svelte';
 	import VaultRelayAdmin from './VaultRelayAdmin.svelte';
 	import type { WalletAccount } from '@bigmarket/bm-types';
 
 	type ControllerChain = 'evm' | 'stacks';
 
-	let showWithdrawDebug = $state(false);
-
-	// Auto-select Stacks if already connected, otherwise default to EVM
 	let chain = $state<ControllerChain>(
 		$walletState.status === 'connected' && $walletState.chain === 'stacks' ? 'stacks' : 'evm'
 	);
@@ -22,7 +23,9 @@
 		$walletState.status === 'connected' && $walletState.chain === 'stacks'
 	);
 
-	// ETH address for MappedSweepPanel — needed to sweep mapped balance back to vault
+	const appConfig = $derived(requireAppConfig($appConfigStore));
+
+	// ETH address for relay bridge-out step
 	const ethAddress = $derived(
 		$walletState.accounts.find((a: WalletAccount) => a.type === 'eth')?.address ?? ''
 	);
@@ -119,40 +122,17 @@
 		{/if}
 		<VaultWithdrawBridge />
 
-		<!-- Debug toggle -->
-		<div class="flex justify-end">
-			<button
-				type="button"
-				onclick={() => (showWithdrawDebug = !showWithdrawDebug)}
-				class="flex items-center gap-1 text-[10px] text-neutral-400 transition-colors hover:text-neutral-600 dark:hover:text-neutral-300"
-				title="Toggle relay debug panels"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 16 16"
-					fill="currentColor"
-					class="h-3 w-3 {showWithdrawDebug ? 'text-amber-500' : ''}"
-				>
-					<path
-						fill-rule="evenodd"
-						d="M6.455 1.45A.5.5 0 0 1 6.952 1h2.096a.5.5 0 0 1 .497.45l.186 1.858a4.996 4.996 0 0 1 1.466.848l1.703-.769a.5.5 0 0 1 .639.206l1.047 1.814a.5.5 0 0 1-.14.656l-1.517 1.09a5.026 5.026 0 0 1 0 1.694l1.516 1.09a.5.5 0 0 1 .141.656l-1.047 1.814a.5.5 0 0 1-.639.206l-1.703-.768a4.996 4.996 0 0 1-1.466.847l-.186 1.858a.5.5 0 0 1-.497.45H6.952a.5.5 0 0 1-.497-.45l-.186-1.858a4.996 4.996 0 0 1-1.466-.848l-1.703.769a.5.5 0 0 1-.639-.206L1.414 10.86a.5.5 0 0 1 .14-.656l1.517-1.09a5.025 5.025 0 0 1 0-1.694L1.554 6.33a.5.5 0 0 1-.14-.656L2.46 3.86a.5.5 0 0 1 .639-.206l1.703.769a4.996 4.996 0 0 1 1.466-.848L6.455 1.45ZM8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-				<span class={showWithdrawDebug ? 'text-amber-500' : ''}>debug</span>
-			</button>
-		</div>
+		{#if evmConnected && ethAddress}
+			<VaultWithdrawBridgeOut />
+		{/if}
 
-		{#if showWithdrawDebug}
+		{#if evmConnected && ethAddress && appConfig.VITE_NETWORK !== 'mainnet'}
 			<div
-				class="space-y-3 rounded-md border border-dashed border-amber-300 bg-amber-50/40 p-3 dark:border-amber-700/50 dark:bg-amber-900/10"
+				class="rounded-md border border-dashed border-amber-300 bg-amber-50/40 p-3 dark:border-amber-700/50 dark:bg-amber-900/10"
 			>
-				<p class="text-[11px] text-amber-700 dark:text-amber-400">
-					Debug: manually sweep the mapped address or relay into the vault / a Stacks address.
+				<p class="mb-2 text-[11px] text-amber-700 dark:text-amber-400">
+					Testnet: AllBridge is unavailable. Move relay USDCx to any Stacks address manually:
 				</p>
-				{#if evmConnected && ethAddress}
-					<MappedSweepPanel sourceChain="evm" sourceAddress={ethAddress} />
-				{/if}
 				<VaultRelayAdmin />
 			</div>
 		{/if}
