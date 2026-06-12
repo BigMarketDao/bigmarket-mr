@@ -61,12 +61,20 @@ export async function signAndBroadcastAllbridgeStacksTx(
   privateKey: string,
   network: "mainnet" | "testnet" | "devnet",
 ): Promise<string> {
-  const { deserializeTransaction, TransactionSigner, broadcastTransaction } =
-    await import("@stacks/transactions");
+  const {
+    deserializeTransaction,
+    TransactionSigner,
+    broadcastTransaction,
+    privateKeyToPublic,
+    createSingleSigSpendingCondition,
+    createStandardAuth,
+    getAddressFromPrivateKey,
+    fetchNonce,
+    AddressHashMode,
+  } = await import("@stacks/transactions");
   const { hexToBytes } = await import("@stacks/common");
-  const { STACKS_DEVNET, STACKS_MAINNET, STACKS_TESTNET } = await import(
-    "@stacks/network"
-  );
+  const { STACKS_DEVNET, STACKS_MAINNET, STACKS_TESTNET } =
+    await import("@stacks/network");
 
   const stacksNetwork =
     network === "testnet"
@@ -76,6 +84,31 @@ export async function signAndBroadcastAllbridgeStacksTx(
         : STACKS_MAINNET;
 
   const transaction = deserializeTransaction(hexToBytes(txHex));
+
+  // AllBridge `buildRawTransactionSend` uses makeRandomPrivKey() for the unsigned
+  // tx auth. Wallets replace origin auth when signing; we must do the same server-side.
+  const origin = transaction.auth.spendingCondition;
+  if (!origin || !("signature" in origin)) {
+    throw new Error(
+      "Allbridge withdraw: expected single-sig origin auth on unsigned tx",
+    );
+  }
+
+  const publicKey = privateKeyToPublic(privateKey);
+  const relayAddress = getAddressFromPrivateKey(privateKey, network as any);
+  const relayNonce = await fetchNonce({
+    address: relayAddress,
+    network: stacksNetwork,
+  });
+
+  const spendingCondition = createSingleSigSpendingCondition(
+    AddressHashMode.P2PKH,
+    publicKey,
+    relayNonce,
+    origin.fee,
+  );
+  transaction.auth = createStandardAuth(spendingCondition);
+
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privateKey);
 
@@ -106,6 +139,17 @@ export async function sendAllbridgeWithdrawRelayer(
   },
 ): Promise<{ txHash: string }> {
   assertWithdrawAddresses(params);
+
+  const { getAddressFromPrivateKey } = await import("@stacks/transactions");
+  const signerAddress = getAddressFromPrivateKey(
+    params.privateKey,
+    params.network as any,
+  );
+  if (signerAddress !== params.fromAccountAddress.trim()) {
+    throw new Error(
+      `Allbridge withdraw: private key does not match fromAccountAddress (key → ${signerAddress}, expected ${params.fromAccountAddress})`,
+    );
+  }
 
   const { sdk, sourceToken, destinationToken, messenger } =
     await loadAllbridgeWithdrawContext(params);
@@ -140,9 +184,7 @@ async function loadAllbridgeWithdrawContext(
 
   const sdkBaseParams = {
     ...mainnet,
-    ...(params.stxHeroApiKey
-      ? { stxHeroApiKey: params.stxHeroApiKey }
-      : {}),
+    ...(params.stxHeroApiKey ? { stxHeroApiKey: params.stxHeroApiKey } : {}),
   };
 
   const sdk =
