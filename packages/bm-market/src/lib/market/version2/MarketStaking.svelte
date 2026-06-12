@@ -271,14 +271,33 @@
     ),
   );
 
+  // function getProbability(index: number): number {
+  //   const totalStakes = market.marketData.stakes.reduce(
+  //     (sum: number, stake: number) => sum + Number(stake),
+  //     0,
+  //   );
+  //   return totalStakes > 0
+  //     ? (Number(market.marketData.stakes[index]) / totalStakes) * 100
+  //     : 0;
+  // }
   function getProbability(index: number): number {
-    const totalStakes = market.marketData.stakes.reduce(
-      (sum: number, stake: number) => sum + Number(stake),
+    const pools = market.marketData.stakes.map(Number);
+    const totalPool = pools.reduce(
+      (sum: number, pool: number): number => sum + pool,
       0,
     );
-    return totalStakes > 0
-      ? (Number(market.marketData.stakes[index]) / totalStakes) * 100
-      : 0;
+
+    const odds = pools.map((selectedPool: number) => {
+      const otherPool = totalPool - selectedPool;
+      return otherPool > 0 ? selectedPool / otherPool : 0;
+    });
+
+    const totalOdds = odds.reduce(
+      (sum: number, value: number) => sum + value,
+      0,
+    );
+
+    return totalOdds > 0 ? (odds[index] / totalOdds) * 100 : 0;
   }
 
   function outcomeSide(index: number): "yes" | "no" | "other" {
@@ -402,11 +421,15 @@
       {/if}
       <p class="text-sm text-[var(--color-muted-foreground)]">
         {isVaultMarket ? "Vault balance" : "Your balance"}:
+
         <span class="tabular-nums text-[var(--color-card-foreground)]"
           >{balanceHuman}</span
         >
-        {sip10Data.symbol} ≈ {balanceFiat}
-        {$selectedCurrency.code === "USD" ? "" : ` ${$selectedCurrency.code}`}
+        {sip10Data.symbol}
+        {#if sip10Data.symbol.toLowerCase() !== "usdcx"}≈ {balanceFiat}
+          {$selectedCurrency.code === "USD"
+            ? ""
+            : ` ${$selectedCurrency.code}`}{/if}
       </p>
       {#if isVaultMarket}
         <p class="text-xs text-[var(--color-muted-foreground)]">
@@ -548,7 +571,7 @@
                 <span
                   class="text-sm tabular-nums text-[var(--color-muted-foreground)]"
                 >
-                  {Math.round(probability)}% think {label}
+                  ~ {Math.round(probability)}% think {label}
                 </span>
               </button>
               {#if hasPosition(index)}
@@ -610,7 +633,7 @@
                       ? 'font-semibold text-[var(--color-warning)]'
                       : 'text-[var(--color-muted-foreground)]'}"
                   >
-                    {Math.round(probability)}%
+                    ~{Math.round(probability)}%
                   </span>
                 </button>
                 {#if isSelected && showInput && connected}

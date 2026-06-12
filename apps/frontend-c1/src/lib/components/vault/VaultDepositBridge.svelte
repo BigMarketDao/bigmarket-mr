@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Button } from '@bigmarket/bm-ui';
+	import { stacks } from '@bigmarket/sdk';
 	import { appConfigStore, requireAppConfig, walletState, initWallet } from '@bigmarket/bm-common';
 	import { registerDepositIntent } from '@bigmarket/bm-utilities';
 
@@ -24,6 +25,15 @@
 	const explorerTxUrl = $derived(txHash ? `${explorerOrigin}/tx/${txHash}` : null);
 
 	const mappedStx = $derived($walletState.activeAccount?.mappedAddress?.trim() ?? '');
+	const mappedStxExplorerUrl = $derived(
+		mappedStx.length > 0
+			? stacks.explorerAddressUrl(
+					appConfig.VITE_NETWORK,
+					appConfig.VITE_STACKS_EXPLORER,
+					mappedStx
+				)
+			: null
+	);
 	const ethAddress = $derived($walletState.accounts.find((a) => a.type === 'eth')?.address ?? '');
 
 	const ready = $derived(
@@ -68,9 +78,20 @@
 
 			const intentRes = await registerDepositIntent(appConfig.VITE_BIGMARKET_API, base);
 			if (!intentRes.ok) throw new Error(await intentRes.text());
+			const { intentId } = (await intentRes.json()) as { intentId: string };
 
 			const { txHash: hash } = await sendAllbridgeDeposit({ ...base, toAccountAddress: mappedStx });
 			txHash = hash;
+
+			const submittedRes = await fetch(
+				`${appConfig.VITE_BIGMARKET_API}/cross-chain/intents/${intentId}/submitted`,
+				{
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ sourceTxHash: hash })
+				}
+			);
+			if (!submittedRes.ok) throw new Error(await submittedRes.text());
 		} catch (e) {
 			errorMsg = e instanceof Error ? e.message : String(e);
 		} finally {
@@ -83,7 +104,8 @@
 	class="w-full space-y-5 rounded-lg border border-neutral-200 bg-neutral-50/80 p-5 dark:border-neutral-700 dark:bg-neutral-900/40"
 >
 	<p class="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
-		Deposit {tokenSymbol} to your vault then participate by buying or selling market shares in BigMarket.
+		Bridge {tokenSymbol} from Ethereum to your mapped relay address on Stacks. After AllBridge and the
+		relayer confirm, {tokenSymbolDestination} is swept into your vault so you can trade on BigMarket.
 	</p>
 
 	{#if $walletState.status !== 'connected'}
@@ -176,21 +198,61 @@
 
 		<!-- Bridge tx -->
 		{#if txHash}
-			<p class="text-xs text-emerald-800 dark:text-emerald-200">
-				Bridge transaction sent.
-				{#if explorerTxUrl}
-					<a
-						class="font-mono break-all underline"
-						href={explorerTxUrl}
-						target="_blank"
-						rel="noreferrer"
-					>
-						{txHash}
-					</a>
-				{:else}
-					<span class="font-mono break-all">{txHash}</span>
+			<div
+				class="space-y-2.5 rounded-md border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-700/50 dark:bg-amber-900/10"
+				role="status"
+			>
+				<p class="text-xs font-medium text-emerald-800 dark:text-emerald-200">
+					Ethereum bridge transaction submitted — not finished yet.
+				</p>
+				<p class="text-xs text-neutral-700 dark:text-neutral-300">
+					<span class="text-neutral-500 dark:text-neutral-400">Ethereum tx</span>
+					{#if explorerTxUrl}
+						<a
+							class="mt-0.5 block font-mono break-all underline"
+							href={explorerTxUrl}
+							target="_blank"
+							rel="noreferrer"
+						>
+							{txHash}
+						</a>
+					{:else}
+						<span class="mt-0.5 block font-mono break-all">{txHash}</span>
+					{/if}
+				</p>
+				<p class="text-xs leading-relaxed text-amber-900 dark:text-amber-100">
+					<strong>Please wait.</strong> AllBridge and our relayer can take several minutes to deliver
+					{tokenSymbolDestination} on Stacks. Your deposit is not in the vault until the sweep completes.
+				</p>
+				<ul
+					class="list-inside list-disc space-y-1 text-xs leading-relaxed text-amber-800 dark:text-amber-200"
+				>
+					<li>
+						Check your mapped relay address on the Stacks explorer for incoming {tokenSymbolDestination}.
+					</li>
+					<li>
+						Once it arrives, the relayer sweeps it into your vault balance automatically (usually
+						within a minute).
+					</li>
+					<li>
+						If it does not sweep, use <strong>Sweep mapped address → vault</strong> below once
+						{tokenSymbolDestination} shows on your relay address.
+					</li>
+				</ul>
+				{#if mappedStx && mappedStxExplorerUrl}
+					<p class="text-xs text-neutral-700 dark:text-neutral-300">
+						<span class="text-neutral-500 dark:text-neutral-400">Relay address (Stacks)</span>
+						<a
+							class="mt-0.5 block break-all font-mono underline"
+							href={mappedStxExplorerUrl}
+							target="_blank"
+							rel="noreferrer"
+						>
+							{mappedStx}
+						</a>
+					</p>
 				{/if}
-			</p>
+			</div>
 		{/if}
 
 		<Button type="button" onclick={submit} disabled={!canSubmit} class="w-full cursor-pointer">

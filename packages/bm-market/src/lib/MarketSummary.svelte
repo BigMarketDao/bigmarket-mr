@@ -198,7 +198,7 @@
       role="tooltip"
       class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 rounded-lg border border-border bg-popover p-3 text-xs text-popover-foreground opacity-0 shadow-lg transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
     >
-      {text}
+      {@html text}
       <span
         class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-popover"
         aria-hidden="true"
@@ -272,7 +272,7 @@
         {totalStakedFiatLine}
       </p>
     {/if}
-    <p class={subClass}>{marketStakes?.length ?? 0} people betting</p>
+    <p class={subClass}>{marketStakes?.length ?? 0} investing</p>
   </div>
 
   <!-- Card 3 — Fee if you win -->
@@ -326,11 +326,11 @@
           </svg>
         </div>
         <span class={labelClass}>
-          {#if blocksTillClose <= 0}Betting closed{:else}Betting closes{/if}
+          {#if blocksTillClose <= 0}Betting closed{:else}Market closes{/if}
         </span>
       </div>
       {@render infoTip(
-        "After this time, no new bets can be placed. The market moves into a resolution window where the outcome is verified.",
+        "Approximate market close time - precise tie depends on Bitcoin block times. <br/><br/>Once closed the market moves into a resolution window where the outcome is verified.",
       )}
     </div>
     <p class="mt-2 text-base font-medium text-foreground tabular-nums">

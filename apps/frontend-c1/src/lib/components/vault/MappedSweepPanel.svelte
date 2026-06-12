@@ -41,7 +41,9 @@
 	// Mapped address comes from walletState (set during initWallet)
 	const mappedAddress = $derived($walletState.activeAccount?.mappedAddress ?? '');
 
-	const usdcxKey = $derived(`${daoConfig.VITE_DAO_DEPLOYER}.usdcx::usdcx-token`);
+	const usdcxKey = $derived(
+		`${daoConfig.VITE_USDCX_CONTRACT_ADDRESS}.${daoConfig.VITE_USDCX_CONTRACT_NAME}::usdcx-token`
+	);
 
 	// Initial balance from store; refreshed on demand via SDK
 	const storeBalance = $derived(

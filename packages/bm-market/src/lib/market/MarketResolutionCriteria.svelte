@@ -258,7 +258,7 @@
     },
     {
       key: "closes",
-      label: "Betting closes",
+      label: "Market closes",
       date: resolution?.closeOffChain ?? "",
       state: bettingStepState,
     },

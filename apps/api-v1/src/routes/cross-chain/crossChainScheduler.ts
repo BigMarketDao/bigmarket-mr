@@ -6,11 +6,10 @@ import { getConfig } from '../../lib/config.js';
 let running = false;
 
 /**
- * Picks up any `submitted` intents whose mapped address has received USDCx and
- * sweeps them into the vault, crediting the original source address.
+ * Picks up bridge intents whose mapped address has received USDCx and sweeps
+ * them into the vault, crediting the original source address.
  *
- * Runs every 10 seconds. Only active on devnet — harmless to start on other
- * networks because sweepIntentToVault will simply find no submitted intents.
+ * Runs every 10 seconds on all networks.
  */
 export const runSweepSubmittedIntentsJob = cron.schedule(
 	'*/10 * * * * *',
@@ -21,19 +20,28 @@ export const runSweepSubmittedIntentsJob = cron.schedule(
 		try {
 			const network = getConfig().network as string;
 
-			const intents = await crossChainIntentCollection.find<CrossChainIntent>({ status: 'submitted', network }).toArray();
-			console.log(`[cross-chain sweep] found ${intents.length} for 'submitted', network ${network} submitted intent(s) ${new Date().toISOString()}`);
+			const intents = await crossChainIntentCollection
+				.find<CrossChainIntent>({
+					status: { $in: ['submitted', 'created'] },
+					network
+				})
+				.toArray();
+			console.log(
+				`[cross-chain sweep] found ${intents.length} pending intent(s) on ${network} ${new Date().toISOString()}`
+			);
 
 			if (intents.length === 0) return;
 
 			for (const intent of intents) {
 				try {
 					const result = await sweepIntentToVault(intent.intentId);
-					console.log(`[cross-chain sweep] swept ${intent.intentId} → txid ${result.sweepTxId}`);
+					if ('skipped' in result && result.skipped) {
+						console.log(`[cross-chain sweep] waiting on balance for ${intent.intentId}`);
+					} else {
+						console.log(`[cross-chain sweep] swept ${intent.intentId} → txid ${result.sweepTxId}`);
+					}
 				} catch (err: any) {
 					console.warn(`[cross-chain sweep] failed for ${intent.intentId}: ${err.message ?? err}`);
-				} finally {
-					running = false;
 				}
 			}
 		} catch (err: any) {

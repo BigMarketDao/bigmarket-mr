@@ -147,6 +147,25 @@ export async function sweepIntentToVault(intentId: string) {
 		throw new Error(`No private key mapping found for ${intent.mappedAddress}`);
 	}
 
+	if (intent.sweepAttempt > 3) {
+		throw new Error(`Sweep attempt ${intent.sweepAttempt} - too many sweeps`);
+	}
+
+	const balance = await getSip010Balance({
+		sourceChain: stacks.normalizeVaultSourceChain(intent.sourceChain),
+		address: intent.mappedAddress
+	});
+	console.log('balance = ' + balance + ' for ' + intent.mappedAddress);
+
+	if (balance <= 0n) {
+		return {
+			intentId,
+			status: intent.status,
+			skipped: true,
+			reason: `No token balance yet on ${intent.mappedAddress}`
+		};
+	}
+
 	await crossChainIntentCollection.updateOne(
 		{ intentId },
 		{
@@ -156,25 +175,11 @@ export async function sweepIntentToVault(intentId: string) {
 			}
 		}
 	);
-	if (intent.sweepAttempt > 3) {
-		throw new Error(`Sweep attempt ${intent.sweepAttempt} - too many sweeps`);
-	}
 
 	try {
-		console.log('balance fetching ' + intent.mappedAddress);
-		const balance = await getSip010Balance({
-			sourceChain: stacks.normalizeVaultSourceChain(intent.sourceChain),
-			address: intent.mappedAddress
-		});
-		console.log('balance = ' + balance + ' for ' + intent.mappedAddress);
-
-		if (balance <= 0n) {
-			throw new Error(`No token balance to sweep for ${intent.mappedAddress}`);
-		}
-
 		const nonce = await getAccountNonce(intent.mappedAddress);
 		console.log('nonce = ' + nonce + ' for ' + intent.mappedAddress);
-		let privateKey = stacks.deriveStacksPrivateKey(getConfig().walletKey, intent.sourceAddress);
+		const privateKey = stacks.deriveStacksPrivateKey(getConfig().walletKey, intent.sourceAddress);
 		const ma = getAddressFromPrivateKey(privateKey, getConfig().network as 'devnet' | 'mainnet' | 'testnet');
 		console.log('sweepIntentToVault = ' + ma);
 		const relayer = stacks.createVaultRelayerClient(getDaoConfig());
@@ -189,8 +194,8 @@ export async function sweepIntentToVault(intentId: string) {
 				sourceAddress: intent.sourceAddress,
 				intentId: intent.intentId
 			},
-			getConfig().walletKey,
 			privateKey,
+			getConfig().walletKey,
 			getConfig().network
 		);
 
@@ -217,9 +222,10 @@ export async function sweepIntentToVault(intentId: string) {
 			{ intentId },
 			{
 				$set: {
-					status: 'failed',
+					status: intent.status,
 					error: err.message ?? String(err),
-					updatedAt: new Date()
+					updatedAt: new Date(),
+					sweepAttempt: intent.sweepAttempt + 1
 				}
 			}
 		);

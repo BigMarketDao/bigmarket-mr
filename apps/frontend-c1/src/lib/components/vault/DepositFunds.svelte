@@ -27,7 +27,7 @@
 	let walletBalance = $derived(
 		BigInt(
 			$userWalletStore.tokenBalances?.fungible_tokens[
-				`${daoConfig.VITE_DAO_DEPLOYER}.usdcx::usdcx-token`
+				`${daoConfig.VITE_USDCX_CONTRACT_ADDRESS}.${daoConfig.VITE_USDCX_CONTRACT_NAME}::usdcx-token`
 			]?.balance || 0
 		)
 	);

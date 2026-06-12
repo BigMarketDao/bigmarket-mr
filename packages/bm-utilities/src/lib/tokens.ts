@@ -53,6 +53,8 @@ export function toFiat(
     ).toFixed(fixed || 2);
   } else if (sip10Data.symbol.toLowerCase() === "sbtc") {
     return (amount * (exchangeRate?.fifteen || 0)).toFixed(fixed || 2);
+  } else if (sip10Data.symbol.toLowerCase() === "usdcx") {
+    return (amount * 1).toFixed(fixed || 2);
   } else {
     // assume all other tokens have 0 value!
     return (
