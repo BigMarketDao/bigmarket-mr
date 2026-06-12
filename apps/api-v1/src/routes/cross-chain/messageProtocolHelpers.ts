@@ -1,7 +1,21 @@
 import type { VaultMarketOpRequest, WithdrawFromVaultRequest } from '@bigmarket/sdk';
 import { eip712HashDisplayString, stacks } from '@bigmarket/sdk';
 import { hexToBytes } from '@stacks/common';
-import { broadcastTransaction, bufferCV, contractPrincipalCV, getAddressFromPrivateKey, makeContractCall, noneCV, PostConditionMode, principalCV, serializeTransaction, sponsorTransaction, standardPrincipalCV, uintCV } from '@stacks/transactions';
+import {
+	broadcastTransaction,
+	bufferCV,
+	contractPrincipalCV,
+	getAddressFromPrivateKey,
+	makeContractCall,
+	makeSTXTokenTransfer,
+	noneCV,
+	PostConditionMode,
+	principalCV,
+	serializeTransaction,
+	sponsorTransaction,
+	standardPrincipalCV,
+	uintCV
+} from '@stacks/transactions';
 import { STACKS_DEVNET, STACKS_MAINNET, STACKS_TESTNET } from '@stacks/network';
 import { getConfig } from '../../lib/config.js';
 import { getDaoConfig } from '../../lib/config_dao.js';
@@ -30,11 +44,7 @@ async function broadcast(tx: Awaited<ReturnType<typeof makeContractCall>>, label
 
 /** Precomputed keccak256(utf8) hashes for EIP-712 string fields (vault verify-evm). */
 function eip712DisplayHashCvs(token: string, mapped: string, recipient = '') {
-	return [
-		bufferCV(eip712HashDisplayString(token)),
-		bufferCV(eip712HashDisplayString(mapped)),
-		bufferCV(eip712HashDisplayString(recipient))
-	];
+	return [bufferCV(eip712HashDisplayString(token)), bufferCV(eip712HashDisplayString(mapped)), bufferCV(eip712HashDisplayString(recipient))];
 }
 
 /**
@@ -56,10 +66,7 @@ export async function withdrawFromVault(body: WithdrawFromVaultRequest): Promise
 
 	if (!config.walletKey) throw new Error('Server walletKey is not configured.');
 
-	const evmController =
-		typeof body.controllerAddress === 'string' && /^0x[0-9a-fA-F]{40}$/.test(body.controllerAddress)
-			? body.controllerAddress
-			: undefined;
+	const evmController = typeof body.controllerAddress === 'string' && /^0x[0-9a-fA-F]{40}$/.test(body.controllerAddress) ? body.controllerAddress : undefined;
 	const { privateKey: senderKey } = resolveMappedKey(config, evmController);
 
 	const network = resolveNetwork(config.network);
@@ -177,6 +184,40 @@ export async function executeVaultMarketOp(body: VaultMarketOpRequest): Promise<
  * When `controllerAddress` is omitted the server's own wallet address is
  * returned (backward-compatible path).
  */
+/** AllBridge bridge txs are not sponsored — the relay pays STX fees from its own balance. */
+const RELAY_BRIDGE_MIN_STX_MICRO = 1_000_000n;
+const RELAY_BRIDGE_TARGET_STX_MICRO = 2_000_000n;
+
+async function getStxBalanceMicro(stacksApi: string, address: string): Promise<bigint> {
+	const res = await fetch(`${stacksApi}/extended/v1/address/${address}/balances`);
+	if (!res.ok) throw new Error(`Failed to fetch STX balance for ${address}`);
+	const data = (await res.json()) as { stx?: { balance?: string } };
+	return BigInt(data.stx?.balance ?? '0');
+}
+
+/** Top up the mapped relay with STX from the server wallet when USDCx arrived without gas. */
+async function ensureRelayStxForBridge(relayAddress: string, walletKey: string, network: ReturnType<typeof resolveNetwork>) {
+	const config = getConfig();
+	const balance = await getStxBalanceMicro(config.stacksApi, relayAddress);
+	if (balance >= RELAY_BRIDGE_MIN_STX_MICRO) return;
+
+	const topUp = RELAY_BRIDGE_TARGET_STX_MICRO - balance;
+	if (topUp <= 0n) return;
+
+	console.log(`[bridge-relay] topping up ${relayAddress} with ${topUp} micro-STX (had ${balance})`);
+	const tx = await makeSTXTokenTransfer({
+		recipient: relayAddress,
+		amount: topUp,
+		senderKey: walletKey,
+		network
+	});
+	const result = await broadcastTransaction({ transaction: tx, network });
+	if ('error' in result) {
+		throw new Error(`Failed to fund relay ${relayAddress} with STX for bridge fees: ${(result as { error: string }).error}` + ((result as { reason?: string }).reason ? ` — ${(result as { reason?: string }).reason}` : ''));
+	}
+	console.log(`[bridge-relay] STX top-up txid ${result.txid}`);
+}
+
 function resolveMappedKey(
 	config: ReturnType<typeof getConfig>,
 	controllerAddress?: string
@@ -200,7 +241,11 @@ function resolveMappedKey(
  * address that received the vault withdrawal.  Omit it to fall back to the
  * server's own relay wallet (used for deposit-side sweep flows).
  */
-export async function getRelayInfo(controllerAddress?: string): Promise<{ relayAddress: string; balanceMicro: string }> {
+export async function getRelayInfo(controllerAddress?: string): Promise<{
+	relayAddress: string;
+	balanceMicro: string;
+	stxBalanceMicro: string;
+}> {
 	const config = getConfig();
 	const daoConfig = getDaoConfig();
 
@@ -209,9 +254,9 @@ export async function getRelayInfo(controllerAddress?: string): Promise<{ relayA
 	const { address: relayAddress } = resolveMappedKey(config, controllerAddress);
 
 	const vault = stacks.createVaultClient(daoConfig);
-	const balance = await vault.getUsdcxBalance(config.stacksApi, relayAddress);
+	const [balance, stxBalance] = await Promise.all([vault.getUsdcxBalance(config.stacksApi, relayAddress), getStxBalanceMicro(config.stacksApi, relayAddress)]);
 
-	return { relayAddress, balanceMicro: balance.toString() };
+	return { relayAddress, balanceMicro: balance.toString(), stxBalanceMicro: stxBalance.toString() };
 }
 
 /**
@@ -284,11 +329,7 @@ function microUsdcToAllbridgeAmount(micro: bigint): string {
  * Bridge USDCx from the controller's mapped Stacks relay address to Ethereum USDC via AllBridge.
  * Mainnet only — the mapped private key is derived from walletKey + EVM controller address.
  */
-export async function bridgeRelayToEthereum(body: {
-	controllerAddress: string;
-	toAccountAddress?: string;
-	amountMicro?: string;
-}): Promise<{ txid: string; relayAddress: string; amount: string }> {
+export async function bridgeRelayToEthereum(body: { controllerAddress: string; toAccountAddress?: string; amountMicro?: string }): Promise<{ txid: string; relayAddress: string; amount: string }> {
 	const config = getConfig();
 
 	if (config.network !== 'mainnet') {

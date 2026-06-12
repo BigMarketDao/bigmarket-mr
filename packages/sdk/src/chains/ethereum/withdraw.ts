@@ -85,8 +85,10 @@ export async function signAndBroadcastAllbridgeStacksTx(
   });
 
   if ("error" in result) {
+    const rejected = result as { error: string; reason?: string };
     throw new Error(
-      `Allbridge withdraw broadcast failed: ${(result as { error: string }).error}`,
+      `Allbridge withdraw broadcast failed: ${rejected.error}` +
+        (rejected.reason ? ` — ${rejected.reason}` : ""),
     );
   }
 
