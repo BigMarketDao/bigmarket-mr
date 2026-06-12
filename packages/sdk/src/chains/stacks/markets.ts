@@ -788,10 +788,10 @@ export function createMarketsClient(daoConfig: DaoConfig) {
           stacksHiroKey,
         );
         if (!result.value) return { stakes: [] };
-        console.log(
-          "fetchUserTokens: result: ",
-          JSON.stringify(result, null, 2),
-        );
+        // console.log(
+        //   "fetchUserTokens: result: ",
+        //   JSON.stringify(result, null, 2),
+        // );
         const stakes =
           result.value.value.map((item: any) => Number(item.value)) || [];
         return {

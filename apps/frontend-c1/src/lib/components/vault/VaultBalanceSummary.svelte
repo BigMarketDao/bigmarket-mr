@@ -47,7 +47,9 @@
 
 	const vaultIdentityReady = $derived(resolveVaultUsdcxBalanceIdentity($walletState) !== null);
 
-	const usdcxKey = $derived(`${daoConfig.VITE_DAO_DEPLOYER}.usdcx::usdcx-token`);
+	const usdcxKey = $derived(
+		`${daoConfig.VITE_USDCX_CONTRACT_ADDRESS}.${daoConfig.VITE_USDCX_CONTRACT_NAME}::usdcx-token`
+	);
 
 	let loading = $state(false);
 	let vaultBalanceLive = $state<number | undefined>($userWalletStore.vaultUsdcxBalanceMicro);
