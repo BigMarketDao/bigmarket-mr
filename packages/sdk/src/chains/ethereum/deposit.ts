@@ -1,6 +1,7 @@
 import {
   AllbridgeCoreSdk,
   ChainSymbol,
+  FeePaymentMethod,
   Messenger,
   nodeRpcUrlsDefault,
   mainnet,
@@ -8,8 +9,15 @@ import {
   type TokenWithChainDetails,
 } from "@allbridge/bridge-core-sdk";
 import type { Eip1193Provider } from "@bigmarket/bm-types";
+import { createAddress, parseContractId } from "@stacks/transactions";
 import { Web3 } from "web3";
 import { getMetaMask } from "./injected.js";
+
+/** ERC-20 `approve(address,uint256)`. */
+const ERC20_APPROVE_SELECTOR = "0x095ea7b3";
+/** AllBridge Core `swapAndBridge(...)`. */
+const SWAP_AND_BRIDGE_SELECTOR = "0x4cd480bd";
+const MAX_ERC20_APPROVAL = (1n << 256n) - 1n;
 
 export type SendAllbridgeDepositParams = {
   /** Token amount to send (Allbridge float string, same as SDK examples). */
@@ -133,6 +141,11 @@ async function loadAllbridgeEthContext(
   }
 
   const messenger = params.messenger ?? Messenger.ALLBRIDGE;
+  if (messenger !== Messenger.ALLBRIDGE) {
+    throw new Error(
+      `Only Messenger.ALLBRIDGE is supported for vault deposits (got ${messenger})`,
+    );
+  }
 
   return {
     provider,
@@ -143,6 +156,199 @@ async function loadAllbridgeEthContext(
     destinationToken,
     messenger,
   };
+}
+
+function assertSafeTx(
+  tx: {
+    to?: string;
+    value?: string | bigint | number;
+    data?: string;
+  },
+  context: string,
+) {
+  const to = tx.to?.toLowerCase();
+  const data = tx.data ?? "0x";
+  const value = BigInt(tx.value ?? 0);
+
+  // Never allow plain ETH sends unless explicitly expected.
+  if (data === "0x" && value > 0n) {
+    throw new Error(
+      `[${context}] Refusing plain ETH transfer to ${to} value=${value}`,
+    );
+  }
+}
+
+function readCalldataWord(data: string, wordIndex: number): string {
+  const body = data.startsWith("0x") ? data.slice(2) : data;
+  const start = 8 + wordIndex * 64;
+  const end = start + 64;
+  if (body.length < end) {
+    throw new Error(`Calldata too short for ABI word ${wordIndex}`);
+  }
+  return `0x${body.slice(start, end)}`;
+}
+
+function readAbiAddress(word: string): string {
+  return `0x${word.slice(-40)}`.toLowerCase();
+}
+
+function readAbiUint256(word: string): bigint {
+  return BigInt(word);
+}
+
+function evmAddressToBytes32(address: string): string {
+  const hex = address.toLowerCase().replace(/^0x/, "");
+  return `0x${hex.padStart(64, "0")}`.toLowerCase();
+}
+
+/** Match AllBridge SDK encoding for Stacks principals on EVM bridge calldata. */
+function encodeAllbridgeStxBytes32(address: string, web3: Web3): string {
+  if (address.includes(".")) {
+    const [addr, name] = parseContractId(
+      address as `${string}.${string}`,
+    );
+    const hashBytes = Buffer.from(createAddress(addr).hash160, "hex");
+    const hash = web3.utils.keccak256(
+      Buffer.concat([hashBytes, Buffer.from(name)]),
+    );
+    return hash.toLowerCase();
+  }
+  const hashBytes = Buffer.from(createAddress(address).hash160, "hex");
+  const padded = Buffer.alloc(32, 0);
+  hashBytes.copy(padded, 32 - hashBytes.length);
+  return `0x${padded.toString("hex")}`.toLowerCase();
+}
+
+function assertAllbridgeApproveTx(
+  approveTx: { to?: string; value?: string; data?: string },
+  sourceToken: TokenWithChainDetails,
+  amountInt: string,
+) {
+  if (approveTx.to?.toLowerCase() !== sourceToken.tokenAddress.toLowerCase()) {
+    throw new Error("Approval tx target is not source token contract");
+  }
+
+  if (BigInt(approveTx.value ?? 0) !== 0n) {
+    throw new Error("Approval tx unexpectedly sends ETH");
+  }
+
+  const data = approveTx.data ?? "0x";
+  if (!data.startsWith(ERC20_APPROVE_SELECTOR)) {
+    throw new Error(
+      `Approval tx is not ERC-20 approve (selector ${data.slice(0, 10)})`,
+    );
+  }
+
+  const spender = readAbiAddress(readCalldataWord(data, 0));
+  const expectedSpender = sourceToken.bridgeAddress.toLowerCase();
+  if (spender !== expectedSpender) {
+    throw new Error(
+      `Approval spender ${spender} is not AllBridge bridge ${expectedSpender}`,
+    );
+  }
+
+  const approvedAmount = readAbiUint256(readCalldataWord(data, 1));
+  if (approvedAmount === MAX_ERC20_APPROVAL) {
+    throw new Error("Refusing unlimited ERC-20 approval");
+  }
+  if (approvedAmount !== BigInt(amountInt)) {
+    throw new Error(
+      `Approval amount ${approvedAmount} does not match requested ${amountInt}`,
+    );
+  }
+}
+
+function assertAllbridgeSendTx(
+  rawTx: { to?: string; value?: string; data?: string },
+  opts: {
+    web3: Web3;
+    sourceToken: TokenWithChainDetails;
+    destinationToken: TokenWithChainDetails;
+    toAccountAddress: string;
+    amountMicro: bigint;
+    messenger: Messenger;
+  },
+) {
+  const bridgeAddress = opts.sourceToken.bridgeAddress.toLowerCase();
+  if (rawTx.to?.toLowerCase() !== bridgeAddress) {
+    throw new Error(
+      `Unexpected AllBridge target: ${rawTx.to} (expected ${bridgeAddress})`,
+    );
+  }
+
+  if (BigInt(rawTx.value ?? 0) !== 0n) {
+    throw new Error(
+      "Bridge tx unexpectedly sends ETH — fees must be paid in stablecoin",
+    );
+  }
+
+  const data = rawTx.data ?? "0x";
+  if (data === "0x") {
+    throw new Error("Bridge tx has no calldata");
+  }
+  if (!data.startsWith(SWAP_AND_BRIDGE_SELECTOR)) {
+    throw new Error(
+      `Unexpected AllBridge method selector: ${data.slice(0, 10)}`,
+    );
+  }
+
+  const tokenWord = readCalldataWord(data, 0).toLowerCase();
+  const expectedToken = evmAddressToBytes32(opts.sourceToken.tokenAddress);
+  if (tokenWord !== expectedToken) {
+    throw new Error(
+      `Bridge source token mismatch (calldata ${tokenWord}, expected ${expectedToken})`,
+    );
+  }
+
+  const amount = readAbiUint256(readCalldataWord(data, 1));
+  if (amount !== opts.amountMicro) {
+    throw new Error(
+      `Bridge amount ${amount} does not match requested ${opts.amountMicro}`,
+    );
+  }
+
+  const recipientWord = readCalldataWord(data, 2).toLowerCase();
+  const expectedRecipient = encodeAllbridgeStxBytes32(
+    opts.toAccountAddress,
+    opts.web3,
+  );
+  if (recipientWord !== expectedRecipient) {
+    throw new Error(
+      `Bridge recipient mismatch (calldata ${recipientWord}, expected ${expectedRecipient} for ${opts.toAccountAddress})`,
+    );
+  }
+
+  const destinationChainId = readAbiUint256(readCalldataWord(data, 3));
+  if (destinationChainId !== BigInt(opts.destinationToken.allbridgeChainId)) {
+    throw new Error(
+      `Bridge destination chain ${destinationChainId} does not match ${opts.destinationToken.allbridgeChainId}`,
+    );
+  }
+
+  const receiveTokenWord = readCalldataWord(data, 4).toLowerCase();
+  const expectedReceiveToken = encodeAllbridgeStxBytes32(
+    opts.destinationToken.tokenAddress,
+    opts.web3,
+  );
+  if (receiveTokenWord !== expectedReceiveToken) {
+    throw new Error(
+      `Bridge receive token mismatch (calldata ${receiveTokenWord}, expected ${expectedReceiveToken})`,
+    );
+  }
+
+  const messengerId = readAbiUint256(readCalldataWord(data, 6));
+  if (messengerId !== 1n) {
+    throw new Error(
+      `Bridge messenger ${messengerId} is not Messenger.ALLBRIDGE (1)`,
+    );
+  }
+
+  const feeTokenAmount = readAbiUint256(readCalldataWord(data, 7));
+  if (feeTokenAmount <= 0n || feeTokenAmount >= amount) {
+    throw new Error(
+      `Bridge fee ${feeTokenAmount} is invalid for amount ${amount}`,
+    );
+  }
 }
 
 /**
@@ -189,6 +395,8 @@ export async function approveAllbridgeDepositIfNeeded(
   };
 
   let approveGas: bigint;
+  assertSafeTx(approveTx, "allbridge-approve");
+  assertAllbridgeApproveTx(approveTx, sourceToken, amountInt);
   try {
     approveGas = await web3.eth.estimateGas({
       ...approveTx,
@@ -224,6 +432,10 @@ export async function sendAllbridgeDeposit(
   const { web3, userAddress, sdk, sourceToken, destinationToken, messenger } =
     await loadAllbridgeEthContext(params);
 
+  const amountMicro = BigInt(
+    Math.round(parseFloat(params.amount) * 10 ** sourceToken.decimals),
+  );
+
   const sendParams: SendParams = {
     amount: params.amount,
     fromAccountAddress: userAddress,
@@ -231,6 +443,7 @@ export async function sendAllbridgeDeposit(
     sourceToken,
     destinationToken,
     messenger,
+    gasFeePaymentMethod: FeePaymentMethod.WITH_STABLECOIN,
   };
 
   await provider.request({ method: "eth_requestAccounts" });
@@ -260,6 +473,16 @@ export async function sendAllbridgeDeposit(
   // (e.g. missing approval, insufficient USDC balance, wrong network).
   // Without this, a failing eth_estimateGas can produce absurdly large gas values
   // that cause a cryptic "insufficient funds for gas" error.
+  assertSafeTx(rawTx, "allbridge-send");
+  assertAllbridgeSendTx(rawTx, {
+    web3,
+    sourceToken,
+    destinationToken,
+    toAccountAddress: params.toAccountAddress,
+    amountMicro,
+    messenger,
+  });
+
   let gasEstimate: bigint;
   try {
     gasEstimate = await web3.eth.estimateGas({ ...rawTx, from: userAddress });
