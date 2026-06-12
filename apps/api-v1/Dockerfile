@@ -46,4 +46,4 @@ WORKDIR /repo/apps/api-v1
 
 EXPOSE ${PORT}
 
-CMD ["node", "dist/app.js"]
+CMD ["node", "--import", "./noble-hashes-register.mjs", "dist/app.js"]
