@@ -43,8 +43,8 @@ export const initScanDaoEventsTestnetJob = cron.schedule('0 12 * * *', async (fi
 	}
 });
 //export const initScanDaoEventsJob = cron.schedule('*/2 * * * *', async (fireDate) => {
-export const initScanDaoEventsJob = cron.schedule('0 12 * * *', async (fireDate) => {
-	console.log('Running: initScanDaoEventsJob at: ' + fireDate);
+export const initScanDaoEventsJob = cron.schedule('0 * * * *', async (fireDate) => {
+	console.log('Running: mainnet initScanDaoEventsJob at: ' + fireDate);
 	try {
 		const daoContract = getDaoConfig().VITE_DAO_DEPLOYER + '.' + getDaoConfig().VITE_DAO;
 		console.log('initScanDaoEventsJob: Running: dao: ' + daoContract);

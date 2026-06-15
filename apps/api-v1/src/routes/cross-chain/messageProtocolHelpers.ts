@@ -7,7 +7,6 @@ import {
 	contractPrincipalCV,
 	getAddressFromPrivateKey,
 	makeContractCall,
-	makeSTXTokenTransfer,
 	noneCV,
 	PostConditionMode,
 	principalCV,
@@ -173,6 +172,13 @@ export async function executeVaultMarketOp(body: VaultMarketOpRequest): Promise<
 	return { txid };
 }
 
+async function getStxBalanceMicro(stacksApi: string, address: string): Promise<bigint> {
+	const res = await fetch(`${stacksApi}/extended/v1/address/${address}/balances`);
+	if (!res.ok) throw new Error(`Failed to fetch STX balance for ${address}`);
+	const data = (await res.json()) as { stx?: { balance?: string } };
+	return BigInt(data.stx?.balance ?? '0');
+}
+
 /**
  * Resolve the Stacks address and its private key for a given controller.
  *
@@ -184,40 +190,6 @@ export async function executeVaultMarketOp(body: VaultMarketOpRequest): Promise<
  * When `controllerAddress` is omitted the server's own wallet address is
  * returned (backward-compatible path).
  */
-/** AllBridge bridge txs are not sponsored — the relay pays STX fees from its own balance. */
-const RELAY_BRIDGE_MIN_STX_MICRO = 1_000_000n;
-const RELAY_BRIDGE_TARGET_STX_MICRO = 2_000_000n;
-
-async function getStxBalanceMicro(stacksApi: string, address: string): Promise<bigint> {
-	const res = await fetch(`${stacksApi}/extended/v1/address/${address}/balances`);
-	if (!res.ok) throw new Error(`Failed to fetch STX balance for ${address}`);
-	const data = (await res.json()) as { stx?: { balance?: string } };
-	return BigInt(data.stx?.balance ?? '0');
-}
-
-/** Top up the mapped relay with STX from the server wallet when USDCx arrived without gas. */
-async function ensureRelayStxForBridge(relayAddress: string, walletKey: string, network: ReturnType<typeof resolveNetwork>) {
-	const config = getConfig();
-	const balance = await getStxBalanceMicro(config.stacksApi, relayAddress);
-	if (balance >= RELAY_BRIDGE_MIN_STX_MICRO) return;
-
-	const topUp = RELAY_BRIDGE_TARGET_STX_MICRO - balance;
-	if (topUp <= 0n) return;
-
-	console.log(`[bridge-relay] topping up ${relayAddress} with ${topUp} micro-STX (had ${balance})`);
-	const tx = await makeSTXTokenTransfer({
-		recipient: relayAddress,
-		amount: topUp,
-		senderKey: walletKey,
-		network
-	});
-	const result = await broadcastTransaction({ transaction: tx, network });
-	if ('error' in result) {
-		throw new Error(`Failed to fund relay ${relayAddress} with STX for bridge fees: ${(result as { error: string }).error}` + ((result as { reason?: string }).reason ? ` — ${(result as { reason?: string }).reason}` : ''));
-	}
-	console.log(`[bridge-relay] STX top-up txid ${result.txid}`);
-}
-
 function resolveMappedKey(
 	config: ReturnType<typeof getConfig>,
 	controllerAddress?: string
@@ -358,6 +330,9 @@ export async function bridgeRelayToEthereum(body: { controllerAddress: string; t
 		throw new Error(`Requested ${amountMicro} micro-USDCx but ${relayAddress} only holds ${balanceMicro}`);
 	}
 
+	const stxBalance = await getStxBalanceMicro(config.stacksApi, relayAddress);
+	console.log(`[bridge-relay] ${relayAddress} USDCx=${balanceMicro} STX=${stxBalance} bridging=${amountMicro}`);
+
 	const { sendAllbridgeWithdrawRelayer, ChainSymbol } = await import('@bigmarket/sdk/ethereum');
 
 	const { txHash } = await sendAllbridgeWithdrawRelayer({
@@ -369,7 +344,9 @@ export async function bridgeRelayToEthereum(body: { controllerAddress: string; t
 		tokenSymbol: 'USDCx',
 		tokenSymbolDestination: 'USDC',
 		stxIsTestnet: false,
+		stxRpcUrl: config.stacksApi,
 		privateKey,
+		sponsorPrivateKey: config.walletKey,
 		network: 'mainnet'
 	});
 

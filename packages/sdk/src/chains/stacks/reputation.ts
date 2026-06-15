@@ -88,10 +88,10 @@ export function createReputationClient(daoConfig: DaoConfig) {
         functionArgs: [`0x${serializeCV(principalCV(sender))}`],
       };
       const result = await callContractReadOnly(stacksApi, data, stacksHiroKey);
-      console.log(
-        "--------------------> fetchWeightedReputation: result: ",
-        result,
-      );
+      // console.log(
+      //   "--------------------> fetchWeightedReputation: result: ",
+      //   result,
+      // );
       return Number(result?.value?.value || -1);
     },
 

@@ -5,6 +5,7 @@ export const DEV_WALLET_STORAGE_KEY = 'bm.devWalletPrivateKey';
 
 const coordinators = [
 	{ stxAddress: 'SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD', btcAddress: '' },
+	{ stxAddress: 'SP1P89TEC03E29V5MYJBSCC8KWR1A243ZG2R8DYB1', btcAddress: '' },
 	{
 		stxAddress: 'ST1R1061ZT6KPJXQ7PAXPFB6ZAZ6ZWW28G8HXK9G5',
 		btcAddress: 'bc1qkj5yxgm3uf78qp2fdmgx2k76ccdvj7rx0qwhv0'

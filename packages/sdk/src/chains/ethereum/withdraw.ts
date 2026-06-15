@@ -1,6 +1,7 @@
 import {
   AllbridgeCoreSdk,
   ChainSymbol,
+  FeePaymentMethod,
   Messenger,
   nodeRpcUrlsDefault,
   mainnet,
@@ -60,6 +61,7 @@ export async function signAndBroadcastAllbridgeStacksTx(
   txHex: string,
   privateKey: string,
   network: "mainnet" | "testnet" | "devnet",
+  options?: { sponsorPrivateKey?: string },
 ): Promise<string> {
   const {
     deserializeTransaction,
@@ -68,6 +70,8 @@ export async function signAndBroadcastAllbridgeStacksTx(
     privateKeyToPublic,
     createSingleSigSpendingCondition,
     createStandardAuth,
+    createSponsoredAuth,
+    sponsorTransaction,
     getAddressFromPrivateKey,
     fetchNonce,
     AddressHashMode,
@@ -101,27 +105,52 @@ export async function signAndBroadcastAllbridgeStacksTx(
     network: stacksNetwork,
   });
 
+  const useSponsor =
+    Boolean(options?.sponsorPrivateKey) && network !== "devnet";
+  const estimatedFee = origin.fee > 0n ? origin.fee : 1000n;
+
   const spendingCondition = createSingleSigSpendingCondition(
     AddressHashMode.P2PKH,
     publicKey,
     relayNonce,
-    origin.fee,
+    useSponsor ? 0n : estimatedFee,
   );
-  transaction.auth = createStandardAuth(spendingCondition);
 
-  const signer = new TransactionSigner(transaction);
-  signer.signOrigin(privateKey);
+  let signedTx;
+  if (useSponsor && options?.sponsorPrivateKey) {
+    transaction.auth = createSponsoredAuth(spendingCondition);
+    const signer = new TransactionSigner(transaction);
+    signer.signOrigin(privateKey);
+    signedTx = await sponsorTransaction({
+      transaction: signer.transaction,
+      sponsorPrivateKey: options.sponsorPrivateKey,
+      fee: estimatedFee,
+      network: stacksNetwork,
+    });
+  } else {
+    transaction.auth = createStandardAuth(spendingCondition);
+    const signer = new TransactionSigner(transaction);
+    signer.signOrigin(privateKey);
+    signedTx = signer.transaction;
+  }
 
   const result = await broadcastTransaction({
-    transaction: signer.transaction,
+    transaction: signedTx,
     network: stacksNetwork,
   });
 
   if ("error" in result) {
     const rejected = result as { error: string; reason?: string };
+    const hint =
+      rejected.reason === "NotEnoughFunds"
+        ? useSponsor
+          ? " — server sponsor wallet may need STX for the tx fee"
+          : ` — relay ${relayAddress} may need STX for the tx fee`
+        : "";
     throw new Error(
       `Allbridge withdraw broadcast failed: ${rejected.error}` +
-        (rejected.reason ? ` — ${rejected.reason}` : ""),
+        (rejected.reason ? ` — ${rejected.reason}` : "") +
+        hint,
     );
   }
 
@@ -136,6 +165,8 @@ export async function sendAllbridgeWithdrawRelayer(
   params: SendAllbridgeWithdrawParams & {
     privateKey: string;
     network: "mainnet" | "testnet" | "devnet";
+    /** When set (mainnet), server wallet pays STX tx fee — relay only needs USDCx. */
+    sponsorPrivateKey?: string;
   },
 ): Promise<{ txHash: string }> {
   assertWithdrawAddresses(params);
@@ -161,6 +192,7 @@ export async function sendAllbridgeWithdrawRelayer(
     sourceToken,
     destinationToken,
     messenger,
+    gasFeePaymentMethod: FeePaymentMethod.WITH_STABLECOIN,
   };
 
   const rawTx = await sdk.bridge.rawTxBuilder.send(sendParams);
@@ -169,6 +201,7 @@ export async function sendAllbridgeWithdrawRelayer(
     txHex,
     params.privateKey,
     params.network,
+    { sponsorPrivateKey: params.sponsorPrivateKey },
   );
 
   return { txHash };
@@ -273,6 +306,7 @@ export async function sendAllbridgeWithdraw(
     sourceToken,
     destinationToken,
     messenger,
+    gasFeePaymentMethod: FeePaymentMethod.WITH_STABLECOIN,
   };
 
   const rawTx = await sdk.bridge.rawTxBuilder.send(sendParams);

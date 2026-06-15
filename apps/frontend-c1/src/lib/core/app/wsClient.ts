@@ -14,33 +14,37 @@ const handlers: Record<string, MessageHandler[]> = {};
 export function connectWebsockets() {
 	if (ws && ws.readyState <= 1) return;
 
-	const config = requireAppConfig(get(appConfigStore));
-	ws = new WebSocket(config.VITE_BIGMARKET_WS);
+	try {
+		const config = requireAppConfig(get(appConfigStore));
+		ws = new WebSocket(config.VITE_BIGMARKET_WS);
 
-	ws.onopen = () => {
-		console.log('[WS] Connected to server');
-		wsConnected.set(true);
-	};
+		ws.onopen = () => {
+			console.log('[WS] Connected to server');
+			wsConnected.set(true);
+		};
 
-	ws.onclose = () => {
-		console.warn('[WS] Disconnected, retrying in 3s');
-		wsConnected.set(false);
-		setTimeout(connectWebsockets, 3000); // auto-reconnect
-	};
+		ws.onclose = () => {
+			console.warn('[WS] Disconnected, retrying in 3s');
+			wsConnected.set(false);
+			setTimeout(connectWebsockets, 3000); // auto-reconnect
+		};
 
-	ws.onerror = (err) => console.error('[WS] Error:', err);
+		ws.onerror = (err) => console.error('[WS] Error:', err);
 
-	ws.onmessage = (event) => {
-		try {
-			const msg = JSON.parse(event.data);
-			if (!msg.type) return;
+		ws.onmessage = (event) => {
+			try {
+				const msg = JSON.parse(event.data);
+				if (!msg.type) return;
 
-			const subs = handlers[msg.type] || [];
-			for (const fn of subs) fn(msg);
-		} catch {
-			console.warn('[WS] Failed to parse message:', event.data);
-		}
-	};
+				const subs = handlers[msg.type] || [];
+				for (const fn of subs) fn(msg);
+			} catch {
+				console.warn('[WS] Failed to parse message:', event.data);
+			}
+		};
+	} catch (err) {
+		console.error('[WS] Error:', err);
+	}
 }
 
 export function onMessage(type: string, handler: MessageHandler) {
