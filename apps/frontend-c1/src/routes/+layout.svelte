@@ -8,7 +8,8 @@
 		daoOverviewStore,
 		exchangeRatesStore,
 		marketSystemCategoriesStore,
-		requireAppConfig
+		requireAppConfig,
+		walletState
 	} from '@bigmarket/bm-common';
 	import { daoConfigStore } from '@bigmarket/bm-common';
 	import type { AppConfig, DaoConfig } from '@bigmarket/bm-types';
@@ -93,7 +94,7 @@
 		await loadSystemData(data);
 		await initWallet(data?.appConfig?.VITE_BIGMARKET_API);
 		await loadWalletData();
-		// console.log('$walletStore', $walletState);
+		console.log('$walletStore', $walletState);
 		// console.log('$userWalletStore', $userWalletStore);
 		// console.log('$daoOverviewStore', $daoOverviewStore);
 		// console.log('$allowedTokenStore', $allowedTokenStore);

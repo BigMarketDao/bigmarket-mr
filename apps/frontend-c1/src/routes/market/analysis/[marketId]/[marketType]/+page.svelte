@@ -56,7 +56,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each stakes as { voter, index, amount, cost } (index)}
+						{#each stakes as { voter, index, amount, cost, _id } (_id)}
 							<tr class="border-b transition hover:bg-gray-700">
 								<td class="border border-gray-300 px-4 py-2">{voter}</td>
 								<td class="border border-gray-300 px-4 py-2">{fmtMicroToStx(amount)}</td>
@@ -81,7 +81,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each claims as { claimer, userTokensInOutcome, userSharesInOutcome, daoFee, marketFee, indexWon } (claimer)}
+				{#each claims as { claimer, userTokensInOutcome, userSharesInOutcome, daoFee, marketFee, indexWon, _id } (_id)}
 					<tr class="border-b transition hover:bg-gray-700">
 						<td class="border border-gray-300 px-4 py-2">{claimer + '/' + indexWon}</td>
 						<td class="border border-gray-300 px-4 py-2">{userTokensInOutcome}</td>

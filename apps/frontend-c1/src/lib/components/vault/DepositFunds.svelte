@@ -6,6 +6,7 @@
 		daoConfigStore,
 		getStxAddress,
 		initWallet,
+		refreshVaultUsdcxBalance,
 		requireAppConfig,
 		requireDaoConfig,
 		showTxModal,
@@ -103,7 +104,7 @@
 					`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`,
 					response.txid
 				);
-				//await refreshBalances();
+				await refreshVaultUsdcxBalance();
 			}
 
 			txHash = response.txid ?? null;

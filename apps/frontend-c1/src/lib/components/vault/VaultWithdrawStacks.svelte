@@ -8,7 +8,10 @@
 		walletState,
 		initWallet,
 		requireDaoConfig,
-		daoConfigStore
+		daoConfigStore,
+		showTxModal,
+		watchTransaction,
+		refreshVaultUsdcxBalance
 	} from '@bigmarket/bm-common';
 	import type { SignedWithdrawMessage, StacksWithdrawParams } from '@bigmarket/sdk';
 
@@ -99,10 +102,19 @@
 				controllerAddress: stxAddress
 			};
 			console.log('relayWithdrawToServer params', params);
-			const result = await relayWithdrawToServer(params, signed);
+			const response = await relayWithdrawToServer(params, signed);
 
-			if (!result.success) throw new Error(result.error ?? 'Relay failed');
-			txid = result.txid ?? null;
+			if (!response.success) throw new Error(response.error ?? 'Relay failed');
+			txid = response.txid ?? null;
+			showTxModal(response.txid);
+			await watchTransaction(
+				appConfig.VITE_BIGMARKET_API,
+				appConfig.VITE_STACKS_API,
+				`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`,
+				response.txid
+			);
+			await refreshVaultUsdcxBalance();
+
 			step = 'idle';
 			signed = null;
 		} catch (e) {

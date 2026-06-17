@@ -7,6 +7,7 @@
     requireDaoConfig,
     daoConfigStore,
     allowedTokenStore,
+    walletState,
   } from "@bigmarket/bm-common";
   import type { AuthenticatedForumContent } from "@bigmarket/sip18-forum-types";
   import type {
@@ -140,7 +141,7 @@
         class="space-y-4 lg:sticky lg:top-16 lg:col-start-2 lg:row-start-1 lg:self-start"
       >
         {#if market.marketData.resolutionState === ResolutionState.RESOLUTION_OPEN}
-          {#if !isUsdcx}
+          {#if $walletState.chain === "stacks"}
             <div
               class="flex rounded-[var(--radius-md)] bg-[var(--color-secondary)] p-1"
               role="tablist"
