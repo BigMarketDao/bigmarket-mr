@@ -1,0 +1,50 @@
+{
+	"name": "@bigmarket/api-divergence-v1",
+	"version": "1.0.0",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"build": "tsc",
+		"build:testnet": "NODE_ENV=testnet tsc",
+		"build:mainnet": "NODE_ENV=mainnet tsc",
+		"start": "node --import ./noble-hashes-register.mjs dist/app.js",
+		"dev": "NODE_ENV=devnet nodemon --watch src --ext ts --exec \"node --import ./noble-hashes-register.mjs --import tsx src/app.ts\""
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"description": "",
+	"dependencies": {
+		"cookie-parser": "^1.4.7",
+		"cors": "^2.8.5",
+		"dotenv": "^16.4.7",
+		"express": "^5.0.1",
+		"fast-levenshtein": "^3.0.0",
+		"jose": "^6.1.0",
+		"jsontokens": "^4.0.1",
+		"luxon": "^3.5.0",
+		"mongodb": "^6.12.0",
+		"mongoose": "^8.9.0",
+		"morgan": "^1.10.0",
+		"node-cron": "^3.0.3",
+		"node-fetch": "^3.3.2",
+		"prettier-plugin-svelte": "^3.3.3",
+		"prettier-plugin-tailwindcss": "^0.6.11",
+		"tsx": "^4.20.6",
+		"ws": "^8.17.1"
+	},
+	"devDependencies": {
+		"@types/cookie-parser": "^1.4.9",
+		"@types/cors": "^2.8.17",
+		"@types/express": "^5.0.0",
+		"@types/fast-levenshtein": "^0.0.4",
+		"@types/luxon": "^3.4.2",
+		"@types/morgan": "^1.9.9",
+		"@types/node": "^22.10.2",
+		"@types/node-cron": "^3.0.11",
+		"@types/node-fetch": "^3.0.2",
+		"@types/ws": "^8.5.13",
+		"nodemon": "^3.1.9",
+		"typescript": "^5.9.3"
+	}
+}

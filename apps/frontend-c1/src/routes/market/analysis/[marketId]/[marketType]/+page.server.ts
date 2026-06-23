@@ -1,5 +1,10 @@
 import { getCached, setCached } from '$lib/core/server/cache/cache';
-import { fetchMarketClaims, fetchMarketStakes, getPredictionMarket } from '@bigmarket/bm-utilities';
+import {
+	fetchMarketClaims,
+	fetchMarketLiquidityEvents,
+	fetchMarketStakes,
+	getPredictionMarket
+} from '@bigmarket/bm-utilities';
 import type { PredictionMarketCreateEvent } from '@bigmarket/bm-types';
 import type { PageServerLoad } from './$types';
 import { getAppConfig, getNetworkFromUrl } from '@bigmarket/bm-config';
@@ -27,7 +32,13 @@ export const load: PageServerLoad = async ({ url, params }) => {
 
 	const key = `market-analysis-page:${marketType}:${marketId}`;
 	const cached = getCached(key) as
-		| { market?: unknown; stakes?: unknown; claims?: unknown; marketType?: number; marketId?: number }
+		| {
+				market?: unknown;
+				stakes?: unknown;
+				claims?: unknown;
+				marketType?: number;
+				marketId?: number;
+		  }
 		| undefined;
 
 	if (cached && isPredictionMarketPayload(cached.market)) {
@@ -43,11 +54,17 @@ export const load: PageServerLoad = async ({ url, params }) => {
 
 	const market = marketRaw;
 	const stakes = await fetchMarketStakes(appConfig.VITE_BIGMARKET_API, marketId, market.marketType);
+	const lpEvents = await fetchMarketLiquidityEvents(
+		appConfig.VITE_BIGMARKET_API,
+		marketId,
+		market.marketType
+	);
 	const claims = await fetchMarketClaims(appConfig.VITE_BIGMARKET_API, marketId, market.marketType);
 	//console.log('CACHE MISS: fetching market: ', market);
 
 	const result = {
 		market,
+		lpEvents,
 		stakes,
 		claims,
 		marketType,

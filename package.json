@@ -13,6 +13,7 @@
   "scripts": {
     "dev": "pnpm --filter @bigmarket/frontend-c1 dev",
     "dev-api": "pnpm --filter @bigmarket/api-v1 dev",
+    "dev-div-api": "pnpm --filter @bigmarket/api-divergence-v1 dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",

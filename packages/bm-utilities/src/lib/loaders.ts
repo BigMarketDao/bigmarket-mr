@@ -139,6 +139,24 @@ export async function getTransaction(
   }
   return val;
 }
+export async function fetchMarketLiquidityEvents(
+  bmApiUrl: string,
+  marketId: number,
+  marketType: number,
+): Promise<import("@bigmarket/bm-types").PredictionMarketEventChain["liquidity"]> {
+  const path = `${bmApiUrl}/pm/liquidity/${marketId}/${marketType}`;
+  const response = await fetch(path);
+  if (response.status === 404) {
+    return {
+      addLiquidityEvents: [],
+      removeLiquidityEvents: [],
+      claimLpFeeEvents: [],
+    };
+  }
+  const res = await response.json();
+  return res;
+}
+
 export async function fetchMarketStakes(
   bmApiUrl: string,
   marketId: number,
