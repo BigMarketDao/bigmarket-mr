@@ -39,8 +39,7 @@ db.daoEventCollection.updateMany({event: 'create-market','unhashedData.name':'Wi
 
 where dao contract is
 
-- SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.bigmarket-dao (nakamoto)
-- SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.ecosystem-dao (2.1 upgrade)
+- SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z.bigmarket-dao
 
 If you want maximum performance:
 db.events.createIndex({ voter: 1, event: 1, marketId: 1, extension: 1 })
@@ -96,10 +95,7 @@ db.marketCategoriesCollection.insertMany([
 db.marketCategoriesCollection.updateOne({name: 'banter'},{$set: {'displayName': 'Start Ups'}})
 
 
-db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ['SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD',
-			'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29',
-			'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z',
-			'SP2Z2CBMGWB9MQZAF5Z8X56KS69XRV3SJF4WKJ7J9',
-			'SPQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRMDV734D']})
+db.marketGatingCollection.insertOne( { gateType : 'create-market','merkleRootInput': ['SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z',
+			'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29']})
 
 ```

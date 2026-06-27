@@ -67,6 +67,59 @@ path = 'contracts/proposals/devnet/bdp000-bootstrap.clar'
 clarity_version = 4
 epoch = 'latest'
 
+[contracts.bdp001-vault-setup]
+path = 'contracts/proposals/devnet/unit-tests/bdp001-vault-setup.clar'
+clarity_version = 4
+epoch = 'latest'
+
+[contracts.bdp001-claim-mint-alice]
+path = 'contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-mint-alice.clar'
+clarity_version = 4
+epoch = 'latest'
+
+[contracts.bdp001-claim-burn-alice]
+path = 'contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-burn-alice.clar'
+clarity_version = 4
+epoch = 'latest'
+
+[contracts.bdp001-claim-mint-alice-extra]
+path = 'contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-mint-alice-extra.clar'
+clarity_version = 4
+epoch = 'latest'
+
+[contracts.bdp001-claim-mint-tom]
+path = 'contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-mint-tom.clar'
+clarity_version = 4
+epoch = 'latest'
+
+[contracts.bdp001-claim-tier-mix]
+path = 'contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-tier-mix.clar'
+clarity_version = 4
+epoch = 'latest'
+
+
+[contracts.bdp001-claim-transfer]
+path = 'contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-transfer.clar'
+clarity_version = 4
+epoch = 'latest'
+
+
+[contracts.bdp001-claim-uneven]
+path = 'contracts/proposals/devnet/unit-tests/reputation/bdp001-claim-uneven.clar'
+clarity_version = 4
+epoch = 'latest'
+
+
+
+
+
+
+
+
+
+
+
+
 [contracts.bdp000-callback]
 path = 'contracts/proposals/devnet/unit-tests/callback/bdp000-callback.clar'
 clarity_version = 4
@@ -524,6 +577,11 @@ epoch = 'latest'
 
 [contracts.wormhole-traits-v2]
 path = 'contracts/external/pyth/wormhole-traits-v2.clar'
+clarity_version = 4
+epoch = 'latest'
+
+[contracts.usdcx]
+path = 'contracts/external/usdcx.clar'
 clarity_version = 4
 epoch = 'latest'
 

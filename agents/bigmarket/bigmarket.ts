@@ -69,7 +69,7 @@ interface HistoryRecord {
 
 const DEPLOYERS: Record<Network, string> = {
   testnet: "ST30Q4WJYHGMYEE1CTGQ334R9M7KQ8ETVQ9NB134T",
-  mainnet: "SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD",
+  mainnet: "SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z",
 };
 
 const API_BASES: Record<Network, string> = {

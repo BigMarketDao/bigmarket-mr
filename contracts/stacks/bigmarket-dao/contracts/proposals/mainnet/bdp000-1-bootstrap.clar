@@ -26,19 +26,17 @@
 			)
 		))
 		;; Set initial members who are able to make proposals
-		(try! (contract-call? .bme003-0-core-proposals set-core-team-member 'SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD true))
+		(try! (contract-call? .bme003-0-core-proposals set-core-team-member 'SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z true))
 		(try! (contract-call? .bme003-0-core-proposals set-core-team-member 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29 true))
-		(try! (contract-call? .bme003-0-core-proposals set-core-team-member 'SP2A6S0FQCBJ7P54ZQ5FFQ6F1AVS60F5DBC9H0D7R true))
-		(try! (contract-call? .bme003-0-core-proposals set-core-team-member 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z true))
 
 		;; initial market creators
-		;; Allowed = ["SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD", "SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29", "SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z", 'SP2Z2CBMGWB9MQZAF5Z8X56KS69XRV3SJF4WKJ7J9','SPQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRMDV734D'];
-		(try! (contract-call? .bme022-0-market-gating set-merkle-root-by-principal .bme024-0-market-predicting 0x765d8185dae39d7c9016a2b889b0a7e59f222333bf36f017bfc1a94c359d2fe7))
-		(try! (contract-call? .bme022-0-market-gating set-merkle-root-by-principal .bme024-0-market-scalar-pyth 0x765d8185dae39d7c9016a2b889b0a7e59f222333bf36f017bfc1a94c359d2fe7))
+		;; Allowed = ["SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29", "SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29"];
+		(try! (contract-call? .bme022-0-market-gating set-merkle-root-by-principal .bme024-0-market-predicting 0x7f20e01c0990fa13fdecc3f2aa41e3d67cc57e956ed4f386f34b4c1d9ac6402e))
+		(try! (contract-call? .bme022-0-market-gating set-merkle-root-by-principal .bme024-0-market-scalar-pyth 0x7f20e01c0990fa13fdecc3f2aa41e3d67cc57e956ed4f386f34b4c1d9ac6402e))
 		
 		;; Category contract setting
-		(try! (contract-call? .bme024-0-market-predicting set-resolution-agent 'SP3NS9010CQ9AK3M6XN3XD9EHNTDZVGYSMFWZ288Z))
-		(try! (contract-call? .bme024-0-market-predicting set-dev-fund 'SM38XBR119DCN8D3WTBGWYYXC3K8X0FY0F9TSD8AF))
+		(try! (contract-call? .bme024-0-market-predicting set-resolution-agent 'SP3CHQ5SPR9D6XFZECCD5DJ20BC5VQG19H8RTF29A)) ;; core 3
+		(try! (contract-call? .bme024-0-market-predicting set-dev-fund 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29))
 		(try! (contract-call? .bme024-0-market-predicting set-dao-treasury .bme006-0-treasury))
 		(try! (contract-call? .bme024-0-market-predicting set-creation-gated true))
 		(try! (contract-call? .bme024-0-market-predicting set-market-fee-bips-max u1000))
@@ -51,12 +49,13 @@
 
 		;; Category contract resolution
 		(try! (contract-call? .bme024-0-market-predicting set-resolution-agent .bme008-0-resolution-coordinator))
-		(try! (contract-call? .bme008-0-resolution-coordinator set-resolution-team-member 'SP3NS9010CQ9AK3M6XN3XD9EHNTDZVGYSMFWZ288Z true))
+		(try! (contract-call? .bme008-0-resolution-coordinator set-resolution-team-member 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29 true))  ;; core 3
+		(try! (contract-call? .bme008-0-resolution-coordinator set-resolution-team-member 'SPX74P2KS0BDE51PATVN46T0P8W97F64JDAH5ZGQ true))  ;; core 2
 		(try! (contract-call? .bme008-0-resolution-coordinator set-signals-required u1))
 
 		;; Scalar contract setting
-		(try! (contract-call? .bme024-0-market-scalar-pyth set-resolution-agent 'SP3NS9010CQ9AK3M6XN3XD9EHNTDZVGYSMFWZ288Z))
-		(try! (contract-call? .bme024-0-market-scalar-pyth set-dev-fund 'SM38XBR119DCN8D3WTBGWYYXC3K8X0FY0F9TSD8AF))
+		(try! (contract-call? .bme024-0-market-scalar-pyth set-resolution-agent 'SP3CHQ5SPR9D6XFZECCD5DJ20BC5VQG19H8RTF29A)) ;; core 3
+		(try! (contract-call? .bme024-0-market-scalar-pyth set-dev-fund 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-dao-treasury .bme006-0-treasury))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-creation-gated true))
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-market-fee-bips-max u1000))
@@ -99,9 +98,9 @@
 		(try! (contract-call? .bme000-0-governance-token bmg-mint-many
 			(list
 				{amount: (/ (* u1500 token-supply) u10000), recipient: .bme006-0-treasury}
-				{amount: u100000000, recipient: 'SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27}
-				{amount: u100000000, recipient: 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29}
-				{amount: u100000000, recipient: 'SP2A6S0FQCBJ7P54ZQ5FFQ6F1AVS60F5DBC9H0D7R}
+				{amount: u100000000, recipient: 'SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z} ;; core
+				{amount: u100000000, recipient: 'SPX74P2KS0BDE51PATVN46T0P8W97F64JDAH5ZGQ} ;; core
+				{amount: u100000000, recipient: 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29}  ;; core
 				{amount: u100000000, recipient: 'SP2Z2CBMGWB9MQZAF5Z8X56KS69XRV3SJF4WKJ7J9}
 				{amount: u100000000, recipient: 'SPQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRMDV734D}
 			)
@@ -116,18 +115,14 @@
 				{amount: u7071339706, recipient: 'SP15Z41T89K34CD6Q1N8DX2VZGCP50ATNAJH6GFXF}
 				{amount: u7071339706, recipient: 'SP2Z2CBMGWB9MQZAF5Z8X56KS69XRV3SJF4WKJ7J9}
 				{amount: u7071339706, recipient: 'SPQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRMDV734D}
-				{amount: u6971339706, recipient: 'SP3HAHEV768GAMP34MTEC83PJ4PG6ZSGBX52CR6XQ}
-				{amount: u6971339706, recipient: 'SP246C0KRV7HKXMRB0H7Y6HCYGRCTZMVB9KP3391R}
-				{amount: u6971339706, recipient: 'SP167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9QRVJ627}
 				{amount: u6971339706, recipient: 'SP2YBH2S583CD60NYJHN165WJQDNDMPH69CZAQ78B}
-				{amount: u6971339706, recipient: 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z}
 				{amount: u6971339706, recipient: 'SPA8AHVNV690M9G555C614YZYMYXD3X5RQE34S31}
 				{amount: u6971339706, recipient: 'SP1KFDTNWYHYRJP7QP342KCFC0T2FXMKN5Z7ZNVX9}
 				{amount: u6971339706, recipient: 'SP22SW60674C0V6B5E234C7ZD2YR8WXKXXVC48GZR}
 				{amount: u6971339706, recipient: 'SP2XFH8D1MM2G11C0S6AZRSNP031RAY92XCARPRSQ}
 				{amount: u6971339706, recipient: 'SP1N4FTM6XK4FS4KQGZBTJY70F4CR36WQET7JFSS7}
-				{amount: u743648648, recipient: 'SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27}
 				{amount: u100000000, recipient: 'SP3N1MPGR5ABZ1AX0SW2DDP5KKZSKB93WDYXQA1H8}
+				{amount: u6971339706, recipient: 'SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z}
 			)
 		))
 
@@ -137,8 +132,7 @@
 		;; Mint early contributors a reserved SFT
 		(try! (contract-call? .bme030-0-reputation-token mint 'SP167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9QRVJ627 u20 u10))
 		(try! (contract-call? .bme030-0-reputation-token mint 'SP1KFDTNWYHYRJP7QP342KCFC0T2FXMKN5Z7ZNVX9 u20 u10))
-		(try! (contract-call? .bme030-0-reputation-token mint 'SP22SW60674C0V6B5E234C7ZD2YR8WXKXXVC48GZR u20 u10))
-		(try! (contract-call? .bme030-0-reputation-token mint 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z u20 u10))
+		(try! (contract-call? .bme030-0-reputation-token mint 'SPX74P2KS0BDE51PATVN46T0P8W97F64JDAH5ZGQ u20 u10))
 		(try! (contract-call? .bme030-0-reputation-token mint 'SP246C0KRV7HKXMRB0H7Y6HCYGRCTZMVB9KP3391R u20 u10))
 		(try! (contract-call? .bme030-0-reputation-token mint 'SP2XFH8D1MM2G11C0S6AZRSNP031RAY92XCARPRSQ u20 u10))
 		(try! (contract-call? .bme030-0-reputation-token mint 'SP2YBH2S583CD60NYJHN165WJQDNDMPH69CZAQ78B u20 u10))
@@ -148,9 +142,8 @@
 		(try! (contract-call? .bme030-0-reputation-token mint 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29 u20 u10))
 		(try! (contract-call? .bme030-0-reputation-token mint 'SPQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRMDV734D u20 u10))
 		(try! (contract-call? .bme030-0-reputation-token mint 'SP3N1MPGR5ABZ1AX0SW2DDP5KKZSKB93WDYXQA1H8 u20 u10))
-		(try! (contract-call? .bme030-0-reputation-token mint 'SP1SCD8ERMTFYE6CK9S0MHWQCP6SY4NAVFJ538A27 u20 u10))
+		(try! (contract-call? .bme030-0-reputation-token mint 'SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z u20 u10))
 		(try! (contract-call? .bme030-0-reputation-token mint 'SP1N4FTM6XK4FS4KQGZBTJY70F4CR36WQET7JFSS7 u20 u10))
-		(try! (contract-call? .bme030-0-reputation-token mint 'SP15Z41T89K34CD6Q1N8DX2VZGCP50ATNAJH6GFXF u20 u10))
 
 		;; sets genesis for reputation
 

@@ -2,9 +2,9 @@
 ;; Description:
 ;; Sets up and configure the DAO
 
-(impl-trait 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.proposal-trait.proposal-trait)
+(impl-trait 'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z.proposal-trait.proposal-trait)
 
-(define-constant token-supply u10000000000000)
+(define-constant token_supply u10000000000000)
 
 (define-public (execute (sender principal))
 	(begin
@@ -66,8 +66,7 @@
 				{
 					extension: .bme032-0-scalar-strategy-hedge,
 					enabled: true,
-				}
-				{
+				} {
 					extension: .bme050-0-vault,
 					enabled: true,
 				}
@@ -93,17 +92,28 @@
 		))
 		(try! (contract-call? .bme050-0-vault set-token-eip712-display .sbtc
 			0x535431505148514b5630524a585a465931444758384d4e534e5956453356475a4a53525450475a474d2e7362746300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-			u46))
+			u46
+		))
 		(try! (contract-call? .bme050-0-vault set-token-eip712-display .wrapped-stx
 			0x535431505148514b5630524a585a465931444758384d4e534e5956453356475a4a53525450475a474d2e777261707065642d737478000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-			u53))
+			u53
+		))
 		(try! (contract-call? .bme050-0-vault set-token-eip712-display .usdcx
 			0x535431505148514b5630524a585a465931444758384d4e534e5956453356475a4a53525450475a474d2e7573646378000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-			u47))
-		(try! (contract-call? .bme050-0-vault set-market-allowed .bme024-0-market-predicting true))
-		(try! (contract-call? .bme050-0-vault set-market-allowed .bme024-0-market-scalar-pyth true))
-		(try! (contract-call? .bme024-0-market-predicting set-authorized-vault .bme050-0-vault true))
-		(try! (contract-call? .bme024-0-market-scalar-pyth set-authorized-vault .bme050-0-vault true))
+			u47
+		))
+		(try! (contract-call? .bme050-0-vault set-market-allowed .bme024-0-market-predicting
+			true
+		))
+		(try! (contract-call? .bme050-0-vault set-market-allowed .bme024-0-market-scalar-pyth
+			true
+		))
+		(try! (contract-call? .bme024-0-market-predicting set-authorized-vault
+			.bme050-0-vault true
+		))
+		(try! (contract-call? .bme024-0-market-scalar-pyth set-authorized-vault
+			.bme050-0-vault true
+		))
 
 		;; Set executive team members.
 		(try! (contract-call? .bme004-0-core-execute set-executive-team-member
@@ -220,7 +230,6 @@
 		(try! (contract-call? .bme024-0-market-scalar-pyth set-price-band-width
 			0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace u1000
 		))
-
 
 		(try! (contract-call? .bme021-0-market-voting set-voting-duration u24))
 		;; (try! (contract-call? .bme010-0-token-sale initialize-ido))
@@ -341,7 +350,7 @@
 				}
 				;; {amount: u1000000000, recipient: .bme006-0-treasury}
 				{
-					amount: (/ (* u1500 token-supply) u10000),
+					amount: (/ (* u1500 token_supply) u10000),
 					recipient: .bme006-0-treasury,
 				}
 			)))

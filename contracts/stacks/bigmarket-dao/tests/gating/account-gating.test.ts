@@ -196,19 +196,16 @@ describe('gating market  creation', () => {
 		);
 		console.log('--------------------------------------------------------------------------------------------------------------');
 		allowedCreators = [
-			'SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD',
-			'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29', //am
-			'SP3JP0N1ZXGASRJ0F7QAHWFPGTVK9T2XNXDB908Z', // daoguy
-			'SP2Z2CBMGWB9MQZAF5Z8X56KS69XRV3SJF4WKJ7J9', // deorg
-			'SPQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRMDV734D' // jb
+			'SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z',
+			'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29' //am
 		];
 		let newRoot = generateMerkleTreeUsingStandardPrincipal(allowedCreators);
 		//let merklProof1 = generateMerkleProof(newRoot.tree, 'ST3RR3HF25CQ9A5DEWS4R1WKJSBCFKQXFBYPJK3WV');
-		const lookupRootKey1 = contractId2Key('SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD.bme024-0-market-scalar-pyth');
+		const lookupRootKey1 = contractId2Key('SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z.bme024-0-market-scalar-pyth');
 		console.log('--------------------------------------------------------------------------------------------------------------');
 		console.log(allowedCreators);
 		console.log(
-			'MAINNET: MERKLE ROOTS FOR MARKET CREATION: \nSP22SW60674C0V6B5E234C7ZD2YR8WXKXXVC48GZR.bme023-0-market-scalar-pyth: \nkey= 0x' +
+			'MAINNET: MERKLE ROOTS FOR MARKET CREATION: \nSPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z.bme023-0-market-scalar-pyth: \nkey= 0x' +
 				lookupRootKey1 +
 				'\nroot= 0x' +
 				newRoot.root

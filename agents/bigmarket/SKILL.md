@@ -76,7 +76,7 @@ bigmarket status
 - Reputation (BIGR): `bme030-0-reputation-token`
 - Treasury: `bme006-0-treasury`
 - Testnet deployer: `ST30Q4WJYHGMYEE1CTGQ334R9M7KQ8ETVQ9NB134T`
-- Mainnet deployer: `SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD`
+- Mainnet deployer: `SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z`
 
 ## Behavior
 

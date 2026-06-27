@@ -4,40 +4,8 @@ import { isLoggedIn } from '@bigmarket/bm-common';
 export const DEV_WALLET_STORAGE_KEY = 'bm.devWalletPrivateKey';
 
 const coordinators = [
-	{ stxAddress: 'SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD', btcAddress: '' },
-	{ stxAddress: 'SP1P89TEC03E29V5MYJBSCC8KWR1A243ZG2R8DYB1', btcAddress: '' },
-	{
-		stxAddress: 'ST1R1061ZT6KPJXQ7PAXPFB6ZAZ6ZWW28G8HXK9G5',
-		btcAddress: 'bc1qkj5yxgm3uf78qp2fdmgx2k76ccdvj7rx0qwhv0'
-	},
-	{
-		stxAddress: 'ST1NXBK3K5YYMD6FD41MVNP3JS1GABZ8TRVX023PT',
-		btcAddress: 'bc1qkj5yxgm3uf78qp2fdmgx2k76ccdvj7rx0qwhv0'
-	},
-	{
-		stxAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
-		btcAddress: 'tb1q6ue638m4t5knwxl4kwhwyuffttlp0ffee3zn3e'
-	},
-	{
-		stxAddress: 'SP3N4AJFZZYC4BK99H53XP8KDGXFGQ2PRSQP2HGT6',
-		btcAddress: 'tb1q6ue638m4t5knwxl4kwhwyuffttlp0ffee3zn3e'
-	},
-	{
-		stxAddress: 'ST3N4AJFZZYC4BK99H53XP8KDGXFGQ2PRSPNET8TN',
-		btcAddress: 'tb1q6ue638m4t5knwxl4kwhwyuffttlp0ffee3zn3e'
-	},
-	{ stxAddress: 'ST167Z6WFHMV0FZKFCRNWZ33WTB0DFBCW9M1FW3AY', btcAddress: '' },
-	{ stxAddress: 'SP1R1061ZT6KPJXQ7PAXPFB6ZAZ6ZWW28GBQA1W0F', btcAddress: '' },
-	{ stxAddress: 'ST30Q4WJYHGMYEE1CTGQ334R9M7KQ8ETVQ9NB134T', btcAddress: '' },
-	{ stxAddress: 'ST22NW0RYCW4GFZRPE8VGJRCKGQMRMMX492QET2ZC', btcAddress: '' },
-	{ stxAddress: 'STEZD95XQ194X67C1QJW4PHKDG8F5D66ZCYFX27A', btcAddress: '' },
+	{ stxAddress: 'SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z', btcAddress: '' },
 	{ stxAddress: 'ST105HCS1RTR7D61EZET8CWNEF24ENEN3V6ARBYBJ', btcAddress: '' }, //am
-	{ stxAddress: 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29', btcAddress: '' },
-	{ stxAddress: 'SP2A6S0FQCBJ7P54ZQ5FFQ6F1AVS60F5DBC9H0D7R', btcAddress: '' },
-	{ stxAddress: 'ST3Y12HJYP2NMNAFHWBPM2CMYDHYXME1F46VC5SPJ', btcAddress: '' },
-	{ stxAddress: 'ST3NS9010CQ9AK3M6XN3XD9EHNTDZVGYSMCBG3K6Z', btcAddress: '' },
-	{ stxAddress: 'SP2Z2CBMGWB9MQZAF5Z8X56KS69XRV3SJF4WKJ7J9', btcAddress: '' }, // deorg
-	{ stxAddress: 'SPQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRMDV734D', btcAddress: '' } // jb
 ];
 
 export function isCoordinator(address: string | undefined) {

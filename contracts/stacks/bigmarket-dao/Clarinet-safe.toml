@@ -47,6 +47,9 @@ contract_id = "SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-storage-v4"
 [[project.requirements]]
 contract_id = "SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1.univ2-router"
 
+[[project.requirements]]
+contract_id = "SP10CZMEE431Q48Z9HNN971BKXPKMR4VQAF3EM6GD.prediction-market-trait"
+
 [contracts.bigmarket-dao]
 path = 'contracts/bigmarket-dao.clar'
 clarity_version = 4
@@ -64,12 +67,29 @@ epoch = 'latest'
 path = 'contracts/extensions/bme030-0-reputation-token.clar'
 clarity_version = 4
 epoch = 'latest'
+
+
+[contracts.bme008-0-resolution-coordinator]
+path = 'contracts/extensions/bme008-0-resolution-coordinator.clar'
+clarity_version = 4
+epoch = 'latest'
+
+[contracts.bme010-0-token-sale]
+path = 'contracts/extensions/bme010-0-token-sale.clar'
+clarity_version = 4
+epoch = 'latest'
+
+
 [contracts.bme001-0-proposal-voting]
 path = 'contracts/extensions/bme001-0-proposal-voting.clar'
 clarity_version = 4
 epoch = 'latest'
 [contracts.bme003-0-core-proposals]
 path = 'contracts/extensions/bme003-0-core-proposals.clar'
+clarity_version = 4
+epoch = 'latest'
+[contracts.bme050-0-vault]
+path = 'contracts/extensions/vault/bme050-0-vault.clar'
 clarity_version = 4
 epoch = 'latest'
 [contracts.bme004-0-core-execute]
@@ -127,6 +147,10 @@ path = 'contracts/external/wrapped-stx.clar'
 clarity_version = 4
 epoch = 'latest'
 
+[contracts.usdcx]
+path = 'contracts/external/usdcx.clar'
+clarity_version = 4
+epoch = 'latest'
 
 
 

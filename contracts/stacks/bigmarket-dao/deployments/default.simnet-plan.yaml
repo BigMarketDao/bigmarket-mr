@@ -58,6 +58,8 @@ genesis:
   - signers
   - signers-voting
   - costs-4
+  - costs-5
+  - pox-5
 plan:
   batches:
   - id: 0
@@ -109,21 +111,6 @@ plan:
       path: .cache/requirements/SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1.univ2-share-fee-to-trait.clar
       clarity-version: 2
     - transaction-type: emulated-contract-publish
-      contract-name: univ2-core
-      emulated-sender: SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1
-      path: .cache/requirements/SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1.univ2-core.clar
-      clarity-version: 2
-    - transaction-type: emulated-contract-publish
-      contract-name: univ2-library
-      emulated-sender: SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1
-      path: .cache/requirements/SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1.univ2-library.clar
-      clarity-version: 2
-    - transaction-type: emulated-contract-publish
-      contract-name: univ2-router
-      emulated-sender: SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1
-      path: .cache/requirements/SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1.univ2-router.clar
-      clarity-version: 2
-    - transaction-type: emulated-contract-publish
       contract-name: univ2-share-fee-to
       emulated-sender: SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1
       path: .cache/requirements/SP1Y5YSTAHZ88XYK1VPDH24GY0HPX5J4JECTMY4A1.univ2-share-fee-to.clar
@@ -136,16 +123,6 @@ plan:
     epoch: '2.4'
   - id: 3
     transactions:
-    - transaction-type: emulated-contract-publish
-      contract-name: sbtc-registry
-      emulated-sender: SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4
-      path: .cache/requirements/SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-registry.clar
-      clarity-version: 3
-    - transaction-type: emulated-contract-publish
-      contract-name: sbtc-token
-      emulated-sender: SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4
-      path: .cache/requirements/SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token.clar
-      clarity-version: 3
     - transaction-type: emulated-contract-publish
       contract-name: sbtc-deposit
       emulated-sender: SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4
@@ -713,11 +690,6 @@ plan:
       contract-name: univ2-share-fee-to
       emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
       path: contracts/external/velar/univ2-share-fee-to.clar
-      clarity-version: 4
-    - transaction-type: emulated-contract-publish
-      contract-name: usdcx
-      emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
-      path: contracts/external/usdcx.clar
       clarity-version: 4
     - transaction-type: emulated-contract-publish
       contract-name: wormhole-traits-v2
