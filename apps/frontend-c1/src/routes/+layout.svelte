@@ -36,6 +36,7 @@
 		TokenPermissionEvent,
 		MarketCategory
 	} from '@bigmarket/bm-types';
+	import AlphaBanner from '$lib/components/template/AlphaBanner.svelte';
 
 	let networkWarning = $state(false);
 	let ready = $state(false);
@@ -120,6 +121,7 @@
 	<div class="flex min-h-dvh flex-col bg-background text-foreground">
 		{#if browser}
 			<div class="shrink-0">
+				<AlphaBanner />
 				<ReputationCommunityBanner />
 				<Header />
 			</div>

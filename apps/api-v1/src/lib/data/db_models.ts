@@ -19,11 +19,10 @@ export let crossChainIntentCollection: Collection;
 
 export let authUserCollection: Collection;
 export let authProviderAccountCollection: Collection;
-export let authZkSessionCollection: Collection;
 export let authJwtSessionCollection: Collection;
 export let authRefreshTokenCollection: Collection;
-export let authProofCollection: Collection;
 export let authOauthSessionCollection: Collection;
+export let rolesCollection: Collection;
 
 export async function connect() {
 	let uriPrefix: string = 'mongodb+srv';
@@ -103,14 +102,6 @@ export async function connect() {
 	await authProviderAccountCollection.createIndex({ userId: 1 }); // list all providers for a user
 	// (remove the duplicate createIndex you had)
 
-	// ZK SESSIONS (short-lived, string sessionId)
-	authZkSessionCollection = database.collection('authZkSessionCollection');
-	await authZkSessionCollection.createIndex({ sessionId: 1 }, { unique: true }); // you query by sessionId
-	await authZkSessionCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL on per-doc expiresAt
-	await authZkSessionCollection.createIndex({ contextId: 1 });
-	await authZkSessionCollection.createIndex({ providerId: 1 });
-	await authZkSessionCollection.createIndex({ status: 1, createdAt: -1 });
-
 	// JWT SESSIONS (device/browser sessions, string sid)
 	authJwtSessionCollection = database.collection('authJwtSessionCollection');
 	await authJwtSessionCollection.createIndex({ sid: 1 }, { unique: true }); // you reference by sid
@@ -124,14 +115,10 @@ export async function connect() {
 	await authRefreshTokenCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL
 	await authRefreshTokenCollection.createIndex({ revokedAt: 1 });
 
-	// PROOF BLOBS (optional; can grow)
-	authProofCollection = database.collection('authProofCollection');
-	await authProofCollection.createIndex({ zkSessionId: 1 });
-	await authProofCollection.createIndex({ storedAt: -1 });
-	// (optional TTL to keep storage in check, e.g., 30 days)
-	// await authProofCollection.createIndex({ storedAt: 1 }, { expireAfterSeconds: 30 * 24 * 3600 });
-
 	authOauthSessionCollection = database.collection('authOauthSessionCollection');
 	await authOauthSessionCollection.createIndex({ state: 1 }, { unique: true });
 	await authOauthSessionCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+	rolesCollection = database.collection('rolesCollection');
+	await rolesCollection.createIndex({ email: 1 }, { unique: true });
 }

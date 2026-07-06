@@ -7,13 +7,44 @@
 	import ConnectPlaywright from './testing/ConnectPlaywright.svelte';
 	import { requireAppConfig } from '@bigmarket/bm-common';
 	import { appConfigStore } from '@bigmarket/bm-common';
+	import {
+		fetchAuthUser,
+		fetchOAuthProviders,
+		isOAuthLoggedIn,
+		logoutOAuth,
+		OAUTH_PROVIDER_LABELS,
+		startOAuthLogin,
+		type AuthUser,
+		type OAuthProvider
+	} from '$lib/core/auth/authSession';
+
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
 	let walletAddress = typeof window !== 'undefined' ? getStxAddress() : '???';
-	let isPhantomConnected = $state(false);
 	let isMetaMaskConnected = $state(false);
 	let connecting = $state<'stacks' | 'ethereum' | null>(null);
+	let oauthConnecting = $state<OAuthProvider | null>(null);
 	let errorMsg = $state<string | null>(null);
+	let oauthProviders = $state<OAuthProvider[]>([]);
+	let oauthUser = $state<AuthUser | null>(null);
+	let oauthSignedIn = $state(false);
+
+	async function loadOAuthState() {
+		oauthSignedIn = isOAuthLoggedIn();
+		if (!oauthSignedIn) {
+			oauthUser = null;
+			return;
+		}
+		oauthUser = await fetchAuthUser(appConfig.VITE_BIGMARKET_API);
+		if (!oauthUser) {
+			oauthSignedIn = false;
+		}
+	}
+
+	onMount(async () => {
+		oauthProviders = await fetchOAuthProviders(appConfig.VITE_BIGMARKET_API);
+		await loadOAuthState();
+	});
 
 	async function runConnect(chain: 'stacks' | 'ethereum') {
 		if (connecting) return;
@@ -29,65 +60,21 @@
 		}
 	}
 
+	function connectOAuth(provider: OAuthProvider) {
+		if (oauthConnecting || connecting) return;
+		errorMsg = null;
+		oauthConnecting = provider;
+		startOAuthLogin(appConfig.VITE_BIGMARKET_API, provider);
+	}
+
+	async function disconnectOAuth() {
+		await logoutOAuth(appConfig.VITE_BIGMARKET_API);
+		oauthSignedIn = false;
+		oauthUser = null;
+	}
+
 	const connectStacks = () => runConnect('stacks');
 	const connectMetaMask = () => runConnect('ethereum');
-	// 	const phantom = window.phantom?.solana;
-
-	// 	if (!phantom) return false;
-
-	// 	try {
-	// 		await phantom.connect({ onlyIfTrusted: true });
-	// 		return true;
-	// 	} catch {
-	// 		return false;
-	// 	}
-	// }
-	onMount(async () => {
-		const phantom = window.phantom?.solana;
-		isPhantomConnected = false;
-		if (phantom && isPhantomConnected) {
-			const response = await phantom.connect();
-			const publicKey = (
-				response as { publicKey: { toString: () => string } }
-			).publicKey.toString();
-			console.log('publicKey', publicKey);
-		}
-		const metaMask = window.phantom?.ethereum;
-		isMetaMaskConnected = false;
-		if (metaMask && isMetaMaskConnected) {
-			const response = await metaMask.connect();
-			const publicKey = (
-				response as { publicKey: { toString: () => string } }
-			).publicKey.toString();
-			console.log('publicKey', publicKey);
-		}
-	});
-
-	// async function checkPhantomConnected() {
-	// 	// const phantom = window.phantom?.solana;
-	// 	// if (!phantom) {
-	// 	// 	window.open('https://phantom.app/', '_blank');
-	// 	// 	return;
-	// 	// }
-	// 	// const response = await phantom.connect();
-	// 	// const publicKey = (response as { publicKey: { toString: () => string } }).publicKey.toString();
-	// 	// console.log('publicKey', publicKey);
-	// 	// isPhantomConnected = true;
-	// 	await connectWallet(appConfig.VITE_BIGMARKET_API, 'solana');
-
-	// 	window.location.reload();
-	// };
-
-	// const connectPhantom = async () => {
-	// 	const phantom = window.phantom?.solana;
-	// 	if (!phantom) {
-	// 		window.open('https://phantom.app/', '_blank');
-	// 		return;
-	// 	}
-	// 	await phantom.disconnect();
-	// 	isPhantomConnected = false;
-	// 	window.location.reload();
-	// };
 
 	const disconnectMetaMask = async () => {
 		const mm = window.phantom?.ethereum;
@@ -96,39 +83,66 @@
 			return;
 		}
 		await mm.disconnect();
-		isPhantomConnected = false;
+		isMetaMaskConnected = false;
 		window.location.reload();
 	};
-
-	// const options = [
-	// 	{ value: 'google', label: 'Google' },
-	// 	{ value: 'github', label: 'GitHub' },
-	// 	{ value: 'linkedin', label: 'LinkedIn' },
-	// 	{ value: 'twitter', label: 'X' }
-	// ];
 </script>
 
 <div data-testid="wallet-connect:panel" class="mx-auto">
 	<div class="mb-4 flex items-center justify-between">
-		<TypoHeader level={2} className="text-neutral-900 dark:text-neutral-100"
-			>Buy STX &amp; Connect Wallet</TypoHeader
-		>
+		<TypoHeader level={2} className="text-neutral-900 dark:text-neutral-100">Connect</TypoHeader>
 	</div>
-	<section>
+	<section class="flex flex-col gap-4">
+		{#if oauthSignedIn}
+			<div
+				data-testid="oauth-connect:status:connected"
+				class="rounded-lg border border-sky-200/60 bg-sky-50/60 p-4 text-sm text-sky-900
+               dark:border-sky-900/40 dark:bg-sky-900/20 dark:text-sky-200"
+			>
+				<p class="font-medium">Signed in</p>
+				{#if oauthUser?.prv}
+					<p class="mt-1 capitalize">{OAUTH_PROVIDER_LABELS[oauthUser.prv as OAuthProvider] ?? oauthUser.prv}</p>
+				{/if}
+				<p class="mt-1 truncate font-mono text-xs opacity-80">{oauthUser?.id ?? 'Account'}</p>
+				<Button variant="secondary" class="mt-3" onclick={disconnectOAuth}>Sign out</Button>
+			</div>
+		{:else if oauthProviders.length > 0}
+			<div class="space-y-2" data-testid="oauth-connect:providers">
+				<TypoHeader level={5} className="text-neutral-800 dark:text-neutral-200"
+					>Sign in</TypoHeader
+				>
+				<ParaContainer>Social sign-in for comments and account features.</ParaContainer>
+				<div class="flex flex-col gap-2">
+					{#each oauthProviders as provider (provider)}
+						<Button
+							variant="secondary"
+							onclick={() => connectOAuth(provider)}
+							disabled={connecting !== null || oauthConnecting !== null}
+							data-testid={`oauth-connect:${provider}`}
+						>
+							{oauthConnecting === provider
+								? 'Redirecting…'
+								: `Continue with ${OAUTH_PROVIDER_LABELS[provider]}`}
+						</Button>
+					{/each}
+				</div>
+			</div>
+		{/if}
+
 		{#if isLoggedIn()}
 			<div
 				data-testid="wallet-connect:status:connected"
 				class="rounded-lg border border-emerald-200/60 bg-emerald-50/60 p-4 text-sm text-emerald-900
                dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-200"
 			>
-				<p class="font-medium">Connected</p>
+				<p class="font-medium">Wallet connected</p>
 				<p class="mt-1 truncate font-mono">{walletAddress}</p>
 			</div>
 		{:else}
 			<div class="flex flex-col gap-3" data-testid="wallet-connect:status:disconnected">
 				<div class="space-y-2" data-testid="wallet-connect:devwallets">
 					<TypoHeader level={5} className="text-neutral-800 dark:text-neutral-200"
-						>Connect Wallet</TypoHeader
+						>Connect wallet</TypoHeader
 					>
 					<ParaContainer>Full access including staking in markets.</ParaContainer>
 					{#if errorMsg}
@@ -142,27 +156,18 @@
 					<div class="flex flex-col gap-2">
 						<Button
 							variant="secondary"
-							class=""
 							onclick={connectStacks}
-							disabled={connecting !== null}
+							disabled={connecting !== null || oauthConnecting !== null}
 						>
 							{connecting === 'stacks' ? 'Connecting…' : 'Connect Stacks'}
 						</Button>
-						<!-- {#if isPhantomConnected}
-						<Button onclick={disconnectPhantom}>Disconnect Phantom</Button>
-					{:else}
-						<Button onclick={connectPhantom}>Connect Phantom</Button>
-					{/if} -->
 						{#if isMetaMaskConnected}
-							<Button variant="secondary" class="" onclick={disconnectMetaMask}
-								>Disconnect Meta Mask</Button
-							>
+							<Button variant="secondary" onclick={disconnectMetaMask}>Disconnect Meta Mask</Button>
 						{:else}
 							<Button
 								variant="secondary"
-								class=""
 								onclick={connectMetaMask}
-								disabled={connecting !== null}
+								disabled={connecting !== null || oauthConnecting !== null}
 							>
 								{connecting === 'ethereum' ? 'Connecting…' : 'Connect Meta Mask'}
 							</Button>

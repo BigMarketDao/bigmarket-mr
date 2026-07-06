@@ -14,7 +14,8 @@ export function printConfig() {
 	console.log('network = ' + CONFIG.network);
 	console.log('publicAppName = ' + CONFIG.publicAppName);
 	console.log('publicAppVersion = ' + CONFIG.publicAppVersion);
-	console.log('zkTlsAppId = ' + CONFIG.zkTlsAppId);
+	console.log('apiBaseUrl = ' + CONFIG.apiBaseUrl);
+	console.log('authFrontendReturnUrl = ' + CONFIG.authFrontendReturnUrl);
 	console.log('llmServer = ' + CONFIG.llmServer);
 	console.log('rpcUser = ' + CONFIG.rpcUser);
 	console.log('rpcHost = ' + CONFIG.rpcHost);
@@ -23,14 +24,6 @@ export function printConfig() {
 
 export function setConfigOnStart() {
 	const network = process.env.NODE_ENV;
-
-	CONFIG.g_client_id = process.env[network + '_g_client_id'] || '';
-	CONFIG.g_project_id = process.env[network + '_g_project_id'] || '';
-	CONFIG.g_auth_uri = process.env[network + '_g_auth_uri'] || '';
-	CONFIG.g_token_uri = process.env[network + '_g_token_uri'] || '';
-	CONFIG.g_client_secret = process.env[network + '_g_client_secret'] || '';
-	CONFIG.g_redirect_uris = process.env[network + '_g_redirect_uris'] || '';
-	CONFIG.g_javascript_origins = process.env[network + '_g_javascript_origins'] || '';
 
 	CONFIG.host = process.env[network + '_sui_host'] || '';
 	CONFIG.port = Number(process.env[network + '_sui_port']) || 6060;
@@ -53,15 +46,22 @@ export function setConfigOnStart() {
 	CONFIG.rpcHost = process.env[network + '_RPC_HOST'] || '';
 	CONFIG.rpcPort = process.env[network + '_RPC_PORT'] || '';
 
-	CONFIG.zkTlsAppId = process.env[network + '_ZKTLS_APP_ID'] || '';
-	CONFIG.zkTlsAppSecret = process.env[network + '_ZKTLS_APP_SECRET'] || '';
-	CONFIG.zkTlsProviderGoogle = process.env[network + '_ZKTLS_PROVIDER_GOOGLE'] || '';
-	CONFIG.zkTlsProviderTwitter = process.env[network + '_ZKTLS_PROVIDER_TWITTER'] || '';
-	CONFIG.zkTlsProviderLinkedIn = process.env[network + '_ZKTLS_PROVIDER_LINKEDIN'] || '';
-	CONFIG.zkTlsProviderGithub = process.env[network + '_ZKTLS_PROVIDER_GITHUB'] || '';
+	CONFIG.jwtSecret = process.env[network + '_JWT_SECRET'] || '';
+	CONFIG.apiBaseUrl = process.env[network + '_sui_apiBaseUrl'] || (network === 'devnet' ? `http://localhost:${CONFIG.port}` : `https://api.${CONFIG.network}.bigmarket.ai`);
+	CONFIG.authFrontendReturnUrl = process.env[network + '_auth_frontend_return_url'] || `${CONFIG.publicAppBaseUrl}/auth/callback`;
+
+	CONFIG.oauthGoogleClientId = process.env[network + '_oauth_google_client_id'] || '';
+	CONFIG.oauthGoogleClientSecret = process.env[network + '_oauth_google_client_secret'] || '';
+	CONFIG.oauthFacebookClientId = process.env[network + '_oauth_facebook_client_id'] || '';
+	CONFIG.oauthFacebookClientSecret = process.env[network + '_oauth_facebook_client_secret'] || '';
+	CONFIG.oauthLinkedinClientId = process.env[network + '_oauth_linkedin_client_id'] || '';
+	CONFIG.oauthLinkedinClientSecret = process.env[network + '_oauth_linkedin_client_secret'] || '';
+	CONFIG.oauthGithubClientId = process.env[network + '_oauth_github_client_id'] || '';
+	CONFIG.oauthGithubClientSecret = process.env[network + '_oauth_github_client_secret'] || '';
+	CONFIG.oauthTwitterClientId = process.env[network + '_oauth_twitter_client_id'] || '';
+	CONFIG.oauthTwitterClientSecret = process.env[network + '_oauth_twitter_client_secret'] || '';
 
 	CONFIG.mempoolUrl = 'https://mempool.space/api';
-	CONFIG.bigmarketUrl = 'https://bigmarket.ai';
 
 	//CONFIG.mempoolUrl = 'https://beta.sbtc-mempool.tech/api/proxy';
 }
@@ -97,5 +97,5 @@ export function isDev() {
 
 export const coordinators = [
 	{ stxAddress: 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29', btcAddress: '' },
-	{ stxAddress: 'SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z', btcAddress: '' },
+	{ stxAddress: 'SPT94T4HGFN8A99AH4DEE3E5EM7J6JN8FKY8KB7Z', btcAddress: '' }
 ];

@@ -5,7 +5,7 @@ export function getNetworkFromUrl(url: URL): Network {
   const chain = url.searchParams.get("chain");
   return chain === "devnet" || chain === "testnet" || chain === "mainnet"
     ? chain
-    : "mainnet";
+    : "devnet";
 }
 
 export function getAppConfig(network: Network): AppConfig {

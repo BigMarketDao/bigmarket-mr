@@ -4,6 +4,7 @@ package-lock.json
 dist
 .svelte-kit
 
+.pnpm-store
 # Output
 .output
 .vercel

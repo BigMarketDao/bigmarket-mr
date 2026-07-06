@@ -15,6 +15,7 @@
 	import { isCoordinator } from '$lib/core/tools/security';
 	import { page } from '$app/state';
 	import { afterNavigate } from '$app/navigation';
+	import AlphaBanner from './AlphaBanner.svelte';
 
 	let dropdownRef: HTMLElement | null = null;
 	let isOpen = $state(false);

@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 import morgan from 'morgan';
 import cors from 'cors';
 import { CONFIG, getConfig, printConfig, setConfigOnStart } from './lib/config.js';
-import { jwtRoutes } from './routes/jwt/jwtRoutes.js';
 import { pollingRoutes } from './routes/polling/pollingRoutes.js';
 import { connect } from './lib/data/db_models.js';
 import { daoEventRoutes } from './routes/dao/events/daoEventsRoutes.js';
@@ -42,26 +41,17 @@ const app = express();
 const port = process.env.PORT || 3020;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.json({ limit: '1mb' })); // for /reclaim/start & most routes
+app.use(express.json({ limit: '1mb' }));
+const corsOrigins = ['https://api.testnet.bigmarket.ai', 'http://localhost:8081', 'http://localhost:8060', 'http://localhost:8080', 'https://testnet.bigmarket.ai', 'https://mainnet.bigmarket.ai', 'https://bigmarket.ai', 'https://dao.bigmarket.ai'];
 app.use(
 	cors({
-		origin: [
-			'https://api.testnet.bigmarket.ai',
-			'http://localhost:8081',
-			'http://localhost:8060',
-			'http://localhost:8080',
-			'http://localhost:8081',
-			'https://testnet.bigmarket.ai',
-			'https://mainnet.bigmarket.ai',
-			'https://bigmarket.ai',
-			'https://dao.bigmarket.ai'
-		]
+		origin: corsOrigins,
+		credentials: true
 	})
 );
 
 app.use(morgan('tiny'));
 app.use(express.static('public'));
-app.use(cors());
 setConfigOnStart();
 setDaoConfigOnStart();
 
@@ -73,12 +63,7 @@ app.use((req, res, next) => {
 	}
 });
 app.use(cookieParser());
-// If you ever disable jsonProofResponse, allow text on the callback:
-app.use('/bigmarket-api/auth/reclaim/receive-proofs', express.text({ type: '*/*', limit: '5mb' }));
 
-// Example protected route
-
-app.use('/bigmarket-api/jwt', jwtRoutes);
 app.use('/bigmarket-api/pm', predictionMarketRoutes);
 app.use('/bigmarket-api/polling', pollingRoutes);
 app.use('/bigmarket-api/my-markets', myMarketRoutes);

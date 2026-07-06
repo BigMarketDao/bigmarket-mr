@@ -1,22 +1,17 @@
 import express from 'express';
-import { getZkSessionStatus, issueTokensFromZkTLS, logout, receiveProofsHandler, refreshAccess, requireAuth, startHandler } from './auth.js';
-import { oauthGoogleCallback, oauthGoogleStart } from './auth_google.js';
+import { logout, refreshAccess, requireAuth } from './auth.js';
+import { listProviders, oauthCallback, oauthStart } from './oauth/oauth.js';
 
 const router = express.Router();
 
-// zk-tls routes
-router.post('/reclaim/start/:provider', startHandler);
-router.post('/reclaim/receive-proofs', receiveProofsHandler);
-router.get('/reclaim/session/:id/status', getZkSessionStatus);
+// OAuth (google, facebook, linkedin, github, twitter)
+router.get('/oauth/providers', listProviders);
+router.get('/oauth/:provider/start', oauthStart);
+router.get('/oauth/:provider/callback', oauthCallback);
 
-// jwt routes
-router.post('/token', issueTokensFromZkTLS); // after zkTLS session verified
+// Session
 router.post('/refresh', refreshAccess);
 router.post('/logout', logout);
-
-// google oauth
-router.get('/oauth/google/start', oauthGoogleStart);
-router.get('/oauth/google/callback', oauthGoogleCallback);
 
 router.get('/me', requireAuth, (req, res) => {
 	res.json({ ok: true, user: (req as any).user });

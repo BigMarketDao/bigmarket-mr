@@ -4,7 +4,7 @@
 ;; Allows the deployer to mint a pool for market liquidity - ie
 ;; allows us to simulate stable CPMM curve behaviour.
 
-;;(impl-trait 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
+;; (impl-trait 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 (impl-trait 'SP2AKWJYC7BNY18W1XXKPGP0YVEK63QJG4793Z2D4.sip-010-trait-ft-standard.sip-010-trait)
 
 (define-fungible-token bmg-play)
@@ -18,9 +18,15 @@
 (define-constant seed-amount u10000000000000) ;; 100_000_000.000000 PLAY (for simulating market depth)
 (define-data-var seeded bool false)
 
-(define-public (get-name) (ok (var-get token-name)))
-(define-public (get-symbol) (ok (var-get token-symbol)))
-(define-public (get-decimals) (ok (var-get token-decimals)))
+(define-public (get-name)
+  (ok (var-get token-name))
+)
+(define-public (get-symbol)
+  (ok (var-get token-symbol))
+)
+(define-public (get-decimals)
+  (ok (var-get token-decimals))
+)
 
 (define-public (get-balance (who principal))
   (ok (ft-get-balance bmg-play who))
@@ -31,14 +37,20 @@
 )
 
 (define-read-only (get-token-uri)
-	(ok (var-get token-uri))
+  (ok (var-get token-uri))
 )
 
-
 ;; Standard transfer
-(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+(define-public (transfer
+    (amount uint)
+    (sender principal)
+    (recipient principal)
+    (memo (optional (buff 34)))
+  )
   (begin
-    (asserts! (or (is-eq tx-sender sender) (is-eq contract-caller sender)) (err u100))
+    (asserts! (or (is-eq tx-sender sender) (is-eq contract-caller sender))
+      (err u100)
+    )
     (ft-transfer? bmg-play amount sender recipient)
   )
 )
@@ -58,9 +70,7 @@
     (var-set seeded true)
     (try! (ft-mint? bmg-play seed-amount contract-owner))
     (try! (ft-mint? bmg-play seed-amount 'SPEZD95XQ194X67C1QJW4PHKDG8F5D66ZCT8BY29))
-    (try! (ft-mint? bmg-play seed-amount 'SPX74P2KS0BDE51PATVN46T0P8W97F64JDAH5ZGQ))
-    (try! (ft-mint? bmg-play seed-amount 'SP2Z2CBMGWB9MQZAF5Z8X56KS69XRV3SJF4WKJ7J9))
-    (try! (ft-mint? bmg-play seed-amount 'SPQE3J7XMMK0DN0BWJZHGE6B05VDYQRXRMDV734D))
+    (try! (ft-mint? bmg-play seed-amount 'SP282CZ6KWHTSQZ0FE3BCDAEN1GQED84XTBVKT7P3))
     (ok true)
   )
 )

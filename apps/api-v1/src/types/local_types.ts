@@ -21,20 +21,18 @@ export type ConfigI = {
 	rpcHost: string;
 
 	mempoolUrl: string;
-	bigmarketUrl: string;
+	apiBaseUrl: string;
+	authFrontendReturnUrl: string;
+	jwtSecret: string;
 
-	g_client_id: string;
-	g_project_id: string;
-	g_auth_uri: string;
-	g_token_uri: string;
-	g_client_secret: string;
-	g_redirect_uris: string;
-	g_javascript_origins: string;
-
-	zkTlsAppId: string;
-	zkTlsAppSecret: string;
-	zkTlsProviderGoogle: string;
-	zkTlsProviderTwitter: string;
-	zkTlsProviderLinkedIn: string;
-	zkTlsProviderGithub: string;
+	oauthGoogleClientId: string;
+	oauthGoogleClientSecret: string;
+	oauthFacebookClientId: string;
+	oauthFacebookClientSecret: string;
+	oauthLinkedinClientId: string;
+	oauthLinkedinClientSecret: string;
+	oauthGithubClientId: string;
+	oauthGithubClientSecret: string;
+	oauthTwitterClientId: string;
+	oauthTwitterClientSecret: string;
 };
