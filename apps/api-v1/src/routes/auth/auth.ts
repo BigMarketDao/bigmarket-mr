@@ -9,6 +9,7 @@ import {
 	authJwtSessionCollection,
 	authRefreshTokenCollection
 } from '../../lib/data/db_models.js';
+import type { OAuthProfile } from './oauth/oauth_types.js';
 
 export const AUTH_BASE_PATH = '/bigmarket-api/auth';
 export const REFRESH_COOKIE_NAME = 'bm_rt';
@@ -78,29 +79,52 @@ async function verifyAccessJWT(token: string) {
 	return await jwtVerify(token, jwtSecret(), { issuer: JWT_ISSUER, audience: JWT_AUD });
 }
 
-export async function findOrCreateUser(providerId: string, subjectHash: string) {
+function providerAccountFields(profile: OAuthProfile) {
+	return {
+		sub: profile.sub,
+		email: profile.email ?? null,
+		emailVerified: profile.emailVerified ?? null,
+		name: profile.name ?? null,
+		picture: profile.picture ?? null
+	};
+}
+
+function userProfileFields(profile: OAuthProfile) {
+	return {
+		email: profile.email ?? null,
+		emailVerified: profile.emailVerified ?? null,
+		name: profile.name ?? null,
+		picture: profile.picture ?? null
+	};
+}
+
+export async function findOrCreateUser(providerId: string, subjectHash: string, profile: OAuthProfile) {
 	let pa = await authProviderAccountCollection.findOne({ providerId, subjectHash });
 	if (!pa) {
+		const now = new Date();
 		const u = await authUserCollection.insertOne({
-			createdAt: new Date(),
-			lastLoginAt: new Date(),
-			primaryProviderId: providerId
+			createdAt: now,
+			lastLoginAt: now,
+			primaryProviderId: providerId,
+			...userProfileFields(profile)
 		} as any);
 		const userId = u.insertedId;
 		await authProviderAccountCollection.insertOne({
 			userId,
 			providerId,
 			subjectHash,
-			addedAt: new Date(),
-			lastVerifiedAt: new Date()
+			...providerAccountFields(profile),
+			addedAt: now,
+			lastVerifiedAt: now
 		} as any);
-		return { userId, subjectHash, providerId };
+		return { userId, subjectHash, providerId, created: true as const };
 	}
 
 	const userId = (pa as any).userId;
-	await authUserCollection.updateOne({ _id: userId }, { $set: { lastLoginAt: new Date() } });
-	await authProviderAccountCollection.updateOne({ _id: (pa as any)._id }, { $set: { lastVerifiedAt: new Date() } });
-	return { userId, subjectHash, providerId };
+	const now = new Date();
+	await authUserCollection.updateOne({ _id: userId }, { $set: { lastLoginAt: now } });
+	await authProviderAccountCollection.updateOne({ _id: (pa as any)._id }, { $set: { lastVerifiedAt: now } });
+	return { userId, subjectHash, providerId, created: false as const };
 }
 
 /** Create device session, refresh token, and set httpOnly cookie. */

@@ -67,8 +67,8 @@ export const oauthStart: RequestHandler = async (req, res) => {
 		url.searchParams.set('code_challenge_method', 'S256');
 	}
 
-	if (provider.key === 'google') {
-		url.searchParams.set('access_type', 'offline');
+	for (const [key, value] of Object.entries(provider.authParams ?? {})) {
+		url.searchParams.set(key, value);
 	}
 
 	res.redirect(url.toString());
@@ -90,7 +90,6 @@ export const oauthCallback: RequestHandler = async (req, res) => {
 			res.status(400).send('Bad request');
 			return;
 		}
-		console.log('oauth callback', { providerKey, state });
 
 		const session = await authOauthSessionCollection.findOneAndDelete({ state });
 		if (!session || session.provider !== provider.key) {
@@ -102,7 +101,6 @@ export const oauthCallback: RequestHandler = async (req, res) => {
 			res.status(400).send('Invalid session');
 			return;
 		}
-		console.log('oauth session found', session);
 		if (session.expiresAt.getTime() < Date.now()) {
 			res.status(400).send('Session expired');
 			return;
@@ -139,10 +137,10 @@ export const oauthCallback: RequestHandler = async (req, res) => {
 		}
 
 		const tokenJson = (await tokenResp.json()) as Record<string, unknown>;
-		const subject = await provider.resolveSubject({ tokenJson, credentials });
-		const subjectHash = subjectHashOf(provider.providerId, subject);
+		const profile = await provider.resolveProfile({ tokenJson, credentials });
+		const subjectHash = subjectHashOf(provider.providerId, profile.sub);
 
-		const { userId } = await findOrCreateUser(provider.providerId, subjectHash);
+		const { userId } = await findOrCreateUser(provider.providerId, subjectHash, profile);
 		await establishAuthSession(req, res, userId, provider.providerId, subjectHash);
 
 		res.redirect(session.returnTo || getConfig().authFrontendReturnUrl || '/');

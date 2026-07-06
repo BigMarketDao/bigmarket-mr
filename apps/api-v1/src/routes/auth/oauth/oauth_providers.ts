@@ -1,5 +1,9 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { ConfigI } from '../../../types/local_types.js';
+import { GOOGLE_OIDC_SCOPES, profileFromIdTokenClaims, type OAuthProfile } from './oauth_types.js';
+
+export type { OAuthProfile } from './oauth_types.js';
+export { GOOGLE_OIDC_SCOPES } from './oauth_types.js';
 
 export type OAuthProviderKey = 'google' | 'facebook' | 'linkedin' | 'github' | 'twitter';
 
@@ -15,9 +19,14 @@ export type OAuthProviderDef = {
 	tokenUrl: string;
 	scopes: string;
 	usePkce: boolean;
+	/** Extra authorization URL query params (e.g. prompt=select_account consent). */
+	authParams?: Record<string, string>;
 	isConfigured: (cfg: ConfigI) => boolean;
 	getCredentials: (cfg: ConfigI) => OAuthCredentials;
-	resolveSubject: (args: { tokenJson: Record<string, unknown>; credentials: OAuthCredentials }) => Promise<string>;
+	resolveProfile: (args: {
+		tokenJson: Record<string, unknown>;
+		credentials: OAuthCredentials;
+	}) => Promise<OAuthProfile>;
 };
 
 const GOOGLE_JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
@@ -42,19 +51,22 @@ export const OAUTH_PROVIDERS: Record<OAuthProviderKey, OAuthProviderDef> = {
 		providerId: 'google',
 		authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
 		tokenUrl: 'https://oauth2.googleapis.com/token',
-		scopes: 'openid email profile',
+		scopes: GOOGLE_OIDC_SCOPES,
 		usePkce: true,
+		authParams: {
+			prompt: 'select_account consent',
+			access_type: 'offline'
+		},
 		isConfigured: (cfg) => hasCredentials({ clientId: cfg.oauthGoogleClientId, clientSecret: cfg.oauthGoogleClientSecret }),
 		getCredentials: (cfg) => ({ clientId: cfg.oauthGoogleClientId, clientSecret: cfg.oauthGoogleClientSecret }),
-		resolveSubject: async ({ tokenJson, credentials }) => {
+		resolveProfile: async ({ tokenJson, credentials }) => {
 			const idToken = tokenJson.id_token as string | undefined;
 			if (!idToken) throw new Error('No id_token from Google');
 			const { payload } = await jwtVerify(idToken, GOOGLE_JWKS, {
 				audience: credentials.clientId,
 				issuer: ['https://accounts.google.com', 'accounts.google.com']
 			});
-			if (!payload.sub) throw new Error('Google id_token missing sub');
-			return String(payload.sub);
+			return profileFromIdTokenClaims(payload as Record<string, unknown>);
 		}
 	},
 	facebook: {
@@ -64,17 +76,18 @@ export const OAUTH_PROVIDERS: Record<OAuthProviderKey, OAuthProviderDef> = {
 		tokenUrl: 'https://graph.facebook.com/v21.0/oauth/access_token',
 		scopes: 'public_profile',
 		usePkce: true,
+		authParams: { auth_type: 'rerequest' },
 		isConfigured: (cfg) => hasCredentials({ clientId: cfg.oauthFacebookClientId, clientSecret: cfg.oauthFacebookClientSecret }),
 		getCredentials: (cfg) => ({
 			clientId: cfg.oauthFacebookClientId,
 			clientSecret: cfg.oauthFacebookClientSecret
 		}),
-		resolveSubject: async ({ tokenJson }) => {
+		resolveProfile: async ({ tokenJson }) => {
 			const accessToken = tokenJson.access_token as string | undefined;
 			if (!accessToken) throw new Error('No access_token from Facebook');
 			const me = await fetchJson(`https://graph.facebook.com/me?fields=id&access_token=${encodeURIComponent(accessToken)}`);
 			if (!me.id) throw new Error('Facebook /me missing id');
-			return String(me.id);
+			return { sub: String(me.id) };
 		}
 	},
 	linkedin: {
@@ -84,28 +97,27 @@ export const OAUTH_PROVIDERS: Record<OAuthProviderKey, OAuthProviderDef> = {
 		tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
 		scopes: 'openid profile',
 		usePkce: true,
+		authParams: { prompt: 'login consent' },
 		isConfigured: (cfg) => hasCredentials({ clientId: cfg.oauthLinkedinClientId, clientSecret: cfg.oauthLinkedinClientSecret }),
 		getCredentials: (cfg) => ({
 			clientId: cfg.oauthLinkedinClientId,
 			clientSecret: cfg.oauthLinkedinClientSecret
 		}),
-		resolveSubject: async ({ tokenJson, credentials }) => {
+		resolveProfile: async ({ tokenJson, credentials }) => {
 			const idToken = tokenJson.id_token as string | undefined;
 			if (idToken) {
 				const { payload } = await jwtVerify(idToken, LINKEDIN_JWKS, {
 					audience: credentials.clientId,
 					issuer: 'https://www.linkedin.com'
 				});
-				if (!payload.sub) throw new Error('LinkedIn id_token missing sub');
-				return String(payload.sub);
+				return profileFromIdTokenClaims(payload as Record<string, unknown>);
 			}
 			const accessToken = tokenJson.access_token as string | undefined;
 			if (!accessToken) throw new Error('No tokens from LinkedIn');
 			const userinfo = await fetchJson('https://api.linkedin.com/v2/userinfo', {
 				headers: { Authorization: `Bearer ${accessToken}` }
 			});
-			if (!userinfo.sub) throw new Error('LinkedIn userinfo missing sub');
-			return String(userinfo.sub);
+			return profileFromIdTokenClaims(userinfo);
 		}
 	},
 	github: {
@@ -113,25 +125,44 @@ export const OAUTH_PROVIDERS: Record<OAuthProviderKey, OAuthProviderDef> = {
 		providerId: 'github',
 		authUrl: 'https://github.com/login/oauth/authorize',
 		tokenUrl: 'https://github.com/login/oauth/access_token',
-		scopes: 'read:user',
+		scopes: 'read:user user:email',
 		usePkce: true,
 		isConfigured: (cfg) => hasCredentials({ clientId: cfg.oauthGithubClientId, clientSecret: cfg.oauthGithubClientSecret }),
 		getCredentials: (cfg) => ({
 			clientId: cfg.oauthGithubClientId,
 			clientSecret: cfg.oauthGithubClientSecret
 		}),
-		resolveSubject: async ({ tokenJson }) => {
+		resolveProfile: async ({ tokenJson }) => {
 			const accessToken = tokenJson.access_token as string | undefined;
 			if (!accessToken) throw new Error('No access_token from GitHub');
-			const user = await fetchJson('https://api.github.com/user', {
-				headers: {
-					Authorization: `Bearer ${accessToken}`,
-					Accept: 'application/vnd.github+json',
-					'User-Agent': 'bigmarket-auth'
-				}
-			});
+			const headers = {
+				Authorization: `Bearer ${accessToken}`,
+				Accept: 'application/vnd.github+json',
+				'User-Agent': 'bigmarket-auth'
+			};
+			const user = await fetchJson('https://api.github.com/user', { headers });
 			if (!user.id) throw new Error('GitHub /user missing id');
-			return String(user.id);
+			const profile: OAuthProfile = {
+				sub: String(user.id),
+				name: typeof user.name === 'string' ? user.name : typeof user.login === 'string' ? user.login : undefined,
+				picture: typeof user.avatar_url === 'string' ? user.avatar_url : undefined
+			};
+			if (typeof user.email === 'string' && user.email) {
+				profile.email = user.email;
+				profile.emailVerified = true;
+			} else {
+				const emails = (await fetchJson('https://api.github.com/user/emails', { headers })) as unknown as Array<{
+					email?: string;
+					primary?: boolean;
+					verified?: boolean;
+				}>;
+				const primary = emails.find((e) => e.primary) ?? emails[0];
+				if (primary?.email) {
+					profile.email = primary.email;
+					profile.emailVerified = primary.verified ?? false;
+				}
+			}
+			return profile;
 		}
 	},
 	twitter: {
@@ -141,12 +172,13 @@ export const OAUTH_PROVIDERS: Record<OAuthProviderKey, OAuthProviderDef> = {
 		tokenUrl: 'https://api.twitter.com/2/oauth2/token',
 		scopes: 'users.read tweet.read',
 		usePkce: true,
+		authParams: { prompt: 'login' },
 		isConfigured: (cfg) => hasCredentials({ clientId: cfg.oauthTwitterClientId, clientSecret: cfg.oauthTwitterClientSecret }),
 		getCredentials: (cfg) => ({
 			clientId: cfg.oauthTwitterClientId,
 			clientSecret: cfg.oauthTwitterClientSecret
 		}),
-		resolveSubject: async ({ tokenJson }) => {
+		resolveProfile: async ({ tokenJson }) => {
 			const accessToken = tokenJson.access_token as string | undefined;
 			if (!accessToken) throw new Error('No access_token from Twitter');
 			const me = await fetchJson('https://api.twitter.com/2/users/me', {
@@ -154,7 +186,7 @@ export const OAUTH_PROVIDERS: Record<OAuthProviderKey, OAuthProviderDef> = {
 			});
 			const id = (me.data as { id?: string } | undefined)?.id;
 			if (!id) throw new Error('Twitter /users/me missing id');
-			return id;
+			return { sub: id };
 		}
 	}
 };

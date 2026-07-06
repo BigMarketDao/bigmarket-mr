@@ -86,49 +86,21 @@
 		isMetaMaskConnected = false;
 		window.location.reload();
 	};
+
+	const oauthProviderLabel = (user: AuthUser) => {
+		const key = (user.provider ?? user.prv) as OAuthProvider | undefined;
+		return key ? (OAUTH_PROVIDER_LABELS[key] ?? key) : 'Social';
+	};
 </script>
 
-<div data-testid="wallet-connect:panel" class="mx-auto">
+<div data-testid="wallet-connect:panel" class="mx-auto flex flex-col">
 	<div class="mb-4 flex items-center justify-between">
-		<TypoHeader level={2} className="text-neutral-900 dark:text-neutral-100">Connect</TypoHeader>
+		<TypoHeader level={2} className="text-neutral-900 dark:text-neutral-100"
+			>Buy STX &amp; Connect Wallet</TypoHeader
+		>
 	</div>
-	<section class="flex flex-col gap-4">
-		{#if oauthSignedIn}
-			<div
-				data-testid="oauth-connect:status:connected"
-				class="rounded-lg border border-sky-200/60 bg-sky-50/60 p-4 text-sm text-sky-900
-               dark:border-sky-900/40 dark:bg-sky-900/20 dark:text-sky-200"
-			>
-				<p class="font-medium">Signed in</p>
-				{#if oauthUser?.prv}
-					<p class="mt-1 capitalize">{OAUTH_PROVIDER_LABELS[oauthUser.prv as OAuthProvider] ?? oauthUser.prv}</p>
-				{/if}
-				<p class="mt-1 truncate font-mono text-xs opacity-80">{oauthUser?.id ?? 'Account'}</p>
-				<Button variant="secondary" class="mt-3" onclick={disconnectOAuth}>Sign out</Button>
-			</div>
-		{:else if oauthProviders.length > 0}
-			<div class="space-y-2" data-testid="oauth-connect:providers">
-				<TypoHeader level={5} className="text-neutral-800 dark:text-neutral-200"
-					>Sign in</TypoHeader
-				>
-				<ParaContainer>Social sign-in for comments and account features.</ParaContainer>
-				<div class="flex flex-col gap-2">
-					{#each oauthProviders as provider (provider)}
-						<Button
-							variant="secondary"
-							onclick={() => connectOAuth(provider)}
-							disabled={connecting !== null || oauthConnecting !== null}
-							data-testid={`oauth-connect:${provider}`}
-						>
-							{oauthConnecting === provider
-								? 'Redirecting…'
-								: `Continue with ${OAUTH_PROVIDER_LABELS[provider]}`}
-						</Button>
-					{/each}
-				</div>
-			</div>
-		{/if}
 
+	<section class="flex flex-col gap-4">
 		{#if isLoggedIn()}
 			<div
 				data-testid="wallet-connect:status:connected"
@@ -141,9 +113,6 @@
 		{:else}
 			<div class="flex flex-col gap-3" data-testid="wallet-connect:status:disconnected">
 				<div class="space-y-2" data-testid="wallet-connect:devwallets">
-					<TypoHeader level={5} className="text-neutral-800 dark:text-neutral-200"
-						>Connect wallet</TypoHeader
-					>
 					<ParaContainer>Full access including staking in markets.</ParaContainer>
 					{#if errorMsg}
 						<p
@@ -155,7 +124,7 @@
 					{/if}
 					<div class="flex flex-col gap-2">
 						<Button
-							variant="secondary"
+							variant="default"
 							onclick={connectStacks}
 							disabled={connecting !== null || oauthConnecting !== null}
 						>
@@ -178,9 +147,76 @@
 		{/if}
 	</section>
 
-	<div class="my-4 h-px w-full bg-neutral-200 dark:bg-neutral-800"></div>
-
 	{#if !$userWalletStore.walletSigningMode && appConfig.VITE_NETWORK === 'devnet'}
+		<div class="my-4 h-px w-full bg-neutral-200 dark:bg-neutral-800"></div>
 		<ConnectPlaywright />
+	{/if}
+
+	{#if oauthProviders.length > 0 || oauthSignedIn}
+		<footer
+			class="mt-6 border-t border-neutral-200 pt-4 dark:border-neutral-800"
+			data-testid="oauth-connect:footer"
+		>
+			<div class="space-y-2">
+				<div class="flex flex-wrap items-center gap-2">
+					<TypoHeader level={6} className="text-neutral-700 dark:text-neutral-300"
+						>Coming soon</TypoHeader
+					>
+					<span
+						class="rounded-full border border-amber-200/80 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-amber-800 uppercase dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200"
+					>
+						Early access
+					</span>
+				</div>
+
+				{#if oauthSignedIn && oauthUser}
+					<div
+						data-testid="oauth-connect:status:connected"
+						class="rounded-md border border-sky-200/50 bg-sky-50/40 px-3 py-2 text-sm text-sky-950 dark:border-sky-900/30 dark:bg-sky-950/20 dark:text-sky-100"
+					>
+						<p class="font-medium">Thanks — you&apos;re on the list.</p>
+						{#if oauthUser.email}
+							<p class="mt-1 text-xs opacity-90">
+								Verified email
+								{#if oauthUser.emailVerified}
+									<span class="text-emerald-600 dark:text-emerald-400">✓</span>
+								{/if}
+								: {oauthUser.email}
+							</p>
+						{:else}
+							<p class="mt-1 text-xs opacity-90">
+								Signed in with {oauthProviderLabel(oauthUser)}.
+							</p>
+						{/if}
+						<button
+							type="button"
+							class="mt-2 text-xs text-sky-700 underline underline-offset-2 hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-100"
+							onclick={disconnectOAuth}
+						>
+							sign out
+						</button>
+					</div>
+				{:else}
+					<p class="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
+						Register your interest by signing in with a verified email. Social login is not required
+						to trade — wallet connect above is how you participate in markets.
+					</p>
+					<div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
+						{#each oauthProviders as provider (provider)}
+							<Button
+								variant="link"
+								size="sm"
+								class="h-auto px-0 text-xs"
+								onclick={() => connectOAuth(provider)}
+								disabled={connecting !== null || oauthConnecting !== null}
+								data-testid={`oauth-connect:${provider}`}
+							>
+								{oauthConnecting === provider ? 'Redirecting…' : OAUTH_PROVIDER_LABELS[provider]}
+							</Button>
+						{/each}
+					</div>
+				{/if}
+			</div>
+		</footer>
 	{/if}
 </div>

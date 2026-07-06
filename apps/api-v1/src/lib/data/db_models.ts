@@ -22,7 +22,6 @@ export let authProviderAccountCollection: Collection;
 export let authJwtSessionCollection: Collection;
 export let authRefreshTokenCollection: Collection;
 export let authOauthSessionCollection: Collection;
-export let rolesCollection: Collection;
 
 export async function connect() {
 	let uriPrefix: string = 'mongodb+srv';
@@ -89,18 +88,17 @@ export async function connect() {
 	marketInterestCollection = database.collection('marketInterestCollection');
 	await marketInterestCollection.createIndex({ email: 1 }, { unique: true });
 
-	// USERS (no PII; durable)
+	// USERS
 	authUserCollection = database.collection('authUserCollection');
 	await authUserCollection.createIndex({ createdAt: -1 });
 	await authUserCollection.createIndex({ lastLoginAt: -1 });
-	// (optional) if you’ll look users up by display:
-	// await authUserCollection.createIndex({ display: 1 }, { unique: true, sparse: true });
+	await authUserCollection.createIndex({ email: 1 }, { sparse: true });
 
 	// PROVIDER ACCOUNTS (stable identity per provider)
 	authProviderAccountCollection = database.collection('authProviderAccountCollection');
-	await authProviderAccountCollection.createIndex({ providerId: 1, subjectHash: 1 }, { unique: true }); // primary lookup + uniqueness
-	await authProviderAccountCollection.createIndex({ userId: 1 }); // list all providers for a user
-	// (remove the duplicate createIndex you had)
+	await authProviderAccountCollection.createIndex({ providerId: 1, subjectHash: 1 }, { unique: true });
+	await authProviderAccountCollection.createIndex({ userId: 1 });
+	await authProviderAccountCollection.createIndex({ providerId: 1, sub: 1 }, { unique: true, sparse: true });
 
 	// JWT SESSIONS (device/browser sessions, string sid)
 	authJwtSessionCollection = database.collection('authJwtSessionCollection');
@@ -119,6 +117,4 @@ export async function connect() {
 	await authOauthSessionCollection.createIndex({ state: 1 }, { unique: true });
 	await authOauthSessionCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-	rolesCollection = database.collection('rolesCollection');
-	await rolesCollection.createIndex({ email: 1 }, { unique: true });
 }

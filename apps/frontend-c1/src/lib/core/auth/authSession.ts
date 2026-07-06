@@ -53,7 +53,18 @@ export async function logoutOAuth(apiBase: string) {
 	clearAccessToken();
 }
 
-export type AuthUser = { id: string; subh?: string; prv?: string; sid?: string };
+export type AuthUser = {
+	id: string;
+	provider?: string;
+	sub?: string | null;
+	email?: string | null;
+	emailVerified?: boolean | null;
+	name?: string | null;
+	picture?: string | null;
+	prv?: string;
+	subh?: string;
+	sid?: string;
+};
 
 export async function fetchAuthUser(apiBase: string): Promise<AuthUser | null> {
 	const token = getAccessToken();
