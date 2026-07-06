@@ -16,6 +16,7 @@ export function printConfig() {
 	console.log('publicAppVersion = ' + CONFIG.publicAppVersion);
 	console.log('apiBaseUrl = ' + CONFIG.apiBaseUrl);
 	console.log('authFrontendReturnUrl = ' + CONFIG.authFrontendReturnUrl);
+	console.log('jwtSecret configured = ' + (CONFIG.jwtSecret.length > 0));
 	console.log('llmServer = ' + CONFIG.llmServer);
 	console.log('rpcUser = ' + CONFIG.rpcUser);
 	console.log('rpcHost = ' + CONFIG.rpcHost);
@@ -46,21 +47,13 @@ export function setConfigOnStart() {
 	CONFIG.rpcHost = process.env[network + '_RPC_HOST'] || '';
 	CONFIG.rpcPort = process.env[network + '_RPC_PORT'] || '';
 
-	CONFIG.jwtSecret = process.env[network + '_JWT_SECRET'] || '';
-	CONFIG.apiBaseUrl =
-		process.env[network + '_sui_apiBaseUrl'] ||
-		(network === 'devnet'
-			? `http://localhost:${CONFIG.port}`
-			: network === 'mainnet'
-				? 'https://api.bigmarket.ai'
-				: `https://api.${CONFIG.network}.bigmarket.ai`);
+	CONFIG.jwtSecret = process.env[network + 'oauth_jwt_secret'] || process.env.JWT_SECRET || '';
+	if (!CONFIG.jwtSecret) {
+		console.warn(`[auth] missing JWT secret — set ${network}oauth_jwt_secret (or JWT_SECRET)`);
+	}
+	CONFIG.apiBaseUrl = process.env[network + '_sui_apiBaseUrl'] || (network === 'devnet' ? `http://localhost:${CONFIG.port}` : network === 'mainnet' ? 'https://api.bigmarket.ai' : `https://api.${CONFIG.network}.bigmarket.ai`);
 	CONFIG.authFrontendReturnUrl =
-		process.env[network + '_oauth_frontend_return_url'] ||
-		(network === 'devnet'
-			? 'http://localhost:8081/auth/callback'
-			: network === 'mainnet'
-				? 'https://bigmarket.ai/auth/callback'
-				: `https://${CONFIG.network}.bigmarket.ai/auth/callback`);
+		process.env[network + '_oauth_frontend_return_url'] || (network === 'devnet' ? 'http://localhost:8081/auth/callback' : network === 'mainnet' ? 'https://bigmarket.ai/auth/callback' : `https://${CONFIG.network}.bigmarket.ai/auth/callback`);
 
 	CONFIG.oauthGoogleClientId = process.env[network + '_oauth_google_client_id'] || '';
 	CONFIG.oauthGoogleClientSecret = process.env[network + '_oauth_google_client_secret'] || '';

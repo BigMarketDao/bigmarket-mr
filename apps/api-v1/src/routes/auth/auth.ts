@@ -19,8 +19,19 @@ const JWT_AUD = 'bigmarket-ui';
 
 const sha256hex = (s: string) => createHash('sha256').update(s).digest('hex');
 
+export class AuthConfigError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = 'AuthConfigError';
+	}
+}
+
 function jwtSecret() {
-	return new TextEncoder().encode(getConfig().jwtSecret);
+	const secret = getConfig().jwtSecret;
+	if (!secret) {
+		throw new AuthConfigError('JWT secret not configured');
+	}
+	return new TextEncoder().encode(secret);
 }
 
 export function subjectHashOf(providerId: string, subject: string) {
@@ -173,15 +184,23 @@ export const refreshAccess: RequestHandler = async (req, res) => {
 	const subh = pa?.subjectHash ?? '0x';
 	const prv = pa?.providerId ?? 'unknown';
 
-	const access = await signAccessJWT({
-		uid: String(session.userId),
-		subh,
-		prv,
-		sid: (rec as any).sessionSid,
-		v: 'oauth:v1'
-	});
-
-	res.json({ accessToken: access });
+	try {
+		const access = await signAccessJWT({
+			uid: String(session.userId),
+			subh,
+			prv,
+			sid: (rec as any).sessionSid,
+			v: 'oauth:v1'
+		});
+		res.json({ accessToken: access });
+	} catch (e) {
+		if (e instanceof AuthConfigError) {
+			console.error('[auth] refresh failed:', e.message);
+			res.status(503).json({ error: 'auth not configured' });
+			return;
+		}
+		throw e;
+	}
 };
 
 export const logout: RequestHandler = async (req, res) => {
