@@ -47,8 +47,20 @@ export function setConfigOnStart() {
 	CONFIG.rpcPort = process.env[network + '_RPC_PORT'] || '';
 
 	CONFIG.jwtSecret = process.env[network + '_JWT_SECRET'] || '';
-	CONFIG.apiBaseUrl = process.env[network + '_sui_apiBaseUrl'] || (network === 'devnet' ? `http://localhost:${CONFIG.port}` : `https://api.${CONFIG.network}.bigmarket.ai`);
-	CONFIG.authFrontendReturnUrl = process.env[network + '_auth_frontend_return_url'] || `${CONFIG.publicAppBaseUrl}/auth/callback`;
+	CONFIG.apiBaseUrl =
+		process.env[network + '_sui_apiBaseUrl'] ||
+		(network === 'devnet'
+			? `http://localhost:${CONFIG.port}`
+			: network === 'mainnet'
+				? 'https://api.bigmarket.ai'
+				: `https://api.${CONFIG.network}.bigmarket.ai`);
+	CONFIG.authFrontendReturnUrl =
+		process.env[network + '_oauth_frontend_return_url'] ||
+		(network === 'devnet'
+			? 'http://localhost:8081/auth/callback'
+			: network === 'mainnet'
+				? 'https://bigmarket.ai/auth/callback'
+				: `https://${CONFIG.network}.bigmarket.ai/auth/callback`);
 
 	CONFIG.oauthGoogleClientId = process.env[network + '_oauth_google_client_id'] || '';
 	CONFIG.oauthGoogleClientSecret = process.env[network + '_oauth_google_client_secret'] || '';

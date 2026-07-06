@@ -90,13 +90,19 @@ export const oauthCallback: RequestHandler = async (req, res) => {
 			res.status(400).send('Bad request');
 			return;
 		}
+		console.log('oauth callback', { providerKey, state });
 
-		const sess = await authOauthSessionCollection.findOneAndDelete({ state });
-		const session = sess?.value;
+		const session = await authOauthSessionCollection.findOneAndDelete({ state });
 		if (!session || session.provider !== provider.key) {
+			console.error(`${provider.key} oauth callback: invalid session`, {
+				state,
+				found: !!session,
+				provider: session?.provider
+			});
 			res.status(400).send('Invalid session');
 			return;
 		}
+		console.log('oauth session found', session);
 		if (session.expiresAt.getTime() < Date.now()) {
 			res.status(400).send('Session expired');
 			return;
