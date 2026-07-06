@@ -47,9 +47,9 @@ export function setConfigOnStart() {
 	CONFIG.rpcHost = process.env[network + '_RPC_HOST'] || '';
 	CONFIG.rpcPort = process.env[network + '_RPC_PORT'] || '';
 
-	CONFIG.jwtSecret = process.env[network + 'oauth_jwt_secret'] || process.env.JWT_SECRET || '';
+	CONFIG.jwtSecret = process.env[network + '_oauth_jwt_secret'] || process.env[network + '_JWT_SECRET'] || process.env.JWT_SECRET || '';
 	if (!CONFIG.jwtSecret) {
-		console.warn(`[auth] missing JWT secret — set ${network}oauth_jwt_secret (or JWT_SECRET)`);
+		console.warn(`[auth] missing JWT secret — set ${network}_oauth_jwt_secret`);
 	}
 	CONFIG.apiBaseUrl = process.env[network + '_sui_apiBaseUrl'] || (network === 'devnet' ? `http://localhost:${CONFIG.port}` : network === 'mainnet' ? 'https://api.bigmarket.ai' : `https://api.${CONFIG.network}.bigmarket.ai`);
 	CONFIG.authFrontendReturnUrl =
