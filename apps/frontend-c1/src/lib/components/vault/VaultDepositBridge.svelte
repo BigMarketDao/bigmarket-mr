@@ -4,6 +4,7 @@
 	import { stacks } from '@bigmarket/sdk';
 	import { appConfigStore, requireAppConfig, walletState, initWallet } from '@bigmarket/bm-common';
 	import { registerDepositIntent } from '@bigmarket/bm-utilities';
+	import { ArrowDown } from 'lucide-svelte';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 
@@ -28,11 +29,7 @@
 	const mappedStx = $derived($walletState.activeAccount?.mappedAddress?.trim() ?? '');
 	const mappedStxExplorerUrl = $derived(
 		mappedStx.length > 0
-			? stacks.explorerAddressUrl(
-					appConfig.VITE_NETWORK,
-					appConfig.VITE_STACKS_EXPLORER,
-					mappedStx
-				)
+			? stacks.explorerAddressUrl(appConfig.VITE_NETWORK, appConfig.VITE_STACKS_EXPLORER, mappedStx)
 			: null
 	);
 	const ethAddress = $derived($walletState.accounts.find((a) => a.type === 'eth')?.address ?? '');
@@ -204,15 +201,15 @@
 				</p>
 				{#if bridgeAmount}
 					<p class="text-xs text-emerald-800 dark:text-emerald-200">
-						Amount: <strong>{bridgeAmount} {tokenSymbol}</strong> → {tokenSymbolDestination} on your
-						mapped relay address.
+						Amount: <strong>{bridgeAmount} {tokenSymbol}</strong> → {tokenSymbolDestination} on your mapped
+						relay address.
 					</p>
 				{/if}
 				{#if explorerTxUrl}
 					<p class="text-xs text-neutral-700 dark:text-neutral-300">
 						<span class="text-neutral-500 dark:text-neutral-400">Ethereum bridge tx</span>
 						<a
-							class="mt-0.5 block break-all font-mono underline"
+							class="mt-0.5 block font-mono break-all underline"
 							href={explorerTxUrl}
 							target="_blank"
 							rel="noreferrer"
@@ -225,8 +222,9 @@
 					class="list-inside list-disc space-y-1 text-xs leading-relaxed text-emerald-800/90 dark:text-emerald-200/90"
 				>
 					<li>
-						When {tokenSymbolDestination} arrives, use <strong>Sweep mapped address → vault</strong>
-						below (or wait for the relayer if enabled).
+						When {tokenSymbolDestination} arrives, the relayer will sweep it to your vault. - you can
+						also manually <strong>sweep mapped address → vault</strong>
+						using the form below <ArrowDown class="h-4 w-4" />.
 					</li>
 					<li>Funds are not in your vault balance until the sweep completes.</li>
 				</ul>
@@ -258,7 +256,7 @@
 					<p class="text-[11px] text-neutral-600 dark:text-neutral-400">
 						Latest approval tx:
 						<a
-							class="block break-all font-mono underline"
+							class="block font-mono break-all underline"
 							href={explorerApproveTxUrl}
 							target="_blank"
 							rel="noreferrer"
@@ -284,7 +282,7 @@
 				</p>
 				{#if explorerApproveTxUrl}
 					<a
-						class="block break-all font-mono text-xs underline"
+						class="block font-mono text-xs break-all underline"
 						href={explorerApproveTxUrl}
 						target="_blank"
 						rel="noreferrer"
@@ -295,8 +293,17 @@
 			</div>
 		{/if}
 
-		<Button type="button" onclick={submit} disabled={!canSubmit || bridgeSubmitted} class="w-full cursor-pointer">
-			{busy ? 'Confirm in MetaMask…' : bridgeSubmitted ? 'Bridge submitted' : `Bridge ${tokenSymbol} → Stacks`}
+		<Button
+			type="button"
+			onclick={submit}
+			disabled={!canSubmit || bridgeSubmitted}
+			class="w-full cursor-pointer"
+		>
+			{busy
+				? 'Confirm in MetaMask…'
+				: bridgeSubmitted
+					? 'Bridge submitted'
+					: `Bridge ${tokenSymbol} → Stacks`}
 		</Button>
 
 		{#if errorMsg && !bridgeStepFailed}

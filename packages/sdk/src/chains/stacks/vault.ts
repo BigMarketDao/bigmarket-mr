@@ -587,14 +587,32 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
      */
     async depositForFromMappedAddress(
       params: RelayerDepositForParams,
-      senderKey: string,
       sponsorKey: string,
       network: string,
       defaultFee = 250_000,
     ) {
       if (params.amount <= 0n) throw new Error("amount must be > 0");
 
-      console.log("depositForFromMappedAddress: params = ", params);
+      const senderKey = params.privateKey;
+
+      const derivedAddress = getAddressFromPrivateKey(senderKey, stacksNetwork);
+      console.log("[deposit-for-relayer] diagnostics:", {
+        senderAddress: params.senderAddress,
+        derivedAddress,
+        addressMatch:
+          derivedAddress.toLowerCase() === params.senderAddress.toLowerCase(),
+        amount: params.amount.toString(),
+        sourceChain: params.sourceChain,
+        sourceAddress: params.sourceAddress,
+        intentId: params.intentId,
+        network,
+      });
+
+      if (derivedAddress.toLowerCase() !== params.senderAddress.toLowerCase()) {
+        throw new Error(
+          `[deposit-for-relayer] privateKey derives ${derivedAddress} but senderAddress is ${params.senderAddress} — key/address mismatch, aborting to prevent fund loss`,
+        );
+      }
 
       const chain = normalizeVaultSourceChain(params.sourceChain);
       const controllerChain = bufferCV(vaultChainIdBuffer(chain));
@@ -623,7 +641,7 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
       ];
 
       const devnet = network === "devnet";
-      console.log("sponsoring transaction on: " + devnet);
+      console.log("[deposit-for-relayer] sponsoring:", !devnet);
       let tx = await makeContractCall({
         contractAddress: deployer,
         contractName: vaultName,
@@ -633,10 +651,9 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
         network: network as any,
         postConditionMode: PostConditionMode.Allow,
         postConditions: [],
-        sponsored: !devnet, // important
+        sponsored: !devnet,
       });
       if (!devnet) {
-        console.log("sponsoring transaction", functionArgs);
         tx = await sponsorTransaction({
           transaction: tx,
           sponsorPrivateKey: sponsorKey,
@@ -644,22 +661,7 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
         });
       }
 
-      //readDaoEventsInternal(`${daoConfig.VITE_DAO_DEPLOYER}.${daoConfig.VITE_DAO}`);
       const txid = await broadcast(tx, "deposit-for-relayer", network);
-
-      // const txid = broadcastInt(
-      //   params,
-      //   "deposit-for",
-      //   [
-      //     contractPrincipalCV(usdcxAddr, usdcxName) as any,
-      //     uintCV(params.amount) as any,
-      //     controllerChain as any,
-      //     controllerAddress as any,
-      //     mappedAddressCV as any,
-      //     intentIdCV as any,
-      //   ],
-      //   defaultFee,
-      // );
       return { txid };
     },
   };

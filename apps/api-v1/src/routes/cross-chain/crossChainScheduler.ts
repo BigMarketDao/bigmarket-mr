@@ -26,9 +26,7 @@ export const runSweepSubmittedIntentsJob = cron.schedule(
 					network
 				})
 				.toArray();
-			console.log(
-				`[cross-chain sweep] found ${intents.length} pending intent(s) on ${network} ${new Date().toISOString()}`
-			);
+			console.log(`[cross-chain sweep] found ${intents.length} pending intent(s) on ${network} ${new Date().toISOString()}`);
 
 			if (intents.length === 0) return;
 

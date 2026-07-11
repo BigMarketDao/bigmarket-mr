@@ -186,6 +186,7 @@ Do not publish raw email addresses.
 - [x] Emails are stored
 - [x] Marketing consent is separate
 - [x] Mainnet contracts are deployed
+- [x] Markets created - 2 markets one BTC/USD one STX/USD
 - [x] MetaMask deposit works
   - [Approval: 0xed2060c51a4c9c8b99b31efa70097fb1bd251e2c62d02634b43a4e8a20aed4ac](https://etherscan.io/tx/0xed2060c51a4c9c8b99b31efa70097fb1bd251e2c62d02634b43a4e8a20aed4ac)
   - [Transfer: 0x47fd676cb90b79725455d783ec5a4bb7b03ec947e763d0e3d6ab24fbc4681584](https://etherscan.io/tx/0x47fd676cb90b79725455d783ec5a4bb7b03ec947e763d0e3d6ab24fbc4681584)

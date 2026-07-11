@@ -194,7 +194,6 @@ export async function sweepIntentToVault(intentId: string) {
 				sourceAddress: intent.sourceAddress,
 				intentId: intent.intentId
 			},
-			privateKey,
 			getConfig().walletKey,
 			getConfig().network
 		);
@@ -270,7 +269,7 @@ export async function depositMappedBalanceToVault(sourceChain: string, sourceAdd
 		sourceAddress: sourceAddress,
 		intentId: crypto.randomUUID()
 	};
-	const { txid } = await relayer.depositForFromMappedAddress(params, privateKey, getConfig().walletKey, getConfig().network);
+	const { txid } = await relayer.depositForFromMappedAddress(params, getConfig().walletKey, getConfig().network);
 
 	return {
 		mappedAddress,
