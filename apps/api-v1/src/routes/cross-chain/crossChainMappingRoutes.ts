@@ -1,6 +1,6 @@
 import express from 'express';
 import { getOrCreateMappedAddress } from './crossChainMappingHelpers.js';
-import { depositMappedBalanceToVault, getBridgeIntent, markIntentSubmitted, registerBridgeIntent, sweepIntentToVault } from './intentRegistryHelper.js';
+import { confirmSweepTx, depositMappedBalanceToVault, getBridgeIntent, markIntentSubmitted, registerBridgeIntent, sweepIntentToVault } from './intentRegistryHelper.js';
 
 const router = express.Router();
 
@@ -60,6 +60,16 @@ router.post('/intents/:intentId/sweep', async (req, res) => {
 	} catch (err: any) {
 		console.error('POST /intents/:intentId/sweep failed', err);
 		res.status(500).json({ error: err.message ?? 'Failed to sweep intent' });
+	}
+});
+
+router.post('/intents/:intentId/confirm', async (req, res) => {
+	try {
+		const result = await confirmSweepTx(req.params.intentId);
+		res.json(result);
+	} catch (err: any) {
+		console.error('POST /intents/:intentId/confirm failed', err);
+		res.status(500).json({ error: err.message ?? 'Failed to confirm sweep tx' });
 	}
 });
 

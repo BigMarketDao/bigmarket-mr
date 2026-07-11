@@ -1,15 +1,14 @@
 import cron from 'node-cron';
 import { crossChainIntentCollection } from '../../lib/data/db_models.js';
-import { sweepIntentToVault, type CrossChainIntent } from './intentRegistryHelper.js';
+import { confirmSweepTx, sweepIntentToVault, type CrossChainIntent } from './intentRegistryHelper.js';
 import { getConfig } from '../../lib/config.js';
 
 let running = false;
 
 /**
- * Picks up bridge intents whose mapped address has received USDCx and sweeps
- * them into the vault, crediting the original source address.
- *
- * Runs every 10 seconds on all networks.
+ * Every 10 seconds:
+ * 1. Confirm any already-broadcast (pending-confirm) sweep txs — resets to 'submitted' on failure.
+ * 2. Attempt to sweep 'submitted'/'created' intents whose mapped address now has a USDCx balance.
  */
 export const runSweepSubmittedIntentsJob = cron.schedule(
 	'*/10 * * * * *',
@@ -20,23 +19,37 @@ export const runSweepSubmittedIntentsJob = cron.schedule(
 		try {
 			const network = getConfig().network as string;
 
-			const intents = await crossChainIntentCollection
-				.find<CrossChainIntent>({
-					status: { $in: ['submitted', 'created'] },
-					network
-				})
-				.toArray();
-			console.log(`[cross-chain sweep] found ${intents.length} pending intent(s) on ${network} ${new Date().toISOString()}`);
+			const [pendingIntents, confirmIntents] = await Promise.all([
+				crossChainIntentCollection
+					.find<CrossChainIntent>({ status: { $in: ['submitted', 'created'] }, network })
+					.toArray(),
+				crossChainIntentCollection
+					.find<CrossChainIntent>({ status: 'pending-confirm', network })
+					.toArray()
+			]);
 
-			if (intents.length === 0) return;
+			if (pendingIntents.length + confirmIntents.length === 0) return;
 
-			for (const intent of intents) {
+			console.log(`[cross-chain sweep] ${pendingIntents.length} pending, ${confirmIntents.length} confirming on ${network}`);
+
+			// Confirm already-broadcast txs first — frees up any that failed on-chain.
+			for (const intent of confirmIntents) {
+				try {
+					const result = await confirmSweepTx(intent.intentId);
+					console.log(`[cross-chain confirm] ${intent.intentId} → ${result.status}`);
+				} catch (err: any) {
+					console.warn(`[cross-chain confirm] failed for ${intent.intentId}: ${err.message ?? err}`);
+				}
+			}
+
+			// Sweep new intents whose balance has arrived.
+			for (const intent of pendingIntents) {
 				try {
 					const result = await sweepIntentToVault(intent.intentId);
 					if ('skipped' in result && result.skipped) {
-						console.log(`[cross-chain sweep] waiting on balance for ${intent.intentId}`);
+						console.log(`[cross-chain sweep] waiting on balance for ${intent.intentId}: ${result.reason}`);
 					} else {
-						console.log(`[cross-chain sweep] swept ${intent.intentId} → txid ${result.sweepTxId}`);
+						console.log(`[cross-chain sweep] broadcast ${intent.intentId} → txid ${result.sweepTxId}`);
 					}
 				} catch (err: any) {
 					console.warn(`[cross-chain sweep] failed for ${intent.intentId}: ${err.message ?? err}`);

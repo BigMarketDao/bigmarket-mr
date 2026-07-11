@@ -595,7 +595,13 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
 
       const senderKey = params.privateKey;
 
-      const derivedAddress = getAddressFromPrivateKey(senderKey, stacksNetwork);
+      // Derive the Stacks address from the mapped private key using the SAME
+      // network string that makeContractCall will use, so the check is consistent
+      // with what actually ends up as tx-sender on-chain.
+      const derivedAddress = getAddressFromPrivateKey(
+        senderKey,
+        network as any,
+      );
       console.log("[deposit-for-relayer] diagnostics:", {
         senderAddress: params.senderAddress,
         derivedAddress,
@@ -610,7 +616,7 @@ export function createVaultRelayerClient(daoConfig: DaoConfig) {
 
       if (derivedAddress.toLowerCase() !== params.senderAddress.toLowerCase()) {
         throw new Error(
-          `[deposit-for-relayer] privateKey derives ${derivedAddress} but senderAddress is ${params.senderAddress} — key/address mismatch, aborting to prevent fund loss`,
+          `[deposit-for-relayer] privateKey derives ${derivedAddress} but senderAddress is ${params.senderAddress} — key/address mismatch (walletKey may have rotated), aborting to prevent fund loss`,
         );
       }
 
