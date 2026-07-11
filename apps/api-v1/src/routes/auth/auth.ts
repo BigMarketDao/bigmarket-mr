@@ -98,6 +98,17 @@ function userProfileFields(profile: OAuthProfile) {
 	};
 }
 
+/** Merge profile into $set updates without overwriting stored values with null/undefined. */
+function profileSyncFields(profile: OAuthProfile, includeSub = false) {
+	const fields: Record<string, unknown> = {};
+	if (includeSub) fields.sub = profile.sub;
+	if (profile.email != null) fields.email = profile.email;
+	if (profile.emailVerified != null) fields.emailVerified = profile.emailVerified;
+	if (profile.name != null) fields.name = profile.name;
+	if (profile.picture != null) fields.picture = profile.picture;
+	return fields;
+}
+
 export async function findOrCreateUser(providerId: string, subjectHash: string, profile: OAuthProfile) {
 	let pa = await authProviderAccountCollection.findOne({ providerId, subjectHash });
 	if (!pa) {
@@ -122,8 +133,17 @@ export async function findOrCreateUser(providerId: string, subjectHash: string, 
 
 	const userId = (pa as any).userId;
 	const now = new Date();
-	await authUserCollection.updateOne({ _id: userId }, { $set: { lastLoginAt: now } });
-	await authProviderAccountCollection.updateOne({ _id: (pa as any)._id }, { $set: { lastVerifiedAt: now } });
+	const profileUpdates = profileSyncFields(profile);
+	const providerUpdates = profileSyncFields(profile, true);
+
+	await authUserCollection.updateOne(
+		{ _id: userId },
+		{ $set: { lastLoginAt: now, ...profileUpdates } }
+	);
+	await authProviderAccountCollection.updateOne(
+		{ _id: (pa as any)._id },
+		{ $set: { lastVerifiedAt: now, ...providerUpdates } }
+	);
 	return { userId, subjectHash, providerId, created: false as const };
 }
 
