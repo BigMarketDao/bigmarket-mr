@@ -325,7 +325,7 @@
 									<div class="space-y-0.5">
 										<p class="text-[10px] text-muted-foreground">Mapped wallet</p>
 										<p
-											class="truncate font-mono text-xs text-muted-foreground"
+											class=" font-mono text-xs text-muted-foreground"
 											title={$walletState.activeAccount.mappedAddress}
 										>
 											{$walletState.activeAccount.mappedAddress}

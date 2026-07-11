@@ -188,10 +188,11 @@ Do not publish raw email addresses.
 - [x] Mainnet contracts are deployed
 - [x] Markets created - 2 markets one BTC/USD one STX/USD
 - [x] MetaMask deposit works
-  - [Approval: 0xed2060c51a4c9c8b99b31efa70097fb1bd251e2c62d02634b43a4e8a20aed4ac](https://etherscan.io/tx/0xed2060c51a4c9c8b99b31efa70097fb1bd251e2c62d02634b43a4e8a20aed4ac)
-  - [Transfer: 0x47fd676cb90b79725455d783ec5a4bb7b03ec947e763d0e3d6ab24fbc4681584](https://etherscan.io/tx/0x47fd676cb90b79725455d783ec5a4bb7b03ec947e763d0e3d6ab24fbc4681584)
-- [x] Signed buy works
-- [ ] Signed sell works
+  - [Approval](https://etherscan.io/tx/0xed2060c51a4c9c8b99b31efa70097fb1bd251e2c62d02634b43a4e8a20aed4ac)
+  - [Transfer](https://etherscan.io/tx/0x33377ccf737c352fa04eeb6a0edb685412e8391287b2fd783187237c6925160d)
+- [x] [Deposit to Vault](https://explorer.hiro.so/txid/0xc2f63d52b8f83b059b4e9f9852db471e5f1fcbeed73d1bde2e7199e8e1a24d2b?chain=mainnet)
+- [x] Signed buy works [buy-shares](https://explorer.hiro.so/txid/8184489120a5779d98c6a51b72a33668797567d05f731c08271a4ec304dfee7c?chain=mainnet)
+- [x] Signed sell works [sell-shares](https://explorer.hiro.so/txid/04d64156d9535f5cc11952ce00c3217f38106a2a725602496c09ce3e73926735?chain=mainnet)
 - [ ] Signed claim works
 - [ ] Replay protection works
 - [ ] One external user completes a live action
