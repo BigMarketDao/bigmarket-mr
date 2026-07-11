@@ -45,9 +45,11 @@ rsync -aP -e "ssh -p $PORT" \
   bob@$SERVER:$REMOTE_PATH
 
 echo "Restarting app on server using PM2 ($PM2_NAME)..."
+echo "Tip: set BM_NETWORK=$DEPLOYMENT in your PM2 ecosystem env for SSR cache warming."
 ssh -p $PORT bob@$SERVER <<EOF
   source ~/.nvm/nvm.sh
   nvm use default
+  export BM_NETWORK=$DEPLOYMENT
   cd $REMOTE_PATH
   pnpm install --prod
   if pm2 jlist | grep -q '"name":"$PM2_NAME"'; then

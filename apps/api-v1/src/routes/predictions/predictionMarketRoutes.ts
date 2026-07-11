@@ -14,7 +14,8 @@ import {
 	fetchMarketVotes,
 	findOpinionPollByTitle,
 	readMinTokenLiquidity2,
-	updateDaoOverview
+	updateDaoOverview,
+	triggerDaoOverviewRefresh
 } from './markets_helper.js';
 import type { PredictionMarketEventChain } from '@bigmarket/bm-types';
 
@@ -24,17 +25,17 @@ import { fetchCreateMarketMerkleInput } from '../gating/gating_helper.js';
 import { getLeaderBoard } from './leader_board_helper.js';
 
 const router = express.Router();
-let lastFetchTime = 0; // To track the last fetch timestamp
-const CACHE_DURATION = 2 * 60 * 1000; // Cache duration in milliseconds (5 minutes)
-//const CACHE_DURATION = 30 * 1000; // Cache duration in milliseconds (5 minutes)
+let lastFetchTime = 0;
+const STALE_AFTER_MS = 2 * 60 * 1000;
 
 router.get('/market-dao-data', async (req, res) => {
-	const now = Date.now();
-	if (!cachedData) {
-		await updateDaoOverview();
+	const stale = !cachedData || Date.now() - lastFetchTime > STALE_AFTER_MS;
+	if (stale) {
+		void triggerDaoOverviewRefresh().then(() => {
+			lastFetchTime = Date.now();
+		});
 	}
-	lastFetchTime = now;
-	res.json(cachedData);
+	res.json(cachedData ?? {});
 });
 
 router.get('/market-dao-data/update/:address', async (req, res) => {

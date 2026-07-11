@@ -4,7 +4,6 @@ import { readDaoExtensionEvents } from './dao_events_extension_helper.js';
 import { getGovernanceData, isExecutiveTeamMember, isExtension } from './extension.js';
 import { getDaoConfig } from '../../../lib/config_dao.js';
 import { coordinators } from '../../../lib/config.js';
-import { updateUICache } from '../../cache/cache_utils.js';
 import { updateDaoOverview } from '../../predictions/markets_helper.js';
 
 const router = express.Router();

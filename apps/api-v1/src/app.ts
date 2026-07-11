@@ -5,6 +5,7 @@ import cors from 'cors';
 import { CONFIG, getConfig, printConfig, setConfigOnStart } from './lib/config.js';
 import { pollingRoutes } from './routes/polling/pollingRoutes.js';
 import { connect } from './lib/data/db_models.js';
+import { triggerDaoOverviewRefresh } from './routes/predictions/markets_helper.js';
 import { daoEventRoutes } from './routes/dao/events/daoEventsRoutes.js';
 import { predictionMarketRoutes } from './routes/predictions/predictionMarketRoutes.js';
 import { myMarketRoutes } from './routes/predictions/my_markets/myMarketRoutes.js';
@@ -109,6 +110,7 @@ async function connectToMongoCloud() {
 	printDaoConfig();
 	await connect();
 	console.log('Connected to MongoDB!');
+	void triggerDaoOverviewRefresh().catch((err) => console.error('[startup] dao overview warm failed', err));
 	if (CONFIG.network === 'testnet') {
 		initScanDaoEventsTestnetJob.start();
 	} else if (CONFIG.network === 'devnet') {

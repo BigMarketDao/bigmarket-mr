@@ -1,46 +1,65 @@
+import { getAppConfig, getDaoConfig } from '@bigmarket/bm-config';
+import type { Network } from '@bigmarket/bm-types';
 import { getCached, setCached } from './cache';
-import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
-import { get } from 'svelte/store';
-import { getLeaderBoard } from '../loaders/reputationLoaders';
 import { fetchStacksInfo } from '../loaders/blockchainLoaders';
 import { fetchExchangeRates } from '../loaders/exchangeRateLoaders';
-import { fetchMarkets, getAllowedTokens } from '../loaders/marketLoaders';
+import { fetchMarketsServer, getAllowedTokens, getMarketCategories } from '../loaders/marketLoaders';
 import { getDaoOverview } from '../loaders/daoLoaders';
 
-// startCacheWarming();
+const WARM_INTERVAL_MS = 25_000;
+const CACHE_TTL_MS = 60_000;
 
-// const PORT = process.env.PORT || 3000;
+function resolveNetwork(): Network {
+	const raw = process.env.BM_NETWORK || process.env.VITE_NETWORK || 'mainnet';
+	if (raw === 'devnet' || raw === 'testnet' || raw === 'mainnet') return raw;
+	return 'mainnet';
+}
 
-// ✅ Inline cache warmer
+let started = false;
+
 export function startCacheWarming() {
-	const layoutKey = 'layout-data-testnet';
-	const homeKey = 'home-page';
-	const appConfig = requireAppConfig(get(appConfigStore));
+	if (started) return;
+	started = true;
 
-	setInterval(async () => {
-		try {
-			if (!getCached(layoutKey)) {
-				console.log('[warm] layout...');
+	const network = resolveNetwork();
+	console.log(`[warm] starting cache warmer for network=${network}`);
 
-				const [exchangeRates, stacksInfo, daoOverview, tokens] = await Promise.all([
-					fetchExchangeRates(appConfig.VITE_BIGMARKET_API),
-					fetchStacksInfo(appConfig.VITE_STACKS_API),
-					getDaoOverview(appConfig.VITE_BIGMARKET_API),
-					getAllowedTokens(appConfig.VITE_BIGMARKET_API)
-				]);
-				setCached(layoutKey, { exchangeRates, stacksInfo, daoOverview, tokens }, 1000 * 30);
-			}
+	void warmCaches(network);
+	setInterval(() => void warmCaches(network), WARM_INTERVAL_MS);
+}
 
-			if (!getCached(homeKey)) {
-				console.log('[warm] home...');
-				const [markets, leaderBoard] = await Promise.all([
-					fetchMarkets(appConfig.VITE_BIGMARKET_API),
-					getLeaderBoard(appConfig.VITE_BIGMARKET_API)
-				]);
-				setCached(homeKey, { markets, leaderBoard }, 1000 * 30);
-			}
-		} catch (err) {
-			console.error('[warm] error:', err);
+async function warmCaches(network: Network) {
+	const layoutKey = `layout-data-${network}`;
+	const homeKey = `home-page-${network}`;
+
+	try {
+		if (!getCached(layoutKey)) {
+			const appConfig = getAppConfig(network);
+			const daoConfig = getDaoConfig(network);
+			console.log(`[warm] layout ${layoutKey}...`);
+
+			const [exchangeRates, stacksInfo, daoOverview, tokens, marketCategories] = await Promise.all([
+				fetchExchangeRates(appConfig.VITE_BIGMARKET_API),
+				fetchStacksInfo(appConfig.VITE_STACKS_API),
+				getDaoOverview(appConfig.VITE_BIGMARKET_API),
+				getAllowedTokens(appConfig.VITE_BIGMARKET_API),
+				getMarketCategories(appConfig.VITE_BIGMARKET_API)
+			]);
+
+			setCached(
+				layoutKey,
+				{ exchangeRates, stacksInfo, daoOverview, tokens, marketCategories, network, appConfig, daoConfig },
+				CACHE_TTL_MS
+			);
 		}
-	}, 1000 * 25);
+
+		if (!getCached(homeKey)) {
+			const appConfig = getAppConfig(network);
+			console.log(`[warm] home ${homeKey}...`);
+			const markets = await fetchMarketsServer(appConfig.VITE_BIGMARKET_API);
+			setCached(homeKey, { network, markets }, CACHE_TTL_MS);
+		}
+	} catch (err) {
+		console.error('[warm] error:', err);
+	}
 }

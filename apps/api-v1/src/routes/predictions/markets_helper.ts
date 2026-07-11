@@ -29,7 +29,17 @@ import { principalCV, serializeCV } from '@stacks/transactions';
 import { readReputationContractData, readReputationContractUserData, readReputationEpochContractData } from './reputation_data.js';
 import { stacks } from '@bigmarket/sdk';
 
-export let cachedData: DaoOverview | null = null; // simpple cache refreshed via cron
+export let cachedData: DaoOverview | null = null; // simple cache refreshed via cron
+let daoOverviewRefreshInFlight: Promise<void> | null = null;
+
+/** Refresh in background; dedupes concurrent callers. */
+export function triggerDaoOverviewRefresh(address?: string): Promise<void> {
+	if (daoOverviewRefreshInFlight) return daoOverviewRefreshInFlight;
+	daoOverviewRefreshInFlight = updateDaoOverview(address).finally(() => {
+		daoOverviewRefreshInFlight = null;
+	});
+	return daoOverviewRefreshInFlight;
+}
 
 export async function updateDaoOverview(address?: string) {
 	try {
