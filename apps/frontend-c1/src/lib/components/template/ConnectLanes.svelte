@@ -8,11 +8,10 @@
 	import { requireAppConfig } from '@bigmarket/bm-common';
 	import { appConfigStore } from '@bigmarket/bm-common';
 	import {
-		fetchAuthUser,
 		fetchOAuthProviders,
-		isOAuthLoggedIn,
 		logoutOAuth,
 		OAUTH_PROVIDER_LABELS,
+		restoreOAuthSession,
 		startOAuthLogin,
 		type AuthUser,
 		type OAuthProvider
@@ -30,15 +29,8 @@
 	let oauthSignedIn = $state(false);
 
 	async function loadOAuthState() {
-		oauthSignedIn = isOAuthLoggedIn();
-		if (!oauthSignedIn) {
-			oauthUser = null;
-			return;
-		}
-		oauthUser = await fetchAuthUser(appConfig.VITE_BIGMARKET_API);
-		if (!oauthUser) {
-			oauthSignedIn = false;
-		}
+		oauthUser = await restoreOAuthSession(appConfig.VITE_BIGMARKET_API);
+		oauthSignedIn = oauthUser !== null;
 	}
 
 	onMount(async () => {

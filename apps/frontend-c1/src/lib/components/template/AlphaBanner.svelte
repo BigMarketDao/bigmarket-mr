@@ -43,7 +43,7 @@
 	};
 </script>
 
-<header class="relative top-0 right-0 left-0 z-[999] h-16 border-b border-border bg-background">
+<header class="relative top-0 right-0 left-0 z-999 h-16 border-b border-border bg-background">
 	<nav
 		class="mx-auto flex h-full w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
 	>
@@ -67,7 +67,7 @@
 			{#if walletConnected}
 				<Button
 					onclick={() => claimTokens()}
-					class="focus:ring-bloodorange rounded-xl bg-gradient-to-b from-orange-500 to-orange-900 
+					class="focus:ring-bloodorange rounded-xl bg-linear-to-b from-orange-500 to-orange-900 
 	px-3 py-1.5 text-xs 
 	font-semibold text-white 
 	shadow-sm transition-transform hover:scale-105 hover:shadow-md focus:ring-2 
@@ -80,7 +80,7 @@
 			{:else}
 				<Button
 					onclick={() => authenticateWallet()}
-					class="focus:ring-bloodorange rounded-xl bg-gradient-to-b from-orange-500 to-orange-900 
+					class="focus:ring-bloodorange rounded-xl bg-linear-to-b from-orange-500 to-orange-900 
 	px-3 py-1.5 text-xs 
 	font-semibold text-white 
 	shadow-sm transition-transform hover:scale-105 hover:shadow-md focus:ring-2 

@@ -76,3 +76,27 @@ export async function fetchAuthUser(apiBase: string): Promise<AuthUser | null> {
 	const data = (await res.json()) as { user?: AuthUser };
 	return data.user ?? null;
 }
+
+/** Restore session from sessionStorage and/or httpOnly refresh cookie. */
+export async function restoreOAuthSession(apiBase: string): Promise<AuthUser | null> {
+	if (!getAccessToken()) {
+		await refreshAccessToken(apiBase);
+	}
+
+	let user = await fetchAuthUser(apiBase);
+	if (user) return user;
+
+	if (getAccessToken()) {
+		clearAccessToken();
+	}
+
+	if (!(await refreshAccessToken(apiBase))) {
+		return null;
+	}
+
+	user = await fetchAuthUser(apiBase);
+	if (!user) {
+		clearAccessToken();
+	}
+	return user;
+}

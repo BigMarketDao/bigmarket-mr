@@ -3,14 +3,14 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { appConfigStore, requireAppConfig } from '@bigmarket/bm-common';
-	import { refreshAccessToken } from '$lib/core/auth/authSession';
+	import { restoreOAuthSession } from '$lib/core/auth/authSession';
 
 	const appConfig = $derived(requireAppConfig($appConfigStore));
 	let errorMsg = $state<string | null>(null);
 
 	onMount(async () => {
-		const token = await refreshAccessToken(appConfig.VITE_BIGMARKET_API);
-		if (token) {
+		const user = await restoreOAuthSession(appConfig.VITE_BIGMARKET_API);
+		if (user) {
 			await goto(resolve('/'));
 			return;
 		}

@@ -8,7 +8,7 @@
 		daoOverviewStore,
 		exchangeRatesStore,
 		marketSystemCategoriesStore,
-		requireAppConfig,
+		requireAppConfig
 	} from '@bigmarket/bm-common';
 	import { daoConfigStore } from '@bigmarket/bm-common';
 	import type { AppConfig, DaoConfig } from '@bigmarket/bm-types';
@@ -36,6 +36,7 @@
 		MarketCategory
 	} from '@bigmarket/bm-types';
 	import AlphaBanner from '$lib/components/template/AlphaBanner.svelte';
+	import OauthBanner from '$lib/components/template/OauthBanner.svelte';
 
 	let networkWarning = $state(false);
 	let ready = $state(false);
@@ -102,7 +103,7 @@
 	<!-- Splash screen -->
 	<div
 		id="splash-screen"
-		class="fixed inset-0 z-[9999] flex h-full w-full flex-col items-center justify-center bg-background"
+		class="fixed inset-0 z-9999 flex h-full w-full flex-col items-center justify-center bg-background"
 	>
 		<img src="/splash.png" alt="BigMarket loading..." class="h-[120%] w-full opacity-80" />
 		<p class="mt-4 font-sans text-sm text-muted-foreground">Loading BigMarket...</p>
@@ -113,6 +114,7 @@
 		{#if browser}
 			<div class="shrink-0">
 				<AlphaBanner />
+				<OauthBanner />
 				<ReputationCommunityBanner />
 				<Header />
 			</div>

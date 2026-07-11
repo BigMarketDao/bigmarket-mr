@@ -111,6 +111,13 @@ function profileSyncFields(profile: OAuthProfile, includeSub = false) {
 
 export async function findOrCreateUser(providerId: string, subjectHash: string, profile: OAuthProfile) {
 	let pa = await authProviderAccountCollection.findOne({ providerId, subjectHash });
+	// Link legacy accounts (e.g. subjectHash algorithm change) by stable provider sub.
+	if (!pa && profile.sub) {
+		pa = await authProviderAccountCollection.findOne({ providerId, sub: profile.sub });
+		if (pa && (pa as any).subjectHash !== subjectHash) {
+			await authProviderAccountCollection.updateOne({ _id: (pa as any)._id }, { $set: { subjectHash } });
+		}
+	}
 	if (!pa) {
 		const now = new Date();
 		const u = await authUserCollection.insertOne({

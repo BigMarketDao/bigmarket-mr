@@ -151,15 +151,24 @@ export const OAUTH_PROVIDERS: Record<OAuthProviderKey, OAuthProviderDef> = {
 				profile.email = user.email;
 				profile.emailVerified = true;
 			} else {
-				const emails = (await fetchJson('https://api.github.com/user/emails', { headers })) as unknown as Array<{
-					email?: string;
-					primary?: boolean;
-					verified?: boolean;
-				}>;
-				const primary = emails.find((e) => e.primary) ?? emails[0];
-				if (primary?.email) {
-					profile.email = primary.email;
-					profile.emailVerified = primary.verified ?? false;
+				try {
+					const emailResp = await fetch('https://api.github.com/user/emails', { headers });
+					if (emailResp.ok) {
+						const emails = (await emailResp.json()) as Array<{
+							email?: string;
+							primary?: boolean;
+							verified?: boolean;
+						}>;
+						const primary = emails.find((e) => e.primary) ?? emails[0];
+						if (primary?.email) {
+							profile.email = primary.email;
+							profile.emailVerified = primary.verified ?? false;
+						}
+					} else {
+						console.warn('[auth] GitHub /user/emails', emailResp.status, await emailResp.text());
+					}
+				} catch (err) {
+					console.warn('[auth] GitHub /user/emails failed', err);
 				}
 			}
 			return profile;

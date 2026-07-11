@@ -18,7 +18,10 @@ router.post('/logout', logout);
 router.get('/me', requireAuth, async (req, res) => {
 	const authUser = (req as any).user;
 	const userId = ObjectId.isValid(authUser.id) ? new ObjectId(authUser.id) : authUser.id;
-	const pa = await authProviderAccountCollection.findOne({ userId });
+	const pa =
+		(authUser.prv
+			? await authProviderAccountCollection.findOne({ userId, providerId: authUser.prv })
+			: null) ?? (await authProviderAccountCollection.findOne({ userId }));
 	const user = await authUserCollection.findOne({ _id: userId });
 	res.json({
 		ok: true,
