@@ -9,6 +9,7 @@ import {
   type TokenWithChainDetails,
 } from "@allbridge/bridge-core-sdk";
 import type { Eip1193Provider } from "@bigmarket/bm-types";
+import { bytesToHex, hexToBytes } from "@stacks/common";
 import { createAddress, parseContractId } from "@stacks/transactions";
 import { Web3 } from "web3";
 import { getMetaMask } from "./injected.js";
@@ -203,20 +204,20 @@ function evmAddressToBytes32(address: string): string {
 
 /** Match AllBridge SDK encoding for Stacks principals on EVM bridge calldata. */
 function encodeAllbridgeStxBytes32(address: string, web3: Web3): string {
-  if (address.includes(".")) {
-    const [addr, name] = parseContractId(
-      address as `${string}.${string}`,
-    );
-    const hashBytes = Buffer.from(createAddress(addr).hash160, "hex");
-    const hash = web3.utils.keccak256(
-      Buffer.concat([hashBytes, Buffer.from(name)]),
-    );
-    return hash.toLowerCase();
-  }
-  const hashBytes = Buffer.from(createAddress(address).hash160, "hex");
-  const padded = Buffer.alloc(32, 0);
-  hashBytes.copy(padded, 32 - hashBytes.length);
-  return `0x${padded.toString("hex")}`.toLowerCase();
+	if (address.includes('.')) {
+		const [addr, name] = parseContractId(address as `${string}.${string}`);
+		const hashBytes = hexToBytes(createAddress(addr).hash160);
+		const nameBytes = new TextEncoder().encode(name);
+		const combined = new Uint8Array(hashBytes.length + nameBytes.length);
+		combined.set(hashBytes, 0);
+		combined.set(nameBytes, hashBytes.length);
+		const hash = web3.utils.keccak256(combined);
+		return hash.toLowerCase();
+	}
+	const hashBytes = hexToBytes(createAddress(address).hash160);
+	const padded = new Uint8Array(32);
+	padded.set(hashBytes, 32 - hashBytes.length);
+	return `0x${bytesToHex(padded)}`.toLowerCase();
 }
 
 function assertAllbridgeApproveTx(

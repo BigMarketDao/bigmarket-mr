@@ -5,8 +5,9 @@
 1. Keep enough STX for deployment, market creation, relayer fees and retries.
 2. Convert a small amount of STX to 30–60 USDC.
 3. Fund the Bob MetaMask wallet with:
-   - USDC
-   - enough ETH for gas
+
+- USDC
+- enough ETH for gas
 
 4. Fund the relayer wallet with STX.
 5. Use separate admin and Bob accounts.
@@ -16,11 +17,12 @@
 1. Make the Register Interest link the entry point.
 2. Support Google and GitHub OAuth.
 3. Store:
-   - email
-   - OAuth provider
-   - registration date
-   - last login date
-   - referral source
+
+- email
+- OAuth provider
+- registration date
+- last login date
+- referral source
 
 4. Add a separate optional marketing consent checkbox.
 5. Redirect the user back to the intended market after registration.
@@ -33,11 +35,12 @@
 3. Deploy the contracts.
 4. Execute required DAO proposals.
 5. Configure:
-   - vault
-   - USDCx
-   - market contracts
-   - relayer
-   - resolution agent
+
+- vault
+- USDCx
+- market contracts
+- relayer
+- resolution agent
 
 6. Update frontend and API mainnet configuration.
 7. Record all deployment transaction IDs.
@@ -75,20 +78,22 @@
 1. Create a simple market ending in about one week.
 2. Add 10–20 USDCx liquidity.
 3. Create source-tagged registration links for:
-   - friends
-   - Stacks Telegram
-   - Discord
-   - direct outreach
+
+- friends
+- Stacks Telegram
+- Discord
+- direct outreach
 
 ## 7. Recruit testers
 
 1. Send the registration link to 3–5 trusted people.
 2. Ask them to:
-   - register
-   - connect MetaMask
-   - deposit or receive a small test amount
-   - place one trade
-   - provide feedback
+
+- register
+- connect MetaMask
+- deposit or receive a small test amount
+- place one trade
+- provide feedback
 
 3. Fund only committed testers.
 4. Keep individual test amounts small.
@@ -98,10 +103,11 @@
 
 1. Share the Register Interest link in approved Stacks groups.
 2. State:
-   - mainnet beta
-   - small amounts only
-   - MetaMask required
-   - feedback requested
+
+- mainnet beta
+- small amounts only
+- MetaMask required
+- feedback requested
 
 3. Do not share the raw market link as the main entry point.
 
@@ -176,12 +182,14 @@ Do not publish raw email addresses.
 
 ## Completion checklist
 
-- [ ] OAuth registration works
-- [ ] Emails are stored
-- [ ] Marketing consent is separate
-- [ ] Mainnet contracts are deployed
-- [ ] MetaMask deposit works
-- [ ] Signed buy works
+- [x] OAuth registration works
+- [x] Emails are stored
+- [x] Marketing consent is separate
+- [x] Mainnet contracts are deployed
+- [x] MetaMask deposit works
+  - [Approval: 0xed2060c51a4c9c8b99b31efa70097fb1bd251e2c62d02634b43a4e8a20aed4ac](https://etherscan.io/tx/0xed2060c51a4c9c8b99b31efa70097fb1bd251e2c62d02634b43a4e8a20aed4ac)
+  - [Transfer: 0x47fd676cb90b79725455d783ec5a4bb7b03ec947e763d0e3d6ab24fbc4681584](https://etherscan.io/tx/0x47fd676cb90b79725455d783ec5a4bb7b03ec947e763d0e3d6ab24fbc4681584)
+- [x] Signed buy works
 - [ ] Signed sell works
 - [ ] Signed claim works
 - [ ] Replay protection works

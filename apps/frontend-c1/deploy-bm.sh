@@ -35,6 +35,7 @@ sed -E "s/( : )'(testnet|mainnet)';/\1'$DEPLOYMENT';/" ../../packages/bm-common/
   && mv ../../packages/bm-common/src/lib/config.ts.tmp ../../packages/bm-common/src/lib/config.ts
 
 echo "Building app..."
+pnpm --filter @bigmarket/sdk build
 pnpm run build
 
 echo "Uploading build to $SERVER:$REMOTE_PATH..."
