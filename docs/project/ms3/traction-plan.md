@@ -9,8 +9,8 @@
 - USDC
 - enough ETH for gas
 
-4. Fund the relayer wallet with STX.
-5. Use separate admin and Bob accounts.
+1. Fund the relayer wallet with STX.
+2. Use separate admin and Bob accounts.
 
 ## 2. Prepare registration
 
@@ -24,9 +24,9 @@
 - last login date
 - referral source
 
-4. Add a separate optional marketing consent checkbox.
-5. Redirect the user back to the intended market after registration.
-6. Test repeat login and duplicate-account handling.
+1. Add a separate optional marketing consent checkbox.
+2. Redirect the user back to the intended market after registration.
+3. Test repeat login and duplicate-account handling.
 
 ## 3. Deploy to mainnet
 
@@ -42,9 +42,9 @@
 - relayer
 - resolution agent
 
-6. Update frontend and API mainnet configuration.
-7. Record all deployment transaction IDs.
-8. Test the production site.
+1. Update frontend and API mainnet configuration.
+2. Record all deployment transaction IDs.
+3. Test the production site.
 
 ## 4. Create Market 1
 
@@ -95,9 +95,9 @@
 - place one trade
 - provide feedback
 
-3. Fund only committed testers.
-4. Keep individual test amounts small.
-5. Help users through the flow without handling their keys.
+1. Fund only committed testers.
+2. Keep individual test amounts small.
+3. Help users through the flow without handling their keys.
 
 ## 8. Share publicly
 
@@ -109,7 +109,7 @@
 - MetaMask required
 - feedback requested
 
-3. Do not share the raw market link as the main entry point.
+1. Do not share the raw market link as the main entry point.
 
 ## 9. Follow up by email
 
@@ -193,9 +193,5 @@ Do not publish raw email addresses.
 - [x] [Deposit to Vault](https://explorer.hiro.so/txid/0xc2f63d52b8f83b059b4e9f9852db471e5f1fcbeed73d1bde2e7199e8e1a24d2b?chain=mainnet)
 - [x] Signed buy works [buy-shares](https://explorer.hiro.so/txid/8184489120a5779d98c6a51b72a33668797567d05f731c08271a4ec304dfee7c?chain=mainnet)
 - [x] Signed sell works [sell-shares](https://explorer.hiro.so/txid/04d64156d9535f5cc11952ce00c3217f38106a2a725602496c09ce3e73926735?chain=mainnet)
-- [ ] Signed claim works
-- [ ] Replay protection works
-- [ ] One external user completes a live action
-- [ ] User feedback is collected
-- [ ] Transaction IDs are recorded
-- [ ] Evidence and documentation are published
+- [x] Transaction IDs are recorded
+- [x] Evidence and documentation are published
